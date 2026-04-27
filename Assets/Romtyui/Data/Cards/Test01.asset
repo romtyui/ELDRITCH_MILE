@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
+  m_Name: Test01
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardId: strike
+  cardName: Strike
+  description: Deal 6 damage
+  artwork: {fileID: 0}
+  cardType: 0
+  rarity: 0
+  targetType: 2
+  baseCost: 1
+  exhaust: 0
+  ethereal: 0
+  retain: 0
+  effects:
+  - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
