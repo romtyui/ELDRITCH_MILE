@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a14456b74c1de346bb9fc6b9c584470, type: 3}
+  m_Name: test02
+  m_EditorClassIdentifier: Assembly-CSharp::CardVisualData
+  artworkSprite: {fileID: 2043298353, guid: 7fd4610ca6dbe304a8645127b199ebc4, type: 3}
+  cardFaceSprite: {fileID: 6930203858216588997, guid: 14de030af0a7a1a42aaf637dcdda3229, type: 3}
+  cardFrameSprite: {fileID: -1244696283241906713, guid: 14de030af0a7a1a42aaf637dcdda3229, type: 3}
+  maskSprite: {fileID: 900610401960726662, guid: 14de030af0a7a1a42aaf637dcdda3229, type: 3}
+  nameTextColor: {r: 1, g: 1, b: 1, a: 1}
+  descriptionTextColor: {r: 0, g: 0, b: 0, a: 1}
+  costTextColor: {r: 1, g: 1, b: 1, a: 1}

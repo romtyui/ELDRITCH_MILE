@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,13 +9,14 @@ public class BattleUnit : MonoBehaviour
     public int currentHp;
     public int block;
 
+    public event Action OnHpChanged;
 
     private Dictionary<StatusType, int> statuses = new();
-
 
     protected virtual void Awake()
     {
         currentHp = maxHp;
+        OnHpChanged?.Invoke();
     }
 
     public virtual void TakeDamage(int amount)
@@ -29,13 +31,30 @@ public class BattleUnit : MonoBehaviour
         }
 
         currentHp -= remaining;
-        if (currentHp < 0) currentHp = 0;
+
+        if (currentHp < 0)
+            currentHp = 0;
+
+        OnHpChanged?.Invoke();
 
         Debug.Log($"{unitName} 受到 {amount} 傷害，剩餘 HP: {currentHp}");
 
         if (currentHp <= 0)
             Die();
+
         Debug.Log($"[Damage] {unitName} take {amount}, HP = {currentHp}");
+    }
+
+    public virtual void Heal(int amount)
+    {
+        currentHp += amount;
+
+        if (currentHp > maxHp)
+            currentHp = maxHp;
+
+        OnHpChanged?.Invoke();
+
+        Debug.Log($"{unitName} 回復 {amount} HP，當前 HP: {currentHp}");
     }
 
     public virtual void GainBlock(int amount)

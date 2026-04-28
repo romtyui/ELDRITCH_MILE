@@ -4,12 +4,19 @@ using UnityEngine.UI;
 
 public class CardViewUI : MonoBehaviour
 {
-    [Header("UI Refs")]
-    public Image artworkImage;      // 卡面層
-    public Image frameImage;        // 卡框層，可先不管
-    public TMP_Text nameText;       // Text(TMP) 可拆多個 TMP
+    [Header("Image Refs")]
+    public Image artworkImage;      // 武器層
+    public Image cardFaceImage;     // 卡面層
+    public Image cardFrameImage;    // 卡框層
+    public Image maskImage;         // 蒙版
+
+    [Header("Text Refs")]
+    public TMP_Text nameText;
     public TMP_Text costText;
     public TMP_Text descriptionText;
+
+    [Header("Fallback Visual")]
+    public CardVisualData defaultVisualData;
 
     public CardInstance CardInstance { get; private set; }
 
@@ -20,11 +27,51 @@ public class CardViewUI : MonoBehaviour
         if (instance == null || instance.data == null)
             return;
 
-        //nameText.text = instance.data.cardName;
-        //costText.text = instance.currentCost.ToString();
-        descriptionText.text = instance.data.description;
+        CardData data = instance.data;
+
+        if (nameText != null)
+            nameText.text = data.cardName;
+
+        if (costText != null)
+            costText.text = instance.currentCost.ToString();
+
+        if (descriptionText != null)
+            descriptionText.text = data.description;
+
+        CardVisualData visual = data.visualData != null
+            ? data.visualData
+            : defaultVisualData;
+
+        ApplyVisual(visual);
+    }
+
+    private void ApplyVisual(CardVisualData visual)
+    {
+        if (visual == null)
+        {
+            Debug.LogWarning($"[{nameof(CardViewUI)}] CardData 沒有 visualData，CardViewUI 也沒有 defaultVisualData");
+            return;
+        }
 
         if (artworkImage != null)
-            artworkImage.sprite = instance.data.artwork;
+            artworkImage.sprite = visual.artworkSprite;
+
+        if (cardFaceImage != null)
+            cardFaceImage.sprite = visual.cardFaceSprite;
+
+        if (cardFrameImage != null)
+            cardFrameImage.sprite = visual.cardFrameSprite;
+
+        if (maskImage != null)
+            maskImage.sprite = visual.maskSprite;
+
+        if (nameText != null)
+            nameText.color = visual.nameTextColor;
+
+        if (descriptionText != null)
+            descriptionText.color = visual.descriptionTextColor;
+
+        if (costText != null)
+            costText.color = visual.costTextColor;
     }
 }

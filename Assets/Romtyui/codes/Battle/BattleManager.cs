@@ -1,22 +1,32 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BattleManager : MonoBehaviour
 {
+    [Header("Units")]
     public BattleUnit playerUnit;
-    public BattleUnit currentEnemy;
+
+    [Header("Enemies")]
+    public EnemyUnit currentEnemy;
+    public List<EnemyUnit> enemies = new();
+
+    [Header("Player Systems")]
     public BattleDeck playerDeck;
     public EnergySystem energySystem;
 
+    [Header("Turn Settings")]
     public int cardsPerTurn = 5;
+    public float enemyActionDelay = 0.5f;
 
-    // 二選一：
-    // 如果你現在是固定10張手牌UI，就拖 FixedHandUIController
-    public FixedHandUIController fixedHandUIController;
+    [Header("UI")]
+    public HandUIController handUIController;
 
-    // 如果你之後改成動態生成手牌，再改拖 HandUIController
-    // public HandUIController handUIController;
+    [Header("Runtime")]
+    public BattlePhase currentPhase = BattlePhase.None;
 
-    //遊戲流程
+    private bool isChangingTurn;
+
     private void Start()
     {
         StartBattle();
@@ -24,34 +34,147 @@ public class BattleManager : MonoBehaviour
 
     public void StartBattle()
     {
-        playerDeck.InitializeDeck();
-        energySystem.ResetEnergy();
-        playerDeck.DrawCards(cardsPerTurn);
+        currentPhase = BattlePhase.None;
+        isChangingTurn = false;
 
-        RefreshHandUI();
+        if (playerDeck != null)
+            playerDeck.InitializeDeck();
 
-        Debug.Log($"戰鬥開始，手牌數量：{playerDeck.Hand.Count}");
+        if (enemies == null || enemies.Count == 0)
+            AutoCollectEnemies();
+
+        if (currentEnemy == null)
+            currentEnemy = GetFirstAliveEnemy();
+
+        StartPlayerTurn();
+
+        if (playerDeck != null)
+            Debug.Log($"戰鬥開始，手牌數量：{playerDeck.Hand.Count}");
+    }
+
+    [ContextMenu("Auto Collect Enemies")]
+    public void AutoCollectEnemies()
+    {
+        enemies.Clear();
+
+        EnemyUnit[] foundEnemies = FindObjectsByType<EnemyUnit>(FindObjectsSortMode.None);
+
+        foreach (EnemyUnit enemy in foundEnemies)
+        {
+            if (enemy == null) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+
+            enemies.Add(enemy);
+        }
+
+        currentEnemy = GetFirstAliveEnemy();
+
+        Debug.Log($"[BattleManager] 自動找到 {enemies.Count} 隻怪物，目前目標：{(currentEnemy != null ? currentEnemy.unitName : "null")}");
     }
 
     public void StartPlayerTurn()
     {
-        energySystem.ResetEnergy();
-        playerDeck.DrawCards(cardsPerTurn);
+        if (currentPhase == BattlePhase.BattleEnded)
+            return;
+
+        currentPhase = BattlePhase.PlayerTurn;
+        isChangingTurn = false;
+
+        if (playerUnit != null)
+            playerUnit.ResetBlock();
+
+        if (energySystem != null)
+            energySystem.ResetEnergy();
+
+        if (playerDeck != null)
+            playerDeck.DrawCards(cardsPerTurn);
+
         RefreshHandUI();
+
+        Debug.Log("玩家回合開始");
     }
 
     public void EndPlayerTurn()
     {
-        playerDeck.DiscardHandAtEndTurn();
+        if (currentPhase != BattlePhase.PlayerTurn)
+            return;
+
+        if (isChangingTurn)
+            return;
+
+        isChangingTurn = true;
+
+        if (playerDeck != null)
+            playerDeck.DiscardHandAtEndTurn();
+
         RefreshHandUI();
 
-        // 之後這裡放敵人行動
+        Debug.Log("玩家回合結束");
+
+        StartCoroutine(EnemyTurnRoutine());
+    }
+
+    private IEnumerator EnemyTurnRoutine()
+    {
+        StartEnemyTurn();
+
+        yield return new WaitForSeconds(enemyActionDelay);
+
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyUnit enemy = enemies[i];
+
+            if (enemy == null) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
+
+            currentEnemy = enemy;
+
+            enemy.ResetBlock();
+            enemy.ExecuteTurn(playerUnit, this);
+
+            yield return new WaitForSeconds(enemyActionDelay);
+
+            if (playerUnit != null && playerUnit.currentHp <= 0)
+            {
+                EndBattle(false);
+                yield break;
+            }
+        }
+
+        currentEnemy = GetFirstAliveEnemy();
+
+        EndEnemyTurn();
+    }
+
+    public void StartEnemyTurn()
+    {
+        if (currentPhase == BattlePhase.BattleEnded)
+            return;
+
+        currentPhase = BattlePhase.EnemyTurn;
+
+        Debug.Log("怪物回合開始");
+    }
+
+    public void EndEnemyTurn()
+    {
+        if (currentPhase == BattlePhase.BattleEnded)
+            return;
+
+        Debug.Log("怪物回合結束");
+
         StartPlayerTurn();
     }
-    //流程結束
 
     public bool TryPlayCard(CardInstance card, BattleUnit target)
     {
+        if (currentPhase != BattlePhase.PlayerTurn)
+        {
+            Debug.Log("現在不是玩家回合，不能出牌");
+            return false;
+        }
+
         if (card == null || card.data == null)
             return false;
 
@@ -59,7 +182,13 @@ public class BattleManager : MonoBehaviour
 
         if (card.data.targetType == TargetType.SingleEnemy && finalTarget == null)
         {
-            Debug.Log("沒有選到敵人");
+            Debug.Log("沒有選到敵人，也沒有 currentEnemy 可以使用");
+            return false;
+        }
+
+        if (energySystem == null)
+        {
+            Debug.LogWarning("[BattleManager] energySystem 沒有指定");
             return false;
         }
 
@@ -73,22 +202,21 @@ public class BattleManager : MonoBehaviour
 
         Debug.Log($"打出卡牌: {card.data.cardName}");
 
-        foreach (var effect in card.data.effects)
+        foreach (CardEffectData effect in card.data.effects)
         {
             if (effect == null) continue;
             effect.Execute(context);
         }
 
-        if (card.data.targetType == TargetType.SingleEnemy && finalTarget == null)
-        {
-            Debug.Log("沒有選到敵人，攻擊牌不打出");
-            return false;
-        }
-
-        playerDeck.OnCardPlayed(card);
+        if (playerDeck != null)
+            playerDeck.OnCardPlayed(card);
 
         RefreshHandUI();
-        Debug.Log($"[TryPlayCard] card = {card.data.cardName}, target = {(target != null ? target.unitName : "null")}");
+
+        Debug.Log($"[TryPlayCard] card = {card.data.cardName}, target = {(finalTarget != null ? finalTarget.unitName : "null")}");
+
+        CheckBattleEnd();
+
         return true;
     }
 
@@ -100,7 +228,14 @@ public class BattleManager : MonoBehaviour
                 return playerUnit;
 
             case TargetType.SingleEnemy:
-                return selectedTarget;
+                if (selectedTarget != null)
+                    return selectedTarget;
+
+                if (currentEnemy != null && currentEnemy.gameObject.activeInHierarchy && currentEnemy.currentHp > 0)
+                    return currentEnemy;
+
+                currentEnemy = GetFirstAliveEnemy();
+                return currentEnemy;
 
             case TargetType.None:
             default:
@@ -108,24 +243,99 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    private EnemyUnit GetFirstAliveEnemy()
+    {
+        if (enemies == null)
+            return null;
+
+        foreach (EnemyUnit enemy in enemies)
+        {
+            if (enemy == null) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
+
+            return enemy;
+        }
+
+        return null;
+    }
+
     public void PlayerDrawCards(int amount)
     {
-        playerDeck.DrawCards(amount);
-        //RefreshHandUI();
+        if (playerDeck != null)
+            playerDeck.DrawCards(amount);
+
+        RefreshHandUI();
     }
 
     public void GainEnergy(int amount)
     {
-        energySystem.GainEnergy(amount);
+        if (energySystem != null)
+            energySystem.GainEnergy(amount);
     }
 
     private void RefreshHandUI()
     {
-        if (fixedHandUIController != null)
-            fixedHandUIController.RefreshHandUI();
+        if (handUIController != null)
+            handUIController.RefreshHandUI();
+    }
 
-        // 如果以後改用動態手牌UI，再打開這段
-        // if (handUIController != null)
-        //     handUIController.RefreshHandUI();
+    private void CheckBattleEnd()
+    {
+        if (playerUnit != null && playerUnit.currentHp <= 0)
+        {
+            EndBattle(false);
+            return;
+        }
+
+        if (enemies == null)
+            enemies = new List<EnemyUnit>();
+
+        enemies.RemoveAll(enemy => enemy == null);
+
+        if (enemies.Count == 0)
+        {
+            AutoCollectEnemies();
+        }
+
+        if (enemies.Count == 0)
+        {
+            Debug.LogWarning("[CheckBattleEnd] enemies 清單是空的，無法判斷戰鬥勝利。請把 EnemyUnit 加到 BattleManager.enemies。");
+            return;
+        }
+
+        bool allEnemiesDead = true;
+
+        foreach (EnemyUnit enemy in enemies)
+        {
+            if (enemy == null) continue;
+
+            if (enemy.gameObject.activeInHierarchy && enemy.currentHp > 0)
+            {
+                allEnemiesDead = false;
+                break;
+            }
+        }
+
+        if (allEnemiesDead)
+        {
+            EndBattle(true);
+            return;
+        }
+
+        currentEnemy = GetFirstAliveEnemy();
+    }
+
+    private void EndBattle(bool playerWin)
+    {
+        currentPhase = BattlePhase.BattleEnded;
+        isChangingTurn = true;
+
+        RefreshHandUI();
+
+        if (playerWin)
+            Debug.Log("戰鬥勝利");
+        else
+            Debug.Log("戰鬥失敗");
     }
 }

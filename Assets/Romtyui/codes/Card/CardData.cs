@@ -8,7 +8,9 @@ public class CardData : ScriptableObject
     public string cardId;
     public string cardName;
     [TextArea] public string description;
-    public Sprite artwork;
+
+    [Header("Visual")]
+    public CardVisualData visualData;
 
     [Header("Card Rules")]
     public CardType cardType;
@@ -24,6 +26,7 @@ public class CardData : ScriptableObject
     [Header("Effects")]
     public List<CardEffectData> effects = new();
 }
+
 public class CardInstance
 {
     public CardData data;
@@ -39,6 +42,7 @@ public class CardInstance
         isExhaustedThisCombat = false;
     }
 }
+
 public enum CardType
 {
     Attack,

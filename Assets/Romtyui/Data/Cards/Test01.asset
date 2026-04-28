@@ -15,7 +15,7 @@ MonoBehaviour:
   cardId: strike
   cardName: Strike
   description: Deal 6 damage
-  artwork: {fileID: 0}
+  visualData: {fileID: 11400000, guid: 27d540af5d656654dafab3f8a116db76, type: 2}
   cardType: 0
   rarity: 0
   targetType: 2
@@ -25,3 +25,4 @@ MonoBehaviour:
   retain: 0
   effects:
   - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
+  - {fileID: 11400000, guid: 137e5a80717b5bb43802586b79a5a1a2, type: 2}
