@@ -587,9 +587,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HandUIController
   battleDeck: {fileID: 1461659477}
-  handFanLayout: {fileID: 134465708}
   cardPrefab: {fileID: 1116888258811706130, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
-  cardParent: {fileID: 134465705}
+  handRoot: {fileID: 134465705}
+  handFanLayout: {fileID: 134465708}
+  drawStartPoint: {fileID: 2079750605}
+  drawDuration: 0.35
+  delayBetweenCards: 0.08
+  arcHeight: 220
+  startScale: 0.45
 --- !u!1 &137844193
 GameObject:
   m_ObjectHideFlags: 0
@@ -5114,6 +5119,8 @@ GameObject:
   - component: {fileID: 1056973082}
   - component: {fileID: 1056973084}
   - component: {fileID: 1056973083}
+  - component: {fileID: 1056973086}
+  - component: {fileID: 1056973085}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -5178,6 +5185,38 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1056973081}
   m_CullTransparentMesh: 1
+--- !u!114 &1056973085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1056973081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63bf97f9c4f5b9e46b90f805f4ed01ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyUnit
+  unitName: test
+  maxHp: 100
+  currentHp: 0
+  block: 0
+  intents:
+  - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
+  currentIntentIndex: 0
+--- !u!114 &1056973086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1056973081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a85ca6c834fcae845a67856b441c1ece, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleTargetUI
+  battleUnit: {fileID: 1056973085}
 --- !u!1 &1077501531
 GameObject:
   m_ObjectHideFlags: 0
@@ -6908,11 +6947,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleDeck
   startingDeck:
   - {fileID: 11400000, guid: d242339d1dfa51441857c2c465e917f6, type: 2}
-  - {fileID: 11400000, guid: 1d8fac906f6a198468c144b6c95d02e2, type: 2}
-  - {fileID: 11400000, guid: 1d8fac906f6a198468c144b6c95d02e2, type: 2}
-  - {fileID: 11400000, guid: 1d8fac906f6a198468c144b6c95d02e2, type: 2}
-  - {fileID: 11400000, guid: 1d8fac906f6a198468c144b6c95d02e2, type: 2}
-  - {fileID: 11400000, guid: 1d8fac906f6a198468c144b6c95d02e2, type: 2}
+  - {fileID: 11400000, guid: d242339d1dfa51441857c2c465e917f6, type: 2}
+  - {fileID: 11400000, guid: d242339d1dfa51441857c2c465e917f6, type: 2}
+  - {fileID: 11400000, guid: d242339d1dfa51441857c2c465e917f6, type: 2}
+  - {fileID: 11400000, guid: d242339d1dfa51441857c2c465e917f6, type: 2}
+  - {fileID: 11400000, guid: d242339d1dfa51441857c2c465e917f6, type: 2}
 --- !u!4 &1461659478
 Transform:
   m_ObjectHideFlags: 0
@@ -9375,6 +9414,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 134465705}
     m_Modifications:
+    - target: {fileID: 410479225790413237, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
+      propertyPath: playThresholdY
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 410479225790413237, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
+      propertyPath: playThresholdPixels
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 3863482782087345233, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
+      propertyPath: m_Alpha
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4293337803333473100, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -9458,6 +9509,10 @@ PrefabInstance:
     - target: {fileID: 5875220465785766505, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_Name
       value: card_template
+      objectReference: {fileID: 0}
+    - target: {fileID: 5875220465785766505, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

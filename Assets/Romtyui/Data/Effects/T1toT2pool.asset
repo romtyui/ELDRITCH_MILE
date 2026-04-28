@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49f6ad0df9a91984ca2650c653b9c5bf, type: 3}
+  m_Name: T1toT2pool
+  m_EditorClassIdentifier: Assembly-CSharp::CardTransformPoolData
+  transformId: octopus
+  entries:
+  - originalCard: {fileID: 11400000, guid: d242339d1dfa51441857c2c465e917f6, type: 2}
+    originalCardId: strike_01
+    resultCard: {fileID: 11400000, guid: 1d8fac906f6a198468c144b6c95d02e2, type: 2}

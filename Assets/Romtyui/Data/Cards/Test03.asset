@@ -10,19 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
-  m_Name: Test01
+  m_Name: Test03
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  cardId: strike_01
-  cardName: Strike
-  description: Deal 6 damage
-  visualData: {fileID: 11400000, guid: 27d540af5d656654dafab3f8a116db76, type: 2}
+  cardId: 
+  cardName: 
+  description: 
+  visualData: {fileID: 0}
   cardType: 0
   rarity: 0
-  targetType: 2
+  targetType: 0
   baseCost: 1
   exhaust: 0
   ethereal: 0
   retain: 0
-  effects:
-  - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
-  - {fileID: 11400000, guid: 137e5a80717b5bb43802586b79a5a1a2, type: 2}
+  effects: []

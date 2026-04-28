@@ -24,24 +24,81 @@ public class BattleDeck : MonoBehaviour
 
         Shuffle(drawPile);
     }
+    public bool TransformRandomCardInDrawPileByPool(CardTransformPoolData transformPool)
+    {
+        if (transformPool == null)
+        {
+            Debug.LogWarning("[BattleDeck] transformPool 是 null，無法變換牌");
+            return false;
+        }
 
+        if (drawPile == null || drawPile.Count == 0)
+        {
+            Debug.Log("[BattleDeck] 抽牌堆沒有牌可以變換");
+            return false;
+        }
+
+        List<int> validIndexes = new List<int>();
+
+        for (int i = 0; i < drawPile.Count; i++)
+        {
+            CardInstance cardInstance = drawPile[i];
+
+            if (cardInstance == null || cardInstance.data == null)
+                continue;
+
+            if (transformPool.TryGetTransformResult(cardInstance.data, out CardData resultCard))
+            {
+                if (resultCard != null)
+                    validIndexes.Add(i);
+            }
+        }
+
+        if (validIndexes.Count == 0)
+        {
+            Debug.Log($"[BattleDeck] 抽牌堆中沒有任何牌可以被變化卡池 {transformPool.transformId} 變換");
+            return false;
+        }
+
+        int selectedListIndex = Random.Range(0, validIndexes.Count);
+        int selectedDrawPileIndex = validIndexes[selectedListIndex];
+
+        CardInstance oldCard = drawPile[selectedDrawPileIndex];
+        CardData oldCardData = oldCard.data;
+
+        bool hasResult = transformPool.TryGetTransformResult(oldCardData, out CardData newCardData);
+
+        if (!hasResult || newCardData == null)
+        {
+            Debug.LogWarning("[BattleDeck] 找到候選牌，但沒有取得變換結果");
+            return false;
+        }
+
+        drawPile[selectedDrawPileIndex] = new CardInstance(newCardData);
+
+        Debug.Log($"[BattleDeck] 變化卡池 {transformPool.transformId}：{oldCardData.cardName} → {newCardData.cardName}");
+
+        return true;
+    }
     public void DrawCards(int amount)
     {
         for (int i = 0; i < amount; i++)
-            DrawOne();
+            DrawOneCard();
     }
 
-    private void DrawOne()
+    public CardInstance DrawOneCard()
     {
         if (drawPile.Count == 0)
             ReshuffleDiscardIntoDraw();
 
         if (drawPile.Count == 0)
-            return;
+            return null;
 
         CardInstance top = drawPile[0];
         drawPile.RemoveAt(0);
         hand.Add(top);
+
+        return top;
     }
 
     public void OnCardPlayed(CardInstance card)

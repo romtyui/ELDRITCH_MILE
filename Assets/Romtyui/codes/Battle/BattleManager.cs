@@ -77,6 +77,11 @@ public class BattleManager : MonoBehaviour
         if (currentPhase == BattlePhase.BattleEnded)
             return;
 
+        StartCoroutine(StartPlayerTurnRoutine());
+    }
+
+    private IEnumerator StartPlayerTurnRoutine()
+    {
         currentPhase = BattlePhase.PlayerTurn;
         isChangingTurn = false;
 
@@ -86,12 +91,12 @@ public class BattleManager : MonoBehaviour
         if (energySystem != null)
             energySystem.ResetEnergy();
 
-        if (playerDeck != null)
-            playerDeck.DrawCards(cardsPerTurn);
-
-        RefreshHandUI();
-
         Debug.Log("玩家回合開始");
+
+        if (handUIController != null)
+            yield return handUIController.DrawCardsAnimated(playerDeck, cardsPerTurn);
+        else
+            playerDeck.DrawCards(cardsPerTurn);
     }
 
     public void EndPlayerTurn()
@@ -182,7 +187,7 @@ public class BattleManager : MonoBehaviour
 
         if (card.data.targetType == TargetType.SingleEnemy && finalTarget == null)
         {
-            Debug.Log("沒有選到敵人，也沒有 currentEnemy 可以使用");
+            Debug.Log("沒有選到敵人，也沒有 currentEnemy 可以攻擊");
             return false;
         }
 
@@ -198,6 +203,11 @@ public class BattleManager : MonoBehaviour
             return false;
         }
 
+        if (playerDeck != null)
+            playerDeck.OnCardPlayed(card);
+
+        RefreshHandUI();
+
         CardResolveContext context = new CardResolveContext(playerUnit, finalTarget, card, this);
 
         Debug.Log($"打出卡牌: {card.data.cardName}");
@@ -208,12 +218,7 @@ public class BattleManager : MonoBehaviour
             effect.Execute(context);
         }
 
-        if (playerDeck != null)
-            playerDeck.OnCardPlayed(card);
-
-        RefreshHandUI();
-
-        Debug.Log($"[TryPlayCard] card = {card.data.cardName}, target = {(finalTarget != null ? finalTarget.unitName : "null")}");
+        Debug.Log($"[TryPlayCard] card = {card.data.cardName}, finalTarget = {(finalTarget != null ? finalTarget.unitName : "null")}");
 
         CheckBattleEnd();
 
@@ -262,10 +267,23 @@ public class BattleManager : MonoBehaviour
 
     public void PlayerDrawCards(int amount)
     {
-        if (playerDeck != null)
-            playerDeck.DrawCards(amount);
+        if (amount <= 0)
+            return;
 
-        RefreshHandUI();
+        StartCoroutine(PlayerDrawCardsRoutine(amount));
+    }
+
+    private IEnumerator PlayerDrawCardsRoutine(int amount)
+    {
+        if (handUIController != null)
+        {
+            yield return handUIController.DrawCardsAnimated(playerDeck, amount);
+        }
+        else
+        {
+            playerDeck.DrawCards(amount);
+            RefreshHandUI();
+        }
     }
 
     public void GainEnergy(int amount)

@@ -383,7 +383,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &4293337803333473100
 RectTransform:
   m_ObjectHideFlags: 0
@@ -483,8 +483,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1423c03e6fbcda46acfcca76738d568, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
-  playThresholdPixels: 140
-  playThresholdY: 180
+  playThresholdPixels: 50
+  playThresholdY: 100
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
   thresholdLineHeight: 4
