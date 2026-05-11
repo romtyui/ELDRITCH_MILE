@@ -25,8 +25,15 @@ public class BattleManager : MonoBehaviour
     [Header("Runtime")]
     public BattlePhase currentPhase = BattlePhase.None;
 
+    [Header("Enemy Spawning")]
+    public EnemyFormationSpawner enemyFormationSpawner;
+
     private bool isChangingTurn;
 
+    [Header("Special Animation")]
+    public CardTransformAnimationController transformAnimationController;
+
+    private bool isResolvingCard;
     private void Start()
     {
         StartBattle();
@@ -40,8 +47,18 @@ public class BattleManager : MonoBehaviour
         if (playerDeck != null)
             playerDeck.InitializeDeck();
 
-        if (enemies == null || enemies.Count == 0)
+        if (energySystem != null)
+            energySystem.ResetEnergy();
+
+        if (enemyFormationSpawner != null)
+        {
+            enemyFormationSpawner.battleManager = this;
+            enemyFormationSpawner.SpawnRandomFormation();
+        }
+        else
+        {
             AutoCollectEnemies();
+        }
 
         if (currentEnemy == null)
             currentEnemy = GetFirstAliveEnemy();
@@ -55,6 +72,9 @@ public class BattleManager : MonoBehaviour
     [ContextMenu("Auto Collect Enemies")]
     public void AutoCollectEnemies()
     {
+        if (enemies == null)
+            enemies = new List<EnemyUnit>();
+
         enemies.Clear();
 
         EnemyUnit[] foundEnemies = FindObjectsByType<EnemyUnit>(FindObjectsSortMode.None);
@@ -63,8 +83,10 @@ public class BattleManager : MonoBehaviour
         {
             if (enemy == null) continue;
             if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
 
-            enemies.Add(enemy);
+            if (!enemies.Contains(enemy))
+                enemies.Add(enemy);
         }
 
         currentEnemy = GetFirstAliveEnemy();
@@ -88,8 +110,8 @@ public class BattleManager : MonoBehaviour
         if (playerUnit != null)
             playerUnit.ResetBlock();
 
-        if (energySystem != null)
-            energySystem.ResetEnergy();
+        //if (energySystem != null)
+        //    energySystem.ResetEnergy();
 
         Debug.Log("玩家回合開始");
 
@@ -121,9 +143,18 @@ public class BattleManager : MonoBehaviour
 
     private IEnumerator EnemyTurnRoutine()
     {
+        EnsureEnemiesRegistered();
+
         StartEnemyTurn();
 
         yield return new WaitForSeconds(enemyActionDelay);
+
+        if (enemies == null || enemies.Count == 0)
+        {
+            Debug.LogWarning("[EnemyTurnRoutine] 沒有任何怪物可以行動");
+            EndEnemyTurn();
+            yield break;
+        }
 
         for (int i = 0; i < enemies.Count; i++)
         {
@@ -132,6 +163,8 @@ public class BattleManager : MonoBehaviour
             if (enemy == null) continue;
             if (!enemy.gameObject.activeInHierarchy) continue;
             if (enemy.currentHp <= 0) continue;
+
+            Debug.Log($"[EnemyTurnRoutine] 怪物行動：{enemy.unitName}");
 
             currentEnemy = enemy;
 
@@ -150,6 +183,44 @@ public class BattleManager : MonoBehaviour
         currentEnemy = GetFirstAliveEnemy();
 
         EndEnemyTurn();
+    }
+    private void EnsureEnemiesRegistered()
+    {
+        if (enemies == null)
+            enemies = new List<EnemyUnit>();
+
+        enemies.RemoveAll(enemy => enemy == null);
+
+        if (enemies.Count == 0)
+        {
+            AutoCollectEnemies();
+        }
+
+        NormalizeEnemyList();
+
+        if (currentEnemy == null)
+            currentEnemy = GetFirstAliveEnemy();
+
+        Debug.Log($"[EnsureEnemiesRegistered] enemies.Count = {enemies.Count}, currentEnemy = {(currentEnemy != null ? currentEnemy.unitName : "null")}");
+    }
+    private void NormalizeEnemyList()
+    {
+        if (enemies == null)
+            enemies = new List<EnemyUnit>();
+
+        List<EnemyUnit> uniqueEnemies = new List<EnemyUnit>();
+
+        foreach (EnemyUnit enemy in enemies)
+        {
+            if (enemy == null) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
+
+            if (!uniqueEnemies.Contains(enemy))
+                uniqueEnemies.Add(enemy);
+        }
+
+        enemies = uniqueEnemies;
     }
 
     public void StartEnemyTurn()
@@ -172,8 +243,14 @@ public class BattleManager : MonoBehaviour
         StartPlayerTurn();
     }
 
-    public bool TryPlayCard(CardInstance card, BattleUnit target)
+    public bool TryPlayCard(CardInstance card, BattleUnit target, CardViewUI playedCardView)
     {
+        if (isResolvingCard)
+        {
+            Debug.Log("卡牌正在結算中");
+            return false;
+        }
+
         if (currentPhase != BattlePhase.PlayerTurn)
         {
             Debug.Log("現在不是玩家回合，不能出牌");
@@ -197,34 +274,113 @@ public class BattleManager : MonoBehaviour
             return false;
         }
 
-        if (!energySystem.Spend(card.currentCost))
+        if (!energySystem.CanSpend(card.currentCost))
         {
             Debug.Log("能量不足");
             return false;
         }
 
+        StartCoroutine(PlayCardRoutine(card, finalTarget, playedCardView));
+        return true;
+    }
+    private IEnumerator PlayCardRoutine(CardInstance card, BattleUnit finalTarget, CardViewUI playedCardView)
+    {
+        isResolvingCard = true;
+
+        energySystem.Spend(card.currentCost);
+
+        bool isTransformCard = HasTransformEffect(card);
+
+        if (playedCardView != null && handUIController != null)
+        {
+            Transform parent = null;
+
+            if (isTransformCard && transformAnimationController != null)
+                parent = transformAnimationController.AnimationRoot;
+
+            handUIController.DetachCardViewForPlay(card, parent);
+        }
+
         if (playerDeck != null)
             playerDeck.OnCardPlayed(card);
 
+        // 變化牌先不要立刻 RefreshHandUI 把正在動畫的牌清掉
         RefreshHandUI();
 
         CardResolveContext context = new CardResolveContext(playerUnit, finalTarget, card, this);
 
         Debug.Log($"打出卡牌: {card.data.cardName}");
 
-        foreach (CardEffectData effect in card.data.effects)
+        for (int i = 0; i < card.data.effects.Count; i++)
         {
-            if (effect == null) continue;
-            effect.Execute(context);
+            CardEffectData effect = card.data.effects[i];
+
+            if (effect == null)
+                continue;
+
+            if (effect is TransformRandomCardByPoolEffectData transformEffect)
+            {
+                yield return ResolveTransformCardEffect(transformEffect, context, playedCardView);
+            }
+            else
+            {
+                effect.Execute(context);
+            }
         }
 
-        Debug.Log($"[TryPlayCard] card = {card.data.cardName}, finalTarget = {(finalTarget != null ? finalTarget.unitName : "null")}");
+        if (!isTransformCard && playedCardView != null)
+        {
+            Destroy(playedCardView.gameObject);
+        }
 
         CheckBattleEnd();
 
-        return true;
+        isResolvingCard = false;
     }
+    private bool HasTransformEffect(CardInstance card)
+    {
+        if (card == null || card.data == null || card.data.effects == null)
+            return false;
 
+        for (int i = 0; i < card.data.effects.Count; i++)
+        {
+            if (card.data.effects[i] is TransformRandomCardByPoolEffectData)
+                return true;
+        }
+
+        return false;
+    }
+    private IEnumerator ResolveTransformCardEffect(
+    TransformRandomCardByPoolEffectData transformEffect,
+    CardResolveContext context,
+    CardViewUI playedCardView
+)
+    {
+        if (transformAnimationController != null)
+        {
+            // 1. 變化牌移動到畫面中間
+            // 2. 暫停 1 秒，之後可替換成 IK 專屬動畫
+            yield return transformAnimationController.MovePlayedCardToCenterAndWait(playedCardView);
+        }
+        else
+        {
+            yield return new WaitForSeconds(1f);
+        }
+
+        // 3. 暫停後才真正執行變化
+        CardTransformResult result = transformEffect.ExecuteTransform(context);
+
+        if (transformAnimationController != null)
+        {
+            // 4. 包包上方出現被替換牌
+            // 5. 向下移動進包包
+            // 6. 消失
+            yield return transformAnimationController.PlayBagTransformAnimation(result);
+
+            // 7. 變化牌本身消失
+            yield return transformAnimationController.FinishPlayedTransformCard(playedCardView);
+        }
+    }
     private BattleUnit ResolveTarget(TargetType targetType, BattleUnit selectedTarget)
     {
         switch (targetType)

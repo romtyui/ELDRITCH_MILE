@@ -124,7 +124,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
                 case TargetType.SingleEnemy:
                     if (targetUnit != null)
                     {
-                        played = battleManager.TryPlayCard(card, targetUnit);
+                        played = battleManager.TryPlayCard(card, targetUnit, cardViewUI);
                     }
                     else
                     {
@@ -135,7 +135,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
                 case TargetType.Self:
                 case TargetType.None:
-                    played = battleManager.TryPlayCard(card, null);
+                    played = battleManager.TryPlayCard(card, null, cardViewUI);
                     break;
             }
         }

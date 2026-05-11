@@ -13,6 +13,9 @@ public class BattleUnit : MonoBehaviour
 
     private Dictionary<StatusType, int> statuses = new();
 
+    [Header("Hit Feedback")]
+    public HitFlashObject hitFlashObject;
+
     protected virtual void Awake()
     {
         currentHp = maxHp;
@@ -36,6 +39,9 @@ public class BattleUnit : MonoBehaviour
             currentHp = 0;
 
         OnHpChanged?.Invoke();
+
+        if (remaining > 0 && hitFlashObject != null)
+            hitFlashObject.Play();
 
         Debug.Log($"{unitName} ¨ü¨ì {amount} ¶Ë®`¡A³Ñ¾l HP: {currentHp}");
 

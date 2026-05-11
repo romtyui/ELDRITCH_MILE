@@ -14,14 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: def
   cardName: def
-  description: Deal 6 damage
+  description: 'Deal 10 damage
+
+    Draw 1 card'
   visualData: {fileID: 11400000, guid: 30eab00d60387cf4b85fdab91f2b445a, type: 2}
-  cardType: 1
+  cardType: 0
   rarity: 0
-  targetType: 1
+  targetType: 2
   baseCost: 1
   exhaust: 0
   ethereal: 0
   retain: 0
   effects:
   - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
+  - {fileID: 11400000, guid: 137e5a80717b5bb43802586b79a5a1a2, type: 2}

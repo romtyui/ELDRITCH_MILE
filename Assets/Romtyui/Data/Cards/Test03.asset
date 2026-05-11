@@ -12,15 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
   m_Name: Test03
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  cardId: 
+  cardId: octopus_A
   cardName: 
   description: 
-  visualData: {fileID: 0}
-  cardType: 0
+  visualData: {fileID: 11400000, guid: c55abe284016a584aae58c5fb01aecff, type: 2}
+  cardType: 1
   rarity: 0
   targetType: 0
   baseCost: 1
   exhaust: 0
   ethereal: 0
   retain: 0
-  effects: []
+  effects:
+  - {fileID: 11400000, guid: fddabcc9d994ce646a548b38e94d0248, type: 2}

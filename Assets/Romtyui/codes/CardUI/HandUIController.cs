@@ -194,7 +194,31 @@ public class HandUIController : MonoBehaviour
         cardRect.localScale = targetScale;
         cardRect.localRotation = targetRotation;
     }
+    public void DetachCardViewForPlay(CardInstance card, Transform newParent)
+    {
+        if (card == null)
+            return;
 
+        if (!cardViews.TryGetValue(card, out CardViewUI view))
+            return;
+
+        RectTransform rect = view.GetComponent<RectTransform>();
+
+        if (handFanLayout != null && rect != null)
+        {
+            handFanLayout.cards.Remove(rect);
+        }
+
+        cardViews.Remove(card);
+
+        if (rect != null && newParent != null)
+        {
+            rect.SetParent(newParent, true);
+        }
+
+        if (handFanLayout != null)
+            handFanLayout.RefreshLayout();
+    }
     private Vector2 GetBezierPoint(Vector2 start, Vector2 end, float t)
     {
         Vector2 middle = (start + end) * 0.5f;
