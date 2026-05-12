@@ -110,13 +110,10 @@ public class BattleManager : MonoBehaviour
         if (playerUnit != null)
             playerUnit.ResetBlock();
 
-        //if (energySystem != null)
-        //    energySystem.ResetEnergy();
-
         Debug.Log("玩家回合開始");
 
         if (handUIController != null)
-            yield return handUIController.DrawCardsAnimated(playerDeck, cardsPerTurn);
+            yield return handUIController.DrawCardsAnimatedWithBag(playerDeck, cardsPerTurn);
         else
             playerDeck.DrawCards(cardsPerTurn);
     }
@@ -433,7 +430,7 @@ public class BattleManager : MonoBehaviour
     {
         if (handUIController != null)
         {
-            yield return handUIController.DrawCardsAnimated(playerDeck, amount);
+            yield return handUIController.DrawCardsAnimatedWithBag(playerDeck, amount);
         }
         else
         {

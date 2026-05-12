@@ -9,7 +9,8 @@ public class EnemyData : ScriptableObject
     public int maxHp = 50;
 
     [Header("Visual")]
-    public GameObject visualPrefab;
+    public GameObject normalVisualPrefab;
+    public GameObject darkVisualPrefab;
 
     [Tooltip("怪物 PSB 生成後的位置偏移")]
     public Vector2 visualAnchoredPosition = Vector2.zero;

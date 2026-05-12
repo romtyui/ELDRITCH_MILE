@@ -838,7 +838,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &201942197
 GameObject:
   m_ObjectHideFlags: 0
@@ -3004,6 +3004,8 @@ MonoBehaviour:
   enemyUnit: {fileID: 543128842}
   battleTargetUI: {fileID: 543128843}
   visualRoot: {fileID: 1287275475}
+  slotVisualScaleMultiplier: 1
+  slotVisualPositionOffset: {x: 0, y: 0}
 --- !u!1 &549958084
 GameObject:
   m_ObjectHideFlags: 0
@@ -5483,6 +5485,8 @@ MonoBehaviour:
   enemyUnit: {fileID: 825301507}
   battleTargetUI: {fileID: 825301508}
   visualRoot: {fileID: 217385496}
+  slotVisualScaleMultiplier: 1
+  slotVisualPositionOffset: {x: 0, y: 0}
 --- !u!114 &825301507
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9558,6 +9562,8 @@ MonoBehaviour:
   enemyUnit: {fileID: 1332204843}
   battleTargetUI: {fileID: 1332204844}
   visualRoot: {fileID: 112079520}
+  slotVisualScaleMultiplier: 1
+  slotVisualPositionOffset: {x: 0, y: 0}
 --- !u!1 &1362179838
 GameObject:
   m_ObjectHideFlags: 0
@@ -13469,7 +13475,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8530365995909924556, guid: 022bbc7115aa0af4abb30ce8d9141c6d, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8782519237154660353, guid: 022bbc7115aa0af4abb30ce8d9141c6d, type: 3}
       propertyPath: m_IsActive
@@ -13910,6 +13916,7 @@ MonoBehaviour:
   cardPrefab: {fileID: 1116888258811706130, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
   handRoot: {fileID: 2081460194}
   handFanLayout: {fileID: 2081460195}
+  bagDrawAnimationController: {fileID: 0}
   drawStartPoint: {fileID: 1222191017}
   drawDuration: 0.35
   delayBetweenCards: 0.08

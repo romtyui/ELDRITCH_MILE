@@ -8,6 +8,9 @@ public class EnemySlotUI : MonoBehaviour
     public EnemyUnit enemyUnit;
     public BattleTargetUI battleTargetUI;
 
+    [Header("Light Reveal")]
+    public PSBMonsterLightReveal lightReveal;
+
     [Header("Visual Root")]
     public RectTransform visualRoot;
 
@@ -18,7 +21,8 @@ public class EnemySlotUI : MonoBehaviour
     [Tooltip("這個站位額外的位置偏移。")]
     public Vector2 slotVisualPositionOffset = Vector2.zero;
 
-    private GameObject currentVisual;
+    private GameObject currentNormalVisual;
+    private GameObject currentDarkVisual;
 
     private void Awake()
     {
@@ -40,6 +44,8 @@ public class EnemySlotUI : MonoBehaviour
 
         if (battleTargetUI == null)
             battleTargetUI = GetComponent<BattleTargetUI>();
+        if (lightReveal == null)
+            lightReveal = FindFirstObjectByType<PSBMonsterLightReveal>();
     }
 
     public EnemyUnit SpawnEnemy(EnemyData enemyData)
@@ -119,19 +125,33 @@ public class EnemySlotUI : MonoBehaviour
 
     private void SpawnVisual(EnemyData enemyData)
     {
-        if (enemyData.visualPrefab == null)
-            return;
-
         Transform parent = visualRoot != null ? visualRoot : transform;
 
-        currentVisual = Instantiate(enemyData.visualPrefab, parent);
-        currentVisual.SetActive(true);
+        currentNormalVisual = SpawnOneVisual(enemyData.normalVisualPrefab, parent, enemyData);
+        currentDarkVisual = SpawnOneVisual(enemyData.darkVisualPrefab, parent, enemyData);
+
+        if (lightReveal != null)
+        {
+            Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;
+            Transform darkRoot = currentDarkVisual != null ? currentDarkVisual.transform : null;
+
+            lightReveal.RegisterMonster(normalRoot, darkRoot);
+        }
+    }
+
+    private GameObject SpawnOneVisual(GameObject prefab, Transform parent, EnemyData enemyData)
+    {
+        if (prefab == null)
+            return null;
+
+        GameObject visual = Instantiate(prefab, parent);
+        visual.SetActive(true);
 
         Vector3 finalScale = enemyData.visualScale * slotVisualScaleMultiplier;
         Vector2 finalPosition = enemyData.visualAnchoredPosition + slotVisualPositionOffset;
         Quaternion finalRotation = Quaternion.Euler(enemyData.visualEulerAngles);
 
-        RectTransform rect = currentVisual.GetComponent<RectTransform>();
+        RectTransform rect = visual.GetComponent<RectTransform>();
 
         if (rect != null)
         {
@@ -145,18 +165,32 @@ public class EnemySlotUI : MonoBehaviour
         }
         else
         {
-            currentVisual.transform.localPosition = finalPosition;
-            currentVisual.transform.localScale = finalScale;
-            currentVisual.transform.localRotation = finalRotation;
+            visual.transform.localPosition = finalPosition;
+            visual.transform.localScale = finalScale;
+            visual.transform.localRotation = finalRotation;
         }
+
+        return visual;
     }
 
     private void ClearVisual()
     {
-        if (currentVisual != null)
+        Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;
+        Transform darkRoot = currentDarkVisual != null ? currentDarkVisual.transform : null;
+
+        if (lightReveal != null)
+            lightReveal.UnregisterMonster(normalRoot, darkRoot);
+
+        if (currentNormalVisual != null)
         {
-            Destroy(currentVisual);
-            currentVisual = null;
+            Destroy(currentNormalVisual);
+            currentNormalVisual = null;
+        }
+
+        if (currentDarkVisual != null)
+        {
+            Destroy(currentDarkVisual);
+            currentDarkVisual = null;
         }
 
         if (visualRoot != null)

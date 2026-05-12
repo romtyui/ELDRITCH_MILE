@@ -12,10 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57ce995f04a5e894cbd0e62549d564bd, type: 3}
   m_Name: test 02
   m_EditorClassIdentifier: Assembly-CSharp::EnemyIntentData
-  intentName: 
+  intentName: test
   description: 
-  intentIcon: {fileID: 0}
-  damageTextOverride: 
+  intentIcon: {fileID: 21300000, guid: fb9f04226d07b7243a6ce246ffc13dd1, type: 3}
+  damageTextOverride: 5
   actions:
-  - {fileID: 11400000, guid: 639d54c19520ba2498a891a09f08a5e0, type: 2}
-  - {fileID: 11400000, guid: 639d54c19520ba2498a891a09f08a5e0, type: 2}
+  - {fileID: 11400000, guid: 9d79149203232b640b8548bdf6e742f1, type: 2}

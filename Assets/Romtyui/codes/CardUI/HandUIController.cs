@@ -10,6 +10,15 @@ public class HandUIController : MonoBehaviour
     public RectTransform handRoot;
     public HandFanLayout handFanLayout;
 
+    //[Header("Draw Pre Animation")]
+    //public Animator drawAnimator;
+    //public string drawAnimationTrigger = "Open";
+    //public float drawEventTimeout = 2f;
+    [Header("Draw Pre Animation")]
+    public BagDrawAnimationController bagDrawAnimationController;
+
+    private bool drawAnimationEventReceived;
+
     [Header("Draw Animation")]
     public RectTransform drawStartPoint;
     public float drawDuration = 0.35f;
@@ -234,4 +243,59 @@ public class HandUIController : MonoBehaviour
     {
         return t * t * (3f - 2f * t);
     }
+
+    public IEnumerator DrawCardsAnimatedWithBag(BattleDeck deck, int amount)
+    {
+        if (amount <= 0)
+            yield break;
+
+        if (bagDrawAnimationController != null)
+        {
+            yield return bagDrawAnimationController.PlayAndWaitForDraw(
+                () => DrawCardsAnimated(deck, amount)
+            );
+        }
+        else
+        {
+            yield return DrawCardsAnimated(deck, amount);
+        }
+    }
+    //public IEnumerator DrawCardsAnimatedAfterEvent(BattleDeck deck, int amount)
+    //{
+    //    if (amount <= 0)
+    //        yield break;
+
+    //    drawAnimationEventReceived = false;
+
+    //    if (drawAnimator != null)
+    //    {
+    //        drawAnimator.SetTrigger(drawAnimationTrigger);
+
+    //        float timer = 0f;
+
+    //        while (!drawAnimationEventReceived)
+    //        {
+    //            timer += Time.deltaTime;
+
+    //            if (timer >= drawEventTimeout)
+    //            {
+    //                Debug.LogWarning("[HandUIController] 等待抽牌動畫事件逾時，直接開始抽牌");
+    //                break;
+    //            }
+
+    //            yield return null;
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Debug.LogWarning("[HandUIController] drawAnimator 沒有指定，直接開始抽牌");
+    //    }
+
+    //    yield return DrawCardsAnimated(deck, amount);
+    //}
+
+    //public void OnDrawAnimationEvent()
+    //{
+    //    drawAnimationEventReceived = true;
+    //}
 }
