@@ -5504,7 +5504,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -741.99994, y: -346}
+  m_AnchoredPosition: {x: -742, y: -346}
   m_SizeDelta: {x: -223.26, y: 25.093}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &902100808
@@ -9839,8 +9839,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a52e4f28127f4e040a2fc088eb66de43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnergySystem
-  maxEnergy: 50
-  currentEnergy: 50
+  maxEnergy: 2
+  currentEnergy: 0
 --- !u!114 &1461659477
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12754,9 +12754,9 @@ MonoBehaviour:
   m_ComponentVersion: 2
   m_LightType: 1
   m_BlendStyleIndex: 0
-  m_FalloffIntensity: 0.403
+  m_FalloffIntensity: 0.67
   m_Color: {r: 0.4627451, g: 0.533645, b: 0.76862746, a: 1}
-  m_Intensity: 4.59
+  m_Intensity: 1.1
   m_LightVolumeIntensity: 0.3
   m_LightVolumeEnabled: 0
   m_ApplyToSortingLayers: 00000000
@@ -12775,8 +12775,8 @@ MonoBehaviour:
   m_ShadowVolumeIntensityEnabled: 1
   m_ShadowVolumeIntensity: 1
   m_LocalBounds:
-    m_Center: {x: -0.22544998, y: -0.22105002, z: 0}
-    m_Extent: {x: 1.01425, y: 1.00975, z: 0}
+    m_Center: {x: -0.22540003, y: -0.22000003, z: 0}
+    m_Extent: {x: 2.1356, y: 2.1296, z: 0}
   m_PointLightInnerAngle: 360
   m_PointLightOuterAngle: 360
   m_PointLightInnerRadius: 0
@@ -12784,7 +12784,7 @@ MonoBehaviour:
   m_ShapeLightParametricSides: 5
   m_ShapeLightParametricAngleOffset: 0
   m_ShapeLightParametricRadius: 1
-  m_ShapeLightFalloffSize: 0.29
+  m_ShapeLightFalloffSize: 1.41
   m_ShapeLightFalloffOffset: {x: 0, y: 0}
   m_ShapePath:
   - {x: 0.5, y: 0, z: 0}
