@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
+  m_Name: ocean_bow
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardId: ocean_bow
+  cardName: ocean_bow
+  description: "\u5C0D \u96A8\u6A5F\u6575\u4EBA \u9020\u6210 3\u9EDE \u50B7\u5BB3
+    3\u6B21\n\u7372\u5F97 1\u9EDE \u529B\u91CF"
+  visualData: {fileID: 11400000, guid: feb06ce6b99375f4f81e7d46277ab8e6, type: 2}
+  cardType: 0
+  rarity: 0
+  targetType: 3
+  baseCost: 1
+  exhaust: 0
+  ethereal: 0
+  retain: 0
+  effects:
+  - {fileID: 11400000, guid: 22aad712da0de044c97f638ece8a80c2, type: 2}
+  - {fileID: 11400000, guid: fa8f5b37a6853934a93b83a903ebc973, type: 2}

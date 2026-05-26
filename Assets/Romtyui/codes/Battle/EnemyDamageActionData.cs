@@ -8,10 +8,11 @@ public class EnemyDamageActionData : EnemyActionData
     public override void Execute(EnemyActionContext context)
     {
         if (context == null) return;
+        if (context.enemy == null) return;
         if (context.player == null) return;
 
-        context.player.TakeDamage(amount);
+        context.enemy.DealDamageTo(context.player, amount);
 
-        Debug.Log($"{context.enemy.unitName} §ðÀ»ª±®a¡A³y¦¨ {amount} ¶Ë®`");
+        Debug.Log($"{context.enemy.unitName} §ðÀ»ª±®a¡A°òÂ¦¶Ë®` {amount}");
     }
 }

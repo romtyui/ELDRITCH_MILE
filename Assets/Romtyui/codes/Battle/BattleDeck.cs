@@ -11,7 +11,12 @@ public class BattleDeck : MonoBehaviour
     private List<CardInstance> discardPile = new();
     private List<CardInstance> exhaustPile = new();
 
+    //public IReadOnlyList<CardInstance> Hand => hand;
+
+    public IReadOnlyList<CardInstance> DrawPile => drawPile;
     public IReadOnlyList<CardInstance> Hand => hand;
+    public IReadOnlyList<CardInstance> DiscardPile => discardPile;
+    public IReadOnlyList<CardInstance> ExhaustPile => exhaustPile;
 
     [Header("Debug View")]
     [SerializeField] private List<string> debugDrawPile = new();
@@ -19,6 +24,13 @@ public class BattleDeck : MonoBehaviour
     [SerializeField] private List<string> debugDiscardPile = new();
     [SerializeField] private List<string> debugExhaustPile = new();
 
+    public enum DeckViewMode
+    {
+        DrawPile,
+        DiscardPile,
+        ExhaustPile,
+        Hand
+    }
     public void InitializeDeck()
     {
         drawPile.Clear();
@@ -33,6 +45,58 @@ public class BattleDeck : MonoBehaviour
 
         Shuffle(drawPile);
         RefreshDebugView();
+    }
+
+    public void ResetForNewGame()
+    {
+        InitializeDeck();
+
+        Debug.Log("[BattleDeck] 重新開始新遊戲：牌組已從 startingDeck 重建");
+    }
+
+    public void PrepareForNextBattleKeepDeck()
+    {
+        if (drawPile == null)
+            drawPile = new List<CardInstance>();
+
+        if (hand == null)
+            hand = new List<CardInstance>();
+
+        if (discardPile == null)
+            discardPile = new List<CardInstance>();
+
+        if (exhaustPile == null)
+            exhaustPile = new List<CardInstance>();
+
+        // 下一場戰鬥：不重製成 startingDeck，而是保留目前戰鬥中的牌
+        // 把手牌、棄牌、消耗牌整理回抽牌堆
+        for (int i = 0; i < hand.Count; i++)
+        {
+            if (hand[i] != null)
+                drawPile.Add(hand[i]);
+        }
+
+        for (int i = 0; i < discardPile.Count; i++)
+        {
+            if (discardPile[i] != null)
+                drawPile.Add(discardPile[i]);
+        }
+
+        for (int i = 0; i < exhaustPile.Count; i++)
+        {
+            if (exhaustPile[i] != null)
+                drawPile.Add(exhaustPile[i]);
+        }
+
+        hand.Clear();
+        discardPile.Clear();
+        exhaustPile.Clear();
+
+        Shuffle(drawPile);
+
+        RefreshDebugView();
+
+        Debug.Log($"[BattleDeck] 下一場戰鬥準備完成：保留目前牌組，抽牌堆數量 = {drawPile.Count}");
     }
 
     public void DrawCards(int amount)

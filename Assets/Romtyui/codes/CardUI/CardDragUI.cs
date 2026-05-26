@@ -133,9 +133,18 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
                     }
                     break;
 
+                case TargetType.AllEnemies:
+                    played = battleManager.TryPlayCard(card, null, cardViewUI);
+                    break;
+
                 case TargetType.Self:
                 case TargetType.None:
                     played = battleManager.TryPlayCard(card, null, cardViewUI);
+                    break;
+
+                default:
+                    Debug.LogWarning($"©|¥¼¤ä´©ªº TargetType: {card.data.targetType}");
+                    played = false;
                     break;
             }
         }

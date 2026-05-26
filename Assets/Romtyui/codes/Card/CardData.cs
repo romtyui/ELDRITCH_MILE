@@ -65,6 +65,7 @@ public enum TargetType
     None,
     Self,
     SingleEnemy,
+    RandomEnemy,
     AllEnemies,
     AllCharacters
 }

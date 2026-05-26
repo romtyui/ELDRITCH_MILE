@@ -7,11 +7,10 @@ public class DamageEffectData : CardEffectData
 
     public override void Execute(CardResolveContext context)
     {
+        if (context == null) return;
+        if (context.source == null) return;
         if (context.target == null) return;
 
-        int finalDamage = amount;
-
-        // 之後可加：力量、虛弱、易傷等修正
-        context.target.TakeDamage(finalDamage);
+        context.source.DealDamageTo(context.target, amount);
     }
 }

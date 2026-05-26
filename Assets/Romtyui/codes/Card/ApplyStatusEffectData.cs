@@ -13,11 +13,3 @@ public class ApplyStatusEffectData : CardEffectData
     }
 }
 
-public enum StatusType
-{
-    Strength,
-    Weak,
-    Vulnerable,
-    Frail,
-    Poison
-}

@@ -4,6 +4,14 @@ using UnityEngine;
 
 public class BattleManager : MonoBehaviour
 {
+    [Header("Test Option Menu")]
+    public OptionMenuUI optionMenuUI;
+
+    [Header("Next Battle Test")]
+    public bool autoStartNextBattleOnWin = true;
+    public float nextBattleDelay = 1f;
+
+
     [Header("Units")]
     public BattleUnit playerUnit;
 
@@ -50,6 +58,16 @@ public class BattleManager : MonoBehaviour
         if (energySystem != null)
             energySystem.ResetEnergy();
 
+        SpawnEnemiesForBattle();
+
+        StartPlayerTurn();
+
+        if (playerDeck != null)
+            Debug.Log($"戰鬥開始，手牌數量：{playerDeck.Hand.Count}");
+    }
+
+    private void SpawnEnemiesForBattle()
+    {
         if (enemyFormationSpawner != null)
         {
             enemyFormationSpawner.battleManager = this;
@@ -60,13 +78,7 @@ public class BattleManager : MonoBehaviour
             AutoCollectEnemies();
         }
 
-        if (currentEnemy == null)
-            currentEnemy = GetFirstAliveEnemy();
-
-        StartPlayerTurn();
-
-        if (playerDeck != null)
-            Debug.Log($"戰鬥開始，手牌數量：{playerDeck.Hand.Count}");
+        currentEnemy = GetFirstAliveEnemy();
     }
 
     [ContextMenu("Auto Collect Enemies")]
@@ -108,13 +120,25 @@ public class BattleManager : MonoBehaviour
         isChangingTurn = false;
 
         if (playerUnit != null)
+        {
+            // 玩家回合開始：清格擋
             playerUnit.ResetBlock();
+
+            // 玩家回合開始狀態結算，例如 Poison
+            playerUnit.OnTurnStart();
+
+            if (playerUnit.currentHp <= 0)
+            {
+                EndBattle(false);
+                yield break;
+            }
+        }
 
         Debug.Log("玩家回合開始");
 
         if (handUIController != null)
             yield return handUIController.DrawCardsAnimatedWithBag(playerDeck, cardsPerTurn);
-        else
+        else if (playerDeck != null)
             playerDeck.DrawCards(cardsPerTurn);
     }
 
@@ -127,6 +151,18 @@ public class BattleManager : MonoBehaviour
             return;
 
         isChangingTurn = true;
+
+        // 玩家回合結束狀態結算，例如 Weak / Vulnerable / Frail 層數 -1
+        if (playerUnit != null)
+        {
+            playerUnit.OnTurnEnd();
+
+            if (playerUnit.currentHp <= 0)
+            {
+                EndBattle(false);
+                return;
+            }
+        }
 
         if (playerDeck != null)
             playerDeck.DiscardHandAtEndTurn();
@@ -143,6 +179,9 @@ public class BattleManager : MonoBehaviour
         EnsureEnemiesRegistered();
 
         StartEnemyTurn();
+
+        if (currentPhase == BattlePhase.BattleEnded)
+            yield break;
 
         yield return new WaitForSeconds(enemyActionDelay);
 
@@ -165,7 +204,8 @@ public class BattleManager : MonoBehaviour
 
             currentEnemy = enemy;
 
-            enemy.ResetBlock();
+            // 怪物攻擊 / 防禦 / 上狀態
+            // 傷害修正會在 EnemyDamageActionData → enemy.DealDamageTo(playerUnit, amount) 裡處理
             enemy.ExecuteTurn(playerUnit, this);
 
             yield return new WaitForSeconds(enemyActionDelay);
@@ -227,11 +267,47 @@ public class BattleManager : MonoBehaviour
 
         currentPhase = BattlePhase.EnemyTurn;
 
+        EnsureEnemiesRegistered();
+
+        // 怪物回合開始：所有怪物清格擋 + 狀態結算
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyUnit enemy = enemies[i];
+
+            if (enemy == null) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
+
+            enemy.ResetBlock();
+
+            // 怪物回合開始狀態結算，例如 Poison
+            enemy.OnTurnStart();
+        }
+
+        CheckBattleEnd();
+
         Debug.Log("怪物回合開始");
     }
 
     public void EndEnemyTurn()
     {
+        if (currentPhase == BattlePhase.BattleEnded)
+            return;
+
+        // 怪物回合結束狀態結算，例如 Weak / Vulnerable / Frail 層數 -1
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyUnit enemy = enemies[i];
+
+            if (enemy == null) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
+
+            enemy.OnTurnEnd();
+        }
+
+        CheckBattleEnd();
+
         if (currentPhase == BattlePhase.BattleEnded)
             return;
 
@@ -255,19 +331,34 @@ public class BattleManager : MonoBehaviour
         }
 
         if (card == null || card.data == null)
+        {
+            Debug.LogWarning("[TryPlayCard] card 或 card.data 是 null");
             return false;
+        }
 
         BattleUnit finalTarget = ResolveTarget(card.data.targetType, target);
 
         if (card.data.targetType == TargetType.SingleEnemy && finalTarget == null)
         {
-            Debug.Log("沒有選到敵人，也沒有 currentEnemy 可以攻擊");
+            Debug.Log("沒有選到敵人");
+            return false;
+        }
+
+        if (card.data.targetType == TargetType.RandomEnemy && finalTarget == null)
+        {
+            Debug.Log("沒有可用的隨機敵人");
+            return false;
+        }
+
+        if (card.data.targetType == TargetType.AllEnemies && GetAliveEnemies().Count == 0)
+        {
+            Debug.Log("沒有任何敵人可以攻擊");
             return false;
         }
 
         if (energySystem == null)
         {
-            Debug.LogWarning("[BattleManager] energySystem 沒有指定");
+            Debug.LogWarning("[TryPlayCard] energySystem 沒有指定");
             return false;
         }
 
@@ -283,6 +374,12 @@ public class BattleManager : MonoBehaviour
     private IEnumerator PlayCardRoutine(CardInstance card, BattleUnit finalTarget, CardViewUI playedCardView)
     {
         isResolvingCard = true;
+
+        if (card == null || card.data == null)
+        {
+            isResolvingCard = false;
+            yield break;
+        }
 
         energySystem.Spend(card.currentCost);
 
@@ -301,27 +398,69 @@ public class BattleManager : MonoBehaviour
         if (playerDeck != null)
             playerDeck.OnCardPlayed(card);
 
-        // 變化牌先不要立刻 RefreshHandUI 把正在動畫的牌清掉
-        RefreshHandUI();
-
-        CardResolveContext context = new CardResolveContext(playerUnit, finalTarget, card, this);
+        if (!isTransformCard)
+            RefreshHandUI();
 
         Debug.Log($"打出卡牌: {card.data.cardName}");
 
-        for (int i = 0; i < card.data.effects.Count; i++)
+        if (card.data.targetType == TargetType.AllEnemies)
         {
-            CardEffectData effect = card.data.effects[i];
+            List<EnemyUnit> aliveEnemies = GetAliveEnemies();
 
-            if (effect == null)
-                continue;
-
-            if (effect is TransformRandomCardByPoolEffectData transformEffect)
+            for (int enemyIndex = 0; enemyIndex < aliveEnemies.Count; enemyIndex++)
             {
-                yield return ResolveTransformCardEffect(transformEffect, context, playedCardView);
+                EnemyUnit enemy = aliveEnemies[enemyIndex];
+
+                if (enemy == null) continue;
+                if (!enemy.gameObject.activeInHierarchy) continue;
+                if (enemy.currentHp <= 0) continue;
+
+                CardResolveContext enemyContext = new CardResolveContext(
+                    playerUnit,
+                    enemy,
+                    card,
+                    this
+                );
+
+                for (int effectIndex = 0; effectIndex < card.data.effects.Count; effectIndex++)
+                {
+                    CardEffectData effect = card.data.effects[effectIndex];
+
+                    if (effect == null)
+                        continue;
+
+                    effect.Execute(enemyContext);
+                }
             }
-            else
+        }
+        else
+        {
+            CardResolveContext context = new CardResolveContext(
+                playerUnit,
+                finalTarget,
+                card,
+                this
+            );
+
+            for (int i = 0; i < card.data.effects.Count; i++)
             {
-                effect.Execute(context);
+                CardEffectData effect = card.data.effects[i];
+
+                if (effect == null)
+                    continue;
+
+                if (effect is TransformRandomCardByPoolEffectData transformEffect)
+                {
+                    yield return ResolveTransformCardEffect(
+                        transformEffect,
+                        context,
+                        playedCardView
+                    );
+                }
+                else
+                {
+                    effect.Execute(context);
+                }
             }
         }
 
@@ -333,7 +472,60 @@ public class BattleManager : MonoBehaviour
         CheckBattleEnd();
 
         isResolvingCard = false;
+
+        yield break;
     }
+
+    private EnemyUnit GetRandomAliveEnemy()
+    {
+        List<EnemyUnit> aliveEnemies = new List<EnemyUnit>();
+
+        if (enemies == null)
+            return null;
+
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyUnit enemy = enemies[i];
+
+            if (enemy == null) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
+
+            aliveEnemies.Add(enemy);
+        }
+
+        if (aliveEnemies.Count == 0)
+            return null;
+
+        int randomIndex = Random.Range(0, aliveEnemies.Count);
+        return aliveEnemies[randomIndex];
+    }
+    public BattleUnit GetRandomAliveEnemyPublic()
+    {
+        return GetRandomAliveEnemy();
+    }
+
+    private List<EnemyUnit> GetAliveEnemies()
+    {
+        List<EnemyUnit> aliveEnemies = new List<EnemyUnit>();
+
+        if (enemies == null)
+            return aliveEnemies;
+
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyUnit enemy = enemies[i];
+
+            if (enemy == null) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
+
+            aliveEnemies.Add(enemy);
+        }
+
+        return aliveEnemies;
+    }
+
     private bool HasTransformEffect(CardInstance card)
     {
         if (card == null || card.data == null || card.data.effects == null)
@@ -386,14 +578,13 @@ public class BattleManager : MonoBehaviour
                 return playerUnit;
 
             case TargetType.SingleEnemy:
-                if (selectedTarget != null)
-                    return selectedTarget;
+                return selectedTarget;
 
-                if (currentEnemy != null && currentEnemy.gameObject.activeInHierarchy && currentEnemy.currentHp > 0)
-                    return currentEnemy;
+            case TargetType.RandomEnemy:
+                return GetRandomAliveEnemy();
 
-                currentEnemy = GetFirstAliveEnemy();
-                return currentEnemy;
+            case TargetType.AllEnemies:
+                return null;
 
             case TargetType.None:
             default:
@@ -417,6 +608,8 @@ public class BattleManager : MonoBehaviour
 
         return null;
     }
+
+
 
     public void PlayerDrawCards(int amount)
     {
@@ -505,8 +698,72 @@ public class BattleManager : MonoBehaviour
         RefreshHandUI();
 
         if (playerWin)
+        {
             Debug.Log("戰鬥勝利");
+
+            if (autoStartNextBattleOnWin)
+            {
+                StartCoroutine(StartNextBattleAfterDelay());
+            }
+        }
         else
+        {
             Debug.Log("戰鬥失敗");
+
+            if (optionMenuUI != null)
+                optionMenuUI.OpenDeathMenu();
+        }
+    }
+
+    private IEnumerator StartNextBattleAfterDelay()
+    {
+        yield return new WaitForSeconds(nextBattleDelay);
+
+        StartNextBattleKeepStateAndDeck();
+    }
+    public void StartNextBattleKeepStateAndDeck()
+    {
+        Debug.Log("[BattleManager] 開始下一場戰鬥：保留玩家狀態與牌組");
+
+        StopAllCoroutines();
+
+        currentPhase = BattlePhase.None;
+        isChangingTurn = false;
+
+        if (playerDeck != null)
+            playerDeck.PrepareForNextBattleKeepDeck();
+
+        if (energySystem != null)
+            energySystem.ResetEnergy();
+
+        SpawnEnemiesForBattle();
+
+        RefreshHandUI();
+
+        StartPlayerTurn();
+    }
+    public void RestartNewGame()
+    {
+        Debug.Log("[BattleManager] 重新開始新遊戲");
+
+        StopAllCoroutines();
+
+        currentPhase = BattlePhase.None;
+        isChangingTurn = false;
+
+        if (playerUnit != null)
+            playerUnit.FullResetUnit();
+
+        if (energySystem != null)
+            energySystem.ResetEnergy();
+
+        if (playerDeck != null)
+            playerDeck.ResetForNewGame();
+
+        SpawnEnemiesForBattle();
+
+        RefreshHandUI();
+
+        StartPlayerTurn();
     }
 }
