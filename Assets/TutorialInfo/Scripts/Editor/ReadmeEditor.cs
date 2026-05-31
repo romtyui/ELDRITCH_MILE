@@ -200,6 +200,8 @@ public class ReadmeEditor : Editor
     {
         if (m_Initialized)
             return;
+        if (Event.current == null)
+            return;
         m_BodyStyle = new GUIStyle(EditorStyles.label);
         m_BodyStyle.wordWrap = true;
         m_BodyStyle.fontSize = 14;

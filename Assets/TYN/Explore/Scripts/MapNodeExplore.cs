@@ -1,0 +1,21 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "NewRoomNode", menuName = "Roguelike/MapNode")]
+public class MapNodeExplore : ScriptableObject
+{
+    [Header("房間設定")]
+    public string roomName = "未知房間";
+    public GameObject roomPrefab;
+
+    [Header("節點拓撲")]
+    public List<MapNodeExplore> nextAvailableNodes = new List<MapNodeExplore>();
+
+    [Header("敘事與文本")]
+    [TextArea(3, 5)]
+    public string entryText = "你進入了一個新的區域...";
+    
+    [Tooltip("探索完此房間所有物件後彈出的文本。若留空則不提示。")]
+    [TextArea(2, 4)]
+    public string roomClearText = ""; 
+}
