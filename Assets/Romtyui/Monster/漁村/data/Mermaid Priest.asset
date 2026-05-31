@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf43116519b6a7a449b6e0c6921700bc, type: 3}
+  m_Name: Mermaid Priest
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  unitName: 
+  maxHp: 50
+  normalVisualPrefab: {fileID: 5378076857621022233, guid: 65e501a77836fb245ab7556e77c687e2, type: 3}
+  darkVisualPrefab: {fileID: 6202756559208920806, guid: e5d6bf9d3775b1c4083a643de0d0d410, type: 3}
+  visualAnchoredPosition: {x: 0, y: 0}
+  visualScale: {x: 1, y: 1, z: 1}
+  visualEulerAngles: {x: 0, y: 0, z: 0}
+  hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
+  hitBoxSprite: {fileID: 0}
+  intents:
+  - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
+  - {fileID: 11400000, guid: e7ebf821917fce441add4146ce26555f, type: 2}
