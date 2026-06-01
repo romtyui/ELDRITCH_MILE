@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -63,7 +63,7 @@ public class BattleManager : MonoBehaviour
         StartPlayerTurn();
 
         if (playerDeck != null)
-            Debug.Log($"¾Ô°«¶}©l¡A¤âµP¼Æ¶q¡G{playerDeck.Hand.Count}");
+            Debug.Log($"{playerDeck.Hand.Count}");
     }
 
     private void SpawnEnemiesForBattle()
@@ -103,7 +103,7 @@ public class BattleManager : MonoBehaviour
 
         currentEnemy = GetFirstAliveEnemy();
 
-        Debug.Log($"[BattleManager] ¦Û°Ê§ä¨ì {enemies.Count} °¦©Çª«¡A¥Ø«e¥Ø¼Ð¡G{(currentEnemy != null ? currentEnemy.unitName : "null")}");
+        Debug.Log($"[BattleManager] ï¿½Û°Ê§ï¿½ï¿½ {enemies.Count} ï¿½ï¿½ï¿½Çªï¿½ï¿½Aï¿½Ø«eï¿½Ø¼Ð¡G{(currentEnemy != null ? currentEnemy.unitName : "null")}");
     }
 
     public void StartPlayerTurn()
@@ -121,10 +121,10 @@ public class BattleManager : MonoBehaviour
 
         if (playerUnit != null)
         {
-            // ª±®a¦^¦X¶}©l¡G²M®æ¾×
+            // ï¿½ï¿½ï¿½aï¿½^ï¿½Xï¿½}ï¿½lï¿½Gï¿½Mï¿½ï¿½ï¿½
             playerUnit.ResetBlock();
 
-            // ª±®a¦^¦X¶}©lª¬ºAµ²ºâ¡A¨Ò¦p Poison
+            // ï¿½ï¿½ï¿½aï¿½^ï¿½Xï¿½}ï¿½lï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½ï¿½Aï¿½Ò¦p Poison
             playerUnit.OnTurnStart();
 
             if (playerUnit.currentHp <= 0)
@@ -134,7 +134,7 @@ public class BattleManager : MonoBehaviour
             }
         }
 
-        Debug.Log("ª±®a¦^¦X¶}©l");
+        Debug.Log("ï¿½ï¿½ï¿½aï¿½^ï¿½Xï¿½}ï¿½l");
 
         if (handUIController != null)
             yield return handUIController.DrawCardsAnimatedWithBag(playerDeck, cardsPerTurn);
@@ -152,7 +152,7 @@ public class BattleManager : MonoBehaviour
 
         isChangingTurn = true;
 
-        // ª±®a¦^¦Xµ²§ôª¬ºAµ²ºâ¡A¨Ò¦p Weak / Vulnerable / Frail ¼h¼Æ -1
+        // ï¿½ï¿½ï¿½aï¿½^ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½ï¿½Aï¿½Ò¦p Weak / Vulnerable / Frail ï¿½hï¿½ï¿½ -1
         if (playerUnit != null)
         {
             playerUnit.OnTurnEnd();
@@ -169,7 +169,7 @@ public class BattleManager : MonoBehaviour
 
         RefreshHandUI();
 
-        Debug.Log("ª±®a¦^¦Xµ²§ô");
+        Debug.Log("ï¿½ï¿½ï¿½aï¿½^ï¿½Xï¿½ï¿½ï¿½ï¿½");
 
         StartCoroutine(EnemyTurnRoutine());
     }
@@ -187,7 +187,7 @@ public class BattleManager : MonoBehaviour
 
         if (enemies == null || enemies.Count == 0)
         {
-            Debug.LogWarning("[EnemyTurnRoutine] ¨S¦³¥ô¦ó©Çª«¥i¥H¦æ°Ê");
+            Debug.LogWarning("[EnemyTurnRoutine] ï¿½Sï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Çªï¿½ï¿½iï¿½Hï¿½ï¿½ï¿½");
             EndEnemyTurn();
             yield break;
         }
@@ -200,12 +200,12 @@ public class BattleManager : MonoBehaviour
             if (!enemy.gameObject.activeInHierarchy) continue;
             if (enemy.currentHp <= 0) continue;
 
-            Debug.Log($"[EnemyTurnRoutine] ©Çª«¦æ°Ê¡G{enemy.unitName}");
+            Debug.Log($"[EnemyTurnRoutine] ï¿½Çªï¿½ï¿½ï¿½Ê¡G{enemy.unitName}");
 
             currentEnemy = enemy;
 
-            // ©Çª«§ðÀ» / ¨¾¿m / ¤Wª¬ºA
-            // ¶Ë®`­×¥¿·|¦b EnemyDamageActionData ¡÷ enemy.DealDamageTo(playerUnit, amount) ¸Ì³B²z
+            // ï¿½Çªï¿½ï¿½ï¿½ï¿½ï¿½ / ï¿½ï¿½ï¿½m / ï¿½Wï¿½ï¿½ï¿½A
+            // ï¿½Ë®`ï¿½×¥ï¿½ï¿½|ï¿½b EnemyDamageActionData ï¿½ï¿½ enemy.DealDamageTo(playerUnit, amount) ï¿½Ì³Bï¿½z
             enemy.ExecuteTurn(playerUnit, this);
 
             yield return new WaitForSeconds(enemyActionDelay);
@@ -269,7 +269,7 @@ public class BattleManager : MonoBehaviour
 
         EnsureEnemiesRegistered();
 
-        // ©Çª«¦^¦X¶}©l¡G©Ò¦³©Çª«²M®æ¾× + ª¬ºAµ²ºâ
+        // ï¿½Çªï¿½ï¿½^ï¿½Xï¿½}ï¿½lï¿½Gï¿½Ò¦ï¿½ï¿½Çªï¿½ï¿½Mï¿½ï¿½ï¿½ + ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½ï¿½
         for (int i = 0; i < enemies.Count; i++)
         {
             EnemyUnit enemy = enemies[i];
@@ -280,13 +280,13 @@ public class BattleManager : MonoBehaviour
 
             enemy.ResetBlock();
 
-            // ©Çª«¦^¦X¶}©lª¬ºAµ²ºâ¡A¨Ò¦p Poison
+            // ï¿½Çªï¿½ï¿½^ï¿½Xï¿½}ï¿½lï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½ï¿½Aï¿½Ò¦p Poison
             enemy.OnTurnStart();
         }
 
         CheckBattleEnd();
 
-        Debug.Log("©Çª«¦^¦X¶}©l");
+        Debug.Log("ï¿½Çªï¿½ï¿½^ï¿½Xï¿½}ï¿½l");
     }
 
     public void EndEnemyTurn()
@@ -294,7 +294,7 @@ public class BattleManager : MonoBehaviour
         if (currentPhase == BattlePhase.BattleEnded)
             return;
 
-        // ©Çª«¦^¦Xµ²§ôª¬ºAµ²ºâ¡A¨Ò¦p Weak / Vulnerable / Frail ¼h¼Æ -1
+        // ï¿½Çªï¿½ï¿½^ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½ï¿½Aï¿½Ò¦p Weak / Vulnerable / Frail ï¿½hï¿½ï¿½ -1
         for (int i = 0; i < enemies.Count; i++)
         {
             EnemyUnit enemy = enemies[i];
@@ -311,7 +311,7 @@ public class BattleManager : MonoBehaviour
         if (currentPhase == BattlePhase.BattleEnded)
             return;
 
-        Debug.Log("©Çª«¦^¦Xµ²§ô");
+        Debug.Log("ï¿½Çªï¿½ï¿½^ï¿½Xï¿½ï¿½ï¿½ï¿½");
 
         StartPlayerTurn();
     }
@@ -320,19 +320,19 @@ public class BattleManager : MonoBehaviour
     {
         if (isResolvingCard)
         {
-            Debug.Log("¥dµP¥¿¦bµ²ºâ¤¤");
+            Debug.Log("ï¿½dï¿½Pï¿½ï¿½ï¿½bï¿½ï¿½ï¿½â¤¤");
             return false;
         }
 
         if (currentPhase != BattlePhase.PlayerTurn)
         {
-            Debug.Log("²{¦b¤£¬Oª±®a¦^¦X¡A¤£¯à¥XµP");
+            Debug.Log("ï¿½{ï¿½bï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½aï¿½^ï¿½Xï¿½Aï¿½ï¿½ï¿½ï¿½Xï¿½P");
             return false;
         }
 
         if (card == null || card.data == null)
         {
-            Debug.LogWarning("[TryPlayCard] card ©Î card.data ¬O null");
+            Debug.LogWarning("[TryPlayCard] card ï¿½ï¿½ card.data ï¿½O null");
             return false;
         }
 
@@ -340,31 +340,31 @@ public class BattleManager : MonoBehaviour
 
         if (card.data.targetType == TargetType.SingleEnemy && finalTarget == null)
         {
-            Debug.Log("¨S¦³¿ï¨ì¼Ä¤H");
+            Debug.Log("ï¿½Sï¿½ï¿½ï¿½ï¿½ï¿½Ä¤H");
             return false;
         }
 
         if (card.data.targetType == TargetType.RandomEnemy && finalTarget == null)
         {
-            Debug.Log("¨S¦³¥i¥ÎªºÀH¾÷¼Ä¤H");
+            Debug.Log("ï¿½Sï¿½ï¿½ï¿½iï¿½Îªï¿½ï¿½Hï¿½ï¿½ï¿½Ä¤H");
             return false;
         }
 
         if (card.data.targetType == TargetType.AllEnemies && GetAliveEnemies().Count == 0)
         {
-            Debug.Log("¨S¦³¥ô¦ó¼Ä¤H¥i¥H§ðÀ»");
+            Debug.Log("ï¿½Sï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¤Hï¿½iï¿½Hï¿½ï¿½ï¿½ï¿½");
             return false;
         }
 
         if (energySystem == null)
         {
-            Debug.LogWarning("[TryPlayCard] energySystem ¨S¦³«ü©w");
+            Debug.LogWarning("[TryPlayCard] energySystem ï¿½Sï¿½ï¿½ï¿½ï¿½ï¿½w");
             return false;
         }
 
         if (!energySystem.CanSpend(card.currentCost))
         {
-            Debug.Log("¯à¶q¤£¨¬");
+            Debug.Log("ï¿½ï¿½qï¿½ï¿½ï¿½ï¿½");
             return false;
         }
 
@@ -401,7 +401,7 @@ public class BattleManager : MonoBehaviour
         if (!isTransformCard)
             RefreshHandUI();
 
-        Debug.Log($"¥´¥X¥dµP: {card.data.cardName}");
+        Debug.Log($"ï¿½ï¿½ï¿½Xï¿½dï¿½P: {card.data.cardName}");
 
         if (card.data.targetType == TargetType.AllEnemies)
         {
@@ -547,8 +547,8 @@ public class BattleManager : MonoBehaviour
     {
         if (transformAnimationController != null)
         {
-            // 1. ÅÜ¤ÆµP²¾°Ê¨ìµe­±¤¤¶¡
-            // 2. ¼È°± 1 ¬í¡A¤§«á¥i´À´«¦¨ IK ±MÄÝ°Êµe
+            // 1. ï¿½Ü¤ÆµPï¿½ï¿½ï¿½Ê¨ï¿½eï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+            // 2. ï¿½È°ï¿½ 1 ï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½ï¿½iï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ IK ï¿½Mï¿½Ý°Êµe
             yield return transformAnimationController.MovePlayedCardToCenterAndWait(playedCardView);
         }
         else
@@ -556,17 +556,17 @@ public class BattleManager : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
 
-        // 3. ¼È°±«á¤~¯u¥¿°õ¦æÅÜ¤Æ
+        // 3. ï¿½È°ï¿½ï¿½ï¿½~ï¿½uï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü¤ï¿½
         CardTransformResult result = transformEffect.ExecuteTransform(context);
 
         if (transformAnimationController != null)
         {
-            // 4. ¥]¥]¤W¤è¥X²{³Q´À´«µP
-            // 5. ¦V¤U²¾°Ê¶i¥]¥]
-            // 6. ®ø¥¢
+            // 4. ï¿½]ï¿½]ï¿½Wï¿½ï¿½Xï¿½{ï¿½Qï¿½ï¿½ï¿½ï¿½ï¿½P
+            // 5. ï¿½Vï¿½Uï¿½ï¿½ï¿½Ê¶iï¿½]ï¿½]
+            // 6. ï¿½ï¿½ï¿½ï¿½
             yield return transformAnimationController.PlayBagTransformAnimation(result);
 
-            // 7. ÅÜ¤ÆµP¥»¨­®ø¥¢
+            // 7. ï¿½Ü¤ÆµPï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             yield return transformAnimationController.FinishPlayedTransformCard(playedCardView);
         }
     }
@@ -664,7 +664,7 @@ public class BattleManager : MonoBehaviour
 
         if (enemies.Count == 0)
         {
-            Debug.LogWarning("[CheckBattleEnd] enemies ²M³æ¬OªÅªº¡AµLªk§PÂ_¾Ô°«³Ó§Q¡C½Ð§â EnemyUnit ¥[¨ì BattleManager.enemies¡C");
+            Debug.LogWarning("[CheckBattleEnd] enemies ï¿½Mï¿½ï¿½Oï¿½Åªï¿½ï¿½Aï¿½Lï¿½kï¿½Pï¿½_ï¿½Ô°ï¿½ï¿½Ó§Qï¿½Cï¿½Ð§ï¿½ EnemyUnit ï¿½[ï¿½ï¿½ BattleManager.enemiesï¿½C");
             return;
         }
 
@@ -699,7 +699,7 @@ public class BattleManager : MonoBehaviour
 
         if (playerWin)
         {
-            Debug.Log("¾Ô°«³Ó§Q");
+            Debug.Log("ï¿½Ô°ï¿½ï¿½Ó§Q");
 
             if (autoStartNextBattleOnWin)
             {
@@ -708,7 +708,7 @@ public class BattleManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("¾Ô°«¥¢±Ñ");
+            Debug.Log("ï¿½Ô°ï¿½ï¿½ï¿½ï¿½ï¿½");
 
             if (optionMenuUI != null)
                 optionMenuUI.OpenDeathMenu();
@@ -723,7 +723,7 @@ public class BattleManager : MonoBehaviour
     }
     public void StartNextBattleKeepStateAndDeck()
     {
-        Debug.Log("[BattleManager] ¶}©l¤U¤@³õ¾Ô°«¡G«O¯dª±®aª¬ºA»PµP²Õ");
+        Debug.Log("[BattleManager] ï¿½}ï¿½lï¿½Uï¿½@ï¿½ï¿½ï¿½Ô°ï¿½ï¿½Gï¿½Oï¿½dï¿½ï¿½ï¿½aï¿½ï¿½ï¿½Aï¿½Pï¿½Pï¿½ï¿½");
 
         StopAllCoroutines();
 
@@ -744,7 +744,7 @@ public class BattleManager : MonoBehaviour
     }
     public void RestartNewGame()
     {
-        Debug.Log("[BattleManager] ­«·s¶}©l·s¹CÀ¸");
+        Debug.Log("[BattleManager] ï¿½ï¿½ï¿½sï¿½}ï¿½lï¿½sï¿½Cï¿½ï¿½");
 
         StopAllCoroutines();
 
@@ -765,5 +765,29 @@ public class BattleManager : MonoBehaviour
         RefreshHandUI();
 
         StartPlayerTurn();
+    }
+    public void AddCardToHand(CardData cardData)
+    {
+        if (playerDeck == null)
+            return;
+
+        playerDeck.AddCardToHand(cardData);
+        RefreshHandUI();
+    }
+
+    public int GetUsedTokenCount(string tokenId)
+    {
+        if (playerDeck == null)
+            return 0;
+
+        return playerDeck.GetUsedTokenCount(tokenId);
+    }
+
+    public int CountTokenInHand(string tokenId)
+    {
+        if (playerDeck == null)
+            return 0;
+
+        return playerDeck.CountTokenInHand(tokenId);
     }
 }

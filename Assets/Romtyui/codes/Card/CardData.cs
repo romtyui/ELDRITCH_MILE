@@ -23,6 +23,14 @@ public class CardData : ScriptableObject
     public bool ethereal;
     public bool retain;
 
+    [Header("Token Settings")]
+    public bool isToken;
+    public string tokenId;
+    [Header("God Card")]
+    public bool isGodCard;
+
+    public GodCardAnimationProfileData godAnimationProfile;
+
     [Header("Effects")]
     public List<CardEffectData> effects = new();
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class BattleDeck : MonoBehaviour
@@ -10,6 +11,8 @@ public class BattleDeck : MonoBehaviour
     private List<CardInstance> hand = new();
     private List<CardInstance> discardPile = new();
     private List<CardInstance> exhaustPile = new();
+
+    private Dictionary<string, int> usedTokenCounts = new();
 
     //public IReadOnlyList<CardInstance> Hand => hand;
 
@@ -24,6 +27,8 @@ public class BattleDeck : MonoBehaviour
     [SerializeField] private List<string> debugDiscardPile = new();
     [SerializeField] private List<string> debugExhaustPile = new();
 
+    
+
     public enum DeckViewMode
     {
         DrawPile,
@@ -37,7 +42,7 @@ public class BattleDeck : MonoBehaviour
         hand.Clear();
         discardPile.Clear();
         exhaustPile.Clear();
-
+        usedTokenCounts.Clear();
         foreach (CardData card in startingDeck)
         {
             drawPile.Add(new CardInstance(card));
@@ -140,7 +145,7 @@ public class BattleDeck : MonoBehaviour
 
     public void OnCardPlayed(CardInstance card)
     {
-        if (card == null)
+        if (card == null || card.data == null)
             return;
 
         if (hand.Remove(card))
@@ -304,5 +309,82 @@ public class BattleDeck : MonoBehaviour
 
             debugList.Add($"{i}: {card.data.cardName} / Cost {card.currentCost}");
         }
+    }
+
+    public void AddCardToHand(CardData cardData)
+    {
+        if (cardData == null)
+        {
+            Debug.LogWarning("[BattleDeck] AddCardToHand 失敗，cardData 是 null");
+            return;
+        }
+
+        hand.Add(new CardInstance(cardData));
+
+        Debug.Log($"[BattleDeck] 生成卡牌到手牌：{cardData.cardName}");
+    }
+
+    private void RegisterTokenPlayed(CardInstance card)
+    {
+        if (card == null || card.data == null)
+            return;
+
+        if (!card.data.isToken)
+            return;
+
+        string id = NormalizeTokenId(card.data.tokenId);
+
+        if (!usedTokenCounts.ContainsKey(id))
+            usedTokenCounts[id] = 0;
+
+        usedTokenCounts[id]++;
+
+        Debug.Log($"[BattleDeck] 使用 Token：{id}，目前使用次數：{usedTokenCounts[id]}");
+    }
+
+    public int GetUsedTokenCount(string tokenId)
+    {
+        string id = NormalizeTokenId(tokenId);
+
+        if (usedTokenCounts.TryGetValue(id, out int count))
+            return count;
+
+        return 0;
+    }
+
+    public int CountTokenInHand(string tokenId)
+    {
+        string id = NormalizeTokenId(tokenId);
+
+        int count = 0;
+
+        for (int i = 0; i < hand.Count; i++)
+        {
+            CardInstance card = hand[i];
+
+            if (card == null || card.data == null)
+                continue;
+
+            if (!card.data.isToken)
+                continue;
+
+            if (NormalizeTokenId(card.data.tokenId) == id)
+                count++;
+        }
+
+        return count;
+    }
+
+    public void ResetTokenUsage()
+    {
+        usedTokenCounts.Clear();
+    }
+
+    private string NormalizeTokenId(string tokenId)
+    {
+        if (string.IsNullOrWhiteSpace(tokenId))
+            return "DefaultToken";
+
+        return tokenId.Trim();
     }
 }
