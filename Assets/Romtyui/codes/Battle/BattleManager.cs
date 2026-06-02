@@ -41,6 +41,9 @@ public class BattleManager : MonoBehaviour
     [Header("Special Animation")]
     public CardTransformAnimationController transformAnimationController;
 
+    [Header("God Card Corruption Animation")]
+    public GodCardCorruptionAnimationController godCardCorruptionAnimationController;
+
     private bool isResolvingCard;
     private void Start()
     {
@@ -389,8 +392,18 @@ public class BattleManager : MonoBehaviour
         {
             Transform parent = null;
 
-            if (isTransformCard && transformAnimationController != null)
-                parent = transformAnimationController.AnimationRoot;
+            if (isTransformCard)
+            {
+                GodCardAnimationData animationData = null;
+
+                if (card != null && card.data != null)
+                    animationData = card.data.godCardAnimation;
+
+                if (animationData != null && godCardCorruptionAnimationController != null)
+                    parent = godCardCorruptionAnimationController.AnimationRoot;
+                else if (transformAnimationController != null)
+                    parent = transformAnimationController.AnimationRoot;
+            }
 
             handUIController.DetachCardViewForPlay(card, parent);
         }
@@ -545,10 +558,42 @@ public class BattleManager : MonoBehaviour
     CardViewUI playedCardView
 )
     {
+        if (transformEffect == null)
+            yield break;
+
+        GodCardAnimationData animationData = null;
+
+        if (context != null && context.card != null && context.card.data != null)
+            animationData = context.card.data.godCardAnimation;
+
+        // 有專屬動畫：走新的 IK 專屬動畫流程
+        if (animationData != null && godCardCorruptionAnimationController != null)
+        {
+            yield return godCardCorruptionAnimationController.PlayGodCorruptionSequence(
+                playedCardView,
+                transformEffect,
+                context,
+                animationData
+            );
+
+            yield break;
+        }
+
+        // 沒有專屬動畫：走舊預設包包動畫流程
+        yield return ResolveDefaultCorruptionAnimation(
+            transformEffect,
+            context,
+            playedCardView
+        );
+    }
+    private IEnumerator ResolveDefaultCorruptionAnimation(
+    TransformRandomCardByPoolEffectData transformEffect,
+    CardResolveContext context,
+    CardViewUI playedCardView
+)
+    {
         if (transformAnimationController != null)
         {
-            // 1. �ܤƵP���ʨ�e������
-            // 2. �Ȱ� 1 ���A����i������ IK �M�ݰʵe
             yield return transformAnimationController.MovePlayedCardToCenterAndWait(playedCardView);
         }
         else
@@ -556,18 +601,17 @@ public class BattleManager : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
 
-        // 3. �Ȱ���~�u�������ܤ�
         CardTransformResult result = transformEffect.ExecuteTransform(context);
 
         if (transformAnimationController != null)
         {
-            // 4. �]�]�W��X�{�Q�����P
-            // 5. �V�U���ʶi�]�]
-            // 6. ����
             yield return transformAnimationController.PlayBagTransformAnimation(result);
-
-            // 7. �ܤƵP��������
             yield return transformAnimationController.FinishPlayedTransformCard(playedCardView);
+        }
+        else
+        {
+            if (playedCardView != null)
+                Destroy(playedCardView.gameObject);
         }
     }
     private BattleUnit ResolveTarget(TargetType targetType, BattleUnit selectedTarget)

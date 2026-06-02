@@ -29,7 +29,8 @@ public class CardData : ScriptableObject
     [Header("God Card")]
     public bool isGodCard;
 
-    public GodCardAnimationProfileData godAnimationProfile;
+    [Tooltip("這張神牌的專屬污染動畫。空著則使用預設動畫。")]
+    public GodCardAnimationData godCardAnimation;
 
     [Header("Effects")]
     public List<CardEffectData> effects = new();

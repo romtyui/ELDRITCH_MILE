@@ -12,6 +12,13 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
     public float shakeDuration = 0.45f;
     public float shakeStrength = 12f;
 
+    [Header("Default God Animation")]
+    public GodCardAnimationData defaultAnimationData;
+
+    [Header("Runtime")]
+    private GodCardAnimationData currentAnimationData;
+    private bool animationFinished;
+
     [Header("Blackout")]
     public CanvasGroup blackoutCanvasGroup;
 
@@ -25,24 +32,21 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
     public Animator tentacleAnimator;
     public string tentacleTriggerName = "PlayGodCorruption";
 
-    [Tooltip("觸手伸進書口後，幾秒後執行污染並顯示污染牌。")]
-    public float revealCardDelay = 1.0f;
+    [Header("Animated Corrupted Card Template")]
+    [Tooltip("動畫裡已經存在的污染牌模板，不再由程式 Instantiate。")]
+    public CardViewUI animatedCorruptedCardTemplate;
 
-    [Tooltip("整段觸手動畫最短播放時間。避免太快結束。")]
-    public float minTentacleAnimTime = 2.2f;
+    [Tooltip("控制動畫模板顯示/隱藏。建議動畫也控制這個 CanvasGroup Alpha。")]
+    public CanvasGroup animatedCardCanvasGroup;
 
-    [Header("Book / Card Reveal")]
-    public RectTransform bookMouthPoint;
-    public RectTransform corruptedCardRevealPoint;
-    public CardViewUI cardPreviewPrefab;
-
-    public float cardRevealMoveDuration = 0.35f;
-    public float cardShowStayTime = 0.85f;
-    public float cardReturnDuration = 0.35f;
-    public float previewCardScale = 0.75f;
+    [Header("Fallback Wait")]
+    [Tooltip("如果動畫事件沒有呼叫結束，最多等待幾秒避免卡死。")]
+    public float animationTimeout = 5f;
 
     [Header("End")]
     public float godCardFadeDuration = 0.2f;
+
+
 
     public Transform AnimationRoot
     {
@@ -56,64 +60,162 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
     }
 
     public IEnumerator PlayGodCorruptionSequence(
-        CardViewUI playedCardView,
-        TransformRandomCardByPoolEffectData transformEffect,
-        CardResolveContext context
-    )
+    CardViewUI playedCardView,
+    TransformRandomCardByPoolEffectData transformEffect,
+    CardResolveContext context,
+    GodCardAnimationData animationData
+)
     {
         if (playedCardView == null || transformEffect == null || context == null)
             yield break;
+
+        currentAnimationData = ResolveAnimationData(animationData);
+        animationFinished = false;
 
         RectTransform playedCardRect = playedCardView.GetComponent<RectTransform>();
 
         if (playedCardRect == null)
             yield break;
 
-        // 1. 畫面變黑，並擋住滑鼠操作
+        // 1. 黑幕開啟
         yield return FadeBlackout(true);
 
-        // 2. 把神牌移到動畫層
+        // 2. 神牌移到動畫層
         playedCardRect.SetParent(AnimationRoot, true);
 
-        // 3. 神牌飛到畫面中央
+        // 3. 神牌飛向中央
         if (centerPoint != null)
             yield return MoveRectWorld(playedCardRect, centerPoint.position, moveToCenterDuration);
 
         // 4. 神牌震動
         yield return ShakeRect(playedCardRect, shakeDuration, shakeStrength);
 
-        // 5. 觸手出現 / 播 IK 動畫
-        PlayTentacleAnimation();
-
-        // 6. 等主觸手伸進書口
-        if (revealCardDelay > 0f)
-            yield return new WaitForSeconds(revealCardDelay);
-
-        // 7. 在這個時間點真正執行污染
+        // 5. 先執行污染，取得污染後的牌資料
         CardTransformResult result = transformEffect.ExecuteTransform(context);
 
-        // 8. 顯示污染後的牌：M_A
-        yield return RevealCorruptedCard(result);
+        // 6. 把污染後的牌資料灌進動畫模板
+        BindCorruptedCardToAnimationTemplate(result);
 
-        // 9. 確保觸手動畫有播到基本長度
-        if (minTentacleAnimTime > 0f)
-            yield return new WaitForSeconds(minTentacleAnimTime);
+        // 7. 播放這張神牌指定的動畫，沒有指定就播預設動畫
+        yield return PlayGodAnimationRoutine(currentAnimationData);
 
-        // 10. 神牌消失
+        // 8. 等動畫結束事件
+        yield return WaitForAnimationFinished(currentAnimationData);
+
+        // 9. 神牌消失
         yield return FinishPlayedGodCard(playedCardView);
 
-        // 11. 關掉觸手
+        // 10. 重置模板
+        ResetAnimatedCardTemplate();
+
+        // 11. 關閉觸手根物件
         if (tentacleRoot != null)
             tentacleRoot.SetActive(false);
 
-        // 12. 黑幕消失，玩家可以繼續操作
+        // 12. 黑幕關閉
         yield return FadeBlackout(false);
+
+        currentAnimationData = null;
     }
 
-    private void PlayTentacleAnimation()
+    private void BindCorruptedCardToAnimationTemplate(CardTransformResult result)
+    {
+        if (animatedCorruptedCardTemplate == null)
+        {
+            Debug.LogWarning("[GodCardCorruptionAnimation] animatedCorruptedCardTemplate 沒有指定");
+            return;
+        }
+
+        if (result == null || !result.success || result.resultCardData == null)
+        {
+            Debug.LogWarning("[GodCardCorruptionAnimation] 沒有成功取得污染後的牌資料");
+            return;
+        }
+
+        CardInstance displayInstance = new CardInstance(result.resultCardData);
+        animatedCorruptedCardTemplate.Bind(displayInstance);
+
+        if (animatedCardCanvasGroup == null)
+            animatedCardCanvasGroup = animatedCorruptedCardTemplate.GetComponent<CanvasGroup>();
+
+        if (animatedCardCanvasGroup != null)
+        {
+            // 一開始先保持透明，之後由動畫把 Alpha 拉到 1
+            animatedCardCanvasGroup.alpha = 0f;
+            animatedCardCanvasGroup.blocksRaycasts = false;
+            animatedCardCanvasGroup.interactable = false;
+        }
+
+        animatedCorruptedCardTemplate.gameObject.SetActive(true);
+
+        Debug.Log($"[GodCardCorruptionAnimation] 動畫模板綁定污染牌：{result.resultCardData.cardName}");
+    }
+
+    private GodCardAnimationData ResolveAnimationData(GodCardAnimationData cardAnimationData)
+    {
+        if (cardAnimationData != null)
+        {
+            Debug.Log($"[GodCardAnimation] 使用神牌專屬動畫：{cardAnimationData.animationName}");
+            return cardAnimationData;
+        }
+
+        if (defaultAnimationData != null)
+        {
+            Debug.Log($"[GodCardAnimation] 使用預設神牌動畫：{defaultAnimationData.animationName}");
+            return defaultAnimationData;
+        }
+
+        Debug.LogWarning("[GodCardAnimation] 沒有專屬動畫，也沒有預設動畫，將使用 Controller 上的預設 Trigger");
+        return null;
+    }
+
+    private IEnumerator PlayGodAnimationRoutine(GodCardAnimationData animationData)
     {
         if (tentacleRoot != null)
             tentacleRoot.SetActive(true);
+
+        // 等一幀，避免 SetActive 後 Animator 還沒初始化
+        yield return null;
+
+        if (tentacleAnimator == null)
+        {
+            Debug.LogWarning("[GodCardAnimation] tentacleAnimator 沒有指定");
+            yield break;
+        }
+
+        string trigger = tentacleTriggerName;
+
+        if (animationData != null)
+        {
+            if (animationData.animatorController != null)
+                tentacleAnimator.runtimeAnimatorController = animationData.animatorController;
+
+            if (!string.IsNullOrEmpty(animationData.triggerName))
+                trigger = animationData.triggerName;
+        }
+
+        Debug.Log($"[GodCardAnimation] SetTrigger: {trigger}");
+
+        tentacleAnimator.ResetTrigger(trigger);
+        tentacleAnimator.SetTrigger(trigger);
+    }
+    private void ResetAnimatedCardTemplate()
+    {
+        if (animatedCardCanvasGroup != null)
+        {
+            animatedCardCanvasGroup.alpha = 0f;
+            animatedCardCanvasGroup.blocksRaycasts = false;
+            animatedCardCanvasGroup.interactable = false;
+        }
+    }
+
+    private IEnumerator PlayTentacleAnimationRoutine()
+    {
+        if (tentacleRoot != null)
+            tentacleRoot.SetActive(true);
+
+        // 等一幀，避免剛 SetActive Animator 還沒初始化就吃不到 Trigger
+        yield return null;
 
         if (tentacleAnimator != null)
         {
@@ -128,71 +230,34 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         }
     }
 
-    private IEnumerator RevealCorruptedCard(CardTransformResult result)
+    private IEnumerator WaitForAnimationFinished(GodCardAnimationData animationData)
     {
-        if (result == null || !result.success)
-            yield break;
+        float timeout = animationTimeout;
 
-        if (result.resultCardData == null)
-            yield break;
+        if (animationData != null && animationData.animationTimeout > 0f)
+            timeout = animationData.animationTimeout;
 
-        if (cardPreviewPrefab == null || bookMouthPoint == null || corruptedCardRevealPoint == null)
-            yield break;
-
-        CardViewUI preview = Instantiate(cardPreviewPrefab, AnimationRoot);
-        preview.gameObject.SetActive(true);
-
-        // 顯示污染後的牌
-        CardInstance displayInstance = new CardInstance(result.resultCardData);
-        preview.Bind(displayInstance);
-
-        RectTransform previewRect = preview.GetComponent<RectTransform>();
-        CanvasGroup canvasGroup = preview.GetComponent<CanvasGroup>();
-
-        if (canvasGroup == null)
-            canvasGroup = preview.gameObject.AddComponent<CanvasGroup>();
-
-        canvasGroup.alpha = 1f;
-
-        previewRect.position = bookMouthPoint.position;
-        previewRect.localScale = Vector3.one * previewCardScale;
-        previewRect.localRotation = Quaternion.identity;
-
-        // 從書口拿出來
-        yield return MoveRectWorld(
-            previewRect,
-            corruptedCardRevealPoint.position,
-            cardRevealMoveDuration
-        );
-
-        // 讓玩家看清楚是哪張污染牌
-        if (cardShowStayTime > 0f)
-            yield return new WaitForSeconds(cardShowStayTime);
-
-        // 丟回書口
-        yield return MoveRectWorld(
-            previewRect,
-            bookMouthPoint.position,
-            cardReturnDuration
-        );
-
-        // 淡出 / 消失
         float timer = 0f;
-        float fadeDuration = 0.15f;
-        Vector3 startScale = previewRect.localScale;
 
-        while (timer < fadeDuration)
+        while (!animationFinished)
         {
             timer += Time.deltaTime;
-            float t = Mathf.Clamp01(timer / fadeDuration);
 
-            canvasGroup.alpha = Mathf.Lerp(1f, 0f, t);
-            previewRect.localScale = Vector3.Lerp(startScale, Vector3.one * 0.2f, t);
+            if (timer >= timeout)
+            {
+                Debug.LogWarning("[GodCardAnimation] 等待神牌動畫結束逾時，強制結束");
+                break;
+            }
 
             yield return null;
         }
+    }
 
-        Destroy(preview.gameObject);
+    // 給 Animation Event 呼叫
+    public void AnimEvent_GodCorruptionFinished()
+    {
+        Debug.Log("[GodCardCorruptionAnimation] 收到動畫結束事件");
+        animationFinished = true;
     }
 
     private IEnumerator FadeBlackout(bool show)
@@ -203,14 +268,20 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         blackoutCanvasGroup.blocksRaycasts = show;
         blackoutCanvasGroup.interactable = show;
 
+        float targetAlpha = blackoutAlpha;
+
+        if (currentAnimationData != null)
+            targetAlpha = currentAnimationData.blackoutAlpha;
+
         float start = blackoutCanvasGroup.alpha;
-        float end = show ? blackoutAlpha : 0f;
+        float end = show ? targetAlpha : 0f;
 
         float timer = 0f;
 
         while (timer < blackoutFadeDuration)
         {
             timer += Time.deltaTime;
+
             float t = Mathf.Clamp01(timer / blackoutFadeDuration);
             float smoothT = t * t * (3f - 2f * t);
 
