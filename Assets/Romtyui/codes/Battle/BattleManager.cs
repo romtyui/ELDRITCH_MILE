@@ -29,6 +29,9 @@ public class BattleManager : MonoBehaviour
 
     [Header("UI")]
     public HandUIController handUIController;
+    public PlayerStatusBarUI playerStatusBarUI;
+
+    // public EnemyStatusBarUI enemyStatusBarUI; // 之後再做
 
     [Header("Runtime")]
     public BattlePhase currentPhase = BattlePhase.None;
@@ -62,6 +65,8 @@ public class BattleManager : MonoBehaviour
             energySystem.ResetEnergy();
 
         SpawnEnemiesForBattle();
+
+        RefreshStatusUI();
 
         StartPlayerTurn();
 
@@ -124,11 +129,10 @@ public class BattleManager : MonoBehaviour
 
         if (playerUnit != null)
         {
-            // ���a�^�X�}�l�G�M���
             playerUnit.ResetBlock();
-
-            // ���a�^�X�}�l���A����A�Ҧp Poison
             playerUnit.OnTurnStart();
+
+            RefreshStatusUI();
 
             if (playerUnit.currentHp <= 0)
             {
@@ -159,6 +163,8 @@ public class BattleManager : MonoBehaviour
         if (playerUnit != null)
         {
             playerUnit.OnTurnEnd();
+
+            RefreshStatusUI();
 
             if (playerUnit.currentHp <= 0)
             {
@@ -210,6 +216,8 @@ public class BattleManager : MonoBehaviour
             // �Ǫ����� / ���m / �W���A
             // �ˮ`�ץ��|�b EnemyDamageActionData �� enemy.DealDamageTo(playerUnit, amount) �̳B�z
             enemy.ExecuteTurn(playerUnit, this);
+
+            RefreshStatusUI();
 
             yield return new WaitForSeconds(enemyActionDelay);
 
@@ -286,6 +294,9 @@ public class BattleManager : MonoBehaviour
             // �Ǫ��^�X�}�l���A����A�Ҧp Poison
             enemy.OnTurnStart();
         }
+
+        RefreshStatusUI();
+
 
         CheckBattleEnd();
 
@@ -481,6 +492,8 @@ public class BattleManager : MonoBehaviour
         {
             Destroy(playedCardView.gameObject);
         }
+
+        RefreshStatusUI();
 
         CheckBattleEnd();
 
@@ -687,6 +700,11 @@ public class BattleManager : MonoBehaviour
         if (handUIController != null)
             handUIController.RefreshHandUI();
     }
+    public void RefreshStatusUI()
+    {
+        if (playerStatusBarUI != null)
+            playerStatusBarUI.Refresh();
+    }
 
     private void CheckBattleEnd()
     {
@@ -784,6 +802,8 @@ public class BattleManager : MonoBehaviour
 
         RefreshHandUI();
 
+        RefreshStatusUI();
+
         StartPlayerTurn();
     }
     public void RestartNewGame()
@@ -807,6 +827,8 @@ public class BattleManager : MonoBehaviour
         SpawnEnemiesForBattle();
 
         RefreshHandUI();
+
+        RefreshStatusUI();
 
         StartPlayerTurn();
     }

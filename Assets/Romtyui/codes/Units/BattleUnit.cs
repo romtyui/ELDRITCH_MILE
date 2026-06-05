@@ -19,7 +19,10 @@ public class BattleUnit : MonoBehaviour
         currentHp = maxHp;
         OnHpChanged?.Invoke();
     }
-
+    public Dictionary<StatusType, int> GetAllStatuses()
+    {
+        return new Dictionary<StatusType, int>(statuses);
+    }
     public virtual void OnTurnStart()
     {
         ResolvePoisonAtTurnStart();
