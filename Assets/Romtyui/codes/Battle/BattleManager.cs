@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BattleManager : MonoBehaviour
 {
@@ -30,7 +31,10 @@ public class BattleManager : MonoBehaviour
     [Header("UI")]
     public HandUIController handUIController;
     public PlayerStatusBarUI playerStatusBarUI;
-
+    public TurnEndButtonAnimatorUI turnEndButtonAnimatorUI;
+    [Header("Player Bars UI")]
+    public Image hpFillImage;
+    public Image sanFillImage;
     // public EnemyStatusBarUI enemyStatusBarUI; // 之後再做
 
     [Header("Runtime")]
@@ -126,11 +130,15 @@ public class BattleManager : MonoBehaviour
     {
         currentPhase = BattlePhase.PlayerTurn;
         isChangingTurn = false;
+        if (turnEndButtonAnimatorUI != null)
+            turnEndButtonAnimatorUI.SetPlayerTurnIdle();
 
         if (playerUnit != null)
         {
             playerUnit.ResetBlock();
             playerUnit.OnTurnStart();
+
+            RefreshPlayerBarsUI();
 
             RefreshStatusUI();
 
@@ -159,10 +167,16 @@ public class BattleManager : MonoBehaviour
 
         isChangingTurn = true;
 
+        if (turnEndButtonAnimatorUI != null)
+            turnEndButtonAnimatorUI.SetEnemyTurnIdle();
+
         // ���a�^�X�������A����A�Ҧp Weak / Vulnerable / Frail �h�� -1
         if (playerUnit != null)
         {
             playerUnit.OnTurnEnd();
+
+            RefreshPlayerBarsUI();
+
 
             RefreshStatusUI();
 
@@ -213,9 +227,15 @@ public class BattleManager : MonoBehaviour
 
             currentEnemy = enemy;
 
+            EnemyAnimationType animationType = enemy.GetCurrentIntentAnimationType();
+
+            yield return enemy.PlayActionAnimation(animationType);
             // �Ǫ����� / ���m / �W���A
             // �ˮ`�ץ��|�b EnemyDamageActionData �� enemy.DealDamageTo(playerUnit, amount) �̳B�z
             enemy.ExecuteTurn(playerUnit, this);
+
+            RefreshPlayerBarsUI();
+
 
             RefreshStatusUI();
 
@@ -397,6 +417,8 @@ public class BattleManager : MonoBehaviour
 
         energySystem.Spend(card.currentCost);
 
+        RefreshPlayerBarsUI();
+
         bool isTransformCard = HasTransformEffect(card);
 
         if (playedCardView != null && handUIController != null)
@@ -492,6 +514,8 @@ public class BattleManager : MonoBehaviour
         {
             Destroy(playedCardView.gameObject);
         }
+
+        RefreshPlayerBarsUI();
 
         RefreshStatusUI();
 
@@ -693,12 +717,48 @@ public class BattleManager : MonoBehaviour
     {
         if (energySystem != null)
             energySystem.GainEnergy(amount);
+        RefreshPlayerBarsUI();
     }
 
     private void RefreshHandUI()
     {
         if (handUIController != null)
             handUIController.RefreshHandUI();
+    }
+    private void RefreshPlayerBarsUI()
+    {
+        RefreshHpBarUI();
+        RefreshSanBarUI();
+    }
+
+    private void RefreshHpBarUI()
+    {
+        if (hpFillImage == null)
+            return;
+
+        if (playerUnit == null)
+        {
+            hpFillImage.fillAmount = 0f;
+            return;
+        }
+
+        float maxHp = Mathf.Max(1, playerUnit.maxHp);
+        hpFillImage.fillAmount = Mathf.Clamp01(playerUnit.currentHp / maxHp);
+    }
+
+    private void RefreshSanBarUI()
+    {
+        if (sanFillImage == null)
+            return;
+
+        if (energySystem == null)
+        {
+            sanFillImage.fillAmount = 0f;
+            return;
+        }
+
+        float maxSan = Mathf.Max(1, energySystem.maxEnergy);
+        sanFillImage.fillAmount = Mathf.Clamp01(energySystem.currentEnergy / maxSan);
     }
     public void RefreshStatusUI()
     {
@@ -800,6 +860,8 @@ public class BattleManager : MonoBehaviour
 
         SpawnEnemiesForBattle();
 
+        RefreshPlayerBarsUI();
+
         RefreshHandUI();
 
         RefreshStatusUI();
@@ -825,6 +887,8 @@ public class BattleManager : MonoBehaviour
             playerDeck.ResetForNewGame();
 
         SpawnEnemiesForBattle();
+
+        RefreshPlayerBarsUI();
 
         RefreshHandUI();
 

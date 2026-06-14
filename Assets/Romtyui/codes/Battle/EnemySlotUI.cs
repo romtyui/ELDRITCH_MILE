@@ -29,6 +29,9 @@ public class EnemySlotUI : MonoBehaviour
     [Header("World Visual Root Test")]
     public Transform worldVisualRoot;
 
+    [Header("Animation")]
+    public EnemyVisualAnimationController visualAnimationController;
+
     private void Awake()
     {
         AutoFindRefs();
@@ -51,6 +54,8 @@ public class EnemySlotUI : MonoBehaviour
             battleTargetUI = GetComponent<BattleTargetUI>();
         if (lightReveal == null)
             lightReveal = FindFirstObjectByType<PSBMonsterLightReveal>();
+        if (visualAnimationController == null)
+            visualAnimationController = gameObject.AddComponent<EnemyVisualAnimationController>();
     }
 
     public EnemyUnit SpawnEnemy(EnemyData enemyData)
@@ -126,6 +131,8 @@ public class EnemySlotUI : MonoBehaviour
             battleTargetUI.battleUnit = enemyUnit;
 
         enemyUnit.RefreshAllUI();
+        if (enemyUnit != null)
+            enemyUnit.visualAnimationController = visualAnimationController;
     }
 
     private void SpawnVisual(EnemyData enemyData)
@@ -140,6 +147,14 @@ public class EnemySlotUI : MonoBehaviour
             Transform darkRoot = currentDarkVisual != null ? currentDarkVisual.transform : null;
 
             lightReveal.RegisterMonster(normalRoot, darkRoot);
+        }
+        if (visualAnimationController != null)
+        {
+            visualAnimationController.Bind(
+                currentNormalVisual,
+                currentDarkVisual,
+                enemyData
+            );
         }
         //if (lightReveal != null)
         //{

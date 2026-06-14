@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -18,6 +19,11 @@ public class EnemyUnit : BattleUnit
     [Header("Intent UI")]
     public Image intentImage;
     public TMP_Text intentDamageText;
+    [Header("Animation")]
+    public EnemyVisualAnimationController visualAnimationController;
+
+    private bool isDead;
+
 
     public EnemyIntentData CurrentIntent
     {
@@ -57,7 +63,56 @@ public class EnemyUnit : BattleUnit
     {
         RefreshAllUI();
     }
+    
+    protected override void OnDamagedButAlive()
+    {
+        base.OnDamagedButAlive();
 
+        PlayHurtAnimation();
+    }
+    public void PlayHurtAnimation()
+    {
+        if (visualAnimationController != null)
+            StartCoroutine(visualAnimationController.PlayHurt());
+    }
+    public IEnumerator PlayActionAnimation(EnemyAnimationType animationType)
+    {
+        if (visualAnimationController == null)
+            yield break;
+
+        switch (animationType)
+        {
+            case EnemyAnimationType.Attack:
+                yield return visualAnimationController.PlayAttack();
+                break;
+
+            case EnemyAnimationType.Block:
+                yield return visualAnimationController.PlayBlock();
+                break;
+
+            case EnemyAnimationType.SpecialAttack:
+                yield return visualAnimationController.PlaySpecialAttack();
+                break;
+
+            case EnemyAnimationType.Hurt:
+                yield return visualAnimationController.PlayHurt();
+                break;
+
+            case EnemyAnimationType.Death:
+                yield return visualAnimationController.PlayDeath();
+                break;
+        }
+    }
+    public EnemyAnimationType GetCurrentIntentAnimationType()
+    {
+        if (intents == null || intents.Count == 0)
+            return EnemyAnimationType.Attack;
+
+        if (currentIntentIndex < 0 || currentIntentIndex >= intents.Count)
+            return EnemyAnimationType.Attack;
+
+        return intents[currentIntentIndex].animationType;
+    }
     public void ExecuteTurn(BattleUnit player, BattleManager battleManager)
     {
         if (currentHp <= 0)
@@ -148,7 +203,20 @@ public class EnemyUnit : BattleUnit
 
     protected override void Die()
     {
-        base.Die();
+        if (isDead)
+            return;
+
+        StartCoroutine(DieRoutine());
+    }
+    public IEnumerator DieRoutine()
+    {
+        if (isDead)
+            yield break;
+
+        isDead = true;
+
+        yield return PlayActionAnimation(EnemyAnimationType.Death);
+
         gameObject.SetActive(false);
     }
 }

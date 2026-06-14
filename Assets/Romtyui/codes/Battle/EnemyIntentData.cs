@@ -19,6 +19,8 @@ public class EnemyIntentData : ScriptableObject
     [Header("Actions")]
     public List<EnemyActionData> actions = new();
 
+    public EnemyAnimationType animationType = EnemyAnimationType.Attack;
+
     public string GetDamageText()
     {
         if (!string.IsNullOrEmpty(damageTextOverride))
