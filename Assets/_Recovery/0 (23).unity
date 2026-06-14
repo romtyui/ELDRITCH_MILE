@@ -2772,7 +2772,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 241786019}
-  - component: {fileID: 241786020}
   m_Layer: 5
   m_Name: VisualRoot
   m_TagString: Untagged
@@ -2799,22 +2798,6 @@ RectTransform:
   m_AnchoredPosition: {x: -26.5, y: 312.8686}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &241786020
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 241786018}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7df38bf792d063d4c91f4d4759e974ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MonsterVisualBlendController
-  normalRoot: {fileID: 0}
-  darkRoot: {fileID: 0}
-  lightPower: 1
-  normalVisibleWhenLight: 1
 --- !u!1001 &242651742
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10058,7 +10041,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 853341942}
-  - component: {fileID: 853341943}
   m_Layer: 5
   m_Name: VisualRoot
   m_TagString: Untagged
@@ -10085,22 +10067,6 @@ RectTransform:
   m_AnchoredPosition: {x: 60.8, y: -51.26895}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &853341943
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 853341941}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7df38bf792d063d4c91f4d4759e974ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MonsterVisualBlendController
-  normalRoot: {fileID: 0}
-  darkRoot: {fileID: 0}
-  lightPower: 1
-  normalVisibleWhenLight: 1
 --- !u!1 &856779783
 GameObject:
   m_ObjectHideFlags: 0
@@ -13814,19 +13780,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 497a5b6883b46fb44a2ae3eaaa2c4b3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PSBMonsterLightReveal
+  lightOrigin: {fileID: 2123409571}
   monsterTargets: []
-  lightPower: 1
-  minNormalAlpha: 0
-  maxNormalAlpha: 1
-  maxDarkAlpha: 1
-  minDarkAlpha: 0
   visualLight: {fileID: 1939482551}
-  darkToNormalStart: 0.45
-  darkToNormalEnd: 0.55
-  hideAlphaThreshold: 0.091
-  minLightIntensity: 0.4
-  maxLightIntensity: 3
-  minLightOuterRadius: 1.5
+  lightPower: 1
+  minRadius: 1.5
+  maxRadius: 7.32
+  feather: -1
+  maxLightIntensity: 1.5
   maxLightOuterRadius: 8
 --- !u!4 &1238208735
 Transform:
@@ -15193,6 +15154,75 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1359369781}
   m_CullTransparentMesh: 1
+--- !u!1001 &1361750398
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5516200362988423403, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_Name
+      value: "\u65B0\u534A\u4EBA\u9B5A\u796D\u53F8 \u62C6 (1)"
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648829095562252424, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 45.360367
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648829095562252424, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 21.66013
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648829095562252424, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648829095562252424, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648829095562252424, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648829095562252424, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648829095562252424, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648829095562252424, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648829095562252424, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6648829095562252424, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7724424546626289053, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.867565
+      objectReference: {fileID: 0}
+    - target: {fileID: 7724424546626289053, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.49732396
+      objectReference: {fileID: 0}
+    - target: {fileID: 7724424546626289053, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -59.646
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 567e5d6205cef4c4789606d7fae55546, type: 3}
 --- !u!1 &1374609116
 GameObject:
   m_ObjectHideFlags: 0
@@ -22664,7 +22694,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2021610427}
-  - component: {fileID: 2021610428}
   m_Layer: 5
   m_Name: VisualRoot
   m_TagString: Untagged
@@ -22691,22 +22720,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0.0045280457}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2021610428
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2021610426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7df38bf792d063d4c91f4d4759e974ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MonsterVisualBlendController
-  normalRoot: {fileID: 0}
-  darkRoot: {fileID: 0}
-  lightPower: 1
-  normalVisibleWhenLight: 1
 --- !u!1 &2023258308
 GameObject:
   m_ObjectHideFlags: 0
@@ -24175,3 +24188,4 @@ SceneRoots:
   - {fileID: 1426275240}
   - {fileID: 1932906685}
   - {fileID: 1499612220}
+  - {fileID: 1361750398}
