@@ -392,8 +392,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u96E2\u958B\u904A\u6232"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: e4c4e26e32dee614a9dafef7f757005f, type: 2}
+  m_sharedMaterial: {fileID: -64622740150405517, guid: e4c4e26e32dee614a9dafef7f757005f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1444,7 +1444,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1127475398}
-  m_Father: {fileID: 1791172256}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -2412,54 +2412,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 182780755}
   m_CullTransparentMesh: 1
---- !u!1 &228303576
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 228303578}
-  - component: {fileID: 228303577}
-  m_Layer: 0
-  m_Name: "\u6230\u9B25\u56DE\u5408\u555F\u52D5\u5668"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &228303577
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 228303576}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4c0ecf67aa2a1ef459003675f78904de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BattleStartOnEnableTrigger
-  battleManagerObject: {fileID: 1791172254}
-  battleManager: {fileID: 1791172255}
-  previousActive: 0
-  currentActive: 0
---- !u!4 &228303578
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 228303576}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.90479, y: 29.66178, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &230586612
 GameObject:
   m_ObjectHideFlags: 0
@@ -4765,56 +4717,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 307783269}
   m_CullTransparentMesh: 1
---- !u!1 &328685895
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 328685897}
-  - component: {fileID: 328685896}
-  m_Layer: 0
-  m_Name: debug
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &328685896
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 328685895}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3740f6c11f25ffa4db961e7863f93aab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BattleDebugHotkeys
-  battleManager: {fileID: 1791172255}
-  battleManagerObject: {fileID: 1791172254}
-  killAllEnemiesKey: 25
-  enableBattleManagerKey: 16
-  debugDamage: 9999
-  enableDebugHotkeys: 1
---- !u!4 &328685897
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 328685895}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.90479, y: 29.66178, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -6848,8 +6750,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u7E7C\u7E8C"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: e4c4e26e32dee614a9dafef7f757005f, type: 2}
+  m_sharedMaterial: {fileID: -64622740150405517, guid: e4c4e26e32dee614a9dafef7f757005f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -12170,7 +12072,6 @@ MonoBehaviour:
   intentImage: {fileID: 555420591}
   intentDamageText: {fileID: 1330222678}
   visualAnimationController: {fileID: 0}
-  battleManager: {fileID: 0}
 --- !u!114 &1056973086
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13113,7 +13014,7 @@ RectTransform:
   - {fileID: 1578066576}
   - {fileID: 778952738}
   - {fileID: 1665138571}
-  m_Father: {fileID: 1791172256}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -13788,7 +13689,7 @@ RectTransform:
   - {fileID: 75625393}
   - {fileID: 1905967391}
   - {fileID: 723484182}
-  m_Father: {fileID: 1791172256}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -17007,7 +16908,6 @@ MonoBehaviour:
   intentImage: {fileID: 2007904619}
   intentDamageText: {fileID: 1588659780}
   visualAnimationController: {fileID: 0}
-  battleManager: {fileID: 0}
 --- !u!114 &1485395015
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19680,8 +19580,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u91CD\u65B0\u958B\u59CB"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: e4c4e26e32dee614a9dafef7f757005f, type: 2}
+  m_sharedMaterial: {fileID: -64622740150405517, guid: e4c4e26e32dee614a9dafef7f757005f, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -21283,7 +21183,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b3065c2c1e01434bbc1b3d9c9bc3900, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleManager
-  optionMenuUI: {fileID: 778952739}
+  optionMenuUI: {fileID: 0}
   autoStartNextBattleOnWin: 1
   nextBattleDelay: 1
   playerUnit: {fileID: 1663680720}
@@ -21315,10 +21215,7 @@ Transform:
   m_LocalPosition: {x: 6.3474, y: 13.2434, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1197299449}
-  - {fileID: 1133561396}
-  - {fileID: 138171411}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1791172257
@@ -23736,7 +23633,6 @@ MonoBehaviour:
   intentImage: {fileID: 504123416}
   intentDamageText: {fileID: 1547757925}
   visualAnimationController: {fileID: 0}
-  battleManager: {fileID: 0}
 --- !u!114 &2132923024
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24331,9 +24227,12 @@ SceneRoots:
   - {fileID: 832575519}
   - {fileID: 502201767}
   - {fileID: 499606085}
-  - {fileID: 1791172256}
+  - {fileID: 1197299449}
+  - {fileID: 1133561396}
+  - {fileID: 138171411}
   - {fileID: 1663680721}
   - {fileID: 1461659478}
+  - {fileID: 1791172256}
   - {fileID: 769923250}
   - {fileID: 2123409571}
   - {fileID: 1939482552}
@@ -24341,5 +24240,3 @@ SceneRoots:
   - {fileID: 1426275240}
   - {fileID: 1932906685}
   - {fileID: 1499612220}
-  - {fileID: 228303578}
-  - {fileID: 328685897}

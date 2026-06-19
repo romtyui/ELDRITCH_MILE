@@ -21,9 +21,23 @@ public class EnemyUnit : BattleUnit
     public TMP_Text intentDamageText;
     [Header("Animation")]
     public EnemyVisualAnimationController visualAnimationController;
+    [Header("Battle Manager")]
+    public BattleManager battleManager;
 
     private bool isDead;
 
+    public bool IsDeathAnimationPlaying
+    {
+        get
+        {
+            return isDead && gameObject.activeInHierarchy && currentHp <= 0;
+        }
+    }
+
+    public void ResetDeathState()
+    {
+        isDead = false;
+    }
 
     public EnemyIntentData CurrentIntent
     {
@@ -218,5 +232,14 @@ public class EnemyUnit : BattleUnit
         yield return PlayActionAnimation(EnemyAnimationType.Death);
 
         gameObject.SetActive(false);
+
+        if (battleManager != null)
+        {
+            battleManager.RequestCheckBattleEnd();
+        }
+        else
+        {
+            Debug.LogWarning($"[{unitName}] battleManager 沒有指定，死亡動畫結束後無法通知 BattleManager 檢查勝利");
+        }
     }
 }

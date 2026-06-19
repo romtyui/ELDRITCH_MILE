@@ -15,7 +15,7 @@ MonoBehaviour:
   unitName: 
   maxHp: 60
   normalVisualPrefab: {fileID: 2950120252326690735, guid: 32a0da94e356ca04a99d99db004becef, type: 3}
-  darkVisualPrefab: {fileID: 8655104859831869724, guid: bd57f3d19fd6576428bc9a9e409a7e5c, type: 3}
+  darkVisualPrefab: {fileID: 4260766497911064656, guid: 948dc1064e406274980a419d56249d1f, type: 3}
   visualAnchoredPosition: {x: 0, y: 0}
   visualScale: {x: 1, y: 1, z: 1}
   visualEulerAngles: {x: 0, y: 0, z: 0}
@@ -33,5 +33,5 @@ MonoBehaviour:
   attackAnimDuration: 0.6
   hurtAnimDuration: 0.35
   deathAnimDuration: 1
-  blockAnimDuration: 0.5
+  blockAnimDuration: 1
   specialAttackAnimDuration: 0.8

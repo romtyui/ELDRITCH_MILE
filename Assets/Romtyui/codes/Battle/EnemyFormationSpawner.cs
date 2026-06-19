@@ -6,20 +6,50 @@ public class EnemyFormationSpawner : MonoBehaviour
     [Header("Encounter")]
     public EnemyEncounterPoolData encounterPool;
 
+    [Header("Stage Spawn Rule")]
+    [Tooltip("false家Αㄏノ EncounterPool セ砏玥true家Αㄏノヘ玡闽舦")]
+    public bool useStageWeightRule = false;
+
+    [Tooltip("家Αㄏノ硂闽瞷 weight 单硂计┣舱")]
+    public int currentStageMaxWeight = 1;
+
+    [Tooltip("家Αㄏノfalse┾炊硄┣true┾ Boss")]
+    public bool currentStageIsBoss = false;
+
     [Header("Enemy Slots")]
     public List<EnemySlotUI> enemySlots = new();
 
     [Header("Battle")]
     public BattleManager battleManager;
 
+    [Header("Debug Runtime")]
+    [SerializeField] private EnemyFormationData debugCurrentFormation;
+    [SerializeField] private List<string> debugSpawnedEnemyNames = new();
+    [SerializeField] private List<string> debugCandidateNames = new();
+    [SerializeField] private string debugSpawnMode;
+
     private readonly List<EnemyUnit> spawnedEnemies = new();
 
     [ContextMenu("Spawn Random Formation")]
     public void SpawnRandomFormation()
     {
-        EnemyFormationData formation = encounterPool != null
-            ? encounterPool.GetRandomFormation()
-            : null;
+        EnemyFormationData formation = null;
+
+        if (encounterPool == null)
+        {
+            Debug.LogWarning("[EnemyFormationSpawner] encounterPool ⊿Τ﹚");
+            return;
+        }
+
+        if (useStageWeightRule)
+        {
+            formation = GetFormationByStageRule();
+        }
+        else
+        {
+            debugSpawnMode = "家ΑEncounterPool セ砏玥";
+            formation = encounterPool.GetRandomFormation();
+        }
 
         if (formation == null)
         {
@@ -30,10 +60,79 @@ public class EnemyFormationSpawner : MonoBehaviour
         SpawnFormation(formation);
     }
 
+    private EnemyFormationData GetFormationByStageRule()
+    {
+        debugSpawnMode = currentStageIsBoss
+            ? $"家ΑBoss 闽MaxWeight = {currentStageMaxWeight}"
+            : $"家Α炊硄/底璣闽MaxWeight = {currentStageMaxWeight}";
+
+        debugCandidateNames.Clear();
+
+        List<EnemyEncounterPoolEntry> candidates = new();
+
+        for (int i = 0; i < encounterPool.entries.Count; i++)
+        {
+            EnemyEncounterPoolEntry entry = encounterPool.entries[i];
+
+            if (entry == null)
+                continue;
+
+            if (entry.formation == null)
+                continue;
+
+            if (encounterPool.IsFormationUsed(entry.formation))
+                continue;
+
+            if (entry.weight > currentStageMaxWeight)
+                continue;
+
+            if (currentStageIsBoss)
+            {
+                if (!entry.isBoss)
+                    continue;
+            }
+            else
+            {
+                if (entry.isBoss)
+                    continue;
+            }
+
+            candidates.Add(entry);
+
+            string typeText = entry.isBoss ? "Boss" : "Normal";
+            debugCandidateNames.Add($"{typeText} / W{entry.weight} / {entry.formation.formationName}");
+        }
+
+        if (candidates.Count == 0)
+        {
+            Debug.LogWarning(
+                $"[EnemyFormationSpawner] 家Α⊿Τノ舱BossOnly = {currentStageIsBoss}, MaxWeight = {currentStageMaxWeight}"
+            );
+
+            return null;
+        }
+
+        EnemyEncounterPoolEntry selectedEntry = encounterPool.GetWeightedRandomEntry(candidates);
+
+        if (selectedEntry == null || selectedEntry.formation == null)
+            return null;
+
+        encounterPool.MarkFormationUsed(selectedEntry.formation);
+
+        Debug.Log(
+            $"[EnemyFormationSpawner] 家Α┾舱{selectedEntry.formation.formationName}, Weight = {selectedEntry.weight}, Boss = {selectedEntry.isBoss}"
+        );
+
+        return selectedEntry.formation;
+    }
+
     public void SpawnFormation(EnemyFormationData formation)
     {
         if (formation == null)
             return;
+
+        debugCurrentFormation = formation;
+        debugSpawnedEnemyNames.Clear();
 
         ClearSlots();
 
@@ -66,7 +165,10 @@ public class EnemyFormationSpawner : MonoBehaviour
             EnemyUnit enemy = slot.SpawnEnemy(entry.enemyData);
 
             if (enemy != null)
+            {
                 spawnedEnemies.Add(enemy);
+                debugSpawnedEnemyNames.Add($"{entry.spawnIndex}: {enemy.unitName}");
+            }
         }
 
         RegisterEnemiesToBattleManager();
@@ -117,5 +219,23 @@ public class EnemyFormationSpawner : MonoBehaviour
             : null;
 
         Debug.Log($"[EnemyFormationSpawner] 祅癘 {battleManager.enemies.Count} 唉┣");
+    }
+
+    [ContextMenu("Reset Encounter Pool Used Formations")]
+    public void ResetEncounterPoolUsedFormations()
+    {
+        if (encounterPool != null)
+            encounterPool.ResetRuntimeUsedFormations();
+    }
+
+    public void SetStageSpawnRule(bool enableRule, int maxWeight, bool isBossStage)
+    {
+        useStageWeightRule = enableRule;
+        currentStageMaxWeight = Mathf.Max(0, maxWeight);
+        currentStageIsBoss = isBossStage;
+
+        Debug.Log(
+            $"[EnemyFormationSpawner] 砞﹚闽┣砏玥useStageWeightRule = {useStageWeightRule}, MaxWeight = {currentStageMaxWeight}, IsBoss = {currentStageIsBoss}"
+        );
     }
 }

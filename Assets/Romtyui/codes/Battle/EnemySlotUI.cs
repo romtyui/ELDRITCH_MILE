@@ -110,10 +110,15 @@ public class EnemySlotUI : MonoBehaviour
             return;
         }
 
+        enemyUnit.ResetDeathState();
+
         enemyUnit.unitName = enemyData.unitName;
         enemyUnit.maxHp = enemyData.maxHp;
         enemyUnit.currentHp = enemyData.maxHp;
         enemyUnit.block = 0;
+
+        if (enemyUnit.battleManager == null)
+            enemyUnit.battleManager = FindFirstObjectByType<BattleManager>();
 
         enemyUnit.intents.Clear();
 

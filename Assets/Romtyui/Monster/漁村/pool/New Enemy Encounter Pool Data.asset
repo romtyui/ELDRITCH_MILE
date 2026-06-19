@@ -12,5 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dde3d9e15a7f1d54b97ba0d5b5b936cc, type: 3}
   m_Name: New Enemy Encounter Pool Data
   m_EditorClassIdentifier: Assembly-CSharp::EnemyEncounterPoolData
-  formations:
-  - {fileID: 11400000, guid: 3feec3443d7065349985e33aea899efb, type: 2}
+  entries:
+  - formation: {fileID: 11400000, guid: 3feec3443d7065349985e33aea899efb, type: 2}
+    weight: 0
+    isBoss: 0
+  - formation: {fileID: 11400000, guid: 6ace41415e0789b43932ac40411c6ad3, type: 2}
+    weight: 1
+    isBoss: 0
+  - formation: {fileID: 11400000, guid: 637485c70d8bd82449f9cc1cb1374330, type: 2}
+    weight: 2
+    isBoss: 1
+  usedFormations: []

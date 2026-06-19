@@ -40,6 +40,8 @@ public class BattleManager : MonoBehaviour
     [Header("Runtime")]
     public BattlePhase currentPhase = BattlePhase.None;
 
+    private bool isCheckingBattleEndDelayed;
+
     [Header("Enemy Spawning")]
     public EnemyFormationSpawner enemyFormationSpawner;
 
@@ -318,7 +320,7 @@ public class BattleManager : MonoBehaviour
         RefreshStatusUI();
 
 
-        CheckBattleEnd();
+        RequestCheckBattleEnd();
 
         Debug.Log("�Ǫ��^�X�}�l");
     }
@@ -340,7 +342,7 @@ public class BattleManager : MonoBehaviour
             enemy.OnTurnEnd();
         }
 
-        CheckBattleEnd();
+        RequestCheckBattleEnd();
 
         if (currentPhase == BattlePhase.BattleEnded)
             return;
@@ -519,7 +521,7 @@ public class BattleManager : MonoBehaviour
 
         RefreshStatusUI();
 
-        CheckBattleEnd();
+        RequestCheckBattleEnd();
 
         isResolvingCard = false;
 
@@ -765,9 +767,32 @@ public class BattleManager : MonoBehaviour
         if (playerStatusBarUI != null)
             playerStatusBarUI.Refresh();
     }
+    public void RequestCheckBattleEnd()
+    {
+        if (currentPhase == BattlePhase.BattleEnded)
+            return;
 
+        if (isCheckingBattleEndDelayed)
+            return;
+
+        StartCoroutine(CheckBattleEndDelayedRoutine());
+    }
+
+    private IEnumerator CheckBattleEndDelayedRoutine()
+    {
+        isCheckingBattleEndDelayed = true;
+
+        yield return null;
+
+        isCheckingBattleEndDelayed = false;
+
+        CheckBattleEnd();
+    }
     private void CheckBattleEnd()
     {
+        if (currentPhase == BattlePhase.BattleEnded)
+            return;
+
         if (playerUnit != null && playerUnit.currentHp <= 0)
         {
             EndBattle(false);
@@ -786,57 +811,84 @@ public class BattleManager : MonoBehaviour
 
         if (enemies.Count == 0)
         {
-            Debug.LogWarning("[CheckBattleEnd] enemies �M��O�Ū��A�L�k�P�_�԰��ӧQ�C�Ч� EnemyUnit �[�� BattleManager.enemies�C");
+            Debug.LogWarning("[CheckBattleEnd] enemies 清單是空的，無法判斷戰鬥勝利。請把 EnemyUnit 加到 BattleManager.enemies。");
             return;
         }
 
-        bool allEnemiesDead = true;
+        bool hasAliveEnemy = false;
+        bool hasDeathAnimationPlaying = false;
 
-        foreach (EnemyUnit enemy in enemies)
+        for (int i = 0; i < enemies.Count; i++)
         {
-            if (enemy == null) continue;
+            EnemyUnit enemy = enemies[i];
+
+            if (enemy == null)
+                continue;
 
             if (enemy.gameObject.activeInHierarchy && enemy.currentHp > 0)
             {
-                allEnemiesDead = false;
+                hasAliveEnemy = true;
                 break;
+            }
+
+            if (enemy.IsDeathAnimationPlaying)
+            {
+                hasDeathAnimationPlaying = true;
             }
         }
 
-        if (allEnemiesDead)
+        if (hasAliveEnemy)
         {
-            EndBattle(true);
+            currentEnemy = GetFirstAliveEnemy();
             return;
         }
 
-        currentEnemy = GetFirstAliveEnemy();
-    }
+        if (hasDeathAnimationPlaying)
+        {
+            Debug.Log("[CheckBattleEnd] 所有怪物 HP 已歸 0，但仍有死亡動畫播放中，延後勝利檢查");
+            RequestCheckBattleEnd();
+            return;
+        }
 
+        EndBattle(true);
+    }
     private void EndBattle(bool playerWin)
     {
+        if (currentPhase == BattlePhase.BattleEnded && isChangingTurn)
+            return;
+
         currentPhase = BattlePhase.BattleEnded;
         isChangingTurn = true;
+        isResolvingCard = false;
+        isCheckingBattleEndDelayed = false;
 
         RefreshHandUI();
+        RefreshPlayerBarsUI();
+        RefreshStatusUI();
 
         if (playerWin)
         {
-            Debug.Log("�԰��ӧQ");
+            Debug.Log("戰鬥勝利");
 
             if (autoStartNextBattleOnWin)
             {
                 StartCoroutine(StartNextBattleAfterDelay());
             }
+            else
+            {
+                Debug.Log("[BattleManager] autoStartNextBattleOnWin = false，戰鬥勝利後關閉 BattleManager 物件");
+
+                gameObject.SetActive(false);
+            }
         }
         else
         {
-            Debug.Log("�԰�����");
+            Debug.Log("戰鬥失敗");
 
             if (optionMenuUI != null)
                 optionMenuUI.OpenDeathMenu();
         }
     }
-
     private IEnumerator StartNextBattleAfterDelay()
     {
         yield return new WaitForSeconds(nextBattleDelay);
@@ -864,6 +916,33 @@ public class BattleManager : MonoBehaviour
 
         RefreshHandUI();
 
+        RefreshStatusUI();
+
+        StartPlayerTurn();
+    }
+
+    public void StartNextBattleKeepHpSanAndDeck()
+    {
+        Debug.Log("[BattleManager] 重新開啟後開始下一場戰鬥：保留 HP / SAN / 牌組");
+
+        StopAllCoroutines();
+
+        currentPhase = BattlePhase.None;
+        isChangingTurn = false;
+        isResolvingCard = false;
+
+        if (playerDeck != null)
+            playerDeck.PrepareForNextBattleKeepDeck();
+
+        // 注意：這裡不要 ResetEnergy
+        // 因為你要求 SAN 值不重製
+        // if (energySystem != null)
+        //     energySystem.ResetEnergy();
+
+        SpawnEnemiesForBattle();
+
+        RefreshPlayerBarsUI();
+        RefreshHandUI();
         RefreshStatusUI();
 
         StartPlayerTurn();
