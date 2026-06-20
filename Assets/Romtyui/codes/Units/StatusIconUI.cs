@@ -33,8 +33,12 @@ public class StatusIconUI : MonoBehaviour
             List<TooltipEntry> entries = new List<TooltipEntry>();
 
             string key = statusType.ToString();
-            string title = key;
-            string body = $"目前層數：{stack}";
+            //string title = key;
+            //string body = $"目前層數：{stack}";
+            string title = GetStatusTitle(statusType);
+            string body = GetStatusDescription(statusType, stack);
+
+            tooltipTrigger.SetTooltip(title, body);
 
             if (database != null && database.TryGet(key, out TooltipKeywordEntry entry))
             {
@@ -47,5 +51,57 @@ public class StatusIconUI : MonoBehaviour
         }
 
         gameObject.SetActive(true);
+    }
+    private string GetStatusTitle(StatusType statusType)
+    {
+        switch (statusType)
+        {
+            case StatusType.Strength:
+                return "力量";
+
+            case StatusType.TemporaryStrength:
+                return "臨時力量";
+
+            case StatusType.Weak:
+                return "虛弱";
+
+            case StatusType.Vulnerable:
+                return "易傷";
+
+            case StatusType.Frail:
+                return "脆弱";
+
+            case StatusType.Poison:
+                return "中毒";
+
+            default:
+                return statusType.ToString();
+        }
+    }
+    private string GetStatusDescription(StatusType statusType, int amount)
+    {
+        switch (statusType)
+        {
+            case StatusType.Strength:
+                return $"造成的攻擊傷害增加 {amount} 點。";
+
+            case StatusType.TemporaryStrength:
+                return $"本回合造成的攻擊傷害增加 {amount} 點，回合結束後移除。";
+
+            case StatusType.Weak:
+                return $"造成的傷害降低。目前剩餘 {amount} 層。";
+
+            case StatusType.Vulnerable:
+                return $"受到的傷害增加。目前剩餘 {amount} 層。";
+
+            case StatusType.Frail:
+                return $"獲得的格擋降低。目前剩餘 {amount} 層。";
+
+            case StatusType.Poison:
+                return $"回合開始時受到 {amount} 點傷害，之後中毒層數減少。";
+
+            default:
+                return $"目前層數：{amount}";
+        }
     }
 }

@@ -920,6 +920,7 @@ public class BattleManager : MonoBehaviour
         isChangingTurn = true;
         isResolvingCard = false;
         isCheckingBattleEndDelayed = false;
+        battleTurnNumber = 0;
 
         RefreshHandUI();
         RefreshPlayerBarsUI();

@@ -50,4 +50,14 @@ public class EnemyData : ScriptableObject
     public float deathAnimDuration = 1.0f;
     public float blockAnimDuration = 0.5f;
     public float specialAttackAnimDuration = 0.8f;
+
+    [Header("Animation SFX")]
+    public AudioClip attackSfx;
+    public AudioClip hurtSfx;
+    public AudioClip deathSfx;
+    public AudioClip blockSfx;
+    public AudioClip specialAttackSfx;
+
+    [Header("Animation SFX Settings")]
+    [Range(0f, 1f)] public float sfxVolume = 1f;
 }

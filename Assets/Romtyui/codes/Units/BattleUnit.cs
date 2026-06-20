@@ -11,8 +11,10 @@ public class BattleUnit : MonoBehaviour
 
     public event Action OnHpChanged;
     public event Action OnStatusChanged;
+    [Header("Unit Type")]
+    public bool isPlayerUnit;
 
-    private Dictionary<StatusType, int> statuses = new();
+    [SerializeField] private Dictionary<StatusType, int> statuses = new();
 
     protected virtual void Awake()
     {
@@ -126,34 +128,46 @@ public class BattleUnit : MonoBehaviour
 
     public virtual void TakeDamage(int amount)
     {
-        int remaining = amount;
+        if (amount <= 0)
+            return;
 
-        if (block > 0)
+        int hpBefore = currentHp;
+
+        // 先用護盾抵擋傷害
+        int blockedAmount = Mathf.Min(block, amount);
+        block -= blockedAmount;
+
+        // 剩下沒被護盾擋住的才會扣 HP
+        int finalDamage = amount - blockedAmount;
+
+        if (finalDamage > 0)
         {
-            int absorbed = Mathf.Min(block, remaining);
-            block -= absorbed;
-            remaining -= absorbed;
+            currentHp -= finalDamage;
+
+            if (currentHp < 0)
+                currentHp = 0;
         }
 
-        currentHp -= remaining;
-
-        if (currentHp < 0)
-            currentHp = 0;
-
+        // 你的 BattleUnit 是用事件通知 UI 更新
         OnHpChanged?.Invoke();
 
-        Debug.Log($"{unitName} 受到 {amount} 傷害，剩餘 HP: {currentHp}");
+        bool actuallyLostHp = currentHp < hpBefore;
+
+        // 只有玩家真的扣到 HP 才搖晃
+        if (actuallyLostHp && isPlayerUnit)
+        {
+            if (CameraShake.Instance != null)
+                CameraShake.Instance.Shake();
+        }
 
         if (currentHp <= 0)
         {
             Die();
         }
-        else
+        else if (actuallyLostHp)
         {
             OnDamagedButAlive();
         }
-
-        Debug.Log($"[Damage] {unitName} take {amount}, HP = {currentHp}");
     }
 
 

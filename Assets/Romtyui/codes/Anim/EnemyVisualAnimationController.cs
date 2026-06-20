@@ -12,12 +12,22 @@ public class EnemyVisualAnimationController : MonoBehaviour
 
     private Animator[] normalAnimators;
     private Animator[] darkAnimators;
+    [Header("Audio")]
+    public AudioSource audioSource;
 
     public void Bind(GameObject normalVisual, GameObject darkVisual, EnemyData enemyData)
     {
         this.normalVisual = normalVisual;
         this.darkVisual = darkVisual;
         this.enemyData = enemyData;
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.playOnAwake = false;
 
         RefreshAnimators();
 
@@ -83,6 +93,8 @@ public class EnemyVisualAnimationController : MonoBehaviour
 
         PlayTriggerOnAnimators(normalAnimators, triggerName);
         PlayTriggerOnAnimators(darkAnimators, triggerName);
+
+        PlaySfx(animationType);
     }
 
     private void PlayTriggerOnAnimators(Animator[] animators, string triggerName)
@@ -162,6 +174,49 @@ public class EnemyVisualAnimationController : MonoBehaviour
 
             default:
                 return 0.1f;
+        }
+    }
+
+    private void PlaySfx(EnemyAnimationType animationType)
+    {
+        if (enemyData == null)
+            return;
+
+        if (audioSource == null)
+            return;
+
+        AudioClip clip = GetSfx(animationType);
+
+        if (clip == null)
+            return;
+
+        audioSource.PlayOneShot(clip, enemyData.sfxVolume);
+    }
+
+    private AudioClip GetSfx(EnemyAnimationType animationType)
+    {
+        if (enemyData == null)
+            return null;
+
+        switch (animationType)
+        {
+            case EnemyAnimationType.Attack:
+                return enemyData.attackSfx;
+
+            case EnemyAnimationType.Hurt:
+                return enemyData.hurtSfx;
+
+            case EnemyAnimationType.Death:
+                return enemyData.deathSfx;
+
+            case EnemyAnimationType.Block:
+                return enemyData.blockSfx;
+
+            case EnemyAnimationType.SpecialAttack:
+                return enemyData.specialAttackSfx;
+
+            default:
+                return null;
         }
     }
 }

@@ -1520,7 +1520,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
+  m_VertexColorAlwaysGammaSpace: 1
   m_UseReflectionProbes: 0
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
@@ -12707,6 +12707,7 @@ MonoBehaviour:
   maxHp: 50
   currentHp: 0
   block: 0
+  isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
   currentIntentIndex: 0
@@ -12772,6 +12773,60 @@ MonoBehaviour:
   openMode: 1
   stopEventPropagation: 0
   entries: []
+--- !u!1 &1070034184
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1070034186}
+  - component: {fileID: 1070034185}
+  m_Layer: 0
+  m_Name: ScreenShakeController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1070034185
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070034184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0484d24cfcd73745bc03b97565c8a83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraShake
+  shakeTargets:
+  - {fileID: 2079750605}
+  - {fileID: 902100807}
+  - {fileID: 134465705}
+  - {fileID: 1775657554}
+  - {fileID: 567129601}
+  - {fileID: 1395119919}
+  - {fileID: 75625393}
+  defaultDuration: 0.15
+  defaultStrength: 12
+--- !u!4 &1070034186
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070034184}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 676.82806, y: -47.84744, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1073876435
 GameObject:
   m_ObjectHideFlags: 0
@@ -13784,7 +13839,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 31
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 64
   m_TargetDisplay: 0
 --- !u!1 &1150116585
 GameObject:
@@ -17701,6 +17756,7 @@ MonoBehaviour:
   maxHp: 50
   currentHp: 0
   block: 0
+  isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
   currentIntentIndex: 0
@@ -19957,6 +20013,7 @@ MonoBehaviour:
   maxHp: 50
   currentHp: 0
   block: 0
+  isPlayerUnit: 1
 --- !u!4 &1663680721
 Transform:
   m_ObjectHideFlags: 0
@@ -24424,7 +24481,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -770.00006, y: -365}
+  m_AnchoredPosition: {x: -769.99994, y: -365}
   m_SizeDelta: {x: 2018.6322, y: 740.766}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2079750606
@@ -24715,6 +24772,7 @@ MonoBehaviour:
   maxHp: 100
   currentHp: 0
   block: 0
+  isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
   currentIntentIndex: 0
@@ -25350,3 +25408,4 @@ SceneRoots:
   - {fileID: 1499612220}
   - {fileID: 228303578}
   - {fileID: 328685897}
+  - {fileID: 1070034186}
