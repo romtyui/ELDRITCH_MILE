@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-// 實作 IPointerClickHandler 確保與 Unity EventSystem 完美結合
 public class Door : MonoBehaviour, IPointerClickHandler
 {
     private MapNodeExplore targetNode;
@@ -12,17 +11,24 @@ public class Door : MonoBehaviour, IPointerClickHandler
         targetNode = node;
     }
 
-    // 當掛載 PhysicsRaycaster 的相機照射到此物件的 Collider，且玩家點擊時觸發
-    public void OnPointerClick(PointerEventData eventData)
+    // --- 新增：一個沒有參數的公開方法，讓 UnityEvent 可以順利在下拉選單找到它 ---
+    public void OpenDoor()
     {
         if (targetNode != null)
         {
-            Debug.Log($"[Door] 玩家點擊了門，準備前往: {targetNode.roomName}");
+            Debug.Log($"[Door] 準備前往: {targetNode.roomName}");
             ExplorationManager.Instance.TransitionToNode(targetNode);
         }
         else
         {
             Debug.LogWarning("[Door] 這扇門尚未設定目標節點！");
         }
+    }
+
+    // --- 修改：保留滑鼠點擊功能，並讓它去呼叫 OpenDoor ---
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        Debug.Log("[Door] 玩家直接點擊了門");
+        OpenDoor();
     }
 }

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8508830969463952600}
   - component: {fileID: 8666518883468394612}
   - component: {fileID: 7698872627691199683}
+  - component: {fileID: 2188966512621883941}
   m_Layer: 0
   m_Name: door1
   m_TagString: Untagged
@@ -151,6 +152,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4e6fbd3d7b0c934eb67cce857cef239, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Door
+--- !u!114 &2188966512621883941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3141303535623651485}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 199ae5f7b5ba9f04f895d3fbc35e5b07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExplorationInteractableTarget
+  targetId: 
+  displayName: "\u8FF7\u9727\u6728\u9580"
+  acceptAnyExplorationCard: 0
+  acceptedCardIds:
+  - explore_open_door
+  canInteractOnce: 0
+  hasInteracted: 0
+  onInteract:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 7698872627691199683}
+        m_TargetAssemblyTypeName: Door, Assembly-CSharp
+        m_MethodName: OpenDoor
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &4693472923797713535
 GameObject:
   m_ObjectHideFlags: 0

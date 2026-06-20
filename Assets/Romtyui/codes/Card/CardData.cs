@@ -23,8 +23,14 @@ public class CardData : ScriptableObject
     public bool ethereal;
     public bool retain;
 
-    [Header("Effects")]
+    [Header("Battle Effects")]
     public List<CardEffectData> effects = new();
+
+    [Header("Exploration Rules")]
+    public ExplorationTargetMode explorationTargetMode = ExplorationTargetMode.None;
+    
+    [Header("Exploration Effects")]
+    public List<ExplorationCardEffectData> explorationEffects = new();
 }
 
 public class CardInstance
@@ -68,4 +74,10 @@ public enum TargetType
     RandomEnemy,
     AllEnemies,
     AllCharacters
+}
+
+public enum ExplorationTargetMode
+{
+    None,
+    SceneInteractable
 }
