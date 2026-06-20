@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -23,6 +24,9 @@ public class EnemyUnit : BattleUnit
     public EnemyVisualAnimationController visualAnimationController;
     [Header("Battle Manager")]
     public BattleManager battleManager;
+    [Header("Intent Tooltip")]
+    public TooltipTriggerUI intentTooltipTrigger;
+    public event Action OnIntentChanged;
 
     private bool isDead;
 
@@ -168,6 +172,8 @@ public class EnemyUnit : BattleUnit
             currentIntentIndex = 0;
 
         RefreshIntentUI();
+
+        OnIntentChanged?.Invoke();
     }
 
     public void RefreshAllUI()
@@ -208,7 +214,29 @@ public class EnemyUnit : BattleUnit
             intentImage.sprite = intent.intentIcon;
             intentImage.enabled = intent.intentIcon != null;
         }
+        if (intentTooltipTrigger != null)
+        {
+            if (intent == null)
+            {
+                intentTooltipTrigger.SetEntries(new List<TooltipEntry>());
+            }
+            else
+            {
+                List<TooltipEntry> entries = new List<TooltipEntry>();
 
+                string title = intent.intentName;
+                string body = $"這名敵人下回合會執行：{intent.intentName}";
+
+                string damageText = intent.GetDamageText();
+
+                if (!string.IsNullOrWhiteSpace(damageText))
+                    body += $"\n數值：{damageText}";
+
+                entries.Add(new TooltipEntry(title, body));
+
+                intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+            }
+        }
         if (intentDamageText != null)
         {
             intentDamageText.text = intent.GetDamageText();

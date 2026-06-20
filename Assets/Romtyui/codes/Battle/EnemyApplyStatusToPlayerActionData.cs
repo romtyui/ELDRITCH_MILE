@@ -15,4 +15,11 @@ public class EnemyApplyStatusToPlayerActionData : EnemyActionData
 
         Debug.Log($"{context.enemy.unitName} 對玩家施加 {statusType} x{amount}");
     }
+    //public override TooltipEntry GetTooltipEntry()
+    //{
+    //    return new TooltipEntry(
+    //        statusType.ToString(),
+    //        $"施加 {statusType} {amount} 層"
+    //    );
+    //}
 }

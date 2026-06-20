@@ -377,6 +377,7 @@ GameObject:
   - component: {fileID: 1322003680613644110}
   - component: {fileID: 410479225790413237}
   - component: {fileID: 1116888258811706130}
+  - component: {fileID: 2071348053210116029}
   m_Layer: 5
   m_Name: card_template
   m_TagString: Untagged
@@ -508,6 +509,27 @@ MonoBehaviour:
   costText: {fileID: 2867094467709275704}
   descriptionText: {fileID: 6723249261879107984}
   defaultVisualData: {fileID: 11400000, guid: 27d540af5d656654dafab3f8a116db76, type: 2}
+  tooltipTrigger: {fileID: 2071348053210116029}
+  tooltipKeywordDatabase: {fileID: 11400000, guid: c4919ea44c1bc6d44a9426f1c93148a7, type: 2}
+  keywordColor: '#FF2D2D'
+  cardTooltipSide: 3
+--- !u!114 &2071348053210116029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5875220465785766505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c0c528d19493d247b7ad615e8bb926f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
+  targetRect: {fileID: 4293337803333473100}
+  preferredSide: 1
+  openMode: 0
+  stopEventPropagation: 0
+  entries: []
 --- !u!1 &7974429899864020984
 GameObject:
   m_ObjectHideFlags: 0
