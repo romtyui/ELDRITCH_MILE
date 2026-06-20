@@ -7,11 +7,13 @@ public class PSBMonsterLightReveal : MonoBehaviour
     [System.Serializable]
     public class MonsterRevealTarget
     {
+        [Header("Runtime Roots")]
         public Transform normalRoot;
         public Transform darkRoot;
 
-        [HideInInspector] public SpriteRenderer[] normalRenderers;
-        [HideInInspector] public SpriteRenderer[] darkRenderers;
+        [Header("Runtime Renderers")]
+        public SpriteRenderer[] normalRenderers;
+        public SpriteRenderer[] darkRenderers;
 
         public MonsterRevealTarget(Transform normalRoot, Transform darkRoot)
         {
@@ -25,50 +27,64 @@ public class PSBMonsterLightReveal : MonoBehaviour
         {
             normalRenderers = normalRoot != null
                 ? normalRoot.GetComponentsInChildren<SpriteRenderer>(true)
-                : null;
+                : new SpriteRenderer[0];
 
             darkRenderers = darkRoot != null
                 ? darkRoot.GetComponentsInChildren<SpriteRenderer>(true)
-                : null;
+                : new SpriteRenderer[0];
         }
     }
-
-    [Header("Light Source")]
-    public Transform lightOrigin;
 
     [Header("Runtime Monster Targets")]
     public List<MonsterRevealTarget> monsterTargets = new();
 
-    [Header("Optional Visual Light")]
-    public Light2D visualLight;
-
-    [Header("Light Settings")]
+    [Header("Blend Settings")]
     [Range(0f, 1f)]
     public float lightPower = 1f;
 
-    public float minRadius = 1.5f;
-    public float maxRadius = 8f;
-    public float feather = 2f;
+    [Tooltip("lightPower = 0 時，普通型態最低透明度")]
+    [Range(0f, 1f)]
+    public float minNormalAlpha = 0f;
+
+    [Tooltip("lightPower = 1 時，普通型態最高透明度")]
+    [Range(0f, 1f)]
+    public float maxNormalAlpha = 1f;
+
+    [Tooltip("lightPower = 0 時，黑暗型態最高透明度")]
+    [Range(0f, 1f)]
+    public float maxDarkAlpha = 1f;
+
+    [Tooltip("lightPower = 1 時，黑暗型態最低透明度")]
+    [Range(0f, 1f)]
+    public float minDarkAlpha = 0f;
+
+    [Header("Optional Visual Light")]
+    public Light2D visualLight;
+    
+    [Header("Blend Threshold")]
+    [Range(0f, 1f)] public float darkToNormalStart = 0.45f;
+    [Range(0f, 1f)] public float darkToNormalEnd = 0.55f;
+    [Header("Anti Flicker")]
+    [Range(0f, 1f)] public float hideAlphaThreshold = 0.03f;
 
     [Header("Visual Light Settings")]
+    public float minLightIntensity = 0.25f;
     public float maxLightIntensity = 1.5f;
-    public float maxLightOuterRadius = 8f;
 
-    private MaterialPropertyBlock block;
+    public float minLightOuterRadius = 1.5f;
+    public float maxLightOuterRadius = 8f;
 
     private void Awake()
     {
-        block = new MaterialPropertyBlock();
-
         RefreshAllTargets();
     }
 
     private void Update()
     {
-        if (lightOrigin == null)
-            return;
+        float clampedPower = Mathf.Clamp01(lightPower);
 
-        float radius = Mathf.Lerp(minRadius, maxRadius, lightPower);
+        float normalAlpha = Mathf.Lerp(minNormalAlpha, maxNormalAlpha, clampedPower);
+        float darkAlpha = Mathf.Lerp(maxDarkAlpha, minDarkAlpha, clampedPower);
 
         for (int i = monsterTargets.Count - 1; i >= 0; i--)
         {
@@ -86,14 +102,14 @@ public class PSBMonsterLightReveal : MonoBehaviour
                 continue;
             }
 
-            UpdateRenderers(target.normalRenderers, radius);
-            UpdateRenderers(target.darkRenderers, radius);
+            SetRenderersAlpha(target.normalRenderers, normalAlpha);
+            SetRenderersAlpha(target.darkRenderers, darkAlpha);
         }
 
         if (visualLight != null)
         {
-            visualLight.intensity = lightPower * maxLightIntensity;
-            visualLight.pointLightOuterRadius = Mathf.Lerp(minRadius, maxLightOuterRadius, lightPower);
+            visualLight.intensity = Mathf.Lerp(minLightIntensity, maxLightIntensity, clampedPower);
+            visualLight.pointLightOuterRadius = Mathf.Lerp(minLightOuterRadius, maxLightOuterRadius, clampedPower);
         }
     }
 
@@ -110,13 +126,14 @@ public class PSBMonsterLightReveal : MonoBehaviour
         if (existing != null)
         {
             existing.RefreshRenderers();
+            Debug.Log($"[PSBMonsterLightReveal] 已存在，刷新怪物 roots：normal = {GetName(normalRoot)}, dark = {GetName(darkRoot)}");
             return;
         }
 
         MonsterRevealTarget target = new MonsterRevealTarget(normalRoot, darkRoot);
         monsterTargets.Add(target);
 
-        Debug.Log($"[PSBMonsterLightReveal] 註冊怪物 normalRoot = {(normalRoot != null ? normalRoot.name : "null")}, darkRoot = {(darkRoot != null ? darkRoot.name : "null")}");
+        Debug.Log($"[PSBMonsterLightReveal] 自動註冊怪物 roots：normal = {GetName(normalRoot)}, dark = {GetName(darkRoot)}");
     }
 
     public void UnregisterMonster(Transform normalRoot, Transform darkRoot)
@@ -131,8 +148,8 @@ public class PSBMonsterLightReveal : MonoBehaviour
                 continue;
             }
 
-            bool sameNormal = target.normalRoot == normalRoot;
-            bool sameDark = target.darkRoot == darkRoot;
+            bool sameNormal = normalRoot != null && target.normalRoot == normalRoot;
+            bool sameDark = darkRoot != null && target.darkRoot == darkRoot;
 
             if (sameNormal || sameDark)
             {
@@ -155,6 +172,11 @@ public class PSBMonsterLightReveal : MonoBehaviour
         }
     }
 
+    public void SetLightPower(float value)
+    {
+        lightPower = Mathf.Clamp01(value);
+    }
+
     private MonsterRevealTarget FindTarget(Transform normalRoot, Transform darkRoot)
     {
         for (int i = 0; i < monsterTargets.Count; i++)
@@ -171,29 +193,33 @@ public class PSBMonsterLightReveal : MonoBehaviour
         return null;
     }
 
-    private void UpdateRenderers(SpriteRenderer[] renderers, float radius)
+    private void SetRenderersAlpha(SpriteRenderer[] renderers, float alpha)
     {
         if (renderers == null)
             return;
 
-        foreach (SpriteRenderer sr in renderers)
+        bool visible = alpha > hideAlphaThreshold;
+
+        for (int i = 0; i < renderers.Length; i++)
         {
+            SpriteRenderer sr = renderers[i];
+
             if (sr == null)
                 continue;
 
-            sr.GetPropertyBlock(block);
+            sr.enabled = visible;
 
-            block.SetVector("_LightWorldPos", lightOrigin.position);
-            block.SetFloat("_Radius", radius);
-            block.SetFloat("_Feather", feather);
-            block.SetFloat("_LightPower", lightPower);
+            if (!visible)
+                continue;
 
-            sr.SetPropertyBlock(block);
+            Color c = sr.color;
+            c.a = alpha;
+            sr.color = c;
         }
     }
 
-    public void SetLightPower(float value)
+    private string GetName(Transform target)
     {
-        lightPower = Mathf.Clamp01(value);
+        return target != null ? target.name : "null";
     }
 }

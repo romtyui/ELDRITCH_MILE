@@ -19,7 +19,10 @@ public class BattleUnit : MonoBehaviour
         currentHp = maxHp;
         OnHpChanged?.Invoke();
     }
-
+    public Dictionary<StatusType, int> GetAllStatuses()
+    {
+        return new Dictionary<StatusType, int>(statuses);
+    }
     public virtual void OnTurnStart()
     {
         ResolvePoisonAtTurnStart();
@@ -142,10 +145,17 @@ public class BattleUnit : MonoBehaviour
         Debug.Log($"{unitName} 受到 {amount} 傷害，剩餘 HP: {currentHp}");
 
         if (currentHp <= 0)
+        {
             Die();
+        }
+        else
+        {
+            OnDamagedButAlive();
+        }
 
         Debug.Log($"[Damage] {unitName} take {amount}, HP = {currentHp}");
     }
+
 
     public virtual void Heal(int amount)
     {
@@ -249,7 +259,9 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 狀態 {statusType} 回合結束減少 1");
     }
-
+    protected virtual void OnDamagedButAlive()
+    {
+    }
     protected virtual void Die()
     {
         Debug.Log($"{unitName} 死亡");

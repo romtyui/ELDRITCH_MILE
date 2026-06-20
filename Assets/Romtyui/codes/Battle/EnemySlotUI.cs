@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
+using UnityEngine.U2D.Animation;
 
 public class EnemySlotUI : MonoBehaviour
 {
@@ -21,8 +23,14 @@ public class EnemySlotUI : MonoBehaviour
     [Tooltip("這個站位額外的位置偏移。")]
     public Vector2 slotVisualPositionOffset = Vector2.zero;
 
-    private GameObject currentNormalVisual;
-    private GameObject currentDarkVisual;
+    [SerializeField]private GameObject currentNormalVisual;
+    [SerializeField] private GameObject currentDarkVisual;
+
+    [Header("World Visual Root Test")]
+    public Transform worldVisualRoot;
+
+    [Header("Animation")]
+    public EnemyVisualAnimationController visualAnimationController;
 
     private void Awake()
     {
@@ -46,6 +54,8 @@ public class EnemySlotUI : MonoBehaviour
             battleTargetUI = GetComponent<BattleTargetUI>();
         if (lightReveal == null)
             lightReveal = FindFirstObjectByType<PSBMonsterLightReveal>();
+        if (visualAnimationController == null)
+            visualAnimationController = gameObject.AddComponent<EnemyVisualAnimationController>();
     }
 
     public EnemyUnit SpawnEnemy(EnemyData enemyData)
@@ -58,13 +68,13 @@ public class EnemySlotUI : MonoBehaviour
 
         AutoFindRefs();
 
+        gameObject.SetActive(true);
+
         ClearVisual();
 
         ApplyDataToImage(enemyData);
         ApplyDataToEnemyUnit(enemyData);
         SpawnVisual(enemyData);
-
-        gameObject.SetActive(true);
 
         return enemyUnit;
     }
@@ -100,10 +110,15 @@ public class EnemySlotUI : MonoBehaviour
             return;
         }
 
+        enemyUnit.ResetDeathState();
+
         enemyUnit.unitName = enemyData.unitName;
         enemyUnit.maxHp = enemyData.maxHp;
         enemyUnit.currentHp = enemyData.maxHp;
         enemyUnit.block = 0;
+
+        if (enemyUnit.battleManager == null)
+            enemyUnit.battleManager = FindFirstObjectByType<BattleManager>();
 
         enemyUnit.intents.Clear();
 
@@ -121,6 +136,8 @@ public class EnemySlotUI : MonoBehaviour
             battleTargetUI.battleUnit = enemyUnit;
 
         enemyUnit.RefreshAllUI();
+        if (enemyUnit != null)
+            enemyUnit.visualAnimationController = visualAnimationController;
     }
 
     private void SpawnVisual(EnemyData enemyData)
@@ -129,7 +146,6 @@ public class EnemySlotUI : MonoBehaviour
 
         currentNormalVisual = SpawnOneVisual(enemyData.normalVisualPrefab, parent, enemyData);
         currentDarkVisual = SpawnOneVisual(enemyData.darkVisualPrefab, parent, enemyData);
-
         if (lightReveal != null)
         {
             Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;
@@ -137,6 +153,33 @@ public class EnemySlotUI : MonoBehaviour
 
             lightReveal.RegisterMonster(normalRoot, darkRoot);
         }
+        if (visualAnimationController != null)
+        {
+            visualAnimationController.Bind(
+                currentNormalVisual,
+                currentDarkVisual,
+                enemyData
+            );
+        }
+        //if (lightReveal != null)
+        //{
+        //    Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;
+        //    Transform darkRoot = currentDarkVisual != null ? currentDarkVisual.transform : null;
+
+        //    lightReveal.RegisterMonster(normalRoot, darkRoot);
+        //}
+        //Transform parent = worldVisualRoot != null ? worldVisualRoot : transform;
+
+        //currentNormalVisual = SpawnOneVisual(enemyData.normalVisualPrefab, parent, enemyData);
+        //currentDarkVisual = SpawnOneVisual(enemyData.darkVisualPrefab, parent, enemyData);
+
+        //if (lightReveal != null)
+        //{
+        //    Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;
+        //    Transform darkRoot = currentDarkVisual != null ? currentDarkVisual.transform : null;
+
+        //    lightReveal.RegisterMonster(normalRoot, darkRoot);
+        //}
     }
 
     private GameObject SpawnOneVisual(GameObject prefab, Transform parent, EnemyData enemyData)
@@ -144,7 +187,11 @@ public class EnemySlotUI : MonoBehaviour
         if (prefab == null)
             return null;
 
-        GameObject visual = Instantiate(prefab, parent);
+        GameObject visual = Instantiate(prefab);
+        
+
+        visual.transform.SetParent(parent, false);
+        visual.name = prefab.name + "_Runtime";
         visual.SetActive(true);
 
         Vector3 finalScale = enemyData.visualScale * slotVisualScaleMultiplier;
@@ -170,9 +217,42 @@ public class EnemySlotUI : MonoBehaviour
             visual.transform.localRotation = finalRotation;
         }
 
+        Debug.Log($"[EnemySlotUI] 生成視覺：{prefab.name} -> {visual.name}", visual);
+        StartCoroutine(RebindSpriteSkinsNextFrame(visual));
         return visual;
     }
+    private IEnumerator RebindSpriteSkinsNextFrame(GameObject root)
+    {
+        yield return null;
 
+        RebindSpriteSkins(root);
+
+        yield return null;
+
+        RebindSpriteSkins(root);
+    }
+
+    private void RebindSpriteSkins(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        SpriteSkin[] skins = root.GetComponentsInChildren<SpriteSkin>(true);
+
+        for (int i = 0; i < skins.Length; i++)
+        {
+            SpriteSkin skin = skins[i];
+
+            if (skin == null)
+                continue;
+
+            skin.autoRebind = true;
+            skin.enabled = false;
+            skin.enabled = true;
+        }
+
+        Debug.Log($"[EnemySlotUI] Rebind SpriteSkin：{root.name}, count = {skins.Length}", root);
+    }
     private void ClearVisual()
     {
         Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;

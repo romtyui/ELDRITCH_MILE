@@ -23,6 +23,15 @@ public class CardData : ScriptableObject
     public bool ethereal;
     public bool retain;
 
+    [Header("Token Settings")]
+    public bool isToken;
+    public string tokenId;
+    [Header("God Card")]
+    public bool isGodCard;
+
+    [Tooltip("這張神牌的專屬污染動畫。空著則使用預設動畫。")]
+    public GodCardAnimationData godCardAnimation;
+
     [Header("Battle Effects")]
     public List<CardEffectData> effects = new();
 

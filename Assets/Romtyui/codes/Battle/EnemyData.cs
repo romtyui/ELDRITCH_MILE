@@ -1,6 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
-
+public enum EnemyAnimationType
+{
+    Idle,
+    Attack,
+    Hurt,
+    Death,
+    Block,
+    SpecialAttack
+}
 [CreateAssetMenu(menuName = "CardGame/Enemy/Enemy Data")]
 public class EnemyData : ScriptableObject
 {
@@ -27,4 +35,19 @@ public class EnemyData : ScriptableObject
 
     [Header("Intents")]
     public List<EnemyIntentData> intents = new();
+
+    [Header("Animation Triggers")]
+    public string idleTrigger = "idle";
+    public string attackTrigger = "atk";
+    public string hurtTrigger = "hurt";
+    public string deathTrigger = "death";
+    public string blockTrigger = "block";
+    public string specialAttackTrigger = "special";
+
+    [Header("Animation Durations")]
+    public float attackAnimDuration = 0.6f;
+    public float hurtAnimDuration = 0.35f;
+    public float deathAnimDuration = 1.0f;
+    public float blockAnimDuration = 0.5f;
+    public float specialAttackAnimDuration = 0.8f;
 }

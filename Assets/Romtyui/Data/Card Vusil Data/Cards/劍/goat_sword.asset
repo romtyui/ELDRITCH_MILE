@@ -14,9 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: goat_sword
   cardName: goat_sword
-  description: 'Deal 10 damage
-
-    Draw 1 card'
+  description: "\u5C0D \u6240\u6709\u6575\u4EBA \u9020\u6210 6\u9EDE \u50B7\u5BB3\n\u6839\u64DA\u5DF2\u4F7F\u7528\u904E
+    \u5375 \u6578\u91CF\u50B7\u5BB3+1"
   visualData: {fileID: 11400000, guid: 1d29a85d81f0e6d438438fb152fdc58a, type: 2}
   cardType: 1
   rarity: 0
@@ -25,6 +24,7 @@ MonoBehaviour:
   exhaust: 0
   ethereal: 0
   retain: 0
+  isToken: 0
+  tokenId: 
   effects:
-  - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
-  - {fileID: 11400000, guid: 137e5a80717b5bb43802586b79a5a1a2, type: 2}
+  - {fileID: 11400000, guid: 3d2d043dada87fa4abc39ae3af6d5f46, type: 2}
