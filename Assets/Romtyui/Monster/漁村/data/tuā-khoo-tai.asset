@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf43116519b6a7a449b6e0c6921700bc, type: 3}
+  m_Name: "tu\u0101-khoo-tai"
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  unitName: "tu\u0101-khoo-tai"
+  maxHp: 100
+  normalVisualPrefab: {fileID: 2726685744332138470, guid: 31fe265b8dd291041a74e7d80c71515a, type: 3}
+  darkVisualPrefab: {fileID: 4278617798232755884, guid: 07b2d6fce24d46e4a96463e7f29c7b9b, type: 3}
+  visualAnchoredPosition: {x: 0, y: 0}
+  visualScale: {x: 1, y: 1, z: 1}
+  visualEulerAngles: {x: 0, y: 0, z: 0}
+  hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
+  hitBoxSprite: {fileID: 0}
+  intents: []
+  idleTrigger: idle
+  attackTrigger: atk
+  hurtTrigger: hurt
+  deathTrigger: death
+  blockTrigger: block
+  specialAttackTrigger: special
+  attackAnimDuration: 0.6
+  hurtAnimDuration: 0.35
+  deathAnimDuration: 1
+  blockAnimDuration: 0.5
+  specialAttackAnimDuration: 0.8
+  attackSfx: {fileID: 0}
+  hurtSfx: {fileID: 0}
+  deathSfx: {fileID: 0}
+  blockSfx: {fileID: 0}
+  specialAttackSfx: {fileID: 0}
+  sfxVolume: 1
