@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
+  m_Name: explore_forward
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardId: explore_forward
+  cardName: "\u79FB\u52D5"
+  description: 
+  visualData: {fileID: 11400000, guid: 331c8a3d2fdb6db4b92ccbf6831c2ee7, type: 2}
+  cardType: 0
+  rarity: 0
+  targetType: 0
+  baseCost: 0
+  exhaust: 0
+  ethereal: 0
+  retain: 0
+  isToken: 0
+  tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
+  effects: []
+  explorationTargetMode: 1
+  explorationEffects:
+  - {fileID: 11400000, guid: dbb418d3d99caf74b8d874c0e7b79ab9, type: 2}

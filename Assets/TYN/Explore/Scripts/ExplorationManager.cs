@@ -24,12 +24,9 @@ public class ExplorationManager : MonoBehaviour
     [Header("當前狀態 (唯讀)")]
     public MapNodeExplore currentNode;
     private GameObject activeRoomInstance;
-    private bool isTransitioning = false; // 防止連續點擊
+    public bool isTransitioning = false; // 防止連續點擊
 
     private float defaultFOV = 60f;
-
-    public List<MapNodeExplore> historyNodes = new List<MapNodeExplore>(); // 紀錄歷史節點 (可選)
-    public MiniMapManager miniMapManager;
 
     private void Awake()
     {
@@ -43,78 +40,59 @@ public class ExplorationManager : MonoBehaviour
 
     private void Start()
     {
-        // 遊戲開始時自動載入起點房間
+        if (mainCamera != null) defaultFOV = mainCamera.fieldOfView;
+        
+        // 確保一開始畫面是全黑的，準備淡入
+        if (fadeCanvasGroup != null) fadeCanvasGroup.alpha = 1f; 
+
+        // --- 【方案A核心】：向大地圖索取要生成的房間資料 ---
+        if (PerspectiveMapGenerator.Instance != null && PerspectiveMapGenerator.Instance.currentMapData != null)
+        {
+            string currentId = PerspectiveMapGenerator.Instance.currentMapData.currentNodeId;
+            var currentData = PerspectiveMapGenerator.Instance.currentMapData.allNodes.Find(n => n.nodeId == currentId);
+            
+            if (currentData != null)
+            {
+                EnterRoom(currentData.templateData);
+                return; // 成功從地圖取得資料，直接返回
+            }
+        }
+
+        // 容錯處理：如果沒有地圖總管 (例如單獨開 ExploreScene 測試時)
         if (startingNode != null)
         {
-            TransitionToNode(startingNode);
+            Debug.Log("[ExplorationManager] 找不到地圖資料，使用預設起始節點。");
+            EnterRoom(startingNode);
         }
         else
         {
-            Debug.LogError("[ExplorationManager] 尚未設定起始節點 (startingNode)！");
+            Debug.LogError("[ExplorationManager] 找不到地圖資料且尚未設定 startingNode！");
         }
-
-        if (mainCamera != null) defaultFOV = mainCamera.fieldOfView;
-        
-        // 確保一開始畫面是亮的
-        if (fadeCanvasGroup != null) fadeCanvasGroup.alpha = 0f; 
-
-        if (startingNode != null) TransitionToNode(startingNode);
     }
 
-    public void TransitionToNode(MapNodeExplore newNode)
+
+    // 專注於「進入單一房間」的邏輯
+    public void EnterRoom(MapNodeExplore node)
     {
-        if (newNode == null || newNode.roomPrefab == null || isTransitioning) return;
-        // 啟動轉場動畫協程
-        StartCoroutine(TransitionRoutine(newNode));
+        if (node == null || node.roomPrefab == null || isTransitioning) return;
+        StartCoroutine(EnterRoutine(node));
     }
 
-    private System.Collections.IEnumerator TransitionRoutine(MapNodeExplore newNode)
+    private System.Collections.IEnumerator EnterRoutine(MapNodeExplore node)
     {
-        // 【新增】如果不是空歷史，就把當前節點存入歷史中
-        if (currentNode != null) 
-        {
-            historyNodes.Add(currentNode);
-        }
-
         isTransitioning = true;
+        currentNode = node;
 
-        // ==========================================
-        // 階段 1：往前衝刺 (縮小 FOV) 與 畫面變黑
-        // ==========================================
-        float timeElapsed = 0f;
-        while (timeElapsed < transitionSpeed)
-        {
-            timeElapsed += Time.deltaTime;
-            float t = timeElapsed / transitionSpeed;
-            
-            // 加上平滑曲線 (Ease In)
-            float smoothT = t * t; 
-
-            if (fadeCanvasGroup != null) fadeCanvasGroup.alpha = Mathf.Lerp(0f, 1f, smoothT);
-            if (mainCamera != null) mainCamera.fieldOfView = Mathf.Lerp(defaultFOV, defaultFOV - 20f, smoothT); // FOV 縮小 20 產生衝刺感
-
-            yield return null;
-        }
-
-        // ==========================================
-        // 階段 2：在全黑的瞬間，替換房間與卡牌
-        // ==========================================
+        // 生成房間
         if (activeRoomInstance != null) Destroy(activeRoomInstance);
-
-        currentNode = newNode;
         Vector3 spawnPos = roomSpawnPoint != null ? roomSpawnPoint.position : Vector3.zero;
-        activeRoomInstance = Instantiate(newNode.roomPrefab, spawnPos, Quaternion.identity);
-        activeRoomInstance.name = $"Room_{newNode.roomName}";
+        activeRoomInstance = Instantiate(node.roomPrefab, spawnPos, Quaternion.identity);
+        activeRoomInstance.name = $"Room_{node.roomName}";
 
         RoomController controller = activeRoomInstance.GetComponent<RoomController>();
-        if (controller != null) controller.InitializeRoom(newNode);
-        // 【新增】每次切換房間後，更新小地圖
-        if (miniMapManager != null)
-        {
-            miniMapManager.DrawMap(currentNode, historyNodes);
-        }
+        if (controller != null) controller.InitializeRoom(node);
 
-        // --- 方案 A：重置手牌資源 ---
+        // 重置手牌資源
         if (cardManager != null)
         {
             cardManager.DiscardHand();
@@ -122,35 +100,60 @@ public class ExplorationManager : MonoBehaviour
             Debug.Log("[ExplorationManager] 進入新房間，重新抽取手牌。");
         }
 
-        // 可以加一點微小的停頓，讓黑畫面保持一下下 (可選)
-        yield return new WaitForSeconds(0.1f);
-
-        // ==========================================
-        // 階段 3：豁然開朗 (恢復 FOV) 與 畫面變亮
-        // ==========================================
-        timeElapsed = 0f;
+        // 豁然開朗 (恢復 FOV) 與 畫面變亮
+        float timeElapsed = 0f;
         while (timeElapsed < transitionSpeed)
         {
             timeElapsed += Time.deltaTime;
             float t = timeElapsed / transitionSpeed;
-            
-            // 加上平滑曲線 (Ease Out)
-            float smoothT = 1f - (1f - t) * (1f - t);
+            float smoothT = 1f - (1f - t) * (1f - t); // Ease Out
 
             if (fadeCanvasGroup != null) fadeCanvasGroup.alpha = Mathf.Lerp(1f, 0f, smoothT);
             if (mainCamera != null) mainCamera.fieldOfView = Mathf.Lerp(defaultFOV - 20f, defaultFOV, smoothT);
-
             yield return null;
         }
 
-        // 確保完全恢復
         if (fadeCanvasGroup != null) fadeCanvasGroup.alpha = 0f;
         if (mainCamera != null) mainCamera.fieldOfView = defaultFOV;
 
         isTransitioning = false;
-        Debug.Log($"[ExplorationManager] 成功進入節點: {newNode.roomName}");
+        Debug.Log($"[ExplorationManager] 成功進入節點: {node.roomName}");
     }
 
+    // 專注於「退出探索場景，返回大地圖」的邏輯
+    public void ExitExploreScene()
+    {
+        if (isTransitioning) return;
+        StartCoroutine(ExitRoutine());
+    }
+
+    private System.Collections.IEnumerator ExitRoutine()
+    {
+        isTransitioning = true;
+
+        // 往前衝刺 (縮小 FOV) 與 畫面變黑
+        float timeElapsed = 0f;
+        while (timeElapsed < transitionSpeed)
+        {
+            timeElapsed += Time.deltaTime;
+            float t = timeElapsed / transitionSpeed;
+            float smoothT = t * t; // Ease In
+
+            if (fadeCanvasGroup != null) fadeCanvasGroup.alpha = Mathf.Lerp(0f, 1f, smoothT);
+            if (mainCamera != null) mainCamera.fieldOfView = Mathf.Lerp(defaultFOV, defaultFOV - 20f, smoothT);
+            yield return null;
+        }
+
+        // --- 【方案A核心】：通知大地圖總管把場景接回去 ---
+        if (PerspectiveMapGenerator.Instance != null)
+        {
+            Debug.Log("[ExplorationManager] 探索結束，交還控制權給大地圖。");
+            PerspectiveMapGenerator.Instance.ReturnToMap();
+        }
+        else
+        {
+            Debug.LogWarning("[ExplorationManager] 找不到大地圖總管，無法卸載場景！(可能是在單場景測試中)");
+            isTransitioning = false; 
+        }
+    }
 }
-
-

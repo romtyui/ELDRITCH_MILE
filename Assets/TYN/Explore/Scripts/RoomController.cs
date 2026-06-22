@@ -16,17 +16,12 @@ public class RoomController : MonoBehaviour
     {
         nodeData = node;
 
-        // 1. 設定門的導向
+        // 1. 設定門 (不再需要讀取節點拓撲，直接全部開啟作為返回地圖的出口)
         for (int i = 0; i < doors.Count; i++)
         {
-            if (i < node.nextAvailableNodes.Count && node.nextAvailableNodes[i] != null)
+            if (doors[i] != null)
             {
-                doors[i].SetTarget(node.nextAvailableNodes[i]);
                 doors[i].gameObject.SetActive(true);
-            }
-            else
-            {
-                doors[i].gameObject.SetActive(false);
             }
         }
 

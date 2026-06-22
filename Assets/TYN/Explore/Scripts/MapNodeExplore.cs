@@ -8,9 +8,6 @@ public class MapNodeExplore : ScriptableObject
     public string roomName = "未知房間";
     public GameObject roomPrefab;
 
-    [Header("節點拓撲")]
-    public List<MapNodeExplore> nextAvailableNodes = new List<MapNodeExplore>();
-
     [Header("敘事與文本")]
     [TextArea(3, 5)]
     public string entryText = "你進入了一個新的區域...";
