@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum TooltipAnchorSide
 {
@@ -50,25 +51,40 @@ public class TooltipUI : MonoBehaviour
         if (container == null || contentRoot == null || blockTemplate == null)
             return;
 
-        ClearBlocks();
-
-        if (entries == null || entries.Count == 0)
+        if (entries == null || entries.Count == 0 || target == null)
+        {
+            Hide();
             return;
+        }
+
+        ClearBlocks();
 
         for (int i = 0; i < entries.Count; i++)
         {
+            if (entries[i] == null)
+                continue;
+
             TooltipBlockUI block = Instantiate(blockTemplate, contentRoot);
             block.gameObject.SetActive(true);
             block.SetData(entries[i]);
             spawnedBlocks.Add(block);
         }
 
+        if (spawnedBlocks.Count == 0)
+        {
+            Hide();
+            return;
+        }
+
         container.gameObject.SetActive(true);
 
-        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
+
+        if (container != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(container);
+
         Reposition(target, preferredSide);
     }
-
     public void Hide()
     {
         ClearBlocks();
@@ -79,15 +95,40 @@ public class TooltipUI : MonoBehaviour
 
     private void ClearBlocks()
     {
-        for (int i = 0; i < spawnedBlocks.Count; i++)
+        for (int i = spawnedBlocks.Count - 1; i >= 0; i--)
         {
-            if (spawnedBlocks[i] != null)
-                Destroy(spawnedBlocks[i].gameObject);
+            TooltipBlockUI block = spawnedBlocks[i];
+
+            if (block == null)
+                continue;
+
+            Transform blockTransform = block.transform;
+
+            if (blockTransform != null)
+                blockTransform.SetParent(null);
+
+            Destroy(block.gameObject);
         }
 
         spawnedBlocks.Clear();
-    }
 
+        if (contentRoot == null)
+            return;
+
+        for (int i = contentRoot.childCount - 1; i >= 0; i--)
+        {
+            Transform child = contentRoot.GetChild(i);
+
+            if (child == null)
+                continue;
+
+            if (blockTemplate != null && child == blockTemplate.transform)
+                continue;
+
+            child.SetParent(null);
+            Destroy(child.gameObject);
+        }
+    }
     private void Reposition(RectTransform target, TooltipAnchorSide preferredSide)
     {
         if (target == null || canvasRect == null || container == null)

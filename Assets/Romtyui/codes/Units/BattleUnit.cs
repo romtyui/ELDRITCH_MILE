@@ -100,7 +100,7 @@ public class BattleUnit : MonoBehaviour
 
         if (GetStatus(StatusType.Weak) > 0)
         {
-            damage = Mathf.FloorToInt(damage * 0.75f);
+            damage = Mathf.CeilToInt(damage * 0.75f);
         }
 
         return Mathf.Max(0, damage);

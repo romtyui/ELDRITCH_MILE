@@ -98,17 +98,28 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
             eventData.Use();
     }
 
-    private void ShowTooltip()
+    public void ShowTooltip()
     {
-        if (TooltipUI.Instance == null)
-            return;
-
         if (entries == null || entries.Count == 0)
             return;
 
-        RectTransform rect = targetRect != null ? targetRect : transform as RectTransform;
+        if (TooltipUI.Instance == null)
+            return;
+
+        RectTransform rect = targetRect != null
+            ? targetRect
+            : transform as RectTransform;
+
+        if (rect == null)
+            return;
 
         TooltipUI.Instance.Show(entries, rect, preferredSide);
+    }
+
+
+    private void OnDestroy()
+    {
+        HideTooltip();
     }
 
     private void HideTooltip()
@@ -140,5 +151,6 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         if (TooltipUI.Instance != null)
             TooltipUI.Instance.Hide();
+        HideTooltip();
     }
 }

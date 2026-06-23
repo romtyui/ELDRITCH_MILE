@@ -825,6 +825,9 @@ public class BattleManager : MonoBehaviour
     {
         if (playerStatusBarUI != null)
             playerStatusBarUI.Refresh();
+
+        if (handUIController != null)
+            handUIController.RefreshCardDescriptionsOnly();
     }
     public void RequestCheckBattleEnd()
     {

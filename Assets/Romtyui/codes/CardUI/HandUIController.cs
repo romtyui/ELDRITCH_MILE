@@ -59,6 +59,18 @@ public class HandUIController : MonoBehaviour
         if (handFanLayout != null)
             handFanLayout.RefreshLayout();
     }
+    public void RefreshCardDescriptionsOnly()
+    {
+        foreach (var pair in cardViews)
+        {
+            CardViewUI view = pair.Value;
+
+            if (view == null)
+                continue;
+
+            view.RefreshRuntimeDescription();
+        }
+    }
 
     public IEnumerator DrawCardsAnimated(BattleDeck deck, int amount)
     {
