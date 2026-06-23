@@ -28,6 +28,7 @@ public class BattleUnit : MonoBehaviour
     public virtual void OnTurnStart()
     {
         ResolvePoisonAtTurnStart();
+        ResolveHardenAtTurnStart();
     }
 
     public virtual void OnTurnEnd()
@@ -194,12 +195,15 @@ public class BattleUnit : MonoBehaviour
 
         block += finalBlock;
 
+        OnHpChanged?.Invoke();
+
         Debug.Log($"{unitName} 獲得 {finalBlock} 格擋，當前格擋: {block}");
     }
 
     public virtual void ResetBlock()
     {
         block = 0;
+        OnHpChanged?.Invoke();
     }
 
     public virtual void ApplyStatus(StatusType statusType, int amount)
@@ -252,6 +256,17 @@ public class BattleUnit : MonoBehaviour
         TakeDamage(poison);
 
         RemoveStatus(StatusType.Poison, 1);
+    }
+    private void ResolveHardenAtTurnStart()
+    {
+        int harden = GetStatus(StatusType.Harden);
+
+        if (harden <= 0)
+            return;
+
+        GainBlock(harden);
+
+        Debug.Log($"{unitName} 的硬化發動，回合開始獲得 {harden} 點護盾");
     }
 
     private void TickTemporaryStatuses()

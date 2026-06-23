@@ -73,6 +73,8 @@ public class StatusIconUI : MonoBehaviour
 
             case StatusType.Poison:
                 return "中毒";
+            case StatusType.Harden:
+                return "硬化";
 
             default:
                 return statusType.ToString();
@@ -99,6 +101,8 @@ public class StatusIconUI : MonoBehaviour
 
             case StatusType.Poison:
                 return $"回合開始時受到 {amount} 點傷害，之後中毒層數減少。";
+            case StatusType.Harden:
+                return $"每回合開始時，獲得 {amount} 點護盾。";
 
             default:
                 return $"目前層數：{amount}";

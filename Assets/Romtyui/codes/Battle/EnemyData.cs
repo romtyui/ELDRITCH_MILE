@@ -33,6 +33,16 @@ public class EnemyData : ScriptableObject
     public Color hitBoxColor = new Color(1f, 0f, 1f, 0.25f);
     public Sprite hitBoxSprite;
 
+    [System.Serializable]
+    public class StartingStatusEntry
+    {
+        public StatusType statusType;
+        public int amount = 1;
+    }
+
+    [Header("Starting Statuses")]
+    public List<StartingStatusEntry> startingStatuses = new();
+
     [Header("Intents")]
     public List<EnemyIntentData> intents = new();
 

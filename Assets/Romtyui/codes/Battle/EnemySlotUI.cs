@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D.Animation;
 using UnityEngine.UI;
+using static EnemyData;
 
 public class EnemySlotUI : MonoBehaviour
 {
@@ -216,6 +217,9 @@ public class EnemySlotUI : MonoBehaviour
             case StatusType.Poison:
                 return "中毒";
 
+            case StatusType.Harden:
+                return "硬化";
+
             default:
                 return statusType.ToString();
         }
@@ -242,6 +246,8 @@ public class EnemySlotUI : MonoBehaviour
 
             case StatusType.Poison:
                 return $"回合開始時受到 {amount} 點傷害，之後中毒層數減少。";
+            case StatusType.Harden: 
+                return $"每回合開始時，獲得 {amount} 點護盾。";
 
             default:
                 return $"目前層數：{amount}";
@@ -320,6 +326,21 @@ public class EnemySlotUI : MonoBehaviour
         enemyUnit.maxHp = enemyData.maxHp;
         enemyUnit.currentHp = enemyData.maxHp;
         enemyUnit.block = 0;
+
+        enemyUnit.ClearAllStatuses();
+
+        if (enemyData.startingStatuses != null)
+        {
+            for (int i = 0; i < enemyData.startingStatuses.Count; i++)
+            {
+                StartingStatusEntry entry = enemyData.startingStatuses[i];
+
+                if (entry == null)
+                    continue;
+
+                enemyUnit.ApplyStatus(entry.statusType, entry.amount);
+            }
+        }
 
         if (enemyUnit.battleManager == null)
             enemyUnit.battleManager = FindFirstObjectByType<BattleManager>();
