@@ -327,6 +327,8 @@ public class EnemySlotUI : MonoBehaviour
         enemyUnit.currentHp = enemyData.maxHp;
         enemyUnit.block = 0;
 
+        enemyUnit.intentTooltipTrigger = intentTooltipTrigger;
+        enemyUnit.stunIntent = enemyData.stunIntent;
         enemyUnit.ClearAllStatuses();
 
         if (enemyData.startingStatuses != null)

@@ -148,7 +148,10 @@ public class BattleUnit : MonoBehaviour
         int realHpDamage = hpBefore - currentHp;
 
         OnHpChanged?.Invoke();
-
+        if (realHpDamage > 0)
+        {
+            OnAfterHpDamageTaken(realHpDamage);
+        }
         if (realHpDamage > 0 && this is EnemyUnit)
         {
             BattleManager battleManager = FindFirstObjectByType<BattleManager>();
@@ -176,7 +179,9 @@ public class BattleUnit : MonoBehaviour
         Debug.Log($"[Damage] {unitName} take {amount}, realHpDamage = {realHpDamage}, HP = {currentHp}");
     }
 
-
+    protected virtual void OnAfterHpDamageTaken(int realHpDamage)
+    {
+    }
     public virtual void Heal(int amount)
     {
         currentHp += amount;

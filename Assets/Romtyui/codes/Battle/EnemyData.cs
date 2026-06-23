@@ -32,7 +32,8 @@ public class EnemyData : ScriptableObject
     [Header("Image Settings")]
     public Color hitBoxColor = new Color(1f, 0f, 1f, 0.25f);
     public Sprite hitBoxSprite;
-
+    [Header("Special Intents")]
+    public EnemyIntentData stunIntent;
     [System.Serializable]
     public class StartingStatusEntry
     {
