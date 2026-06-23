@@ -1,28 +1,27 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement; // 新增這行來處理場景載入
+using UnityEngine.SceneManagement; 
 
 // ==========================================
 // 【純資料層 Data】(不會掛在物件上)
-// 用來記錄這局遊戲的狀態，未來要存檔就是存這個
 // ==========================================
 [System.Serializable]
 public class RunNodeData
 {
-    public string nodeId;                 // 節點唯一ID
-    public MapNodeExplore templateData;   // 對應的 SO (只讀不寫)
-    public int layer;                     // 第幾層
-    public float xPercent;                // 畫布上的 X 座標百分比
-    public float yPercent;                // 畫布上的 Y 座標百分比
-    public List<string> nextNodeIds = new List<string>(); // 連向哪些節點的 ID
+    public string nodeId;                 
+    public MapNodeExplore templateData;   
+    public int layer;                     
+    public float xPercent;                
+    public float yPercent;                
+    public List<string> nextNodeIds = new List<string>(); 
 }
 
 [System.Serializable]
 public class MapData
 {
     public List<RunNodeData> allNodes = new List<RunNodeData>();
-    public string currentNodeId = "";     // 玩家目前所在的節點 ID
-    public List<string> historyNodeIds = new List<string>(); // 走過的節點 ID
+    public string currentNodeId = "";     
+    public List<string> historyNodeIds = new List<string>(); 
 }
 
 // ==========================================
@@ -33,7 +32,6 @@ public class PerspectiveMapGenerator : MonoBehaviour
     public static PerspectiveMapGenerator Instance { get; private set; }
 
     [Header("測試 DEMO 路線設定")]
-    [Tooltip("自訂 DEMO 路線的節點資料 (依序從下到上排列，例如放入 test1, test2, test3, test4)")]
     public List<MapNodeExplore> demoRouteNodes;
 
     [Header("UI 生成設定")]
@@ -44,17 +42,15 @@ public class PerspectiveMapGenerator : MonoBehaviour
     public GameObject bossNodePrefab;
 
     [Header("場景轉場控制")]
-    [Tooltip("地圖專用的相機，進入探索時需關閉")]
     public Camera mapCamera;
-    [Tooltip("地圖專用的畫布，進入探索時需關閉")]
     public Canvas mapCanvas;
-    [Tooltip("要疊加載入的探索場景名稱")]
-    public string exploreSceneName = "ExploreScene"; 
 
     [Header("當前遊戲資料 (唯讀觀察用)")]
     public MapData currentMapData;
 
-    // 紀錄畫面上生成的 UI 物件，方便更新狀態
+    // --- 新增：記錄最後疊加載入的場景名稱 ---
+    private string lastLoadedSceneName = "";
+
     private Dictionary<string, PerspectiveNode> spawnedNodeUIs = new Dictionary<string, PerspectiveNode>();
 
     private void Awake()
@@ -65,28 +61,16 @@ public class PerspectiveMapGenerator : MonoBehaviour
 
     private void Start()
     {
-        // 1. 產生純資料 (Data)
         currentMapData = GenerateDemoData(); 
-        
-        // 2. 根據資料畫出畫面 (View)
         RenderMapView(currentMapData);       
-        
-        // 3. 更新明暗狀態
         SyncMapState();                      
     }
 
-    // --------------------------------------------------------
-    // 步驟 1：只算資料，不碰 UI
-    // --------------------------------------------------------
     private MapData GenerateDemoData()
     {
         MapData newMap = new MapData();
 
-        if (demoRouteNodes == null || demoRouteNodes.Count == 0)
-        {
-            Debug.LogWarning("DEMO路線未設定！");
-            return newMap;
-        }
+        if (demoRouteNodes == null || demoRouteNodes.Count == 0) return newMap;
 
         int layers = demoRouteNodes.Count;
         RunNodeData previousNode = null;
@@ -95,36 +79,27 @@ public class PerspectiveMapGenerator : MonoBehaviour
         {
             RunNodeData nodeData = new RunNodeData
             {
-                nodeId = "Node_" + i, // 給予唯一 ID
+                nodeId = "Node_" + i, 
                 templateData = demoRouteNodes[i],
                 layer = i,
-                xPercent = 50f, // 固定在中間
+                xPercent = 50f, 
                 yPercent = layers <= 1 ? 50f : 10f + 80f / (layers - 1) * i
             };
 
             newMap.allNodes.Add(nodeData);
 
-            // 建立連線資料 (前一個節點的 nextIds 記錄當前節點的 ID)
-            if (previousNode != null)
-            {
-                previousNode.nextNodeIds.Add(nodeData.nodeId);
-            }
+            if (previousNode != null) previousNode.nextNodeIds.Add(nodeData.nodeId);
             previousNode = nodeData;
         }
 
         return newMap;
     }
 
-    // --------------------------------------------------------
-    // 步驟 2：只畫 UI，不碰邏輯
-    // --------------------------------------------------------
     private void RenderMapView(MapData mapData)
     {
-        // 清空舊 UI
         foreach (Transform child in mapContainer) Destroy(child.gameObject);
         spawnedNodeUIs.Clear();
 
-        // 畫節點
         foreach (var nodeData in mapData.allNodes)
         {
             bool isBoss = (nodeData.layer == mapData.allNodes.Count - 1);
@@ -137,12 +112,11 @@ public class PerspectiveMapGenerator : MonoBehaviour
             rect.anchoredPosition = Vector2.zero;
 
             PerspectiveNode nodeScript = nodeObj.GetComponent<PerspectiveNode>();
-            nodeScript.InitData(nodeData); // 綁定資料
+            nodeScript.InitData(nodeData); 
             
             spawnedNodeUIs.Add(nodeData.nodeId, nodeScript);
         }
 
-        // 畫連線
         foreach (var nodeData in mapData.allNodes)
         {
             foreach (var targetId in nodeData.nextNodeIds)
@@ -168,14 +142,10 @@ public class PerspectiveMapGenerator : MonoBehaviour
         rect.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
     }
 
-    // --------------------------------------------------------
-    // 狀態更新與點擊處理
-    // --------------------------------------------------------
     public void SyncMapState()
     {
         if (currentMapData == null) return;
 
-        // 找出目前所在節點的資料
         RunNodeData currentData = currentMapData.allNodes.Find(n => n.nodeId == currentMapData.currentNodeId);
         List<string> availableNextIds = currentData != null ? currentData.nextNodeIds : new List<string>();
 
@@ -187,7 +157,6 @@ public class PerspectiveMapGenerator : MonoBehaviour
             bool isCurrent = (id == currentMapData.currentNodeId);
             bool isVisited = currentMapData.historyNodeIds.Contains(id);
             
-            // 如果還沒出發 (currentNodeId == "")，則第 0 層為可選
             bool isSelectable = false;
             if (string.IsNullOrEmpty(currentMapData.currentNodeId) && uiNode.runtimeData.layer == 0) isSelectable = true;
             else if (availableNextIds.Contains(id)) isSelectable = true;
@@ -196,38 +165,72 @@ public class PerspectiveMapGenerator : MonoBehaviour
         }
     }
 
-    // 供 PerspectiveNode 點擊時呼叫
     public void OnNodeClicked(RunNodeData clickedNode)
     {
-        // 1. 記錄歷史軌跡
         if (!string.IsNullOrEmpty(currentMapData.currentNodeId))
         {
             currentMapData.historyNodeIds.Add(currentMapData.currentNodeId);
         }
         
-        // 2. 更新當前位置
         currentMapData.currentNodeId = clickedNode.nodeId;
         SyncMapState();
 
-        // 3. 【方案A的轉場起點】
-        Debug.Log($"玩家進入了節點: {clickedNode.templateData.name}，準備載入場景...");
-
-        // 關閉地圖專用的相機與畫布，把螢幕「讓」給接下來要載入的探索場景
         if (mapCamera != null) mapCamera.gameObject.SetActive(false);
         if (mapCanvas != null) mapCanvas.gameObject.SetActive(false);
 
-        // 疊加載入探索場景
-        SceneManager.LoadSceneAsync(exploreSceneName, LoadSceneMode.Additive);
+        string targetScene = "ExploreScene";
+        if (clickedNode.templateData != null && !string.IsNullOrEmpty(clickedNode.templateData.targetSceneName))
+        {
+            targetScene = clickedNode.templateData.targetSceneName;
+        }
+
+        string nodeName = clickedNode.templateData != null ? clickedNode.templateData.name : "Unknown";
+        Debug.Log($"[地圖] 玩家進入了節點: {nodeName}，準備疊加載入場景: {targetScene}");
+
+        // --- 記錄載入的場景名稱 ---
+        lastLoadedSceneName = targetScene;
+
+        SceneManager.LoadSceneAsync(targetScene, LoadSceneMode.Additive);
     }
 
-    // 供探索場景結束時呼叫 (例如打完怪了，回到地圖)
-    public void ReturnToMap()
+    // ========================================================
+    // --- 新增：由探索場景呼叫，將目前的探索場景替換成戰鬥場景 ---
+    // ========================================================
+    public void TransferToBattleScene(string battleSceneName)
     {
-        // 重新開啟地圖相機與畫布
+        Debug.Log($"[地圖] 準備從 {lastLoadedSceneName} 切換至戰鬥場景: {battleSceneName}");
+
+        // 1. 卸載當前的探索場景
+        if (!string.IsNullOrEmpty(lastLoadedSceneName))
+        {
+            SceneManager.UnloadSceneAsync(lastLoadedSceneName);
+        }
+
+        // 2. 疊加載入同學的戰鬥場景
+        SceneManager.LoadSceneAsync(battleSceneName, LoadSceneMode.Additive);
+        
+        // 3. 更新目前疊加在上面的場景名稱！這樣戰鬥結束時才能正確卸載它
+        lastLoadedSceneName = battleSceneName;
+    }
+
+    // --- 修改：不再需要傳入場景名稱，由地圖總管自行決定卸載誰 ---
+    public void WakeUpMapAndUnload()
+    {
+        if (string.IsNullOrEmpty(lastLoadedSceneName))
+        {
+            Debug.LogWarning("[地圖] 沒有記錄到任何載入的場景，無法卸載！");
+            return;
+        }
+
+        Debug.Log($"[地圖] 準備卸載場景 {lastLoadedSceneName} 並重新喚醒地圖相機...");
+        
         if (mapCamera != null) mapCamera.gameObject.SetActive(true);
         if (mapCanvas != null) mapCanvas.gameObject.SetActive(true);
         
-        // 卸載探索場景
-        SceneManager.UnloadSceneAsync(exploreSceneName);
+        // 卸載記錄在案的場景
+        SceneManager.UnloadSceneAsync(lastLoadedSceneName);
+        
+        // 清空記錄
+        lastLoadedSceneName = "";
     }
 }

@@ -1,11 +1,23 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum ExplorationNodeType
+{
+    Event,
+    Combat,
+    Boss
+}
+
 [CreateAssetMenu(fileName = "NewRoomNode", menuName = "Roguelike/MapNode")]
 public class MapNodeExplore : ScriptableObject
 {
     [Header("房間設定")]
     public string roomName = "未知房間";
+    public ExplorationNodeType nodeType = ExplorationNodeType.Combat;
+    
+    [Tooltip("點擊此節點時要疊加載入的場景名稱 (例如 ExploreScene 或 BattleScene)")]
+    public string targetSceneName = "ExploreScene";
+
     public GameObject roomPrefab;
 
     [Header("敘事與文本")]
