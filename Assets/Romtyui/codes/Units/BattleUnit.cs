@@ -128,46 +128,51 @@ public class BattleUnit : MonoBehaviour
 
     public virtual void TakeDamage(int amount)
     {
-        if (amount <= 0)
-            return;
-
         int hpBefore = currentHp;
 
-        // 先用護盾抵擋傷害
-        int blockedAmount = Mathf.Min(block, amount);
-        block -= blockedAmount;
+        int remaining = amount;
 
-        // 剩下沒被護盾擋住的才會扣 HP
-        int finalDamage = amount - blockedAmount;
-
-        if (finalDamage > 0)
+        if (block > 0)
         {
-            currentHp -= finalDamage;
-
-            if (currentHp < 0)
-                currentHp = 0;
+            int absorbed = Mathf.Min(block, remaining);
+            block -= absorbed;
+            remaining -= absorbed;
         }
 
-        // 你的 BattleUnit 是用事件通知 UI 更新
+        currentHp -= remaining;
+
+        if (currentHp < 0)
+            currentHp = 0;
+
+        int realHpDamage = hpBefore - currentHp;
+
         OnHpChanged?.Invoke();
 
-        bool actuallyLostHp = currentHp < hpBefore;
-
-        // 只有玩家真的扣到 HP 才搖晃
-        if (actuallyLostHp && isPlayerUnit)
+        if (realHpDamage > 0 && this is EnemyUnit)
         {
-            if (CameraShake.Instance != null)
-                CameraShake.Instance.Shake();
+            BattleManager battleManager = FindFirstObjectByType<BattleManager>();
+
+            if (battleManager != null)
+            {
+                RectTransform rect = transform as RectTransform;
+
+                if (rect != null)
+                    battleManager.ShowDamagePopup(realHpDamage, rect);
+            }
         }
+
+        Debug.Log($"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}");
 
         if (currentHp <= 0)
         {
             Die();
         }
-        else if (actuallyLostHp)
+        else if (realHpDamage > 0)
         {
             OnDamagedButAlive();
         }
+
+        Debug.Log($"[Damage] {unitName} take {amount}, realHpDamage = {realHpDamage}, HP = {currentHp}");
     }
 
 

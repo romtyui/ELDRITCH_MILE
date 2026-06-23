@@ -13787,6 +13787,7 @@ RectTransform:
   - {fileID: 716225807}
   - {fileID: 1930022467}
   - {fileID: 1665138571}
+  - {fileID: 1753983813}
   m_Father: {fileID: 1791172256}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -21443,6 +21444,41 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1739929399}
   m_CullTransparentMesh: 1
+--- !u!1 &1753983812
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1753983813}
+  m_Layer: 5
+  m_Name: DamagePopupRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1753983813
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1753983812}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1133561396}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1775657553
 GameObject:
   m_ObjectHideFlags: 0
@@ -22282,6 +22318,9 @@ MonoBehaviour:
   turnPhaseBannerUI: {fileID: 1930022469}
   hpFillImage: {fileID: 1261777585}
   sanFillImage: {fileID: 1649682361}
+  damagePopupPrefab: {fileID: -8286644415514860712, guid: 1144ac4c395712d408b3fc4c798cae5a, type: 3}
+  damagePopupRoot: {fileID: 1753983813}
+  damagePopupWorldOffset: {x: 0, y: 1.5, z: 0}
   currentPhase: 0
   battleTurnNumber: 0
   enemyFormationSpawner: {fileID: 75625396}

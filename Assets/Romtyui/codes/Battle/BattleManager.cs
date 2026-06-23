@@ -38,6 +38,11 @@ public class BattleManager : MonoBehaviour
     public Image sanFillImage;
     // public EnemyStatusBarUI enemyStatusBarUI; // 之後再做
 
+    [Header("Damage Popup UI")]
+    public DamagePopupUI damagePopupPrefab;
+    public RectTransform damagePopupRoot;
+    public Vector3 damagePopupWorldOffset = new Vector3(0f, 1.5f, 0f);
+
     [Header("Runtime")]
     public BattlePhase currentPhase = BattlePhase.None;
 
@@ -1041,6 +1046,27 @@ public class BattleManager : MonoBehaviour
         RefreshStatusUI();
 
         StartPlayerTurn();
+    }
+    public void ShowDamagePopup(int damage, Transform target)
+    {
+        if (damage <= 0)
+            return;
+
+        if (damagePopupPrefab == null || damagePopupRoot == null || target == null)
+            return;
+
+        Camera cam = Camera.main;
+        if (cam == null)
+            return;
+
+        Vector3 worldPos = target.position + damagePopupWorldOffset;
+        Vector3 screenPos = cam.WorldToScreenPoint(worldPos);
+
+        if (screenPos.z < 0f)
+            return;
+
+        DamagePopupUI popup = Instantiate(damagePopupPrefab, damagePopupRoot);
+        popup.Setup(damage, screenPos);
     }
     public void AddCardToHand(CardData cardData)
     {
