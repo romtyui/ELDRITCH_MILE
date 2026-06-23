@@ -7,10 +7,10 @@ using UnityEngine.UI;
 public class CardViewUI : MonoBehaviour
 {
     [Header("Image Refs")]
-    public Image artworkImage;      // 武器層
-    public Image cardFaceImage;     // 卡面層
-    public Image cardFrameImage;    // 卡框層
-    public Image maskImage;         // 蒙版
+    public Image artworkImage;
+    public Image cardFaceImage;
+    public Image cardFrameImage;
+    public Image maskImage;
 
     [Header("Text Refs")]
     public TMP_Text nameText;
@@ -20,19 +20,20 @@ public class CardViewUI : MonoBehaviour
     [Header("Fallback Visual")]
     public CardVisualData defaultVisualData;
 
-
-
     public CardInstance CardInstance { get; private set; }
-    private string currentRuntimeDescription;
+
     [Header("Tooltip")]
     public TooltipTriggerUI tooltipTrigger;
     public TooltipKeywordDatabase tooltipKeywordDatabase;
 
     [Header("Keyword Highlight")]
     public string keywordColor = "#FFD45A";
+    public string damageValueColor = "#FF4A4A";
+    public string blockValueColor = "#66CCFF";
 
     [Header("Tooltip Position")]
     public TooltipAnchorSide cardTooltipSide = TooltipAnchorSide.Top;
+
 
     private BattleManager cachedBattleManager;
     private string lastRuntimeDescription;
@@ -52,16 +53,15 @@ public class CardViewUI : MonoBehaviour
         if (costText != null)
             costText.text = instance.currentCost.ToString();
 
-        RefreshRuntimeDescription();
-
         CardVisualData visual = data.visualData != null
             ? data.visualData
             : defaultVisualData;
 
         ApplyVisual(visual);
 
-        SetupTooltip(instance, lastRuntimeDescription);
+        RefreshRuntimeDescription();
     }
+
     public void RefreshRuntimeDescription()
     {
         if (CardInstance == null || CardInstance.data == null)
@@ -74,6 +74,7 @@ public class CardViewUI : MonoBehaviour
 
         SetupTooltip(CardInstance, lastRuntimeDescription);
     }
+
     private string BuildRuntimeDescription(CardInstance instance)
     {
         if (instance == null || instance.data == null)
@@ -90,13 +91,10 @@ public class CardViewUI : MonoBehaviour
             ? battleManager.playerUnit
             : null;
 
-        BattleUnit target = battleManager != null
-            ? battleManager.currentEnemy
-            : null;
+        BattleUnit target = null;
 
-        // 全體攻擊不套用單一怪物的易傷，因為每個怪物受到的傷害可能不同。
-        if (instance.data.targetType == TargetType.AllEnemies)
-            target = null;
+        if (battleManager != null && instance.data.targetType == TargetType.SingleEnemy)
+            target = battleManager.currentEnemy;
 
         CardResolveContext context = new CardResolveContext(
             source,
@@ -107,6 +105,7 @@ public class CardViewUI : MonoBehaviour
 
         return ReplaceDescriptionTokens(text, instance, context);
     }
+
     private string ReplaceDescriptionTokens(
     string text,
     CardInstance instance,
@@ -116,28 +115,137 @@ public class CardViewUI : MonoBehaviour
         if (instance == null || instance.data == null || instance.data.effects == null)
             return text;
 
+        int damageIndex = 0;
+        int blockIndex = 0;
+
+        Dictionary<string, string> values = new Dictionary<string, string>();
+
+        for (int i = 0; i < instance.data.effects.Count; i++)
+        {
+            CardEffectData effect = instance.data.effects[i];
+
+            if (effect == null)
+                continue;
+
+            if (effect is DamageEffectData damageEffect)
+            {
+                int value = CalculateDamagePreview(instance, damageEffect, context);
+                string coloredValue = ColorValue(value, damageValueColor);
+
+                if (!values.ContainsKey("damage"))
+                    values.Add("damage", coloredValue);
+
+                if (!values.ContainsKey("damege"))
+                    values.Add("damege", coloredValue);
+
+                values["damage" + damageIndex] = coloredValue;
+                values["damege" + damageIndex] = coloredValue;
+
+                damageIndex++;
+            }
+            else if (effect is GainBlockEffectData blockEffect)
+            {
+                int value = CalculateBlockPreview(blockEffect, context);
+                string coloredValue = ColorValue(value, blockValueColor);
+
+                if (!values.ContainsKey("block"))
+                    values.Add("block", coloredValue);
+
+                values["block" + blockIndex] = coloredValue;
+
+                blockIndex++;
+            }
+            else if (effect is CardDescriptionValueProvider provider)
+            {
+                AddProviderValue(values, provider, "damage", context, damageValueColor);
+                AddProviderValue(values, provider, "damege", context, damageValueColor);
+                AddProviderValue(values, provider, "block", context, blockValueColor);
+            }
+        }
+
         return Regex.Replace(text, @"\{([a-zA-Z0-9_]+)\}", match =>
         {
             string key = match.Groups[1].Value;
 
-            for (int i = 0; i < instance.data.effects.Count; i++)
-            {
-                CardEffectData effect = instance.data.effects[i];
+            if (values.TryGetValue(key, out string value))
+                return value;
 
-                if (effect == null)
-                    continue;
-
-                if (effect is CardDescriptionValueProvider provider)
-                {
-                    if (provider.TryGetDescriptionValue(key, context, out int value))
-                        return value.ToString();
-                }
-            }
-
-            // 沒有任何效果能處理這個 key，就保留原樣，方便你 debug。
             return match.Value;
         });
     }
+
+    private void AddProviderValue(
+    Dictionary<string, string> values,
+    CardDescriptionValueProvider provider,
+    string key,
+    CardResolveContext context,
+    string color
+)
+    {
+        if (provider == null)
+            return;
+
+        if (values.ContainsKey(key))
+            return;
+
+        if (provider.TryGetDescriptionValue(key, context, out int value))
+            values.Add(key, ColorValue(value, color));
+    }
+    private string ColorValue(int value, string color)
+    {
+        if (string.IsNullOrWhiteSpace(color))
+            return value.ToString();
+
+        return $"<color={color}>{value}</color>";
+    }
+
+    private int CalculateDamagePreview(
+        CardInstance instance,
+        DamageEffectData damageEffect,
+        CardResolveContext context
+    )
+    {
+        if (damageEffect == null)
+            return 0;
+
+        int damage = damageEffect.amount;
+
+        BattleUnit source = context != null ? context.source : null;
+        BattleUnit target = context != null ? context.target : null;
+
+        if (source != null)
+            damage = source.ModifyOutgoingDamage(damage);
+
+        bool shouldApplyTargetStatus =
+            instance != null &&
+            instance.data != null &&
+            instance.data.targetType == TargetType.SingleEnemy &&
+            target != null;
+
+        if (shouldApplyTargetStatus)
+            damage = target.ModifyIncomingDamage(damage);
+
+        return Mathf.Max(0, damage);
+    }
+
+    private int CalculateBlockPreview(
+        GainBlockEffectData blockEffect,
+        CardResolveContext context
+    )
+    {
+        if (blockEffect == null)
+            return 0;
+
+        int block = blockEffect.amount;
+
+        BattleUnit source = context != null ? context.source : null;
+
+        if (source != null)
+            block = source.ModifyBlockGain(block);
+
+        return Mathf.Max(0, block);
+    }
+
     private BattleManager GetBattleManager()
     {
         if (cachedBattleManager == null)
@@ -145,6 +253,7 @@ public class CardViewUI : MonoBehaviour
 
         return cachedBattleManager;
     }
+
     private string BuildHighlightedDescription(string originalDescription)
     {
         if (string.IsNullOrWhiteSpace(originalDescription))
@@ -155,7 +264,8 @@ public class CardViewUI : MonoBehaviour
 
         string result = originalDescription;
 
-        List<TooltipKeywordEntry> foundKeywords = tooltipKeywordDatabase.FindKeywordsInText(originalDescription);
+        List<TooltipKeywordEntry> foundKeywords =
+            tooltipKeywordDatabase.FindKeywordsInText(originalDescription);
 
         for (int i = 0; i < foundKeywords.Count; i++)
         {
@@ -173,6 +283,7 @@ public class CardViewUI : MonoBehaviour
 
         return result;
     }
+
     private void SetupTooltip(CardInstance card, string runtimeDescription)
     {
         if (tooltipTrigger == null)
@@ -187,6 +298,7 @@ public class CardViewUI : MonoBehaviour
 
         tooltipTrigger.SetEntries(entries, cardTooltipSide);
     }
+
     private void AddKeywordTooltipEntries(List<TooltipEntry> results, string description)
     {
         if (results == null)
@@ -234,6 +346,7 @@ public class CardViewUI : MonoBehaviour
             results.Add(new TooltipEntry(title, body));
         }
     }
+
     public void SetTooltipSide(TooltipAnchorSide side)
     {
         cardTooltipSide = side;
@@ -241,65 +354,7 @@ public class CardViewUI : MonoBehaviour
         if (tooltipTrigger != null)
             tooltipTrigger.preferredSide = side;
     }
-    private List<TooltipEntry> BuildCardKeywordTooltipEntries(CardInstance card)
-    {
-        List<TooltipEntry> results = new();
 
-        if (card == null || card.data == null)
-            return results;
-
-        if (tooltipKeywordDatabase == null)
-            return results;
-
-        string description = card.data.description;
-
-        List<TooltipKeywordEntry> foundKeywords = tooltipKeywordDatabase.FindKeywordsInText(description);
-
-        for (int i = 0; i < foundKeywords.Count; i++)
-        {
-            TooltipKeywordEntry keywordEntry = foundKeywords[i];
-
-            if (keywordEntry == null)
-                continue;
-
-            string title = string.IsNullOrWhiteSpace(keywordEntry.title)
-                ? keywordEntry.keyword
-                : keywordEntry.title;
-
-            string body = keywordEntry.description;
-
-            if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(body))
-                continue;
-
-            results.Add(new TooltipEntry(title, body));
-        }
-
-        return results;
-    }
-    private string BuildCardKeywordText(CardData data)
-    {
-        if (data == null)
-            return "";
-
-        string result = "";
-
-        if (data.retain)
-            result += "保留：回合結束時不會被棄掉。\n";
-
-        if (data.exhaust)
-            result += "消耗：打出後本場戰鬥暫時移除。\n";
-
-        if (data.ethereal)
-            result += "虛無：如果回合結束仍在手牌中，會被消耗。\n";
-
-        if (data.isToken)
-            result += "Token：由效果生成的特殊牌。\n";
-
-        if (data.isGodCard)
-            result += "神牌：打出後會觸發特殊污染或變化效果。\n";
-
-        return result;
-    }
     private void ApplyVisual(CardVisualData visual)
     {
         if (visual == null)

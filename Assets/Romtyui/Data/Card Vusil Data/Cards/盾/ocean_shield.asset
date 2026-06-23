@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: ocean_shield
   cardName: ocean_shield
-  description: "\u7372\u5F976\u9EDE\u8B77\u76FE\n\u7372\u5F971\u9EDE\u529B\u91CF"
+  description: "\u7372\u5F97 {block} \u9EDE\u8B77\u76FE\n\u7372\u5F971\u9EDE\u529B\u91CF"
   visualData: {fileID: 11400000, guid: 7db8b038fc7b44841ae83831c163d14a, type: 2}
   cardType: 1
   rarity: 0
@@ -23,6 +23,10 @@ MonoBehaviour:
   exhaust: 0
   ethereal: 0
   retain: 0
+  isToken: 0
+  tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 144e6b3118cd63a43acac2b553d92499, type: 2}
   - {fileID: 11400000, guid: fa8f5b37a6853934a93b83a903ebc973, type: 2}

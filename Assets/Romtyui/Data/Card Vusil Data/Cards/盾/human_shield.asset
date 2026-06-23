@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: human_shield
   cardName: human_shield
-  description: "\u7372\u5F976\u9EDE\u8B77\u76FE"
+  description: "\u7372\u5F97 {block} \u9EDE\u8B77\u76FE"
   visualData: {fileID: 11400000, guid: db88a014cd1ebcb419934286faebf892, type: 2}
   cardType: 0
   rarity: 0
@@ -23,5 +23,9 @@ MonoBehaviour:
   exhaust: 0
   ethereal: 0
   retain: 0
+  isToken: 0
+  tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 144e6b3118cd63a43acac2b553d92499, type: 2}

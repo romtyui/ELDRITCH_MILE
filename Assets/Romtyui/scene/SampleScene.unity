@@ -2290,6 +2290,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &181309834
 GameObject:
@@ -4551,6 +4553,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &292422261
 GameObject:
@@ -4974,8 +4978,15 @@ MonoBehaviour:
   battleManagerObject: {fileID: 1791172254}
   killAllEnemiesKey: 25
   enableBattleManagerKey: 16
+  toggleStatusDebugUIKey: 94
   debugDamage: 9999
   enableDebugHotkeys: 1
+  showStatusDebugUI: 0
+  includeInactiveEnemies: 0
+  statusAmount: 1
+  allCardDatabase: {fileID: 11400000, guid: 716868c49c6c473459a8b95399ff61f1, type: 2}
+  debugAddableCards: []
+  addCardAmount: 1
 --- !u!4 &328685897
 Transform:
   m_ObjectHideFlags: 0
@@ -8146,6 +8157,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!114 &593662567
 MonoBehaviour:
@@ -9729,6 +9742,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &769923248
 GameObject:
@@ -11769,6 +11784,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &952948179
 GameObject:
@@ -15120,6 +15137,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &1261777583
 GameObject:
@@ -15660,6 +15679,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &1330222676
 GameObject:
@@ -21201,6 +21222,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!114 &1732845279
 MonoBehaviour:
@@ -22071,6 +22094,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &1786970439
 GameObject:
@@ -24055,6 +24080,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &2033931681
 GameObject:
@@ -24354,6 +24381,8 @@ MonoBehaviour:
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
   keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &2075213760
 GameObject:

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: human_stick
   cardName: human_stick
-  description: "\u9020\u6210 6 \u9EDE\u50B7\u5BB3"
+  description: "\u9020\u6210 {damage} \u9EDE\u50B7\u5BB3"
   visualData: {fileID: 11400000, guid: f921d68cc4f01634da9fd34006152f3d, type: 2}
   cardType: 0
   rarity: 0
@@ -23,5 +23,9 @@ MonoBehaviour:
   exhaust: 0
   ethereal: 0
   retain: 0
+  isToken: 0
+  tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
