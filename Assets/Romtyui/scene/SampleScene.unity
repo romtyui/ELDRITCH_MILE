@@ -563,8 +563,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyFormationSpawner
   encounterPool: {fileID: 11400000, guid: 13f5cf0799ec5e042b125c85a3849e23, type: 2}
-  useStageWeightRule: 1
-  currentStageMaxWeight: 3
+  useStageWeightRule: 0
+  currentStageMaxWeight: 1
   currentStageIsBoss: 0
   enemySlots:
   - {fileID: 2132923025}
@@ -12727,9 +12727,13 @@ MonoBehaviour:
   isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
+  isCharging: 0
+  chargeValue: 0
+  chargeTurnsLeft: 0
   currentIntentIndex: 0
   currentHpText: {fileID: 512364049}
   maxHpText: {fileID: 1691219662}
+  stunIntent: {fileID: 0}
   intentImage: {fileID: 555420591}
   intentDamageText: {fileID: 1330222678}
   visualAnimationController: {fileID: 0}
@@ -17781,9 +17785,13 @@ MonoBehaviour:
   isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
+  isCharging: 0
+  chargeValue: 0
+  chargeTurnsLeft: 0
   currentIntentIndex: 0
   currentHpText: {fileID: 1088045887}
   maxHpText: {fileID: 271351973}
+  stunIntent: {fileID: 0}
   intentImage: {fileID: 2007904619}
   intentDamageText: {fileID: 1588659780}
   visualAnimationController: {fileID: 0}
@@ -24843,9 +24851,13 @@ MonoBehaviour:
   isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
+  isCharging: 0
+  chargeValue: 0
+  chargeTurnsLeft: 0
   currentIntentIndex: 0
   currentHpText: {fileID: 550124009}
   maxHpText: {fileID: 132822267}
+  stunIntent: {fileID: 0}
   intentImage: {fileID: 504123416}
   intentDamageText: {fileID: 1547757925}
   visualAnimationController: {fileID: 0}

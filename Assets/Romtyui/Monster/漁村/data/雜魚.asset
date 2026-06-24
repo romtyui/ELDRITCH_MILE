@@ -21,11 +21,11 @@ MonoBehaviour:
   visualEulerAngles: {x: 0, y: 0, z: 0}
   hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
   hitBoxSprite: {fileID: 0}
+  stunIntent: {fileID: 0}
   startingStatuses: []
   intents:
-  - {fileID: 11400000, guid: 9ccf9f684db95004fb5cd4dd4b6de1f0, type: 2}
-  - {fileID: 11400000, guid: 1509a49531ebcf14a92d3e18f8180128, type: 2}
   - {fileID: 11400000, guid: e7ebf821917fce441add4146ce26555f, type: 2}
+  - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
   idleTrigger: idle
   attackTrigger: atk
   hurtTrigger: hurt
