@@ -15,4 +15,11 @@ public class EnemyDamageActionData : EnemyActionData
 
         Debug.Log($"{context.enemy.unitName} 攻擊玩家，基礎傷害 {amount}");
     }
+    //public override TooltipEntry GetTooltipEntry()
+    //{
+    //    return new TooltipEntry(
+    //        "攻擊",
+    //        $"攻擊造成 {amount} 點傷害"
+    //    );
+    //}
 }

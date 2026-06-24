@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: ocean_axe
   cardName: ocean_axe
-  description: "\u7372\u5F97 3 \u9EDE \u81E8\u6642\u529B\u91CF\n\u9020\u6210 9 \u9EDE\u50B7\u5BB3"
+  description: "\u7372\u5F97 3 \u9EDE \u81E8\u6642\u529B\u91CF\n\u9020\u6210 {damage}
+    \u9EDE\u50B7\u5BB3"
   visualData: {fileID: 11400000, guid: 30eab00d60387cf4b85fdab91f2b445a, type: 2}
   cardType: 0
   rarity: 0
@@ -23,6 +24,10 @@ MonoBehaviour:
   exhaust: 0
   ethereal: 0
   retain: 0
+  isToken: 0
+  tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 53fe4992020dade479438ae12030a34d, type: 2}
   - {fileID: 11400000, guid: d736b78ea3db8b542bfca96a019ad3d9, type: 2}

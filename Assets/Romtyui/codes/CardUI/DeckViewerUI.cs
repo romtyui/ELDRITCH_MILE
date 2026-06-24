@@ -155,6 +155,7 @@ public class DeckViewerUI : MonoBehaviour
             }
 
             CardViewUI view = Instantiate(cardPrefab, contentRoot);
+            view.SetTooltipSide(TooltipAnchorSide.Left);
             view.gameObject.SetActive(true);
             view.Bind(card);
 

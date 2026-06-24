@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: goat_stick
   cardName: goat_stick
-  description: "\u9020\u6210 6 \u9EDE\u50B7\u5BB3\n\u751F\u6210 1\u5F35 token\u5230\u624B\u724C"
+  description: "\u9020\u6210 {damage} \u9EDE\u50B7\u5BB3\n\u751F\u6210 1\u5F35 token\u5230\u624B\u724C"
   visualData: {fileID: 11400000, guid: a7bceafd9727b5342a614bfa5da1ed3d, type: 2}
   cardType: 0
   rarity: 0
@@ -25,6 +25,8 @@ MonoBehaviour:
   retain: 0
   isToken: 0
   tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
   - {fileID: 11400000, guid: b11532d897f1d754a8613e4104ed1ee2, type: 2}

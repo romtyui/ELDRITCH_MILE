@@ -11,8 +11,10 @@ public class BattleUnit : MonoBehaviour
 
     public event Action OnHpChanged;
     public event Action OnStatusChanged;
+    [Header("Unit Type")]
+    public bool isPlayerUnit;
 
-    private Dictionary<StatusType, int> statuses = new();
+    [SerializeField] private Dictionary<StatusType, int> statuses = new();
 
     protected virtual void Awake()
     {
@@ -25,11 +27,14 @@ public class BattleUnit : MonoBehaviour
     }
     public virtual void OnTurnStart()
     {
-        ResolvePoisonAtTurnStart();
+        
+        ResolveRegenerationAtTurnStart();
+        ResolveHardenAtTurnStart();
     }
 
     public virtual void OnTurnEnd()
     {
+        ResolvePoisonAtTurnStart();
         ClearEndOfTurnStatuses();
         TickTemporaryStatuses();
     }
@@ -98,7 +103,7 @@ public class BattleUnit : MonoBehaviour
 
         if (GetStatus(StatusType.Weak) > 0)
         {
-            damage = Mathf.FloorToInt(damage * 0.75f);
+            damage = Mathf.CeilToInt(damage * 0.75f);
         }
 
         return Mathf.Max(0, damage);
@@ -126,6 +131,8 @@ public class BattleUnit : MonoBehaviour
 
     public virtual void TakeDamage(int amount)
     {
+        int hpBefore = currentHp;
+
         int remaining = amount;
 
         if (block > 0)
@@ -140,23 +147,56 @@ public class BattleUnit : MonoBehaviour
         if (currentHp < 0)
             currentHp = 0;
 
+        int realHpDamage = hpBefore - currentHp;
+
         OnHpChanged?.Invoke();
 
-        Debug.Log($"{unitName} 受到 {amount} 傷害，剩餘 HP: {currentHp}");
+
+        if (realHpDamage > 0)
+        {
+            ReduceRegenerationOnDamage();
+            OnAfterHpDamageTaken(realHpDamage);
+        }
+        if (realHpDamage > 0 && this is EnemyUnit)
+        {
+            BattleManager battleManager = FindFirstObjectByType<BattleManager>();
+
+            if (battleManager != null)
+            {
+                RectTransform rect = transform as RectTransform;
+
+                if (rect != null)
+                    battleManager.ShowDamagePopup(realHpDamage, rect);
+            }
+        }
+
+        Debug.Log($"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}");
 
         if (currentHp <= 0)
         {
             Die();
         }
-        else
+        else if (realHpDamage > 0)
         {
             OnDamagedButAlive();
         }
 
-        Debug.Log($"[Damage] {unitName} take {amount}, HP = {currentHp}");
+        Debug.Log($"[Damage] {unitName} take {amount}, realHpDamage = {realHpDamage}, HP = {currentHp}");
     }
+    private void ReduceRegenerationOnDamage()
+    {
+        int regeneration = GetStatus(StatusType.Regeneration);
 
+        if (regeneration <= 0)
+            return;
 
+        RemoveStatus(StatusType.Regeneration, 1);
+
+        Debug.Log($"{unitName} 受到傷害，再生層數減少 1，剩餘 {GetStatus(StatusType.Regeneration)}");
+    }
+    protected virtual void OnAfterHpDamageTaken(int realHpDamage)
+    {
+    }
     public virtual void Heal(int amount)
     {
         currentHp += amount;
@@ -175,12 +215,15 @@ public class BattleUnit : MonoBehaviour
 
         block += finalBlock;
 
+        OnHpChanged?.Invoke();
+
         Debug.Log($"{unitName} 獲得 {finalBlock} 格擋，當前格擋: {block}");
     }
 
     public virtual void ResetBlock()
     {
         block = 0;
+        OnHpChanged?.Invoke();
     }
 
     public virtual void ApplyStatus(StatusType statusType, int amount)
@@ -220,6 +263,23 @@ public class BattleUnit : MonoBehaviour
     {
         return GetStatus(statusType) > 0;
     }
+    public virtual void SetStatus(StatusType statusType, int amount)
+    {
+        if (amount <= 0)
+        {
+            if (statuses.ContainsKey(statusType))
+                statuses.Remove(statusType);
+
+            OnStatusChanged?.Invoke();
+            return;
+        }
+
+        statuses[statusType] = amount;
+
+        OnStatusChanged?.Invoke();
+
+        Debug.Log($"{unitName} 的 {statusType} 被設定為 {amount}");
+    }
 
     private void ResolvePoisonAtTurnStart()
     {
@@ -234,7 +294,36 @@ public class BattleUnit : MonoBehaviour
 
         RemoveStatus(StatusType.Poison, 1);
     }
+    private void ResolveHardenAtTurnStart()
+    {
+        int harden = GetStatus(StatusType.Harden);
 
+        if (harden <= 0)
+            return;
+
+        GainBlock(harden);
+
+        Debug.Log($"{unitName} 的硬化發動，回合開始獲得 {harden} 點護盾");
+    }
+    private void ResolveRegenerationAtTurnStart()
+    {
+        int regeneration = GetStatus(StatusType.Regeneration);
+
+        if (regeneration <= 0)
+            return;
+
+        if (currentHp <= 0)
+            return;
+
+        int healAmount = Mathf.CeilToInt(maxHp * regeneration * 0.05f);
+
+        if (healAmount <= 0)
+            healAmount = 1;
+
+        Heal(healAmount);
+
+        Debug.Log($"{unitName} 的再生發動，層數 {regeneration}，恢復 {healAmount} 點生命");
+    }
     private void TickTemporaryStatuses()
     {
         TickStatus(StatusType.Weak);

@@ -32,6 +32,17 @@ public class EnemyData : ScriptableObject
     [Header("Image Settings")]
     public Color hitBoxColor = new Color(1f, 0f, 1f, 0.25f);
     public Sprite hitBoxSprite;
+    [Header("Special Intents")]
+    public EnemyIntentData stunIntent;
+    [System.Serializable]
+    public class StartingStatusEntry
+    {
+        public StatusType statusType;
+        public int amount = 1;
+    }
+
+    [Header("Starting Statuses")]
+    public List<StartingStatusEntry> startingStatuses = new();
 
     [Header("Intents")]
     public List<EnemyIntentData> intents = new();
@@ -50,4 +61,14 @@ public class EnemyData : ScriptableObject
     public float deathAnimDuration = 1.0f;
     public float blockAnimDuration = 0.5f;
     public float specialAttackAnimDuration = 0.8f;
+
+    [Header("Animation SFX")]
+    public AudioClip attackSfx;
+    public AudioClip hurtSfx;
+    public AudioClip deathSfx;
+    public AudioClip blockSfx;
+    public AudioClip specialAttackSfx;
+
+    [Header("Animation SFX Settings")]
+    [Range(0f, 1f)] public float sfxVolume = 1f;
 }

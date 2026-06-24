@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: ocean_sword
   cardName: ocean_sword
-  description: "\u5C0D \u6240\u6709\u6575\u4EBA \u9020\u6210 6\u9EDE \u50B7\u5BB3\n\u7372\u5F97
+  description: "\u5C0D \u6240\u6709\u6575\u4EBA \u9020\u6210 {damage} \u9EDE \u50B7\u5BB3\n\u7372\u5F97
     3\u9EDE \u81E8\u6642\u529B\u91CF"
   visualData: {fileID: 11400000, guid: 72b03fb8f9d7b164db781fde8b1abd2f, type: 2}
   cardType: 0
@@ -24,6 +24,10 @@ MonoBehaviour:
   exhaust: 0
   ethereal: 0
   retain: 0
+  isToken: 0
+  tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
   - {fileID: 11400000, guid: 53fe4992020dade479438ae12030a34d, type: 2}

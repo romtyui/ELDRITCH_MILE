@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: human_axe
   cardName: human_axe
-  description: "\u9020\u6210 9 \u9EDE\u50B7\u5BB3"
+  description: "\u9020\u6210 {damage} \u9EDE\u50B7\u5BB3"
   visualData: {fileID: 11400000, guid: 27d540af5d656654dafab3f8a116db76, type: 2}
   cardType: 0
   rarity: 0
@@ -23,5 +23,9 @@ MonoBehaviour:
   exhaust: 0
   ethereal: 0
   retain: 0
+  isToken: 0
+  tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: d736b78ea3db8b542bfca96a019ad3d9, type: 2}

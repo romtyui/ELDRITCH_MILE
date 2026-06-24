@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: ocean_stick
   cardName: ocean_stick
-  description: "\u9020\u6210 6 \u9EDE\u50B7\u5BB3\n\u7372\u5F97 1 \u9EDE \u529B\u91CF"
+  description: "\u9020\u6210  {damage} \u9EDE\u50B7\u5BB3\n\u7372\u5F97 1 \u9EDE
+    \u529B\u91CF"
   visualData: {fileID: 11400000, guid: abc2b025a67797a409be476f2af336f9, type: 2}
   cardType: 0
   rarity: 0
@@ -23,6 +24,10 @@ MonoBehaviour:
   exhaust: 0
   ethereal: 0
   retain: 0
+  isToken: 0
+  tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
   - {fileID: 11400000, guid: fa8f5b37a6853934a93b83a903ebc973, type: 2}

@@ -147,6 +147,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2417002716793284222}
   - component: {fileID: 5204375593199812058}
+  - component: {fileID: 8150403969932170253}
   m_Layer: 5
   m_Name: StatusIconPrefab
   m_TagString: Untagged
@@ -189,6 +190,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StatusIconUI
   iconImage: {fileID: 168783437754999015}
   stackText: {fileID: 22560675520507211}
+  tooltipTrigger: {fileID: 0}
+  keywordDatabase: {fileID: 0}
+--- !u!114 &8150403969932170253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6777798781298083730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c0c528d19493d247b7ad615e8bb926f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
+  targetRect: {fileID: 0}
+  preferredSide: 1
+  openMode: 0
+  stopEventPropagation: 0
+  entries: []
 --- !u!1 &7031162652024920858
 GameObject:
   m_ObjectHideFlags: 0
@@ -248,7 +268,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:

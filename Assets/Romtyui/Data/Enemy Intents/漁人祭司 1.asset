@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 57ce995f04a5e894cbd0e62549d564bd, type: 3}
-  m_Name: New Enemy Intent Data
+  m_Name: "\u6F01\u4EBA\u796D\u53F8 1"
   m_EditorClassIdentifier: Assembly-CSharp::EnemyIntentData
-  intentName: test
+  intentName: 
   description: 
-  intentIcon: {fileID: 21300000, guid: d39e9a7a9cc9bcb46850ba1dacb0b705, type: 3}
-  damageTextOverride: 6
+  intentIcon: {fileID: 21300000, guid: 6bd461431eb4865489b3cf17937f3781, type: 3}
+  damageTextOverride: 
   actions:
-  - {fileID: 11400000, guid: 639d54c19520ba2498a891a09f08a5e0, type: 2}
+  - {fileID: 11400000, guid: f57e537d34239b34fb26cdeee55296d9, type: 2}
+  animationType: 5

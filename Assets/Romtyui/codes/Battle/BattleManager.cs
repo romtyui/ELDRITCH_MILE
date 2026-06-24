@@ -32,15 +32,23 @@ public class BattleManager : MonoBehaviour
     public HandUIController handUIController;
     public PlayerStatusBarUI playerStatusBarUI;
     public TurnEndButtonAnimatorUI turnEndButtonAnimatorUI;
+    public TurnPhaseBannerUI turnPhaseBannerUI;
     [Header("Player Bars UI")]
     public Image hpFillImage;
     public Image sanFillImage;
     // public EnemyStatusBarUI enemyStatusBarUI; // 之後再做
 
+    [Header("Damage Popup UI")]
+    public DamagePopupUI damagePopupPrefab;
+    public RectTransform damagePopupRoot;
+    public Vector3 damagePopupWorldOffset = new Vector3(0f, 1.5f, 0f);
+
     [Header("Runtime")]
     public BattlePhase currentPhase = BattlePhase.None;
 
     private bool isCheckingBattleEndDelayed;
+    [Header("Turn Count")]
+    public int battleTurnNumber = 0;
 
     [Header("Enemy Spawning")]
     public EnemyFormationSpawner enemyFormationSpawner;
@@ -63,6 +71,8 @@ public class BattleManager : MonoBehaviour
     {
         currentPhase = BattlePhase.None;
         isChangingTurn = false;
+        isResolvingCard = false;
+        battleTurnNumber = 0;
 
         if (playerDeck != null)
             playerDeck.InitializeDeck();
@@ -132,8 +142,14 @@ public class BattleManager : MonoBehaviour
     {
         currentPhase = BattlePhase.PlayerTurn;
         isChangingTurn = false;
+
+        battleTurnNumber++;
+
         if (turnEndButtonAnimatorUI != null)
             turnEndButtonAnimatorUI.SetPlayerTurnIdle();
+
+        if (turnPhaseBannerUI != null)
+            yield return turnPhaseBannerUI.ShowPlayerTurn(battleTurnNumber);
 
         if (playerUnit != null)
         {
@@ -141,7 +157,6 @@ public class BattleManager : MonoBehaviour
             playerUnit.OnTurnStart();
 
             RefreshPlayerBarsUI();
-
             RefreshStatusUI();
 
             if (playerUnit.currentHp <= 0)
@@ -151,14 +166,16 @@ public class BattleManager : MonoBehaviour
             }
         }
 
-        Debug.Log("���a�^�X�}�l");
+        Debug.Log($"玩家回合開始，第 {battleTurnNumber} 回合");
 
         if (handUIController != null)
             yield return handUIController.DrawCardsAnimatedWithBag(playerDeck, cardsPerTurn);
         else if (playerDeck != null)
             playerDeck.DrawCards(cardsPerTurn);
-    }
 
+        if (turnPhaseBannerUI != null)
+            yield return turnPhaseBannerUI.Hide();
+    }
     public void EndPlayerTurn()
     {
         if (currentPhase != BattlePhase.PlayerTurn)
@@ -167,25 +184,70 @@ public class BattleManager : MonoBehaviour
         if (isChangingTurn)
             return;
 
+        if (isResolvingCard)
+        {
+            Debug.Log("[BattleManager] 卡牌或神牌動畫仍在結算中，不能切換到敵方回合");
+            return;
+        }
+
+        StartCoroutine(EndPlayerTurnRoutine());
+
+
+        //if (currentPhase != BattlePhase.PlayerTurn)
+        //    return;
+
+        //if (isChangingTurn)
+        //    return;
+
+        //isChangingTurn = true;
+
+        //if (turnEndButtonAnimatorUI != null)
+        //    turnEndButtonAnimatorUI.SetEnemyTurnIdle();
+
+        //// ���a�^�X�������A����A�Ҧp Weak / Vulnerable / Frail �h�� -1
+        //if (playerUnit != null)
+        //{
+        //    playerUnit.OnTurnEnd();
+
+        //    RefreshPlayerBarsUI();
+
+
+        //    RefreshStatusUI();
+
+        //    if (playerUnit.currentHp <= 0)
+        //    {
+        //        EndBattle(false);
+        //        return;
+        //    }
+        //}
+
+        //if (playerDeck != null)
+        //    playerDeck.DiscardHandAtEndTurn();
+
+        //RefreshHandUI();
+
+        //Debug.Log("���a�^�X����");
+
+        //StartCoroutine(EnemyTurnRoutine());
+    }
+    private IEnumerator EndPlayerTurnRoutine()
+    {
         isChangingTurn = true;
 
         if (turnEndButtonAnimatorUI != null)
             turnEndButtonAnimatorUI.SetEnemyTurnIdle();
 
-        // ���a�^�X�������A����A�Ҧp Weak / Vulnerable / Frail �h�� -1
         if (playerUnit != null)
         {
             playerUnit.OnTurnEnd();
 
             RefreshPlayerBarsUI();
-
-
             RefreshStatusUI();
 
             if (playerUnit.currentHp <= 0)
             {
                 EndBattle(false);
-                return;
+                yield break;
             }
         }
 
@@ -194,11 +256,13 @@ public class BattleManager : MonoBehaviour
 
         RefreshHandUI();
 
-        Debug.Log("���a�^�X����");
+        Debug.Log("玩家回合結束");
+
+        if (turnPhaseBannerUI != null)
+            yield return turnPhaseBannerUI.ShowEnemyTurn();
 
         StartCoroutine(EnemyTurnRoutine());
     }
-
     private IEnumerator EnemyTurnRoutine()
     {
         EnsureEnemiesRegistered();
@@ -766,6 +830,9 @@ public class BattleManager : MonoBehaviour
     {
         if (playerStatusBarUI != null)
             playerStatusBarUI.Refresh();
+
+        if (handUIController != null)
+            handUIController.RefreshCardDescriptionsOnly();
     }
     public void RequestCheckBattleEnd()
     {
@@ -861,6 +928,7 @@ public class BattleManager : MonoBehaviour
         isChangingTurn = true;
         isResolvingCard = false;
         isCheckingBattleEndDelayed = false;
+        battleTurnNumber = 0;
 
         RefreshHandUI();
         RefreshPlayerBarsUI();
@@ -903,6 +971,8 @@ public class BattleManager : MonoBehaviour
 
         currentPhase = BattlePhase.None;
         isChangingTurn = false;
+        isResolvingCard = false;
+        battleTurnNumber = 0;
 
         if (playerDeck != null)
             playerDeck.PrepareForNextBattleKeepDeck();
@@ -955,6 +1025,8 @@ public class BattleManager : MonoBehaviour
 
         currentPhase = BattlePhase.None;
         isChangingTurn = false;
+        isResolvingCard = false;
+        battleTurnNumber = 0;
 
         if (playerUnit != null)
             playerUnit.FullResetUnit();
@@ -974,6 +1046,27 @@ public class BattleManager : MonoBehaviour
         RefreshStatusUI();
 
         StartPlayerTurn();
+    }
+    public void ShowDamagePopup(int damage, Transform target)
+    {
+        if (damage <= 0)
+            return;
+
+        if (damagePopupPrefab == null || damagePopupRoot == null || target == null)
+            return;
+
+        Camera cam = Camera.main;
+        if (cam == null)
+            return;
+
+        Vector3 worldPos = target.position + damagePopupWorldOffset;
+        Vector3 screenPos = cam.WorldToScreenPoint(worldPos);
+
+        if (screenPos.z < 0f)
+            return;
+
+        DamagePopupUI popup = Instantiate(damagePopupPrefab, damagePopupRoot);
+        popup.Setup(damage, screenPos);
     }
     public void AddCardToHand(CardData cardData)
     {

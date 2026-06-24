@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf43116519b6a7a449b6e0c6921700bc, type: 3}
+  m_Name: "tu\u0101-khoo-tai"
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  unitName: "tu\u0101-khoo-tai"
+  maxHp: 80
+  normalVisualPrefab: {fileID: 2726685744332138470, guid: 31fe265b8dd291041a74e7d80c71515a, type: 3}
+  darkVisualPrefab: {fileID: 4278617798232755884, guid: 07b2d6fce24d46e4a96463e7f29c7b9b, type: 3}
+  visualAnchoredPosition: {x: 0, y: 0}
+  visualScale: {x: 1, y: 1, z: 1}
+  visualEulerAngles: {x: 0, y: 0, z: 0}
+  hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
+  hitBoxSprite: {fileID: 0}
+  stunIntent: {fileID: 0}
+  startingStatuses: []
+  intents:
+  - {fileID: 11400000, guid: dc080c9ae1798e6458d890a3e53d8c49, type: 2}
+  - {fileID: 11400000, guid: e533eb873d1c85846886accbb896836d, type: 2}
+  idleTrigger: idle
+  attackTrigger: atk
+  hurtTrigger: hurt
+  deathTrigger: death
+  blockTrigger: block
+  specialAttackTrigger: special
+  attackAnimDuration: 0.6
+  hurtAnimDuration: 0.35
+  deathAnimDuration: 1
+  blockAnimDuration: 0.5
+  specialAttackAnimDuration: 0.8
+  attackSfx: {fileID: 8300000, guid: b975d8a7ce1f39040bf5ea55021522a8, type: 3}
+  hurtSfx: {fileID: 8300000, guid: 953c416a16092f84388d78615701f42e, type: 3}
+  deathSfx: {fileID: 8300000, guid: 75ae7f34af32c844eb56e1426aa2e467, type: 3}
+  blockSfx: {fileID: 0}
+  specialAttackSfx: {fileID: 0}
+  sfxVolume: 1

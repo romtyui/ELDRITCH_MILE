@@ -14,4 +14,11 @@ public class EnemyGainBlockActionData : EnemyActionData
 
         Debug.Log($"{context.enemy.unitName} 獲得 {amount} 格擋");
     }
+    //public override TooltipEntry GetTooltipEntry()
+    //{
+    //    return new TooltipEntry(
+    //        "防禦",
+    //        $"獲得 {amount} 點格擋"
+    //    );
+    //}
 }

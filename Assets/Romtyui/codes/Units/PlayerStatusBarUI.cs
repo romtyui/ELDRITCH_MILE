@@ -8,6 +8,7 @@ public class PlayerStatusBarUI : MonoBehaviour
     public StatusIconDatabase iconDatabase;
     public StatusIconUI statusIconPrefab;
     public Transform iconRoot;
+    public TooltipKeywordDatabase keywordDatabase;
 
     private readonly List<StatusIconUI> spawnedIcons = new();
 
@@ -57,7 +58,7 @@ public class PlayerStatusBarUI : MonoBehaviour
             Sprite icon = iconDatabase.GetIcon(statusType);
 
             StatusIconUI iconUI = Instantiate(statusIconPrefab, iconRoot);
-            iconUI.Set(icon, amount);
+            iconUI.Set(statusType, icon, amount, keywordDatabase);
 
             spawnedIcons.Add(iconUI);
         }

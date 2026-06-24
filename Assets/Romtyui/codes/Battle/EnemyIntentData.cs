@@ -21,6 +21,8 @@ public class EnemyIntentData : ScriptableObject
 
     public EnemyAnimationType animationType = EnemyAnimationType.Attack;
 
+    //public List<EnemyTooltipKeywordData> tooltipKeywords = new();
+
     public string GetDamageText()
     {
         if (!string.IsNullOrEmpty(damageTextOverride))
@@ -45,3 +47,10 @@ public class EnemyIntentData : ScriptableObject
         return totalDamage.ToString();
     }
 }
+//[System.Serializable]
+//public class EnemyTooltipKeywordData
+//{
+//    public string title;
+//    [TextArea(2, 5)]
+//    public string description;
+//}
