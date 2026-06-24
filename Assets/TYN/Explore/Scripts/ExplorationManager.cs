@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement; // 新增這行來處理場景歸屬
 
 public class ExplorationManager : MonoBehaviour
 {
@@ -64,9 +65,17 @@ public class ExplorationManager : MonoBehaviour
         currentNode = node;
 
         if (activeRoomInstance != null) Destroy(activeRoomInstance);
+        
         Vector3 spawnPos = roomSpawnPoint != null ? roomSpawnPoint.position : Vector3.zero;
         activeRoomInstance = Instantiate(node.roomPrefab, spawnPos, Quaternion.identity);
-        
+        activeRoomInstance.name = $"Room_{node.roomName}";
+
+        // ========================================================
+        // 【修復核心】：強制將生成的房間，移動到 ExplorationManager 所在的場景
+        // 確保未來卸載 ExploreScene 時，這個房間會被一起銷毀，絕不殘留！
+        // ========================================================
+        SceneManager.MoveGameObjectToScene(activeRoomInstance, gameObject.scene);
+
         RoomController controller = activeRoomInstance.GetComponent<RoomController>();
         if (controller != null) controller.InitializeRoom(node);
 
@@ -93,7 +102,6 @@ public class ExplorationManager : MonoBehaviour
         isTransitioning = false;
     }
 
-    // 返回大地圖
     public void ExitExploreScene()
     {
         if (isTransitioning) return;
@@ -104,30 +112,37 @@ public class ExplorationManager : MonoBehaviour
     {
         isTransitioning = true;
 
-        // 往前衝刺 (縮小 FOV) 與 畫面變黑
         float timeElapsed = 0f;
         while (timeElapsed < transitionSpeed)
         {
             timeElapsed += Time.deltaTime;
             float t = timeElapsed / transitionSpeed;
-            float smoothT = t * t; // Ease In
+            float smoothT = t * t; 
 
             if (fadeCanvasGroup != null) fadeCanvasGroup.alpha = Mathf.Lerp(0f, 1f, smoothT);
             if (mainCamera != null) mainCamera.fieldOfView = Mathf.Lerp(defaultFOV, defaultFOV - 20f, smoothT);
             yield return null;
         }
 
-        // --- 【方案A核心】：通知大地圖總管把場景接回去 ---
         if (PerspectiveMapGenerator.Instance != null)
         {
-            Debug.Log("[ExplorationManager] 探索結束，交還控制權給大地圖。");
-            // --- 修改：直接呼叫無參數的方法 ---
             PerspectiveMapGenerator.Instance.WakeUpMapAndUnload();
         }
         else
         {
-            Debug.LogWarning("[ExplorationManager] 找不到大地圖總管，無法卸載場景！(可能是在單場景測試中)");
+            Debug.LogWarning("[ExplorationManager] 找不到大地圖總管，無法卸載場景！");
             isTransitioning = false; 
+        }
+    }
+
+    // ========================================================
+    // 雙重保險：如果 ExplorationManager 被銷毀，強制帶走房間
+    // ========================================================
+    private void OnDestroy()
+    {
+        if (activeRoomInstance != null)
+        {
+            Destroy(activeRoomInstance);
         }
     }
 }
