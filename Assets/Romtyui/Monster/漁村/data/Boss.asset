@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf43116519b6a7a449b6e0c6921700bc, type: 3}
+  m_Name: Boss
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  unitName: 
+  maxHp: 200
+  normalVisualPrefab: {fileID: 5170236678497478279, guid: bf268a3a596679644b7cebaf7eb53d51, type: 3}
+  darkVisualPrefab: {fileID: 3783185597483147171, guid: f0404c58383ed83449841e87b93a7931, type: 3}
+  visualAnchoredPosition: {x: 0, y: 250}
+  visualScale: {x: 1.2, y: 1.2, z: 1}
+  visualEulerAngles: {x: 0, y: 0, z: 0}
+  hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
+  hitBoxSprite: {fileID: 0}
+  stunIntent: {fileID: 0}
+  startingStatuses:
+  - statusType: 7
+    amount: 20
+  intents:
+  - {fileID: 11400000, guid: 5ddd6d6144535af4db9c808c36af01ef, type: 2}
+  - {fileID: 11400000, guid: e5707821394d4ca43926ff13fc0a882d, type: 2}
+  - {fileID: 11400000, guid: 58080c96d63f4fe42b1a56b4e9c83e4c, type: 2}
+  - {fileID: 11400000, guid: 9deb6dbdc2ad1df4da48198459d13934, type: 2}
+  idleTrigger: idle
+  attackTrigger: atk
+  hurtTrigger: hurt
+  deathTrigger: death
+  blockTrigger: block
+  specialAttackTrigger: special
+  attackAnimDuration: 0.4
+  hurtAnimDuration: 0.3
+  deathAnimDuration: 1
+  blockAnimDuration: 0.2
+  specialAttackAnimDuration: 0.8
+  attackSfx: {fileID: 0}
+  hurtSfx: {fileID: 0}
+  deathSfx: {fileID: 0}
+  blockSfx: {fileID: 0}
+  specialAttackSfx: {fileID: 0}
+  sfxVolume: 1

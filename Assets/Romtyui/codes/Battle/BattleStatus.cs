@@ -8,5 +8,6 @@ public enum StatusType
     Poison,         // 中毒：回合開始受到傷害
 
 
-    Harden          // 硬化：回合開始獲得護盾
+    Harden,         // 硬化：回合開始獲得護盾
+    Regeneration,   // 自癒：回合開始恢復生命
 }

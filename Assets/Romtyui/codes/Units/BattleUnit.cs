@@ -27,12 +27,14 @@ public class BattleUnit : MonoBehaviour
     }
     public virtual void OnTurnStart()
     {
-        ResolvePoisonAtTurnStart();
+        
+        ResolveRegenerationAtTurnStart();
         ResolveHardenAtTurnStart();
     }
 
     public virtual void OnTurnEnd()
     {
+        ResolvePoisonAtTurnStart();
         ClearEndOfTurnStatuses();
         TickTemporaryStatuses();
     }
@@ -148,8 +150,11 @@ public class BattleUnit : MonoBehaviour
         int realHpDamage = hpBefore - currentHp;
 
         OnHpChanged?.Invoke();
+
+
         if (realHpDamage > 0)
         {
+            ReduceRegenerationOnDamage();
             OnAfterHpDamageTaken(realHpDamage);
         }
         if (realHpDamage > 0 && this is EnemyUnit)
@@ -178,7 +183,17 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"[Damage] {unitName} take {amount}, realHpDamage = {realHpDamage}, HP = {currentHp}");
     }
+    private void ReduceRegenerationOnDamage()
+    {
+        int regeneration = GetStatus(StatusType.Regeneration);
 
+        if (regeneration <= 0)
+            return;
+
+        RemoveStatus(StatusType.Regeneration, 1);
+
+        Debug.Log($"{unitName} 受到傷害，再生層數減少 1，剩餘 {GetStatus(StatusType.Regeneration)}");
+    }
     protected virtual void OnAfterHpDamageTaken(int realHpDamage)
     {
     }
@@ -248,6 +263,23 @@ public class BattleUnit : MonoBehaviour
     {
         return GetStatus(statusType) > 0;
     }
+    public virtual void SetStatus(StatusType statusType, int amount)
+    {
+        if (amount <= 0)
+        {
+            if (statuses.ContainsKey(statusType))
+                statuses.Remove(statusType);
+
+            OnStatusChanged?.Invoke();
+            return;
+        }
+
+        statuses[statusType] = amount;
+
+        OnStatusChanged?.Invoke();
+
+        Debug.Log($"{unitName} 的 {statusType} 被設定為 {amount}");
+    }
 
     private void ResolvePoisonAtTurnStart()
     {
@@ -273,7 +305,25 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 的硬化發動，回合開始獲得 {harden} 點護盾");
     }
+    private void ResolveRegenerationAtTurnStart()
+    {
+        int regeneration = GetStatus(StatusType.Regeneration);
 
+        if (regeneration <= 0)
+            return;
+
+        if (currentHp <= 0)
+            return;
+
+        int healAmount = Mathf.CeilToInt(maxHp * regeneration * 0.05f);
+
+        if (healAmount <= 0)
+            healAmount = 1;
+
+        Heal(healAmount);
+
+        Debug.Log($"{unitName} 的再生發動，層數 {regeneration}，恢復 {healAmount} 點生命");
+    }
     private void TickTemporaryStatuses()
     {
         TickStatus(StatusType.Weak);

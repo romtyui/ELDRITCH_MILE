@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: "tu\u0101-khoo-tai"
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   unitName: "tu\u0101-khoo-tai"
-  maxHp: 100
+  maxHp: 80
   normalVisualPrefab: {fileID: 2726685744332138470, guid: 31fe265b8dd291041a74e7d80c71515a, type: 3}
   darkVisualPrefab: {fileID: 4278617798232755884, guid: 07b2d6fce24d46e4a96463e7f29c7b9b, type: 3}
   visualAnchoredPosition: {x: 0, y: 0}
@@ -37,9 +37,9 @@ MonoBehaviour:
   deathAnimDuration: 1
   blockAnimDuration: 0.5
   specialAttackAnimDuration: 0.8
-  attackSfx: {fileID: 0}
-  hurtSfx: {fileID: 0}
-  deathSfx: {fileID: 0}
+  attackSfx: {fileID: 8300000, guid: b975d8a7ce1f39040bf5ea55021522a8, type: 3}
+  hurtSfx: {fileID: 8300000, guid: 953c416a16092f84388d78615701f42e, type: 3}
+  deathSfx: {fileID: 8300000, guid: 75ae7f34af32c844eb56e1426aa2e467, type: 3}
   blockSfx: {fileID: 0}
   specialAttackSfx: {fileID: 0}
   sfxVolume: 1

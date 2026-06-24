@@ -75,7 +75,8 @@ public class StatusIconUI : MonoBehaviour
                 return "中毒";
             case StatusType.Harden:
                 return "硬化";
-
+            case StatusType.Regeneration:
+                return "再生";
             default:
                 return statusType.ToString();
         }
@@ -103,7 +104,12 @@ public class StatusIconUI : MonoBehaviour
                 return $"回合開始時受到 {amount} 點傷害，之後中毒層數減少。";
             case StatusType.Harden:
                 return $"每回合開始時，獲得 {amount} 點護盾。";
-
+            case StatusType.Regeneration:
+                {
+                    int percent = amount * 5;
+                    //int healAmount = Mathf.CeilToInt(owner.maxHp * amount * 0.05f);
+                    return $"每回合開始時，恢復自身最大生命值 {percent}%的生命。\n受到生命傷害時，層數減少 1。";
+                }
             default:
                 return $"目前層數：{amount}";
         }
