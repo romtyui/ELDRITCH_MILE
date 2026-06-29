@@ -46,12 +46,28 @@ public class DamagePopupUI : MonoBehaviour
         float t = Mathf.Clamp01(timer / lifetime);
 
         if (rectTransform != null)
-            rectTransform.position = Vector2.Lerp(startPosition, endPosition, t);
+            rectTransform.anchoredPosition = Vector2.Lerp(startPosition, endPosition, t);
 
         if (canvasGroup != null)
             canvasGroup.alpha = 1f - t;
 
         if (t >= 1f)
             Destroy(gameObject);
+    }
+    public void SetupLocal(int value, Vector2 anchoredPosition)
+    {
+        if (valueText != null)
+            valueText.text = value.ToString();
+
+        startPosition = anchoredPosition;
+        endPosition = startPosition + Vector2.up * moveUpDistance;
+
+        if (rectTransform != null)
+            rectTransform.anchoredPosition = startPosition;
+
+        if (canvasGroup != null)
+            canvasGroup.alpha = 1f;
+
+        timer = 0f;
     }
 }

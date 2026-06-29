@@ -331,6 +331,9 @@ public class EnemySlotUI : MonoBehaviour
         enemyUnit.maxHp = enemyData.maxHp;
         enemyUnit.currentHp = enemyData.maxHp;
         enemyUnit.block = 0;
+        enemyUnit.damagePopupAnchor = visualRoot != null
+            ? visualRoot
+            : transform as RectTransform;
 
         enemyUnit.intentTooltipTrigger = intentTooltipTrigger;
         enemyUnit.stunIntent = enemyData.stunIntent;

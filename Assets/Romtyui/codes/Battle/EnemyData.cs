@@ -28,7 +28,8 @@ public class EnemyData : ScriptableObject
 
     [Tooltip("怪物 PSB 生成後的旋轉")]
     public Vector3 visualEulerAngles = Vector3.zero;
-
+    [Header("Damage Popup")]
+    public Vector2 damagePopupOffset = new Vector2(0f, 80f);
     [Header("Image Settings")]
     public Color hitBoxColor = new Color(1f, 0f, 1f, 0.25f);
     public Sprite hitBoxSprite;

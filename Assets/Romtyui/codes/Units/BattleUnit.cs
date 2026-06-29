@@ -163,17 +163,9 @@ public class BattleUnit : MonoBehaviour
                 CameraShake.Instance.Shake();
         }
 
-        if (realHpDamage > 0 && this is EnemyUnit)
+        if (realHpDamage > 0 && this is EnemyUnit enemy)
         {
-            BattleManager battleManager = FindFirstObjectByType<BattleManager>();
-
-            if (battleManager != null)
-            {
-                RectTransform rect = transform as RectTransform;
-
-                if (rect != null)
-                    battleManager.ShowDamagePopup(realHpDamage, rect);
-            }
+            enemy.ShowDamagePopup(realHpDamage);
         }
 
         Debug.Log($"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}");
@@ -189,6 +181,7 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"[Damage] {unitName} take {amount}, realHpDamage = {realHpDamage}, HP = {currentHp}");
     }
+
     private void ReduceRegenerationOnDamage()
     {
         int regeneration = GetStatus(StatusType.Regeneration);

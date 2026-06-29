@@ -38,10 +38,10 @@ public class BattleManager : MonoBehaviour
     public Image sanFillImage;
     // public EnemyStatusBarUI enemyStatusBarUI; // 之後再做
 
-    [Header("Damage Popup UI")]
-    public DamagePopupUI damagePopupPrefab;
-    public RectTransform damagePopupRoot;
-    public Vector3 damagePopupWorldOffset = new Vector3(0f, 1.5f, 0f);
+    //[Header("Damage Popup UI")]
+    //public DamagePopupUI damagePopupPrefab;
+    //public RectTransform damagePopupRoot;
+    //public Vector2 damagePopupRandomRange = new Vector2(60f, 30f);
 
     [Header("Runtime")]
     public BattlePhase currentPhase = BattlePhase.None;
@@ -1047,27 +1047,59 @@ public class BattleManager : MonoBehaviour
 
         StartPlayerTurn();
     }
-    public void ShowDamagePopup(int damage, Transform target)
-    {
-        if (damage <= 0)
-            return;
+    //public void ShowDamagePopup(int damage, RectTransform targetRect, Vector2 offset)
+    //{
+    //    if (damage <= 0)
+    //        return;
 
-        if (damagePopupPrefab == null || damagePopupRoot == null || target == null)
-            return;
+    //    if (damagePopupPrefab == null)
+    //    {
+    //        Debug.LogWarning("[DamagePopup] damagePopupPrefab 沒有指定");
+    //        return;
+    //    }
 
-        Camera cam = Camera.main;
-        if (cam == null)
-            return;
+    //    if (damagePopupRoot == null)
+    //    {
+    //        Debug.LogWarning("[DamagePopup] damagePopupRoot 沒有指定");
+    //        return;
+    //    }
 
-        Vector3 worldPos = target.position + damagePopupWorldOffset;
-        Vector3 screenPos = cam.WorldToScreenPoint(worldPos);
+    //    if (targetRect == null)
+    //    {
+    //        Debug.LogWarning("[DamagePopup] targetRect 是 null");
+    //        return;
+    //    }
 
-        if (screenPos.z < 0f)
-            return;
+    //    if (!damagePopupRoot.gameObject.scene.IsValid())
+    //    {
+    //        Debug.LogError("[DamagePopup] damagePopupRoot 不是場景中的物件，請拖 Hierarchy 裡 Canvas 底下的 DamagePopupRoot。");
+    //        return;
+    //    }
 
-        DamagePopupUI popup = Instantiate(damagePopupPrefab, damagePopupRoot);
-        popup.Setup(damage, screenPos);
-    }
+    //    Canvas rootCanvas = damagePopupRoot.GetComponentInParent<Canvas>();
+
+    //    Camera uiCamera = null;
+
+    //    if (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
+    //        uiCamera = rootCanvas.worldCamera;
+
+    //    Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(
+    //        uiCamera,
+    //        targetRect.position
+    //    );
+
+    //    screenPos += offset;
+
+    //    Vector2 randomOffset = new Vector2(
+    //        Random.Range(-damagePopupRandomRange.x, damagePopupRandomRange.x),
+    //        Random.Range(-damagePopupRandomRange.y, damagePopupRandomRange.y)
+    //    );
+
+    //    screenPos += randomOffset;
+
+    //    DamagePopupUI popup = Instantiate(damagePopupPrefab, damagePopupRoot);
+    //    popup.Setup(damage, screenPos);
+    //}
     public void AddCardToHand(CardData cardData)
     {
         if (playerDeck == null)

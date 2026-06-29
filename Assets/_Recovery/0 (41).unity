@@ -12337,11 +12337,8 @@ MonoBehaviour:
   stunIntent: {fileID: 0}
   intentImage: {fileID: 555420591}
   intentDamageText: {fileID: 1330222678}
-  damagePopupPrefab: {fileID: -8286644415514860712, guid: 1144ac4c395712d408b3fc4c798cae5a, type: 3}
-  damagePopupRoot: {fileID: 1595762586}
   damagePopupAnchor: {fileID: 1595762586}
   damagePopupOffset: {x: 0, y: 120}
-  damagePopupRandomRange: {x: 40, y: 20}
   visualAnimationController: {fileID: 0}
   battleManager: {fileID: 0}
   intentTooltipTrigger: {fileID: 0}
@@ -17325,11 +17322,8 @@ MonoBehaviour:
   stunIntent: {fileID: 0}
   intentImage: {fileID: 2007904619}
   intentDamageText: {fileID: 1588659780}
-  damagePopupPrefab: {fileID: -8286644415514860712, guid: 1144ac4c395712d408b3fc4c798cae5a, type: 3}
-  damagePopupRoot: {fileID: 2127834315}
   damagePopupAnchor: {fileID: 2127834315}
   damagePopupOffset: {x: 0, y: 120}
-  damagePopupRandomRange: {x: 40, y: 20}
   visualAnimationController: {fileID: 0}
   battleManager: {fileID: 0}
   intentTooltipTrigger: {fileID: 0}
@@ -21845,7 +21839,8 @@ MonoBehaviour:
   nextBattleDelay: 1
   playerUnit: {fileID: 1663680720}
   currentEnemy: {fileID: 0}
-  enemies: []
+  enemies:
+  - {fileID: 0}
   playerDeck: {fileID: 1461659477}
   energySystem: {fileID: 1461659476}
   cardsPerTurn: 5
@@ -21856,6 +21851,9 @@ MonoBehaviour:
   turnPhaseBannerUI: {fileID: 1930022469}
   hpFillImage: {fileID: 1261777585}
   sanFillImage: {fileID: 1649682361}
+  damagePopupPrefab: {fileID: -8286644415514860712, guid: 1144ac4c395712d408b3fc4c798cae5a, type: 3}
+  damagePopupRoot: {fileID: 1753983813}
+  damagePopupRandomRange: {x: 60, y: 30}
   currentPhase: 0
   battleTurnNumber: 0
   enemyFormationSpawner: {fileID: 75625396}
@@ -24423,11 +24421,8 @@ MonoBehaviour:
   stunIntent: {fileID: 0}
   intentImage: {fileID: 504123416}
   intentDamageText: {fileID: 1547757925}
-  damagePopupPrefab: {fileID: -8286644415514860712, guid: 1144ac4c395712d408b3fc4c798cae5a, type: 3}
-  damagePopupRoot: {fileID: 1614959817}
   damagePopupAnchor: {fileID: 1614959817}
   damagePopupOffset: {x: 0, y: 120}
-  damagePopupRandomRange: {x: 40, y: 20}
   visualAnimationController: {fileID: 0}
   battleManager: {fileID: 0}
   intentTooltipTrigger: {fileID: 0}

@@ -28,6 +28,20 @@ public class EnemyUnit : BattleUnit
     [Header("Intent UI")]
     public Image intentImage;
     public TMP_Text intentDamageText;
+    [Header("Damage Popup")]
+    public DamagePopupUI damagePopupPrefab;
+
+    [Tooltip("這隻怪物專屬的跳字生成 Root，建議放在 EnemySlot 底下")]
+    public RectTransform damagePopupRoot;
+
+    [Tooltip("跳字錨點。通常是 visualRoot 或 MonsterVisualRoot")]
+    public RectTransform damagePopupAnchor;
+
+    [Tooltip("這隻怪物的跳字偏移")]
+    public Vector2 damagePopupOffset = new Vector2(0f, 80f);
+
+    [Tooltip("跳字隨機散開範圍")]
+    public Vector2 damagePopupRandomRange = new Vector2(40f, 20f);
     [Header("Animation")]
     public EnemyVisualAnimationController visualAnimationController;
     [Header("Battle Manager")]
@@ -459,5 +473,83 @@ public class EnemyUnit : BattleUnit
         {
             Debug.LogWarning($"[{unitName}] battleManager 沒有指定，死亡動畫結束後無法通知 BattleManager 檢查勝利");
         }
+    }
+    public void ShowDamagePopup(int damage)
+    {
+        if (damage <= 0)
+            return;
+
+        if (damagePopupPrefab == null)
+        {
+            Debug.LogWarning($"[EnemyDamagePopup] {unitName} 的 damagePopupPrefab 沒有指定", gameObject);
+            return;
+        }
+
+        if (damagePopupRoot == null)
+        {
+            Debug.LogWarning($"[EnemyDamagePopup] {unitName} 的 damagePopupRoot 沒有指定", gameObject);
+            return;
+        }
+
+        RectTransform anchor = damagePopupAnchor != null
+            ? damagePopupAnchor
+            : transform as RectTransform;
+
+        if (anchor == null)
+        {
+            Debug.LogWarning($"[EnemyDamagePopup] {unitName} 找不到跳字 anchor", gameObject);
+            return;
+        }
+
+        DamagePopupUI popup = Instantiate(damagePopupPrefab, damagePopupRoot);
+
+        RectTransform popupRect = popup.transform as RectTransform;
+
+        if (popupRect == null)
+        {
+            popup.Setup(damage, Vector2.zero);
+            return;
+        }
+
+        Vector2 localPosition = GetLocalPositionInPopupRoot(anchor);
+
+        Vector2 randomOffset = new Vector2(
+            UnityEngine.Random.Range(-damagePopupRandomRange.x, damagePopupRandomRange.x),
+            UnityEngine.Random.Range(-damagePopupRandomRange.y, damagePopupRandomRange.y)
+        );
+
+        popupRect.anchoredPosition = localPosition + damagePopupOffset + randomOffset;
+
+        popup.SetupLocal(damage, popupRect.anchoredPosition);
+
+        Debug.Log(
+            $"[EnemyDamagePopup] {unitName} damage = {damage}, root = {damagePopupRoot.name}, anchor = {anchor.name}, local = {popupRect.anchoredPosition}",
+            gameObject
+        );
+    }
+    private Vector2 GetLocalPositionInPopupRoot(RectTransform anchor)
+    {
+        Canvas rootCanvas = damagePopupRoot.GetComponentInParent<Canvas>();
+
+        Camera uiCamera = null;
+
+        if (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            uiCamera = rootCanvas.worldCamera;
+
+        Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(
+            uiCamera,
+            anchor.position
+        );
+
+        Vector2 localPoint;
+
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            damagePopupRoot,
+            screenPosition,
+            uiCamera,
+            out localPoint
+        );
+
+        return localPoint;
     }
 }

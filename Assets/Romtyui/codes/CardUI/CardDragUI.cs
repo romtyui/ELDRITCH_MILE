@@ -23,6 +23,9 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
     private Vector2 pointerDownScreenPos;
     private Vector2 startAnchoredPosition;
 
+    private bool useTargetArrowMode;
+    private bool useDirectDragMode;
+
     [Header("Play Threshold Debug")]
     public float playThresholdY = 180f;
     public bool showPlayThresholdLine = true;
@@ -53,6 +56,49 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
             targetArrow = FindFirstObjectByType<TargetArrowUI>(FindObjectsInactive.Include);
         }
     }
+    private TargetType GetCurrentTargetType()
+    {
+        if (cardViewUI == null)
+            cardViewUI = GetComponent<CardViewUI>();
+
+        if (cardViewUI == null)
+            return TargetType.None;
+
+        if (cardViewUI.CardInstance == null || cardViewUI.CardInstance.data == null)
+            return TargetType.None;
+
+        return cardViewUI.CardInstance.data.targetType;
+    }
+
+    private bool ShouldUseTargetArrowMode()
+    {
+        return GetCurrentTargetType() == TargetType.SingleEnemy;
+    }
+
+    private bool ShouldUseDirectDragMode()
+    {
+        TargetType targetType = GetCurrentTargetType();
+
+        return targetType == TargetType.None ||
+               targetType == TargetType.Self ||
+               targetType == TargetType.RandomEnemy ||
+               targetType == TargetType.AllEnemies ||
+               targetType == TargetType.AllCharacters;
+    }
+
+    private void UpdateDirectDragPosition(Vector2 currentScreenPosition)
+    {
+        if (rectTransform == null)
+            return;
+
+        float scaleFactor = 1f;
+
+        if (canvas != null)
+            scaleFactor = Mathf.Max(0.01f, canvas.scaleFactor);
+
+        Vector2 screenDelta = currentScreenPosition - pointerDownScreenPos;
+        rectTransform.anchoredPosition = startAnchoredPosition + screenDelta / scaleFactor;
+    }
 
     public void OnPointerDown(PointerEventData eventData)
     {
@@ -60,6 +106,9 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
         pointerDownScreenPos = eventData.position;
         startAnchoredPosition = rectTransform.anchoredPosition;
+
+        useTargetArrowMode = ShouldUseTargetArrowMode();
+        useDirectDragMode = ShouldUseDirectDragMode();
 
         ShowThresholdLine();
 
@@ -73,23 +122,42 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         rectTransform.SetAsLastSibling();
         canvasGroup.blocksRaycasts = false;
 
-        EnsureTargetArrow();
-
-        if (targetArrow != null)
+        if (useTargetArrowMode)
         {
-            targetArrow.Show(rectTransform);
-            targetArrow.UpdateArrow(eventData.position);
+            EnsureTargetArrow();
+
+            if (targetArrow != null)
+            {
+                targetArrow.Show(rectTransform);
+                targetArrow.UpdateArrow(eventData.position);
+            }
+        }
+        else
+        {
+            if (targetArrow != null)
+                targetArrow.Hide();
         }
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!IsDragging) return;
+        if (!IsDragging)
+            return;
 
-        EnsureTargetArrow();
+        if (useTargetArrowMode)
+        {
+            EnsureTargetArrow();
 
-        if (targetArrow != null)
-            targetArrow.UpdateArrow(eventData.position);
+            if (targetArrow != null)
+                targetArrow.UpdateArrow(eventData.position);
+
+            return;
+        }
+
+        if (useDirectDragMode)
+        {
+            UpdateDirectDragPosition(eventData.position);
+        }
     }
 
     public void OnPointerUp(PointerEventData eventData)
@@ -133,12 +201,11 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
                     }
                     break;
 
-                case TargetType.AllEnemies:
-                    played = battleManager.TryPlayCard(card, null, cardViewUI);
-                    break;
-
-                case TargetType.Self:
                 case TargetType.None:
+                case TargetType.Self:
+                case TargetType.RandomEnemy:
+                case TargetType.AllEnemies:
+                case TargetType.AllCharacters:
                     played = battleManager.TryPlayCard(card, null, cardViewUI);
                     break;
 
