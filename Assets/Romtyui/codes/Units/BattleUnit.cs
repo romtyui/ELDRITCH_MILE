@@ -151,12 +151,18 @@ public class BattleUnit : MonoBehaviour
 
         OnHpChanged?.Invoke();
 
-
         if (realHpDamage > 0)
         {
             ReduceRegenerationOnDamage();
             OnAfterHpDamageTaken(realHpDamage);
         }
+
+        if (realHpDamage > 0 && isPlayerUnit)
+        {
+            if (CameraShake.Instance != null)
+                CameraShake.Instance.Shake();
+        }
+
         if (realHpDamage > 0 && this is EnemyUnit)
         {
             BattleManager battleManager = FindFirstObjectByType<BattleManager>();
