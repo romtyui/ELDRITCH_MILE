@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class BattleDebugHotkeys : MonoBehaviour
 {
@@ -16,8 +17,19 @@ public class BattleDebugHotkeys : MonoBehaviour
     [Tooltip("開關 Debug UI")]
     public Key toggleStatusDebugUIKey = Key.F1;
 
+    [Tooltip("保存目前紀錄並載入指定場景")]
+    public Key loadSceneWithSaveKey = Key.F5;
+    [Tooltip("不通關，保留目前怪物組並重新載入指定場景")]
+    public Key reloadSceneWithoutCommitKey = Key.F6;
+
     [Header("Settings")]
     public int debugDamage = 9999;
+    [Header("Scene Load Debug")]
+    [Tooltip("按下指定按鍵後要載入的場景名稱。場景必須加入 Build Settings。")]
+    public string debugSceneName = "BattleScene";
+
+    [Tooltip("載入場景前是否先保存目前 HP / SAN / 牌組紀錄")]
+    public bool saveRunStateBeforeLoadScene = true;
 
     [Header("Debug")]
     public bool enableDebugHotkeys = true;
@@ -99,6 +111,17 @@ public class BattleDebugHotkeys : MonoBehaviour
             keyboard[toggleStatusDebugUIKey].wasPressedThisFrame)
         {
             ToggleStatusDebugUI();
+        }
+
+        if (keyboard[loadSceneWithSaveKey] != null &&
+    keyboard[loadSceneWithSaveKey].wasPressedThisFrame)
+        {
+            DebugCommitBattleAndLoadScene();
+        }
+        if (keyboard[reloadSceneWithoutCommitKey] != null &&
+    keyboard[reloadSceneWithoutCommitKey].wasPressedThisFrame)
+        {
+            DebugReloadSceneFromBattleStartDeckSnapshot();
         }
     }
 
@@ -834,5 +857,109 @@ public class BattleDebugHotkeys : MonoBehaviour
         Debug.Log("[BattleDebugHotkeys] 開啟 BattleManager 物件");
 
         battleManagerObject.SetActive(true);
+    }
+    // =========================================================
+    // Scene Load Debug
+    // =========================================================
+
+    [ContextMenu("Debug Load Scene With Run State")]
+    [ContextMenu("Debug Commit Battle And Load Scene")]
+    public void DebugCommitBattleAndLoadScene()
+    {
+        AutoFindRefs();
+
+        if (string.IsNullOrWhiteSpace(debugSceneName))
+        {
+            Debug.LogWarning("[BattleDebugHotkeys] debugSceneName 是空的，無法載入場景");
+            return;
+        }
+
+        if (battleManager == null)
+        {
+            Debug.LogWarning("[BattleDebugHotkeys] battleManager 是 null，無法保存戰鬥紀錄");
+            return;
+        }
+
+        if (RunStateManager.Instance != null)
+        {
+            // F5 = 模擬通關，所以要清除保留怪物組
+            RunStateManager.Instance.ClearReservedFormation();
+
+            // F5 = 保存玩家目前狀態
+            RunStateManager.Instance.SaveFromBattle(
+                battleManager.playerUnit,
+                battleManager.energySystem,
+                battleManager.playerDeck
+            );
+
+            Debug.Log("[BattleDebugHotkeys] F5 已保存目前玩家狀態，並清除保留怪物組");
+        }
+        else
+        {
+            Debug.LogWarning("[BattleDebugHotkeys] 場景中沒有 RunStateManager，無法保存紀錄");
+        }
+
+        Time.timeScale = 1f;
+
+        Debug.Log($"[BattleDebugHotkeys] F5 模擬通關，載入場景：{debugSceneName}");
+
+        SceneManager.LoadScene(debugSceneName);
+    }
+
+    private void SaveRunStateForDebugSceneLoad()
+    {
+        AutoFindRefs();
+
+        if (RunStateManager.Instance == null)
+        {
+            Debug.LogWarning("[BattleDebugHotkeys] 場景中沒有 RunStateManager，無法保存紀錄。請確認已建立 RunStateManager 物件。");
+            return;
+        }
+
+        if (battleManager == null)
+        {
+            Debug.LogWarning("[BattleDebugHotkeys] battleManager 是 null，無法保存紀錄");
+            return;
+        }
+
+        RunStateManager.Instance.SaveFromBattle(
+            battleManager.playerUnit,
+            battleManager.energySystem,
+            battleManager.playerDeck
+        );
+
+        Debug.Log("[BattleDebugHotkeys] 已在載入場景前保存 RunState");
+    }
+    [ContextMenu("Debug Reload Scene From Battle Start Deck Snapshot")]
+    public void DebugReloadSceneFromBattleStartDeckSnapshot()
+    {
+        AutoFindRefs();
+
+        if (string.IsNullOrWhiteSpace(debugSceneName))
+        {
+            Debug.LogWarning("[BattleDebugHotkeys] debugSceneName 是空的，無法載入場景");
+            return;
+        }
+
+        if (RunStateManager.Instance == null)
+        {
+            Debug.LogWarning("[BattleDebugHotkeys] 沒有 RunStateManager，無法使用戰鬥開始牌組快照");
+            return;
+        }
+
+        if (RunStateManager.Instance.battleStartDeckSnapshot == null ||
+            !RunStateManager.Instance.battleStartDeckSnapshot.hasSnapshot)
+        {
+            Debug.LogWarning("[BattleDebugHotkeys] 還沒有戰鬥開始牌組快照，請先進入戰鬥");
+            return;
+        }
+
+        RunStateManager.Instance.pendingRestoreBattleStartDeckSnapshot = true;
+
+        Time.timeScale = 1f;
+
+        Debug.Log($"[BattleDebugHotkeys] F6 使用戰鬥開始牌組快照重新載入場景：{debugSceneName}");
+
+        SceneManager.LoadScene(debugSceneName);
     }
 }

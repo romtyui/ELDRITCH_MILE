@@ -12,13 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf43116519b6a7a449b6e0c6921700bc, type: 3}
   m_Name: Mermaid Priest
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  unitName: 
+  unitName: monster_01
   maxHp: 50
+  enemyId: 
   normalVisualPrefab: {fileID: 7359972480015207673, guid: 468e9a2b8b403df4db5350018a65c403, type: 3}
   darkVisualPrefab: {fileID: 5807027265319249175, guid: 25d89f51e486b5e42b025df0a7ca02d4, type: 3}
   visualAnchoredPosition: {x: 0, y: 0}
   visualScale: {x: 1, y: 1, z: 1}
   visualEulerAngles: {x: 0, y: 0, z: 0}
+  damagePopupOffset: {x: 0, y: 80}
   hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
   hitBoxSprite: {fileID: 0}
   stunIntent: {fileID: 0}

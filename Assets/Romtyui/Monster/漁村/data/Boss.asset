@@ -12,13 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf43116519b6a7a449b6e0c6921700bc, type: 3}
   m_Name: Boss
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  unitName: 
+  unitName: monster_05
   maxHp: 200
+  enemyId: 
   normalVisualPrefab: {fileID: 5170236678497478279, guid: bf268a3a596679644b7cebaf7eb53d51, type: 3}
   darkVisualPrefab: {fileID: 3783185597483147171, guid: f0404c58383ed83449841e87b93a7931, type: 3}
   visualAnchoredPosition: {x: 0, y: 250}
   visualScale: {x: 1.2, y: 1.2, z: 1}
   visualEulerAngles: {x: 0, y: 0, z: 0}
+  damagePopupOffset: {x: 0, y: 80}
   hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
   hitBoxSprite: {fileID: 0}
   stunIntent: {fileID: 0}

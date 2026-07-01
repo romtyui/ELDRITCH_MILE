@@ -15,6 +15,8 @@ public class EnemyData : ScriptableObject
     [Header("Basic")]
     public string unitName;
     public int maxHp = 50;
+    [Header("Save ID")]
+    public string enemyId;
 
     [Header("Visual")]
     public GameObject normalVisualPrefab;

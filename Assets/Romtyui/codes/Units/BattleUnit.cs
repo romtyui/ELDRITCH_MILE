@@ -279,6 +279,49 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 的 {statusType} 被設定為 {amount}");
     }
+    public void NotifyUnitChanged()
+    {
+        OnHpChanged?.Invoke();
+        OnStatusChanged?.Invoke();
+    }
+    public List<StatusSnapshotEntry> CaptureStatusSnapshot()
+    {
+        List<StatusSnapshotEntry> result = new List<StatusSnapshotEntry>();
+
+        foreach (var pair in statuses)
+        {
+            if (pair.Value <= 0)
+                continue;
+
+            result.Add(new StatusSnapshotEntry(pair.Key, pair.Value));
+        }
+
+        return result;
+    }
+    public void RestoreStatusSnapshot(List<StatusSnapshotEntry> snapshot)
+    {
+        statuses.Clear();
+
+        if (snapshot != null)
+        {
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                StatusSnapshotEntry entry = snapshot[i];
+
+                if (entry == null)
+                    continue;
+
+                if (entry.amount <= 0)
+                    continue;
+
+                statuses[entry.statusType] = entry.amount;
+            }
+        }
+
+        OnStatusChanged?.Invoke();
+
+        Debug.Log($"[BattleUnit] {unitName} 已還原狀態快照，數量 = {statuses.Count}");
+    }
 
     private void ResolvePoisonAtTurnStart()
     {

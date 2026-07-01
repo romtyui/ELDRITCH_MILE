@@ -41,6 +41,23 @@ public class EnemyFormationSpawner : MonoBehaviour
             return;
         }
 
+        // 1. 如果有保留的怪物組，優先使用保留組
+        // 這通常代表：玩家中途離開遊戲後重新進入戰鬥
+        if (RunStateManager.Instance != null &&
+            RunStateManager.Instance.TryGetReservedFormation(out formation))
+        {
+            if (formation != null)
+            {
+                debugSpawnMode = "保留戰鬥：使用上次保留的怪物組";
+
+                Debug.Log($"[EnemyFormationSpawner] 使用保留怪物組：{formation.name}");
+
+                SpawnFormation(formation);
+                return;
+            }
+        }
+
+        // 2. 沒有保留怪物組，才走你原本的抽怪規則
         if (useStageWeightRule)
         {
             formation = GetFormationByStageRule();
@@ -55,6 +72,13 @@ public class EnemyFormationSpawner : MonoBehaviour
         {
             Debug.LogWarning("[EnemyFormationSpawner] 沒有可用的怪物組合");
             return;
+        }
+
+        // 3. 新抽到的怪物組先保留起來
+        // 注意：這裡只是保留，不代表消耗怪物池
+        if (RunStateManager.Instance != null)
+        {
+            RunStateManager.Instance.ReserveFormation(formation);
         }
 
         SpawnFormation(formation);
