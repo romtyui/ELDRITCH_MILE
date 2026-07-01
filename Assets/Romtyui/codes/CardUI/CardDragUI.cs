@@ -47,14 +47,25 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
         if (canvasGroup == null)
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
+
+        EnsureTargetArrow();
     }
 
     private void EnsureTargetArrow()
     {
-        if (targetArrow == null)
+        if (targetArrow != null)
+            return;
+
+        if (TargetArrowUI.Instance != null)
         {
-            targetArrow = FindFirstObjectByType<TargetArrowUI>(FindObjectsInactive.Include);
+            targetArrow = TargetArrowUI.Instance;
+            return;
         }
+
+        targetArrow = FindFirstObjectByType<TargetArrowUI>(FindObjectsInactive.Include);
+
+        if (targetArrow == null)
+            Debug.LogWarning("[CardDragUI] 找不到 TargetArrowUI");
     }
     private TargetType GetCurrentTargetType()
     {
@@ -130,6 +141,10 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
             {
                 targetArrow.Show(rectTransform);
                 targetArrow.UpdateArrow(eventData.position);
+            }
+            else
+            {
+                Debug.LogWarning("[CardDragUI] 按下卡牌時沒有 TargetArrowUI，所以箭頭無法顯示");
             }
         }
         else
