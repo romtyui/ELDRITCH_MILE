@@ -492,4 +492,41 @@ public class RunStateManager : MonoBehaviour
             $"DrawPileOrder {battleStartDeckSnapshot.drawPileOrder.Count}"
         );
     }
+    public void ClearAllRunData()
+    {
+        // 玩家進度
+        savedPlayerMaxHp = 0;
+        savedPlayerCurrentHp = 0;
+
+        savedMaxEnergy = 0;
+        savedCurrentEnergy = 0;
+
+        if (savedDeck != null)
+            savedDeck.Clear();
+
+        hasSavedRunState = false;
+
+        // 保留怪物組
+        ClearReservedFormation();
+
+        // 戰鬥開始快照
+        if (battleStartDeckSnapshot != null)
+        {
+            battleStartDeckSnapshot.hasSnapshot = false;
+            battleStartDeckSnapshot.playerMaxHp = 0;
+            battleStartDeckSnapshot.playerCurrentHp = 0;
+            battleStartDeckSnapshot.maxEnergy = 0;
+            battleStartDeckSnapshot.currentEnergy = 0;
+
+            if (battleStartDeckSnapshot.playerStatuses != null)
+                battleStartDeckSnapshot.playerStatuses.Clear();
+
+            if (battleStartDeckSnapshot.drawPileOrder != null)
+                battleStartDeckSnapshot.drawPileOrder.Clear();
+        }
+
+        pendingRestoreBattleStartDeckSnapshot = false;
+
+        Debug.Log("[RunStateManager] 已清除所有 Run 紀錄，下一次會以新遊戲開始");
+    }
 }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class OptionMenuUI : MonoBehaviour
@@ -18,6 +19,7 @@ public class OptionMenuUI : MonoBehaviour
     public Button continueButton;
     public Button restartButton;
     public Button settingsButton;
+    public Button mainMenuButton;
     public Button quitButton;
     public Button backFromSettingsButton;
 
@@ -25,6 +27,7 @@ public class OptionMenuUI : MonoBehaviour
     public bool showContinueButton = true;
     public bool showRestartButton = true;
     public bool showSettingsButton = true;
+    public bool showMainMenuButton = true;
     public bool showQuitButton = true;
 
     [Header("Volume Settings")]
@@ -41,6 +44,16 @@ public class OptionMenuUI : MonoBehaviour
 
     private bool isDeathMenu;
 
+    [Header("Main Menu")]
+    [Tooltip("回到主畫面時要載入的場景名稱")]
+    public string mainMenuSceneName = "MainMenu";
+
+    [Tooltip("回到主畫面時是否清除目前 Run 紀錄。勾選 = 放棄目前存檔；不勾 = 保留目前紀錄")]
+    public bool clearRunDataWhenReturnMainMenu = false;
+
+    [Tooltip("回主畫面時是否恢復 Time.timeScale")]
+    public bool resetTimeScaleWhenReturnMainMenu = true;
+
     private void Awake()
     {
         if (continueButton != null)
@@ -51,6 +64,8 @@ public class OptionMenuUI : MonoBehaviour
 
         if (settingsButton != null)
             settingsButton.onClick.AddListener(OpenSettingsPage);
+        if (mainMenuButton != null)
+            mainMenuButton.onClick.AddListener(ReturnToMainMenu);
 
         if (quitButton != null)
             quitButton.onClick.AddListener(QuitGame);
@@ -217,6 +232,39 @@ public class OptionMenuUI : MonoBehaviour
         }
     }
 
+    public void ReturnToMainMenu()
+    {
+        if (resetTimeScaleWhenReturnMainMenu)
+            Time.timeScale = 1f;
+
+        if (clearRunDataWhenReturnMainMenu)
+        {
+            if (RunStateManager.Instance != null)
+            {
+                RunStateManager.Instance.ClearAllRunData();
+                Debug.Log("[OptionMenuUI] 回到主畫面：已清除目前 Run 紀錄");
+            }
+            else
+            {
+                Debug.LogWarning("[OptionMenuUI] 找不到 RunStateManager，無法清除 Run 紀錄");
+            }
+        }
+        else
+        {
+            Debug.Log("[OptionMenuUI] 回到主畫面：保留目前 Run 紀錄");
+        }
+
+        if (string.IsNullOrWhiteSpace(mainMenuSceneName))
+        {
+            Debug.LogWarning("[OptionMenuUI] mainMenuSceneName 是空的，無法回到主畫面");
+            return;
+        }
+
+        Debug.Log($"[OptionMenuUI] 載入主畫面場景：{mainMenuSceneName}");
+
+        SceneManager.LoadScene(mainMenuSceneName);
+    }
+
     private void RefreshButtonVisibility()
     {
         if (continueButton != null)
@@ -230,6 +278,9 @@ public class OptionMenuUI : MonoBehaviour
 
         if (settingsButton != null)
             settingsButton.gameObject.SetActive(showSettingsButton);
+
+        if (mainMenuButton != null)
+            mainMenuButton.gameObject.SetActive(showMainMenuButton);
 
         if (quitButton != null)
             quitButton.gameObject.SetActive(showQuitButton);
