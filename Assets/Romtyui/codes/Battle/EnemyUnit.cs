@@ -5,6 +5,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+[System.Serializable]
+public class EnemyStatusDebugEntry
+{
+    public StatusType statusType;
+    public int amount;
+}
+
 public class EnemyUnit : BattleUnit
 {
     [Header("Enemy Intents")]
@@ -13,6 +20,10 @@ public class EnemyUnit : BattleUnit
     public bool isCharging;
     public int chargeValue;
     public int chargeTurnsLeft;
+
+    [Header("Debug - Current Statuses")]
+    [SerializeField]
+    private List<EnemyStatusDebugEntry> inspectorStatuses = new List<EnemyStatusDebugEntry>();
 
     private bool chargeBrokenStunQueued;
     private bool stayOnCurrentIntentThisTurn;
@@ -23,11 +34,14 @@ public class EnemyUnit : BattleUnit
     [Header("HP UI")]
     public TMP_Text currentHpText;
     public TMP_Text maxHpText;
+
     [Header("Special Intents")]
     public EnemyIntentData stunIntent;
+
     [Header("Intent UI")]
     public Image intentImage;
     public TMP_Text intentDamageText;
+
     [Header("Damage Popup")]
     public DamagePopupUI damagePopupPrefab;
 
@@ -42,14 +56,62 @@ public class EnemyUnit : BattleUnit
 
     [Tooltip("跳字隨機散開範圍")]
     public Vector2 damagePopupRandomRange = new Vector2(40f, 20f);
+
+    [Header("Enemy Block UI")]
+    [Tooltip("整個護盾 UI Root。建議是包含 Image、Text、Animator 的父物件")]
+    public GameObject blockRoot;
+
+    [Tooltip("護盾圖片")]
+    public Image blockImage;
+
+    [Tooltip("護盾數值文字")]
+    public TMP_Text blockText;
+
+    [Tooltip("護盾 UI Animator。可以不指定，沒有就不播放動畫")]
+    public Animator blockAnimator;
+
+    [Header("Enemy Block UI Text")]
+    public string blockTextPrefix = "";
+    public string blockTextSuffix = "";
+
+    [Header("Enemy Block UI Animation")]
+    [Tooltip("是否使用護盾生成動畫")]
+    public bool useBlockAppearAnimation = true;
+
+    [Tooltip("是否使用護盾常態動畫")]
+    public bool useBlockIdleAnimation = true;
+
+    [Tooltip("是否使用護盾消失動畫")]
+    public bool useBlockDisappearAnimation = true;
+
+    [Tooltip("生成動畫 Trigger 名稱")]
+    public string blockAppearTrigger = "Block_Appear";
+
+    [Tooltip("常態動畫 Trigger 名稱")]
+    public string blockIdleTrigger = "Block_Idle";
+
+    [Tooltip("消失動畫 Trigger 名稱")]
+    public string blockDisappearTrigger = "Block_Disappear";
+
+    [Tooltip("生成動畫大約秒數。播放完後會嘗試切到常態動畫")]
+    public float blockAppearDuration = 0.25f;
+
+    [Tooltip("消失動畫大約秒數。播放完後才隱藏護盾 UI")]
+    public float blockDisappearDuration = 0.25f;
+
+    private bool isBlockUIVisible;
+    private Coroutine blockAnimationCoroutine;
+
     [Header("Animation")]
     public EnemyVisualAnimationController visualAnimationController;
+
     [Header("Battle Manager")]
     public BattleManager battleManager;
+
     [Header("Intent Tooltip")]
     public TooltipTriggerUI intentTooltipTrigger;
-    public event Action OnIntentChanged;
 
+    public event Action OnIntentChanged;
 
     private bool isDead;
 
@@ -60,6 +122,7 @@ public class EnemyUnit : BattleUnit
             return isDead && gameObject.activeInHierarchy && currentHp <= 0;
         }
     }
+
     public bool TryGetChargeTooltip(out TooltipEntry entry)
     {
         entry = null;
@@ -88,6 +151,7 @@ public class EnemyUnit : BattleUnit
 
         return true;
     }
+
     public void StartCharge(int startValue, int turnCount)
     {
         isCharging = true;
@@ -99,17 +163,21 @@ public class EnemyUnit : BattleUnit
 
         RefreshIntentUI();
         RefreshIntentTooltip();
+        RefreshInspectorStatuses();
 
         Debug.Log($"[{unitName}] 開始蓄力，蓄力值 = {chargeValue}，倒數 = {chargeTurnsLeft}");
     }
+
     public void RequestStayOnCurrentIntent()
     {
         stayOnCurrentIntentThisTurn = true;
     }
+
     public bool HasChargeBrokenStunQueued()
     {
         return chargeBrokenStunQueued;
     }
+
     public void ConsumeChargeBrokenStun()
     {
         chargeBrokenStunQueued = false;
@@ -119,6 +187,7 @@ public class EnemyUnit : BattleUnit
 
         Debug.Log($"[{unitName}] 因蓄力被打破而暈眩，空過一回合");
     }
+
     public int TickChargeCountdown()
     {
         if (!isCharging)
@@ -133,6 +202,7 @@ public class EnemyUnit : BattleUnit
 
         return chargeTurnsLeft;
     }
+
     public int GetChargeDamage()
     {
         if (!isCharging)
@@ -140,6 +210,7 @@ public class EnemyUnit : BattleUnit
 
         return Mathf.Max(0, chargeValue);
     }
+
     public void ClearCharge()
     {
         isCharging = false;
@@ -150,6 +221,7 @@ public class EnemyUnit : BattleUnit
 
         RefreshIntentUI();
     }
+
     protected override void OnAfterHpDamageTaken(int realHpDamage)
     {
         base.OnAfterHpDamageTaken(realHpDamage);
@@ -178,9 +250,12 @@ public class EnemyUnit : BattleUnit
 
         RefreshIntentUI();
     }
+
     public void ResetDeathState()
     {
         isDead = false;
+
+        RefreshInspectorStatuses();
     }
 
     public EnemyIntentData CurrentIntent
@@ -199,6 +274,7 @@ public class EnemyUnit : BattleUnit
             return intents[currentIntentIndex];
         }
     }
+
     public void RefreshIntentTooltip()
     {
         if (intentTooltipTrigger == null)
@@ -246,29 +322,44 @@ public class EnemyUnit : BattleUnit
     private void OnEnable()
     {
         OnHpChanged += RefreshHpUI;
+        OnHpChanged += RefreshBlockUI;
+        OnStatusChanged += RefreshInspectorStatuses;
+
+        RefreshBlockUI();
+        RefreshInspectorStatuses();
     }
 
     private void OnDisable()
     {
         OnHpChanged -= RefreshHpUI;
+        OnHpChanged -= RefreshBlockUI;
+        OnStatusChanged -= RefreshInspectorStatuses;
+
+        if (blockAnimationCoroutine != null)
+        {
+            StopCoroutine(blockAnimationCoroutine);
+            blockAnimationCoroutine = null;
+        }
     }
 
     private void Start()
     {
         RefreshAllUI();
     }
-    
+
     protected override void OnDamagedButAlive()
     {
         base.OnDamagedButAlive();
 
         PlayHurtAnimation();
     }
+
     public void PlayHurtAnimation()
     {
         if (visualAnimationController != null)
             StartCoroutine(visualAnimationController.PlayHurt());
     }
+
     public IEnumerator PlayActionAnimation(EnemyAnimationType animationType)
     {
         if (visualAnimationController == null)
@@ -297,6 +388,7 @@ public class EnemyUnit : BattleUnit
                 break;
         }
     }
+
     public EnemyAnimationType GetCurrentIntentAnimationType()
     {
         if (intents == null || intents.Count == 0)
@@ -307,6 +399,7 @@ public class EnemyUnit : BattleUnit
 
         return intents[currentIntentIndex].animationType;
     }
+
     public void ExecuteTurn(BattleUnit player, BattleManager battleManager)
     {
         if (currentHp <= 0)
@@ -371,6 +464,8 @@ public class EnemyUnit : BattleUnit
     {
         RefreshHpUI();
         RefreshIntentUI();
+        RefreshBlockUI();
+        RefreshInspectorStatuses();
     }
 
     public void RefreshHpUI()
@@ -380,6 +475,210 @@ public class EnemyUnit : BattleUnit
 
         if (maxHpText != null)
             maxHpText.text = maxHp.ToString();
+    }
+
+    [ContextMenu("Refresh Inspector Statuses")]
+    public void RefreshInspectorStatuses()
+    {
+        inspectorStatuses.Clear();
+
+        Array statusValues = Enum.GetValues(typeof(StatusType));
+
+        for (int i = 0; i < statusValues.Length; i++)
+        {
+            StatusType statusType = (StatusType)statusValues.GetValue(i);
+            int amount = GetStatus(statusType);
+
+            if (amount <= 0)
+                continue;
+
+            inspectorStatuses.Add(new EnemyStatusDebugEntry
+            {
+                statusType = statusType,
+                amount = amount
+            });
+        }
+    }
+
+    public void RefreshBlockUI()
+    {
+        int currentBlock = block;
+
+        if (blockText != null)
+            blockText.text = $"{blockTextPrefix}{currentBlock}{blockTextSuffix}";
+
+        if (currentBlock > 0)
+        {
+            ShowBlockUI();
+        }
+        else
+        {
+            HideBlockUI();
+        }
+    }
+
+    private void ShowBlockUI()
+    {
+        if (blockRoot == null)
+            return;
+
+        if (blockAnimationCoroutine != null)
+        {
+            StopCoroutine(blockAnimationCoroutine);
+            blockAnimationCoroutine = null;
+        }
+
+        if (!isBlockUIVisible)
+        {
+            blockRoot.SetActive(true);
+            isBlockUIVisible = true;
+
+            if (CanPlayBlockAnimation(blockAppearTrigger, useBlockAppearAnimation))
+            {
+                blockAnimationCoroutine = StartCoroutine(PlayBlockAppearThenIdleRoutine());
+            }
+            else
+            {
+                PlayBlockIdleAnimation();
+            }
+
+            return;
+        }
+
+        if (!blockRoot.activeSelf)
+            blockRoot.SetActive(true);
+
+        PlayBlockIdleAnimation();
+    }
+
+    private void HideBlockUI()
+    {
+        if (blockRoot == null)
+            return;
+
+        if (!isBlockUIVisible && !blockRoot.activeSelf)
+            return;
+
+        if (blockAnimationCoroutine != null)
+        {
+            StopCoroutine(blockAnimationCoroutine);
+            blockAnimationCoroutine = null;
+        }
+
+        if (CanPlayBlockAnimation(blockDisappearTrigger, useBlockDisappearAnimation))
+        {
+            blockAnimationCoroutine = StartCoroutine(PlayBlockDisappearRoutine());
+        }
+        else
+        {
+            blockRoot.SetActive(false);
+            isBlockUIVisible = false;
+        }
+    }
+
+    private IEnumerator PlayBlockAppearThenIdleRoutine()
+    {
+        PlayBlockAnimation(blockAppearTrigger);
+
+        yield return new WaitForSeconds(blockAppearDuration);
+
+        PlayBlockIdleAnimation();
+
+        blockAnimationCoroutine = null;
+    }
+
+    private IEnumerator PlayBlockDisappearRoutine()
+    {
+        PlayBlockAnimation(blockDisappearTrigger);
+
+        yield return new WaitForSeconds(blockDisappearDuration);
+
+        if (blockRoot != null)
+            blockRoot.SetActive(false);
+
+        isBlockUIVisible = false;
+        blockAnimationCoroutine = null;
+    }
+
+    private void PlayBlockIdleAnimation()
+    {
+        if (!CanPlayBlockAnimation(blockIdleTrigger, useBlockIdleAnimation))
+            return;
+
+        PlayBlockAnimation(blockIdleTrigger);
+    }
+
+    private bool CanPlayBlockAnimation(string triggerName, bool useAnimation)
+    {
+        if (!useAnimation)
+            return false;
+
+        if (blockAnimator == null)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(triggerName))
+            return false;
+
+        return AnimatorHasTrigger(blockAnimator, triggerName);
+    }
+
+    private void PlayBlockAnimation(string triggerName)
+    {
+        if (blockAnimator == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(triggerName))
+            return;
+
+        if (!AnimatorHasTrigger(blockAnimator, triggerName))
+            return;
+
+        ResetBlockTriggerIfExists(blockAppearTrigger);
+        ResetBlockTriggerIfExists(blockIdleTrigger);
+        ResetBlockTriggerIfExists(blockDisappearTrigger);
+
+        blockAnimator.SetTrigger(triggerName);
+    }
+
+    private void ResetBlockTriggerIfExists(string triggerName)
+    {
+        if (blockAnimator == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(triggerName))
+            return;
+
+        if (!AnimatorHasTrigger(blockAnimator, triggerName))
+            return;
+
+        blockAnimator.ResetTrigger(triggerName);
+    }
+
+    private bool AnimatorHasTrigger(Animator animator, string triggerName)
+    {
+        if (animator == null)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(triggerName))
+            return false;
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            AnimatorControllerParameter parameter = parameters[i];
+
+            if (parameter == null)
+                continue;
+
+            if (parameter.type != AnimatorControllerParameterType.Trigger)
+                continue;
+
+            if (parameter.name == triggerName)
+                return true;
+        }
+
+        return false;
     }
 
     public void RefreshIntentUI()
@@ -405,6 +704,7 @@ public class EnemyUnit : BattleUnit
             intentImage.sprite = intent.intentIcon;
             intentImage.enabled = intent.intentIcon != null;
         }
+
         if (intentTooltipTrigger != null)
         {
             if (intent == null)
@@ -428,9 +728,11 @@ public class EnemyUnit : BattleUnit
                 intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
             }
         }
+
         if (intentDamageText != null)
         {
             intentDamageText.text = intent.GetDamageText();
+
             if (chargeBrokenStunQueued)
             {
                 intentDamageText.text = "暈";
@@ -444,6 +746,7 @@ public class EnemyUnit : BattleUnit
                 intentDamageText.text = intent.GetDamageText();
             }
         }
+
         RefreshIntentTooltip();
     }
 
@@ -454,6 +757,7 @@ public class EnemyUnit : BattleUnit
 
         StartCoroutine(DieRoutine());
     }
+
     public IEnumerator DieRoutine()
     {
         if (isDead)
@@ -474,6 +778,7 @@ public class EnemyUnit : BattleUnit
             Debug.LogWarning($"[{unitName}] battleManager 沒有指定，死亡動畫結束後無法通知 BattleManager 檢查勝利");
         }
     }
+
     public void ShowDamagePopup(int damage)
     {
         if (damage <= 0)
@@ -527,6 +832,7 @@ public class EnemyUnit : BattleUnit
             gameObject
         );
     }
+
     private Vector2 GetLocalPositionInPopupRoot(RectTransform anchor)
     {
         Canvas rootCanvas = damagePopupRoot.GetComponentInParent<Canvas>();
