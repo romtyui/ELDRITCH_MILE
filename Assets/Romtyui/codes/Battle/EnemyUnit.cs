@@ -24,6 +24,20 @@ public class EnemyUnit : BattleUnit
     [Header("Debug - Current Statuses")]
     [SerializeField]
     private List<EnemyStatusDebugEntry> inspectorStatuses = new List<EnemyStatusDebugEntry>();
+    [Header("Enemy Status Icon UI")]
+    [Tooltip("怪物狀態 Icon 生成位置。建議這個物件上放 Horizontal Layout Group 或 Vertical Layout Group")]
+    public Transform statusIconRoot;
+
+    [Tooltip("狀態圖示資料庫，和玩家狀態 UI 使用同一個 StatusIconDatabase")]
+    public StatusIconDatabase statusIconDatabase;
+
+    [Tooltip("狀態 Icon 預置物，直接使用玩家的 StatusIconUI Prefab")]
+    public StatusIconUI statusIconPrefab;
+
+    [Tooltip("沒有任何狀態時是否隱藏 StatusIconRoot")]
+    public bool hideStatusRootWhenEmpty = true;
+
+    private readonly List<StatusIconUI> spawnedStatusIcons = new List<StatusIconUI>();
 
     private bool chargeBrokenStunQueued;
     private bool stayOnCurrentIntentThisTurn;
@@ -255,6 +269,7 @@ public class EnemyUnit : BattleUnit
     {
         isDead = false;
 
+        ClearStatusIconUI();
         RefreshInspectorStatuses();
     }
 
@@ -324,9 +339,11 @@ public class EnemyUnit : BattleUnit
         OnHpChanged += RefreshHpUI;
         OnHpChanged += RefreshBlockUI;
         OnStatusChanged += RefreshInspectorStatuses;
+        OnStatusChanged += RefreshStatusIconUI;
 
         RefreshBlockUI();
         RefreshInspectorStatuses();
+        RefreshStatusIconUI();
     }
 
     private void OnDisable()
@@ -334,6 +351,7 @@ public class EnemyUnit : BattleUnit
         OnHpChanged -= RefreshHpUI;
         OnHpChanged -= RefreshBlockUI;
         OnStatusChanged -= RefreshInspectorStatuses;
+        OnStatusChanged -= RefreshStatusIconUI;
 
         if (blockAnimationCoroutine != null)
         {
@@ -466,6 +484,7 @@ public class EnemyUnit : BattleUnit
         RefreshIntentUI();
         RefreshBlockUI();
         RefreshInspectorStatuses();
+        RefreshStatusIconUI();
     }
 
     public void RefreshHpUI()
@@ -498,6 +517,126 @@ public class EnemyUnit : BattleUnit
                 amount = amount
             });
         }
+    }
+    public void RefreshStatusIconUI()
+    {
+        ClearStatusIconUI();
+
+        if (statusIconRoot == null)
+            return;
+
+        if (statusIconDatabase == null)
+        {
+            Debug.LogWarning($"[EnemyUnit] {unitName} 的 statusIconDatabase 沒有指定", gameObject);
+            SetStatusIconRootVisible(false);
+            return;
+        }
+
+        if (statusIconPrefab == null)
+        {
+            Debug.LogWarning($"[EnemyUnit] {unitName} 的 statusIconPrefab 沒有指定", gameObject);
+            SetStatusIconRootVisible(false);
+            return;
+        }
+
+        Dictionary<StatusType, int> currentStatuses = GetAllStatuses();
+
+        foreach (var pair in currentStatuses)
+        {
+            StatusType statusType = pair.Key;
+            int amount = pair.Value;
+
+            if (amount <= 0)
+                continue;
+
+            StatusIconUI iconUI = Instantiate(statusIconPrefab, statusIconRoot);
+
+            if (iconUI == null)
+                continue;
+
+            SetupStatusIconVisual(iconUI, statusType, amount);
+
+            spawnedStatusIcons.Add(iconUI);
+        }
+
+        SetStatusIconRootVisible(spawnedStatusIcons.Count > 0 || !hideStatusRootWhenEmpty);
+    }
+
+    public void ClearStatusIconUI()
+    {
+        for (int i = 0; i < spawnedStatusIcons.Count; i++)
+        {
+            if (spawnedStatusIcons[i] != null)
+                Destroy(spawnedStatusIcons[i].gameObject);
+        }
+
+        spawnedStatusIcons.Clear();
+
+        if (statusIconRoot != null)
+        {
+            for (int i = statusIconRoot.childCount - 1; i >= 0; i--)
+            {
+                Destroy(statusIconRoot.GetChild(i).gameObject);
+            }
+        }
+
+        SetStatusIconRootVisible(false);
+    }
+
+    private void SetupStatusIconVisual(StatusIconUI iconUI, StatusType statusType, int amount)
+    {
+        if (iconUI == null)
+            return;
+
+        Sprite icon = statusIconDatabase.GetIcon(statusType);
+
+        if (iconUI.iconImage != null)
+        {
+            iconUI.iconImage.sprite = icon;
+            iconUI.iconImage.enabled = icon != null;
+        }
+
+        if (iconUI.stackText != null)
+        {
+            iconUI.stackText.text = amount > 1 ? amount.ToString() : "";
+            iconUI.stackText.gameObject.SetActive(amount > 1);
+        }
+
+        DisableStatusIconTooltip(iconUI);
+
+        iconUI.gameObject.SetActive(true);
+    }
+
+    private void DisableStatusIconTooltip(StatusIconUI iconUI)
+    {
+        if (iconUI == null)
+            return;
+
+        if (iconUI.tooltipTrigger != null)
+            iconUI.tooltipTrigger.enabled = false;
+
+        TooltipTriggerUI[] triggers = iconUI.GetComponentsInChildren<TooltipTriggerUI>(true);
+
+        for (int i = 0; i < triggers.Length; i++)
+        {
+            TooltipTriggerUI trigger = triggers[i];
+
+            if (trigger == null)
+                continue;
+
+            trigger.enabled = false;
+        }
+    }
+
+    private void SetStatusIconRootVisible(bool visible)
+    {
+        if (statusIconRoot == null)
+            return;
+
+        if (hideStatusRootWhenEmpty)
+            statusIconRoot.gameObject.SetActive(visible);
+        else
+            statusIconRoot.gameObject.SetActive(true);
     }
 
     public void RefreshBlockUI()
@@ -764,6 +903,8 @@ public class EnemyUnit : BattleUnit
             yield break;
 
         isDead = true;
+
+        ClearStatusIconUI();
 
         yield return PlayActionAnimation(EnemyAnimationType.Death);
 

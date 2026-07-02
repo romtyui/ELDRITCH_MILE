@@ -38,6 +38,19 @@ public class EnemySlotUI : MonoBehaviour
     public TooltipTriggerUI intentTooltipTrigger;
     public TooltipTriggerUI statusTooltipTrigger;
 
+    [Header("Enemy Status Icon UI")]
+    [Tooltip("這個敵人 Slot 專用的狀態 Icon Root")]
+    public Transform statusIconRoot;
+
+    [Tooltip("狀態圖示資料庫，和玩家使用同一個")]
+    public StatusIconDatabase statusIconDatabase;
+
+    [Tooltip("狀態 Icon 預置物，直接使用玩家 StatusIconUI Prefab")]
+    public StatusIconUI statusIconPrefab;
+
+    [Tooltip("沒有狀態時是否隱藏 StatusIconRoot")]
+    public bool hideStatusRootWhenEmpty = true;
+
     private void Awake()
     {
         AutoFindRefs();
@@ -167,25 +180,30 @@ public class EnemySlotUI : MonoBehaviour
     }
     private void RefreshStatusTooltip()
     {
-        if (statusTooltipTrigger == null || enemyUnit == null)
+        if (enemyUnit == null)
             return;
 
-        List<TooltipEntry> entries = new List<TooltipEntry>();
-
-        Dictionary<StatusType, int> statuses = enemyUnit.GetAllStatuses();
-
-        foreach (var pair in statuses)
+        if (statusTooltipTrigger != null)
         {
-            StatusType statusType = pair.Key;
-            int amount = pair.Value;
+            List<TooltipEntry> entries = new List<TooltipEntry>();
 
-            if (amount <= 0)
-                continue;
+            Dictionary<StatusType, int> statuses = enemyUnit.GetAllStatuses();
 
-            entries.Add(BuildStatusTooltipEntry(statusType, amount));
+            foreach (var pair in statuses)
+            {
+                StatusType statusType = pair.Key;
+                int amount = pair.Value;
+
+                if (amount <= 0)
+                    continue;
+
+                entries.Add(BuildStatusTooltipEntry(statusType, amount));
+            }
+
+            statusTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
         }
 
-        statusTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+        enemyUnit.RefreshStatusIconUI();
     }
     private TooltipEntry BuildStatusTooltipEntry(StatusType statusType, int amount)
     {
@@ -294,6 +312,7 @@ public class EnemySlotUI : MonoBehaviour
         {
             enemyUnit.OnStatusChanged -= RefreshStatusTooltip;
             enemyUnit.OnIntentChanged -= RefreshIntentTooltip;
+            enemyUnit.ClearStatusIconUI();
         }
 
         ClearVisual();
@@ -302,6 +321,7 @@ public class EnemySlotUI : MonoBehaviour
         {
             enemyUnit.currentHp = 0;
             enemyUnit.RefreshAllUI();
+            enemyUnit.ClearStatusIconUI();
         }
 
         gameObject.SetActive(false);
@@ -334,6 +354,12 @@ public class EnemySlotUI : MonoBehaviour
         enemyUnit.damagePopupAnchor = visualRoot != null
             ? visualRoot
             : transform as RectTransform;
+
+        enemyUnit.statusIconRoot = statusIconRoot;
+        enemyUnit.statusIconDatabase = statusIconDatabase;
+        enemyUnit.statusIconPrefab = statusIconPrefab;
+        enemyUnit.hideStatusRootWhenEmpty = hideStatusRootWhenEmpty;
+        enemyUnit.ClearStatusIconUI();
 
         enemyUnit.intentTooltipTrigger = intentTooltipTrigger;
         enemyUnit.stunIntent = enemyData.stunIntent;
