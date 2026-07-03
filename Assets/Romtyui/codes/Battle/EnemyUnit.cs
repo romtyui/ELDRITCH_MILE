@@ -598,8 +598,8 @@ public class EnemyUnit : BattleUnit
 
         if (iconUI.stackText != null)
         {
-            iconUI.stackText.text = amount > 1 ? amount.ToString() : "";
-            iconUI.stackText.gameObject.SetActive(amount > 1);
+            iconUI.stackText.text = amount.ToString();
+            iconUI.stackText.gameObject.SetActive(amount > 0);
         }
 
         DisableStatusIconTooltip(iconUI);

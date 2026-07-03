@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: goat_sword
   cardName: goat_sword
-  description: "\u5C0D \u6240\u6709\u6575\u4EBA \u9020\u6210 {damage} \u9EDE \u50B7\u5BB3\n\u6839\u64DA\u5DF2\u4F7F\u7528\u904E
-    \u5375 \u6578\u91CF\u50B7\u5BB3+1"
+  description: "\u5C0D\u6240\u6709\u6575\u4EBA\u9020\u6210 {swordDamage} \u9EDE\u50B7\u5BB3\n
+    ({baseDamage} +  {usedEggCount}(\u5DF2\u4F7F\u7528\u5375\u6B21\u6578))"
   visualData: {fileID: 11400000, guid: 1d29a85d81f0e6d438438fb152fdc58a, type: 2}
-  cardType: 1
+  cardType: 0
   rarity: 0
   targetType: 4
   baseCost: 1
@@ -29,4 +29,5 @@ MonoBehaviour:
   isGodCard: 0
   godCardAnimation: {fileID: 0}
   effects:
+  - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
   - {fileID: 11400000, guid: 3d2d043dada87fa4abc39ae3af6d5f46, type: 2}

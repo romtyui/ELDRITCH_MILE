@@ -27,7 +27,7 @@ public class BattleDeck : MonoBehaviour
     [SerializeField] private List<string> debugDiscardPile = new();
     [SerializeField] private List<string> debugExhaustPile = new();
 
-    
+    private Dictionary<string, int> playedTokenCounts = new Dictionary<string, int>();
 
     public enum DeckViewMode
     {
@@ -147,6 +147,8 @@ public class BattleDeck : MonoBehaviour
     {
         if (card == null || card.data == null)
             return;
+
+        RegisterTokenPlayed(card);
 
         if (hand.Remove(card))
         {
@@ -453,5 +455,18 @@ public class BattleDeck : MonoBehaviour
         RefreshDebugView();
 
         Debug.Log($"[BattleDeck] 已還原戰鬥開始抽牌堆順序，張數 = {drawPile.Count}");
+    }
+    public int GetTokenPlayedCount(string tokenId)
+    {
+        if (string.IsNullOrWhiteSpace(tokenId))
+            tokenId = "DefaultToken";
+
+        if (playedTokenCounts == null)
+            return 0;
+
+        if (playedTokenCounts.TryGetValue(tokenId, out int count))
+            return count;
+
+        return 0;
     }
 }

@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: goat_bow
   cardName: goat_bow
-  description: "\u5C0D\u96A8\u6A5F\u6575\u4EBA\u9020\u6210 {damage} \u9EDE\u50B7\u5BB3\u5DF2\u4F7F\u7528\u904E\u5375\u7684\u6B21\u6578"
+  description: "\u5C0D\u96A8\u6A5F\u6575\u4EBA\u9020\u6210 {damage} \u9EDE\u50B7\u5BB3\uFF0C\u91CD\u8907{bowHitCount}
+    \u6B21\u3002"
   visualData: {fileID: 11400000, guid: 499bda74e6d169a42bf217f927266eca, type: 2}
   cardType: 1
   rarity: 0
-  targetType: 2
+  targetType: 3
   baseCost: 1
   exhaust: 0
   ethereal: 0

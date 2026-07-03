@@ -25,25 +25,59 @@ public class TooltipUI : MonoBehaviour
     public Vector2 verticalOffset = new Vector2(0f, 20f);
     public Vector2 screenPadding = new Vector2(20f, 20f);
 
+    [Header("Clamp")]
+    [Tooltip("是否強制讓 Tooltip 留在 Canvas 畫面內")]
+    public bool clampToCanvas = true;
+
+    [Tooltip("顯示時是否強制修正 container 的 Anchor / Pivot。建議打開")]
+    public bool forceTopLeftPivot = true;
+
     private Canvas rootCanvas;
     private RectTransform canvasRect;
     private Camera canvasCamera;
+
     private readonly List<TooltipBlockUI> spawnedBlocks = new();
 
     private void Awake()
     {
         Instance = this;
 
-        rootCanvas = GetComponentInParent<Canvas>();
-        canvasRect = rootCanvas != null ? rootCanvas.GetComponent<RectTransform>() : null;
-
-        if (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
-            canvasCamera = rootCanvas.worldCamera;
+        CacheCanvasRefs();
+        SetupContainerTransform();
 
         Hide();
 
         if (blockTemplate != null)
             blockTemplate.gameObject.SetActive(false);
+    }
+
+    private void CacheCanvasRefs()
+    {
+        rootCanvas = GetComponentInParent<Canvas>();
+        canvasRect = rootCanvas != null ? rootCanvas.GetComponent<RectTransform>() : null;
+
+        canvasCamera = null;
+
+        if (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            canvasCamera = rootCanvas.worldCamera;
+    }
+
+    private void SetupContainerTransform()
+    {
+        if (container == null)
+            return;
+
+        if (!forceTopLeftPivot)
+            return;
+
+        // 這裡很重要：
+        // Reposition() 算出來的位置是「以 Canvas 中心為原點」的 local position。
+        // 所以 container 的 anchor 要固定在 Canvas 中心。
+        container.anchorMin = new Vector2(0.5f, 0.5f);
+        container.anchorMax = new Vector2(0.5f, 0.5f);
+
+        // 讓 anchoredPosition 代表 Tooltip 左上角位置。
+        container.pivot = new Vector2(0f, 1f);
     }
 
     public void Show(List<TooltipEntry> entries, RectTransform target, TooltipAnchorSide preferredSide = TooltipAnchorSide.Auto)
@@ -56,6 +90,9 @@ public class TooltipUI : MonoBehaviour
             Hide();
             return;
         }
+
+        CacheCanvasRefs();
+        SetupContainerTransform();
 
         ClearBlocks();
 
@@ -78,13 +115,19 @@ public class TooltipUI : MonoBehaviour
 
         container.gameObject.SetActive(true);
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
+        Canvas.ForceUpdateCanvases();
+
+        if (contentRoot != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
 
         if (container != null)
             LayoutRebuilder.ForceRebuildLayoutImmediate(container);
 
+        Canvas.ForceUpdateCanvases();
+
         Reposition(target, preferredSide);
     }
+
     public void Hide()
     {
         ClearBlocks();
@@ -129,25 +172,40 @@ public class TooltipUI : MonoBehaviour
             Destroy(child.gameObject);
         }
     }
+
     private void Reposition(RectTransform target, TooltipAnchorSide preferredSide)
     {
         if (target == null || canvasRect == null || container == null)
             return;
 
+        SetupContainerTransform();
+
+        Canvas.ForceUpdateCanvases();
+
+        if (contentRoot != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
+
+        if (container != null)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(container);
+
+        Canvas.ForceUpdateCanvases();
+
         Bounds targetBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(canvasRect, target);
         Vector2 tooltipSize = container.rect.size;
 
         float targetCenterY = (targetBounds.min.y + targetBounds.max.y) * 0.5f;
-        float tooltipCenterOffsetY = tooltipSize.y * 0.5f;
+        float tooltipHalfHeight = tooltipSize.y * 0.5f;
+
+        // 因為 container pivot 是左上角，所以這些位置都是 Tooltip 左上角座標。
 
         Vector2 leftPos = new Vector2(
             targetBounds.min.x - tooltipSize.x - sideOffset.x,
-            targetCenterY + tooltipCenterOffsetY
+            targetCenterY + tooltipHalfHeight + sideOffset.y
         );
 
         Vector2 rightPos = new Vector2(
             targetBounds.max.x + sideOffset.x,
-            targetCenterY + tooltipCenterOffsetY
+            targetCenterY + tooltipHalfHeight + sideOffset.y
         );
 
         Vector2 topPos = new Vector2(
@@ -160,7 +218,7 @@ public class TooltipUI : MonoBehaviour
             targetBounds.min.y - verticalOffset.y
         );
 
-        Vector2 finalPos = leftPos;
+        Vector2 finalPos;
 
         switch (preferredSide)
         {
@@ -180,35 +238,52 @@ public class TooltipUI : MonoBehaviour
                 finalPos = ChooseBestPosition(bottomPos, topPos, leftPos, rightPos, tooltipSize);
                 break;
 
+            case TooltipAnchorSide.Auto:
             default:
                 finalPos = ChooseBestPosition(leftPos, rightPos, topPos, bottomPos, tooltipSize);
                 break;
         }
 
-        container.anchoredPosition = ClampToCanvas(finalPos, tooltipSize);
+        if (clampToCanvas)
+            finalPos = ClampToCanvas(finalPos, tooltipSize);
+
+        container.anchoredPosition = finalPos;
     }
 
-    private Vector2 ChooseBestPosition(Vector2 first, Vector2 second, Vector2 third, Vector2 fourth, Vector2 tooltipSize)
+    private Vector2 ChooseBestPosition(
+        Vector2 first,
+        Vector2 second,
+        Vector2 third,
+        Vector2 fourth,
+        Vector2 tooltipSize
+    )
     {
-        if (FitsInsideCanvas(first, tooltipSize)) return first;
-        if (FitsInsideCanvas(second, tooltipSize)) return second;
-        if (FitsInsideCanvas(third, tooltipSize)) return third;
-        if (FitsInsideCanvas(fourth, tooltipSize)) return fourth;
+        if (FitsInsideCanvas(first, tooltipSize))
+            return first;
+
+        if (FitsInsideCanvas(second, tooltipSize))
+            return second;
+
+        if (FitsInsideCanvas(third, tooltipSize))
+            return third;
+
+        if (FitsInsideCanvas(fourth, tooltipSize))
+            return fourth;
 
         return first;
     }
 
-    private bool FitsInsideCanvas(Vector2 pos, Vector2 size)
+    private bool FitsInsideCanvas(Vector2 topLeftPosition, Vector2 size)
     {
         if (canvasRect == null)
             return true;
 
         Rect rect = canvasRect.rect;
 
-        float left = pos.x;
-        float right = pos.x + size.x;
-        float top = pos.y;
-        float bottom = pos.y - size.y;
+        float left = topLeftPosition.x;
+        float right = topLeftPosition.x + size.x;
+        float top = topLeftPosition.y;
+        float bottom = topLeftPosition.y - size.y;
 
         return left >= rect.xMin + screenPadding.x &&
                right <= rect.xMax - screenPadding.x &&
@@ -216,24 +291,28 @@ public class TooltipUI : MonoBehaviour
                top <= rect.yMax - screenPadding.y;
     }
 
-    private Vector2 ClampToCanvas(Vector2 pos, Vector2 size)
+    private Vector2 ClampToCanvas(Vector2 topLeftPosition, Vector2 size)
     {
         if (canvasRect == null)
-            return pos;
+            return topLeftPosition;
 
         Rect rect = canvasRect.rect;
 
-        float x = Mathf.Clamp(
-            pos.x,
-            rect.xMin + screenPadding.x,
-            rect.xMax - size.x - screenPadding.x
-        );
+        float minX = rect.xMin + screenPadding.x;
+        float maxX = rect.xMax - size.x - screenPadding.x;
 
-        float y = Mathf.Clamp(
-            pos.y,
-            rect.yMin + size.y + screenPadding.y,
-            rect.yMax - screenPadding.y
-        );
+        float minY = rect.yMin + size.y + screenPadding.y;
+        float maxY = rect.yMax - screenPadding.y;
+
+        // 如果 Tooltip 太大，避免 Mathf.Clamp min > max 導致位置異常。
+        if (maxX < minX)
+            maxX = minX;
+
+        if (maxY < minY)
+            maxY = minY;
+
+        float x = Mathf.Clamp(topLeftPosition.x, minX, maxX);
+        float y = Mathf.Clamp(topLeftPosition.y, minY, maxY);
 
         return new Vector2(x, y);
     }

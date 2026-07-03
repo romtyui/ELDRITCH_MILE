@@ -160,12 +160,59 @@ public class CardViewUI : MonoBehaviour
                 AddProviderValue(values, provider, "damage", context, damageValueColor);
                 AddProviderValue(values, provider, "damege", context, damageValueColor);
                 AddProviderValue(values, provider, "block", context, blockValueColor);
+
+                AddProviderValue(values, provider, "usedEggCount", context, damageValueColor);
+                AddProviderValue(values, provider, "usedTokenCount", context, damageValueColor);
+                AddProviderValue(values, provider, "playedTokenCount", context, damageValueColor);
+                AddProviderValue(values, provider, "eggCount", context, damageValueColor);
+                AddProviderValue(values, provider, "已使用過卵的次數", context, damageValueColor);
+
+                AddProviderValue(values, provider, "extraHitCount", context, damageValueColor);
+                AddProviderValue(values, provider, "extraCount", context, damageValueColor);
+                AddProviderValue(values, provider, "追加次數", context, damageValueColor);
+
+                AddProviderValue(values, provider, "baseHitCount", context, damageValueColor);
+                AddProviderValue(values, provider, "baseCount", context, damageValueColor);
+                AddProviderValue(values, provider, "保底次數", context, damageValueColor);
+
+                AddProviderValue(values, provider, "bowHitCount", context, damageValueColor);
+                AddProviderValue(values, provider, "totalHitCount", context, damageValueColor);
+                AddProviderValue(values, provider, "repeatCount", context, damageValueColor);
+                AddProviderValue(values, provider, "重複次數", context, damageValueColor);
+
+                AddProviderValue(values, provider, "baseDamage", context, damageValueColor);
+                AddProviderValue(values, provider, "baseSwordDamage", context, damageValueColor);
+                AddProviderValue(values, provider, "基礎傷害", context, damageValueColor);
+
+                AddProviderValue(values, provider, "usedTokenBonusDamage", context, damageValueColor);
+                AddProviderValue(values, provider, "bonusDamage", context, damageValueColor);
+                AddProviderValue(values, provider, "tokenBonusDamage", context, damageValueColor);
+                AddProviderValue(values, provider, "額外傷害", context, damageValueColor);
+
+                AddProviderValue(values, provider, "swordDamage", context, damageValueColor);
+                AddProviderValue(values, provider, "totalDamage", context, damageValueColor);
+                AddProviderValue(values, provider, "finalDamage", context, damageValueColor);
+                AddProviderValue(values, provider, "總傷害", context, damageValueColor);
+
+                AddProviderValue(values, provider, "baseBlock", context, blockValueColor);
+                AddProviderValue(values, provider, "baseShieldBlock", context, blockValueColor);
+                AddProviderValue(values, provider, "基礎護盾", context, blockValueColor);
+
+                AddProviderValue(values, provider, "usedTokenBonusBlock", context, blockValueColor);
+                AddProviderValue(values, provider, "bonusBlock", context, blockValueColor);
+                AddProviderValue(values, provider, "tokenBonusBlock", context, blockValueColor);
+                AddProviderValue(values, provider, "額外護盾", context, blockValueColor);
+
+                AddProviderValue(values, provider, "shieldBlock", context, blockValueColor);
+                AddProviderValue(values, provider, "totalBlock", context, blockValueColor);
+                AddProviderValue(values, provider, "finalBlock", context, blockValueColor);
+                AddProviderValue(values, provider, "總護盾", context, blockValueColor);
             }
         }
 
-        return Regex.Replace(text, @"\{([a-zA-Z0-9_]+)\}", match =>
+        return Regex.Replace(text, @"\{([^{}]+)\}", match =>
         {
-            string key = match.Groups[1].Value;
+            string key = match.Groups[1].Value.Trim();
 
             if (values.TryGetValue(key, out string value))
                 return value;

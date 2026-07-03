@@ -11,6 +11,10 @@ public class StatusIconUI : MonoBehaviour
     public TooltipTriggerUI tooltipTrigger;
     public TooltipKeywordDatabase keywordDatabase;
 
+    [Header("Stack Text Display")]
+    [Tooltip("篈Τ 1 糷琌陪ボ计")]
+    public bool showNumberWhenOneStack = true;
+
     public void Set(StatusType statusType, Sprite icon, int stack, TooltipKeywordDatabase database)
     {
         if (iconImage != null)
@@ -19,11 +23,7 @@ public class StatusIconUI : MonoBehaviour
             iconImage.enabled = icon != null;
         }
 
-        if (stackText != null)
-        {
-            stackText.text = stack > 1 ? stack.ToString() : "";
-            stackText.gameObject.SetActive(stack > 1);
-        }
+        RefreshStackText(stack);
 
         if (tooltipTrigger == null)
             tooltipTrigger = GetComponent<TooltipTriggerUI>();
@@ -33,8 +33,6 @@ public class StatusIconUI : MonoBehaviour
             List<TooltipEntry> entries = new List<TooltipEntry>();
 
             string key = statusType.ToString();
-            //string title = key;
-            //string body = $"ヘ玡糷计{stack}";
             string title = GetStatusTitle(statusType);
             string body = GetStatusDescription(statusType, stack);
 
@@ -52,6 +50,21 @@ public class StatusIconUI : MonoBehaviour
 
         gameObject.SetActive(true);
     }
+
+    private void RefreshStackText(int stack)
+    {
+        if (stackText == null)
+            return;
+
+        bool shouldShow = stack > 0;
+
+        if (stack == 1 && !showNumberWhenOneStack)
+            shouldShow = false;
+
+        stackText.text = stack.ToString();
+        stackText.gameObject.SetActive(shouldShow);
+    }
+
     private string GetStatusTitle(StatusType statusType)
     {
         switch (statusType)
@@ -73,14 +86,18 @@ public class StatusIconUI : MonoBehaviour
 
             case StatusType.Poison:
                 return "い瑀";
+
             case StatusType.Harden:
                 return "祑て";
+
             case StatusType.Regeneration:
                 return "ネ";
+
             default:
                 return statusType.ToString();
         }
     }
+
     private string GetStatusDescription(StatusType statusType, int amount)
     {
         switch (statusType)
@@ -102,14 +119,16 @@ public class StatusIconUI : MonoBehaviour
 
             case StatusType.Poison:
                 return $"秨﹍ {amount} 翴端甡ぇい瑀糷计搭ぶ";
+
             case StatusType.Harden:
                 return $"–秨﹍莉眔 {amount} 翴臔";
+
             case StatusType.Regeneration:
                 {
                     int percent = amount * 5;
-                    //int healAmount = Mathf.CeilToInt(owner.maxHp * amount * 0.05f);
-                    return $"–秨﹍確ō程ネ㏑ {percent}%ネ㏑\nネ㏑端甡糷计搭ぶ 1";
+                    return $"–秨﹍確ō程ネ㏑ {percent}% ネ㏑\nネ㏑端甡糷计搭ぶ 1";
                 }
+
             default:
                 return $"ヘ玡糷计{amount}";
         }
