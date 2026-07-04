@@ -2,73 +2,160 @@ using UnityEngine;
 
 public class TargetArrowUI : MonoBehaviour
 {
+    public static TargetArrowUI Instance { get; private set; }
+
+    [Header("Root")]
+    [Tooltip("負責顯示/隱藏整組箭頭。通常是 ArrowRoot 或 ArrowVisualRoot。")]
+    public RectTransform visualRoot;
+
+    [Tooltip("負責座標換算的全螢幕 RectTransform。建議是 ArrowCanvasRoot。")]
+    public RectTransform positionRoot;
+
     [Header("Arrow Parts")]
     public RectTransform arrowBody;
     public RectTransform arrowHead;
 
     [Header("Follow Mouse Settings")]
-    [Tooltip("箭頭終點距離滑鼠下方多少像素。數值越大，箭頭頭部越靠下。")]
     public float mouseEndYOffset = 55f;
-
-    [Tooltip("箭頭起點是否從卡牌上方出發。")]
     public Vector2 startOffset = new Vector2(0f, 80f);
-
-    [Tooltip("如果箭頭圖片本身不是朝右，請調整這個角度。箭頭朝右 = 0，朝上 = -90，朝下 = 90。")]
     public float arrowRotationOffset = 0f;
+
+    [Header("Debug")]
+    public bool debugLogPosition = false;
 
     private RectTransform startCard;
     private Canvas canvas;
-    private RectTransform canvasRect;
+    private bool isShowing;
 
     private void Awake()
     {
-        canvas = GetComponentInParent<Canvas>();
-        canvasRect = canvas.transform as RectTransform;
+        Instance = this;
+
+        AutoFindRefs();
+
         Hide();
+    }
+
+    private void OnEnable()
+    {
+        Instance = this;
+
+        AutoFindRefs();
+    }
+
+    private void AutoFindRefs()
+    {
+        if (canvas == null)
+            canvas = GetComponentInParent<Canvas>();
+
+        if (visualRoot == null)
+            visualRoot = transform as RectTransform;
+
+        if (positionRoot == null)
+            positionRoot = visualRoot;
+
+        if (arrowBody == null)
+        {
+            Transform body = transform.Find("ArrowCanvasRoot/ArrowBody");
+
+            if (body == null)
+                body = transform.Find("ArrowBody");
+
+            if (body != null)
+                arrowBody = body as RectTransform;
+        }
+
+        if (arrowHead == null)
+        {
+            Transform head = transform.Find("ArrowCanvasRoot/ArrowHead");
+
+            if (head == null)
+                head = transform.Find("ArrowHead");
+
+            if (head != null)
+                arrowHead = head as RectTransform;
+        }
     }
 
     public void Show(RectTransform cardRect)
     {
+        AutoFindRefs();
+
         startCard = cardRect;
+        isShowing = true;
+
         gameObject.SetActive(true);
+        transform.SetAsLastSibling();
+
+        SetArrowVisible(true);
     }
 
     public void Hide()
     {
         startCard = null;
-        gameObject.SetActive(false);
+        isShowing = false;
+
+        SetArrowVisible(false);
+    }
+
+    private void SetArrowVisible(bool visible)
+    {
+        if (visualRoot != null)
+            visualRoot.gameObject.SetActive(visible);
+
+        if (arrowBody != null)
+            arrowBody.gameObject.SetActive(visible);
+
+        if (arrowHead != null)
+            arrowHead.gameObject.SetActive(visible);
     }
 
     public void UpdateArrow(Vector2 mouseScreenPos)
     {
-        if (startCard == null || canvasRect == null)
+        if (!isShowing)
             return;
 
-        Camera cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay
-            ? null
-            : canvas.worldCamera;
+        if (startCard == null)
+            return;
 
-        Vector2 startScreenPos = RectTransformUtility.WorldToScreenPoint(cam, startCard.position);
+        AutoFindRefs();
+
+        if (positionRoot == null)
+            return;
+
+        Camera cam = null;
+
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            cam = canvas.worldCamera;
+
+        Vector2 startScreenPos = RectTransformUtility.WorldToScreenPoint(
+            cam,
+            startCard.position
+        );
 
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            canvasRect,
+            positionRoot,
             startScreenPos,
             cam,
             out Vector2 startLocal
         );
 
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            canvasRect,
+            positionRoot,
             mouseScreenPos,
             cam,
             out Vector2 mouseLocal
         );
 
-        // 起點：卡牌位置，可以稍微往上，避免從卡牌中心射出
         Vector2 finalStartLocal = startLocal + startOffset;
-
-        // 終點：永遠在滑鼠下方
         Vector2 finalEndLocal = mouseLocal + Vector2.down * mouseEndYOffset;
+
+        if (debugLogPosition)
+        {
+            Debug.Log(
+                $"[TargetArrowUI] mouse = {mouseScreenPos}, start = {finalStartLocal}, end = {finalEndLocal}"
+            );
+        }
 
         DrawArrow(finalStartLocal, finalEndLocal);
     }
@@ -85,6 +172,7 @@ public class TargetArrowUI : MonoBehaviour
 
         if (arrowBody != null)
         {
+            arrowBody.gameObject.SetActive(true);
             arrowBody.anchoredPosition = startLocal + dir * 0.5f;
             arrowBody.sizeDelta = new Vector2(length, arrowBody.sizeDelta.y);
             arrowBody.localRotation = Quaternion.Euler(0f, 0f, angle);
@@ -92,6 +180,7 @@ public class TargetArrowUI : MonoBehaviour
 
         if (arrowHead != null)
         {
+            arrowHead.gameObject.SetActive(true);
             arrowHead.anchoredPosition = endLocal;
             arrowHead.localRotation = Quaternion.Euler(0f, 0f, angle + arrowRotationOffset);
         }

@@ -12,13 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf43116519b6a7a449b6e0c6921700bc, type: 3}
   m_Name: "tu\u0101-khoo-tai"
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  unitName: "tu\u0101-khoo-tai"
+  unitName: monster_03
   maxHp: 80
+  enemyId: 
   normalVisualPrefab: {fileID: 2726685744332138470, guid: 31fe265b8dd291041a74e7d80c71515a, type: 3}
   darkVisualPrefab: {fileID: 4278617798232755884, guid: 07b2d6fce24d46e4a96463e7f29c7b9b, type: 3}
   visualAnchoredPosition: {x: 0, y: 0}
   visualScale: {x: 1, y: 1, z: 1}
   visualEulerAngles: {x: 0, y: 0, z: 0}
+  damagePopupOffset: {x: -6.42, y: 80}
   hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
   hitBoxSprite: {fileID: 0}
   stunIntent: {fileID: 0}

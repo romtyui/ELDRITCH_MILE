@@ -12,7 +12,10 @@ public class DeckViewerUI : MonoBehaviour
     public RectTransform contentRoot;
     public CardViewUI cardPrefab;
 
-    [Header("Title")]
+    [Header("Center Title")]
+    [Tooltip("如果不想顯示中間標題，就關掉")]
+    public bool showCenterTitle = false;
+
     public TMP_Text titleText;
     public TMP_Text countText;
 
@@ -22,6 +25,31 @@ public class DeckViewerUI : MonoBehaviour
     public Button exhaustPileButton;
     public Button handButton;
     public Button closeButton;
+
+    [Header("Button Text")]
+    public TMP_Text drawPileButtonText;
+    public TMP_Text discardPileButtonText;
+    public TMP_Text exhaustPileButtonText;
+    public TMP_Text handButtonText;
+
+    [Header("Button Image")]
+    public Image drawPileButtonImage;
+    public Image discardPileButtonImage;
+    public Image exhaustPileButtonImage;
+    public Image handButtonImage;
+
+    [Header("Tab Text Label")]
+    public string drawPileLabel = "牌組區";
+    public string discardPileLabel = "棄牌區";
+    public string exhaustPileLabel = "消耗區";
+    public string handLabel = "手牌區";
+
+    [Header("Tab Colors")]
+    public Color activeTabColor = Color.white;
+    public Color inactiveTabColor = new Color(0.45f, 0.45f, 0.45f, 1f);
+
+    public Color activeTextColor = Color.black;
+    public Color inactiveTextColor = new Color(0.18f, 0.18f, 0.18f, 1f);
 
     [Header("Card Size In Viewer")]
     public bool overrideCardSize = false;
@@ -33,6 +61,8 @@ public class DeckViewerUI : MonoBehaviour
 
     private void Awake()
     {
+        AutoBindButtonRefs();
+
         if (drawPileButton != null)
             drawPileButton.onClick.AddListener(OpenDrawPile);
 
@@ -50,6 +80,48 @@ public class DeckViewerUI : MonoBehaviour
 
         if (panelRoot != null)
             panelRoot.SetActive(false);
+
+        RefreshTabUI();
+        UpdateCenterTitle();
+    }
+
+    private void AutoBindButtonRefs()
+    {
+        if (drawPileButton != null)
+        {
+            if (drawPileButtonImage == null)
+                drawPileButtonImage = drawPileButton.image;
+
+            if (drawPileButtonText == null)
+                drawPileButtonText = drawPileButton.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        if (discardPileButton != null)
+        {
+            if (discardPileButtonImage == null)
+                discardPileButtonImage = discardPileButton.image;
+
+            if (discardPileButtonText == null)
+                discardPileButtonText = discardPileButton.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        if (exhaustPileButton != null)
+        {
+            if (exhaustPileButtonImage == null)
+                exhaustPileButtonImage = exhaustPileButton.image;
+
+            if (exhaustPileButtonText == null)
+                exhaustPileButtonText = exhaustPileButton.GetComponentInChildren<TMP_Text>(true);
+        }
+
+        if (handButton != null)
+        {
+            if (handButtonImage == null)
+                handButtonImage = handButton.image;
+
+            if (handButtonText == null)
+                handButtonText = handButton.GetComponentInChildren<TMP_Text>(true);
+        }
     }
 
     [ContextMenu("Test Open Draw Pile")]
@@ -130,6 +202,9 @@ public class DeckViewerUI : MonoBehaviour
             return;
         }
 
+        RefreshTabUI();
+        UpdateCenterTitle();
+
         ClearCards();
 
         IReadOnlyList<CardInstance> cards = GetCurrentCards();
@@ -141,8 +216,6 @@ public class DeckViewerUI : MonoBehaviour
         }
 
         Debug.Log($"[DeckViewerUI] Refresh {currentMode}, count = {cards.Count}");
-
-        UpdateTitle(cards.Count);
 
         for (int i = 0; i < cards.Count; i++)
         {
@@ -172,10 +245,12 @@ public class DeckViewerUI : MonoBehaviour
             }
 
             CardDragUI drag = view.GetComponent<CardDragUI>();
+
             if (drag != null)
                 drag.enabled = false;
 
             CardHoverUI hover = view.GetComponent<CardHoverUI>();
+
             if (hover != null)
                 hover.enabled = false;
 
@@ -185,9 +260,85 @@ public class DeckViewerUI : MonoBehaviour
         }
     }
 
+    private void RefreshTabUI()
+    {
+        int drawCount = GetPileCount(DeckViewMode.DrawPile);
+        int discardCount = GetPileCount(DeckViewMode.DiscardPile);
+        int exhaustCount = GetPileCount(DeckViewMode.ExhaustPile);
+        int handCount = GetPileCount(DeckViewMode.Hand);
+
+        if (drawPileButtonText != null)
+            drawPileButtonText.text = $"{drawPileLabel} ({drawCount})";
+
+        if (discardPileButtonText != null)
+            discardPileButtonText.text = $"{discardPileLabel} ({discardCount})";
+
+        if (exhaustPileButtonText != null)
+            exhaustPileButtonText.text = $"{exhaustPileLabel} ({exhaustCount})";
+
+        if (handButtonText != null)
+            handButtonText.text = $"{handLabel} ({handCount})";
+
+        SetTabVisual(
+            DeckViewMode.DrawPile,
+            drawPileButtonImage,
+            drawPileButtonText
+        );
+
+        SetTabVisual(
+            DeckViewMode.DiscardPile,
+            discardPileButtonImage,
+            discardPileButtonText
+        );
+
+        SetTabVisual(
+            DeckViewMode.ExhaustPile,
+            exhaustPileButtonImage,
+            exhaustPileButtonText
+        );
+
+        SetTabVisual(
+            DeckViewMode.Hand,
+            handButtonImage,
+            handButtonText
+        );
+    }
+
+    private void SetTabVisual(DeckViewMode mode, Image buttonImage, TMP_Text buttonText)
+    {
+        bool isActive = currentMode == mode;
+
+        if (buttonImage != null)
+            buttonImage.color = isActive ? activeTabColor : inactiveTabColor;
+
+        if (buttonText != null)
+            buttonText.color = isActive ? activeTextColor : inactiveTextColor;
+    }
+
+    private int GetPileCount(DeckViewMode mode)
+    {
+        if (battleDeck == null)
+            return 0;
+
+        IReadOnlyList<CardInstance> cards = GetCardsByMode(mode);
+
+        if (cards == null)
+            return 0;
+
+        return cards.Count;
+    }
+
     private IReadOnlyList<CardInstance> GetCurrentCards()
     {
-        switch (currentMode)
+        return GetCardsByMode(currentMode);
+    }
+
+    private IReadOnlyList<CardInstance> GetCardsByMode(DeckViewMode mode)
+    {
+        if (battleDeck == null)
+            return null;
+
+        switch (mode)
         {
             case DeckViewMode.DrawPile:
                 return battleDeck.DrawPile;
@@ -206,13 +357,24 @@ public class DeckViewerUI : MonoBehaviour
         }
     }
 
-    private void UpdateTitle(int count)
+    private void UpdateCenterTitle()
     {
-        if (titleText != null)
-            titleText.text = GetTitleText(currentMode);
+        if (showCenterTitle)
+        {
+            if (titleText != null)
+                titleText.text = GetTitleText(currentMode);
 
-        if (countText != null)
-            countText.text = count.ToString();
+            if (countText != null)
+                countText.text = GetPileCount(currentMode).ToString();
+        }
+        else
+        {
+            if (titleText != null)
+                titleText.text = "";
+
+            if (countText != null)
+                countText.text = "";
+        }
     }
 
     private string GetTitleText(DeckViewMode mode)

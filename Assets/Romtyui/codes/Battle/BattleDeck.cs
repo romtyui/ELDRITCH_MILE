@@ -387,4 +387,71 @@ public class BattleDeck : MonoBehaviour
 
         return tokenId.Trim();
     }
+
+    public void RestoreDeckSnapshot(
+    List<CardData> savedDrawPile,
+    List<CardData> savedHand,
+    List<CardData> savedDiscardPile,
+    List<CardData> savedExhaustPile
+)
+    {
+        drawPile.Clear();
+        hand.Clear();
+        discardPile.Clear();
+        exhaustPile.Clear();
+
+        RestorePile(savedDrawPile, drawPile);
+        RestorePile(savedHand, hand);
+        RestorePile(savedDiscardPile, discardPile);
+        RestorePile(savedExhaustPile, exhaustPile);
+
+        RefreshDebugView();
+
+        Debug.Log(
+            $"[BattleDeck] 已還原牌堆快照：" +
+            $"Draw {drawPile.Count}, " +
+            $"Hand {hand.Count}, " +
+            $"Discard {discardPile.Count}, " +
+            $"Exhaust {exhaustPile.Count}"
+        );
+    }
+    private void RestorePile(List<CardData> savedCards, List<CardInstance> targetPile)
+    {
+        if (savedCards == null || targetPile == null)
+            return;
+
+        for (int i = 0; i < savedCards.Count; i++)
+        {
+            CardData cardData = savedCards[i];
+
+            if (cardData == null)
+                continue;
+
+            targetPile.Add(new CardInstance(cardData));
+        }
+    }
+    public void RestoreDrawPileOrderOnly(List<CardData> savedDrawPileOrder)
+    {
+        drawPile.Clear();
+        hand.Clear();
+        discardPile.Clear();
+        exhaustPile.Clear();
+
+        if (savedDrawPileOrder != null)
+        {
+            for (int i = 0; i < savedDrawPileOrder.Count; i++)
+            {
+                CardData cardData = savedDrawPileOrder[i];
+
+                if (cardData == null)
+                    continue;
+
+                drawPile.Add(new CardInstance(cardData));
+            }
+        }
+
+        RefreshDebugView();
+
+        Debug.Log($"[BattleDeck] 已還原戰鬥開始抽牌堆順序，張數 = {drawPile.Count}");
+    }
 }

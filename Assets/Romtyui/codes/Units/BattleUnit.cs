@@ -151,23 +151,21 @@ public class BattleUnit : MonoBehaviour
 
         OnHpChanged?.Invoke();
 
-
         if (realHpDamage > 0)
         {
             ReduceRegenerationOnDamage();
             OnAfterHpDamageTaken(realHpDamage);
         }
-        if (realHpDamage > 0 && this is EnemyUnit)
+
+        if (realHpDamage > 0 && isPlayerUnit)
         {
-            BattleManager battleManager = FindFirstObjectByType<BattleManager>();
+            if (CameraShake.Instance != null)
+                CameraShake.Instance.Shake();
+        }
 
-            if (battleManager != null)
-            {
-                RectTransform rect = transform as RectTransform;
-
-                if (rect != null)
-                    battleManager.ShowDamagePopup(realHpDamage, rect);
-            }
+        if (realHpDamage > 0 && this is EnemyUnit enemy)
+        {
+            enemy.ShowDamagePopup(realHpDamage);
         }
 
         Debug.Log($"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}");
@@ -183,6 +181,7 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"[Damage] {unitName} take {amount}, realHpDamage = {realHpDamage}, HP = {currentHp}");
     }
+
     private void ReduceRegenerationOnDamage()
     {
         int regeneration = GetStatus(StatusType.Regeneration);
@@ -279,6 +278,49 @@ public class BattleUnit : MonoBehaviour
         OnStatusChanged?.Invoke();
 
         Debug.Log($"{unitName} 的 {statusType} 被設定為 {amount}");
+    }
+    public void NotifyUnitChanged()
+    {
+        OnHpChanged?.Invoke();
+        OnStatusChanged?.Invoke();
+    }
+    public List<StatusSnapshotEntry> CaptureStatusSnapshot()
+    {
+        List<StatusSnapshotEntry> result = new List<StatusSnapshotEntry>();
+
+        foreach (var pair in statuses)
+        {
+            if (pair.Value <= 0)
+                continue;
+
+            result.Add(new StatusSnapshotEntry(pair.Key, pair.Value));
+        }
+
+        return result;
+    }
+    public void RestoreStatusSnapshot(List<StatusSnapshotEntry> snapshot)
+    {
+        statuses.Clear();
+
+        if (snapshot != null)
+        {
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                StatusSnapshotEntry entry = snapshot[i];
+
+                if (entry == null)
+                    continue;
+
+                if (entry.amount <= 0)
+                    continue;
+
+                statuses[entry.statusType] = entry.amount;
+            }
+        }
+
+        OnStatusChanged?.Invoke();
+
+        Debug.Log($"[BattleUnit] {unitName} 已還原狀態快照，數量 = {statuses.Count}");
     }
 
     private void ResolvePoisonAtTurnStart()

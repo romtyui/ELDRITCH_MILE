@@ -38,10 +38,16 @@ public class BattleManager : MonoBehaviour
     public Image sanFillImage;
     // public EnemyStatusBarUI enemyStatusBarUI; // 之後再做
 
-    [Header("Damage Popup UI")]
-    public DamagePopupUI damagePopupPrefab;
-    public RectTransform damagePopupRoot;
-    public Vector3 damagePopupWorldOffset = new Vector3(0f, 1.5f, 0f);
+    //[Header("Damage Popup UI")]
+    //public DamagePopupUI damagePopupPrefab;
+    //public RectTransform damagePopupRoot;
+    //public Vector2 damagePopupRandomRange = new Vector2(60f, 30f);
+
+    //[Header("Battle Start Deck Snapshot")]
+    //public BattleStartDeckSnapshot battleStartDeckSnapshot = new();
+
+    //[Tooltip("F6 使用。重新載入場景後，是否要套用戰鬥開始前的牌組順序")]
+    //public bool pendingRestoreBattleStartDeckSnapshot;
 
     [Header("Runtime")]
     public BattlePhase currentPhase = BattlePhase.None;
@@ -74,14 +80,66 @@ public class BattleManager : MonoBehaviour
         isResolvingCard = false;
         battleTurnNumber = 0;
 
-        if (playerDeck != null)
-            playerDeck.InitializeDeck();
+        bool restoreBattleStartDeckSnapshot =
+            RunStateManager.Instance != null &&
+            RunStateManager.Instance.pendingRestoreBattleStartDeckSnapshot;
 
-        if (energySystem != null)
-            energySystem.ResetEnergy();
+        bool hasRunState =
+            RunStateManager.Instance != null &&
+            RunStateManager.Instance.hasSavedRunState;
+
+        if (restoreBattleStartDeckSnapshot)
+        {
+            RunStateManager.Instance.ApplyBattleStartDeckSnapshot(
+                playerUnit,
+                energySystem,
+                playerDeck
+            );
+        }
+        else
+        {
+            if (hasRunState)
+            {
+                // 先把 F5 保存的牌組塞回 startingDeck
+                RunStateManager.Instance.ApplyToBattle(
+                    playerUnit,
+                    energySystem,
+                    playerDeck
+                );
+            }
+
+            if (playerDeck != null)
+                playerDeck.InitializeDeck();
+
+            if (!hasRunState)
+            {
+                if (energySystem != null)
+                    energySystem.ResetEnergy();
+            }
+
+            if (hasRunState)
+            {
+                // InitializeDeck 之後再套一次，確保 HP / SAN 不被覆蓋
+                RunStateManager.Instance.ApplyToBattle(
+                    playerUnit,
+                    energySystem,
+                    playerDeck
+                );
+            }
+
+            if (RunStateManager.Instance != null)
+            {
+                RunStateManager.Instance.SaveBattleStartDeckSnapshot(
+                    playerUnit,
+                    energySystem,
+                    playerDeck
+                );
+            }
+        }
 
         SpawnEnemiesForBattle();
 
+        RefreshPlayerBarsUI();
         RefreshStatusUI();
 
         StartPlayerTurn();
@@ -89,7 +147,113 @@ public class BattleManager : MonoBehaviour
         if (playerDeck != null)
             Debug.Log($"{playerDeck.Hand.Count}");
     }
+    //    public void SaveBattleStartDeckSnapshot(
+    //    BattleUnit playerUnit,
+    //    EnergySystem energySystem,
+    //    BattleDeck battleDeck
+    //)
+    //    {
+    //        if (battleStartDeckSnapshot == null)
+    //            battleStartDeckSnapshot = new BattleStartDeckSnapshot();
 
+    //        battleStartDeckSnapshot.hasSnapshot = true;
+
+    //        if (playerUnit != null)
+    //        {
+    //            battleStartDeckSnapshot.playerMaxHp = playerUnit.maxHp;
+    //            battleStartDeckSnapshot.playerCurrentHp = playerUnit.currentHp;
+
+    //            battleStartDeckSnapshot.playerStatuses.Clear();
+
+    //            List<StatusSnapshotEntry> statusEntries = playerUnit.CaptureStatusSnapshot();
+
+    //            for (int i = 0; i < statusEntries.Count; i++)
+    //            {
+    //                battleStartDeckSnapshot.playerStatuses.Add(statusEntries[i]);
+    //            }
+    //        }
+
+    //        if (energySystem != null)
+    //        {
+    //            battleStartDeckSnapshot.maxEnergy = energySystem.maxEnergy;
+    //            battleStartDeckSnapshot.currentEnergy = energySystem.currentEnergy;
+    //        }
+
+    //        battleStartDeckSnapshot.drawPileOrder.Clear();
+
+    //        if (battleDeck != null && battleDeck.DrawPile != null)
+    //        {
+    //            for (int i = 0; i < battleDeck.DrawPile.Count; i++)
+    //            {
+    //                CardInstance card = battleDeck.DrawPile[i];
+
+    //                if (card == null || card.data == null)
+    //                    continue;
+
+    //                battleStartDeckSnapshot.drawPileOrder.Add(card.data);
+    //            }
+    //        }
+
+    //        Debug.Log(
+    //            $"[RunStateManager] 已保存戰鬥開始牌組快照：" +
+    //            $"HP {battleStartDeckSnapshot.playerCurrentHp}/{battleStartDeckSnapshot.playerMaxHp}, " +
+    //            $"Energy {battleStartDeckSnapshot.currentEnergy}/{battleStartDeckSnapshot.maxEnergy}, " +
+    //            $"DrawPileOrder {battleStartDeckSnapshot.drawPileOrder.Count}"
+    //        );
+    //    }
+    //    public void ApplyBattleStartDeckSnapshot(
+    //    BattleUnit playerUnit,
+    //    EnergySystem energySystem,
+    //    BattleDeck battleDeck
+    //)
+    //    {
+    //        if (battleStartDeckSnapshot == null || !battleStartDeckSnapshot.hasSnapshot)
+    //        {
+    //            Debug.LogWarning("[RunStateManager] 沒有戰鬥開始牌組快照，無法還原");
+    //            return;
+    //        }
+
+    //        if (playerUnit != null)
+    //        {
+    //            playerUnit.maxHp = battleStartDeckSnapshot.playerMaxHp;
+    //            playerUnit.currentHp = Mathf.Clamp(
+    //                battleStartDeckSnapshot.playerCurrentHp,
+    //                0,
+    //                battleStartDeckSnapshot.playerMaxHp
+    //            );
+
+    //            playerUnit.RestoreStatusSnapshot(battleStartDeckSnapshot.playerStatuses);
+
+    //            playerUnit.OnHpChanged?.Invoke();
+    //            playerUnit.OnStatusChanged?.Invoke();
+    //        }
+
+    //        if (energySystem != null)
+    //        {
+    //            energySystem.maxEnergy = battleStartDeckSnapshot.maxEnergy;
+    //            energySystem.currentEnergy = Mathf.Clamp(
+    //                battleStartDeckSnapshot.currentEnergy,
+    //                0,
+    //                battleStartDeckSnapshot.maxEnergy
+    //            );
+    //        }
+
+    //        if (battleDeck != null)
+    //        {
+    //            battleDeck.RestoreDrawPileOrderOnly(
+    //                battleStartDeckSnapshot.drawPileOrder
+    //            );
+    //        }
+
+    //        pendingRestoreBattleStartDeckSnapshot = false;
+
+    //        Debug.Log(
+    //            $"[RunStateManager] 已還原戰鬥開始牌組快照：" +
+    //            $"HP {battleStartDeckSnapshot.playerCurrentHp}/{battleStartDeckSnapshot.playerMaxHp}, " +
+    //            $"Energy {battleStartDeckSnapshot.currentEnergy}/{battleStartDeckSnapshot.maxEnergy}, " +
+    //            $"DrawPileOrder {battleStartDeckSnapshot.drawPileOrder.Count}"
+    //        );
+    //    }
     private void SpawnEnemiesForBattle()
     {
         if (enemyFormationSpawner != null)
@@ -938,6 +1102,8 @@ public class BattleManager : MonoBehaviour
         {
             Debug.Log("戰鬥勝利");
 
+            CommitCurrentFormation();
+
             if (autoStartNextBattleOnWin)
             {
                 StartCoroutine(StartNextBattleAfterDelay());
@@ -948,6 +1114,21 @@ public class BattleManager : MonoBehaviour
 
                 gameObject.SetActive(false);
             }
+            Debug.Log("[BattleManager] 戰鬥勝利");
+
+            if (RunStateManager.Instance != null)
+            {
+                RunStateManager.Instance.SaveFromBattle(
+                    playerUnit,
+                    energySystem,
+                    playerDeck
+                );
+
+                RunStateManager.Instance.ClearReservedFormation();
+
+                Debug.Log("[BattleManager] 戰鬥勝利：已保存玩家進度，並清除保留怪物組");
+            }
+
         }
         else
         {
@@ -955,6 +1136,14 @@ public class BattleManager : MonoBehaviour
 
             if (optionMenuUI != null)
                 optionMenuUI.OpenDeathMenu();
+        }
+    }
+    private void CommitCurrentFormation()
+    {
+        if (RunStateManager.Instance != null)
+        {
+            RunStateManager.Instance.ClearReservedFormation();
+            Debug.Log("[BattleManager] 戰鬥勝利，清除保留怪物組，下次會重新抽怪");
         }
     }
     private IEnumerator StartNextBattleAfterDelay()
@@ -1047,27 +1236,59 @@ public class BattleManager : MonoBehaviour
 
         StartPlayerTurn();
     }
-    public void ShowDamagePopup(int damage, Transform target)
-    {
-        if (damage <= 0)
-            return;
+    //public void ShowDamagePopup(int damage, RectTransform targetRect, Vector2 offset)
+    //{
+    //    if (damage <= 0)
+    //        return;
 
-        if (damagePopupPrefab == null || damagePopupRoot == null || target == null)
-            return;
+    //    if (damagePopupPrefab == null)
+    //    {
+    //        Debug.LogWarning("[DamagePopup] damagePopupPrefab 沒有指定");
+    //        return;
+    //    }
 
-        Camera cam = Camera.main;
-        if (cam == null)
-            return;
+    //    if (damagePopupRoot == null)
+    //    {
+    //        Debug.LogWarning("[DamagePopup] damagePopupRoot 沒有指定");
+    //        return;
+    //    }
 
-        Vector3 worldPos = target.position + damagePopupWorldOffset;
-        Vector3 screenPos = cam.WorldToScreenPoint(worldPos);
+    //    if (targetRect == null)
+    //    {
+    //        Debug.LogWarning("[DamagePopup] targetRect 是 null");
+    //        return;
+    //    }
 
-        if (screenPos.z < 0f)
-            return;
+    //    if (!damagePopupRoot.gameObject.scene.IsValid())
+    //    {
+    //        Debug.LogError("[DamagePopup] damagePopupRoot 不是場景中的物件，請拖 Hierarchy 裡 Canvas 底下的 DamagePopupRoot。");
+    //        return;
+    //    }
 
-        DamagePopupUI popup = Instantiate(damagePopupPrefab, damagePopupRoot);
-        popup.Setup(damage, screenPos);
-    }
+    //    Canvas rootCanvas = damagePopupRoot.GetComponentInParent<Canvas>();
+
+    //    Camera uiCamera = null;
+
+    //    if (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
+    //        uiCamera = rootCanvas.worldCamera;
+
+    //    Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(
+    //        uiCamera,
+    //        targetRect.position
+    //    );
+
+    //    screenPos += offset;
+
+    //    Vector2 randomOffset = new Vector2(
+    //        Random.Range(-damagePopupRandomRange.x, damagePopupRandomRange.x),
+    //        Random.Range(-damagePopupRandomRange.y, damagePopupRandomRange.y)
+    //    );
+
+    //    screenPos += randomOffset;
+
+    //    DamagePopupUI popup = Instantiate(damagePopupPrefab, damagePopupRoot);
+    //    popup.Setup(damage, screenPos);
+    //}
     public void AddCardToHand(CardData cardData)
     {
         if (playerDeck == null)

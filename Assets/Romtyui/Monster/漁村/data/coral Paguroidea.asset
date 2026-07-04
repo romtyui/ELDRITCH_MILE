@@ -12,15 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cf43116519b6a7a449b6e0c6921700bc, type: 3}
   m_Name: coral Paguroidea
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  unitName: 
+  unitName: monster_02
   maxHp: 60
+  enemyId: 
   normalVisualPrefab: {fileID: 2950120252326690735, guid: 32a0da94e356ca04a99d99db004becef, type: 3}
   darkVisualPrefab: {fileID: 4260766497911064656, guid: 948dc1064e406274980a419d56249d1f, type: 3}
   visualAnchoredPosition: {x: 0, y: 0}
   visualScale: {x: 1, y: 1, z: 1}
   visualEulerAngles: {x: 0, y: 0, z: 0}
+  damagePopupOffset: {x: 0, y: 80}
   hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
   hitBoxSprite: {fileID: 0}
+  stunIntent: {fileID: 0}
   startingStatuses:
   - statusType: 6
     amount: 5
