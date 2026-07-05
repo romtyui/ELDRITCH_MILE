@@ -15,6 +15,12 @@ public class ExplorationManager : MonoBehaviour
     public CanvasGroup fadeCanvasGroup; 
     public float transitionSpeed = 0.3f; 
 
+    // --- 新增這兩行 ---
+    [Header("UI 標題展演")]
+    public MapBannerUI exploreBannerUI;
+    public string exploreEnterText = "<color=#FFFFFF>探索</color>";
+    // -------------------
+
     [Header("卡牌系統連動")]
     public CardExplorationManager cardManager;
 
@@ -70,10 +76,7 @@ public class ExplorationManager : MonoBehaviour
         activeRoomInstance = Instantiate(node.roomPrefab, spawnPos, Quaternion.identity);
         activeRoomInstance.name = $"Room_{node.roomName}";
 
-        // ========================================================
-        // 【修復核心】：強制將生成的房間，移動到 ExplorationManager 所在的場景
-        // 確保未來卸載 ExploreScene 時，這個房間會被一起銷毀，絕不殘留！
-        // ========================================================
+        // 強制將生成的房間，移動到 ExplorationManager 所在的場景
         SceneManager.MoveGameObjectToScene(activeRoomInstance, gameObject.scene);
 
         RoomController controller = activeRoomInstance.GetComponent<RoomController>();
@@ -85,6 +88,15 @@ public class ExplorationManager : MonoBehaviour
             cardManager.DrawCards(cardManager.cardsOnEnterExploration);
         }
 
+        // ==========================================
+        // --- 新增：觸發「探索」Banner 動畫 ---
+        // ==========================================
+        if (exploreBannerUI != null)
+        {
+            StartCoroutine(exploreBannerUI.ShowMapTitle(exploreEnterText));
+        }
+
+        // 原本的黑幕淡出邏輯
         float timeElapsed = 0f;
         while (timeElapsed < transitionSpeed)
         {
