@@ -365,7 +365,7 @@ public class PerspectiveMapGenerator : MonoBehaviour
     
         // ----------------------------------
 
-        visualCurrentNodeId = currentMapData.currentNodeId; // 同步視覺狀態
+        
         if (transitionFade != null) transitionFade.blocksRaycasts = false;
     }
 
@@ -412,43 +412,6 @@ public class PerspectiveMapGenerator : MonoBehaviour
         if (mapCanvas != null) mapCanvas.gameObject.SetActive(false);
         
         yield return StartCoroutine(FadeRoutine(1f, 0f));
-    }
-
-    public void WakeUpMapAndUnload()
-    {
-        if (string.IsNullOrEmpty(lastLoadedSceneName)) return;
-        StartCoroutine(WakeUpRoutine());
-    }
-
-    private IEnumerator WakeUpRoutine()
-    {
-        // 1. 地圖接手時，因為剛從 ExplorationManager 回來，畫面已經是黑的
-        if (transitionFade != null)
-        {
-            transitionFade.alpha = 1f;
-            transitionFade.blocksRaycasts = true;
-        }
-
-        // 2. 重開地圖物件
-        if (mapCamera != null) mapCamera.gameObject.SetActive(true);
-        if (mapCanvas != null) mapCanvas.gameObject.SetActive(true);
-        
-        // 3. 卸載場景
-        AsyncOperation asyncUnload = SceneManager.UnloadSceneAsync(lastLoadedSceneName);
-        while (!asyncUnload.isDone) yield return null;
-        lastLoadedSceneName = "";
-
-        // 4. 地圖淡入亮起
-        yield return StartCoroutine(FadeRoutine(1f, 0f));
-
-        // 動態展演 2：醒來後，如果位置有變，執行棋子跳躍與地圖捲動 (這段原本的邏輯保留)
-        /* 
-        if (visualCurrentNodeId != currentMapData.currentNodeId)
-        {
-            yield return StartCoroutine(MoveAvatarAndScrollMap(visualCurrentNodeId, currentMapData.currentNodeId));
-            visualCurrentNodeId = currentMapData.currentNodeId;
-        }
-        */
     }
 
     private IEnumerator MoveAvatarAndScrollMap(string fromId, string toId)
@@ -553,7 +516,6 @@ public class PerspectiveMapGenerator : MonoBehaviour
         if (string.IsNullOrEmpty(lastLoadedSceneName)) return;
         StartCoroutine(WakeUpRoutine());
     }
-
     private IEnumerator WakeUpRoutine()
     {
         yield return StartCoroutine(FadeRoutine(0f, 1f));
@@ -591,14 +553,14 @@ public class PerspectiveMapGenerator : MonoBehaviour
                 StartCoroutine(mapBannerUI.ShowMapTitle(mapEnterText));
         }
 
-        // ========================================================
-        // 動態展演 2：醒來後，如果位置有變，執行棋子跳躍與地圖捲動
-        // ========================================================
+        // 動態展演 2：醒來後，如果位置有變，執行棋子跳躍與地圖捲動 (這段原本的邏輯保留)
+        /* 
         if (visualCurrentNodeId != currentMapData.currentNodeId)
         {
             yield return StartCoroutine(MoveAvatarAndScrollMap(visualCurrentNodeId, currentMapData.currentNodeId));
             visualCurrentNodeId = currentMapData.currentNodeId;
         }
+        */
 
         
         // ----------------------------------------------
