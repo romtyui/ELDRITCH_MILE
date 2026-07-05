@@ -11,23 +11,31 @@ public class RandomEnemyMultiHitDamageEffectData : CardEffectData, CardDescripti
 
     public override void Execute(CardResolveContext context)
     {
-        if (context == null) return;
-        if (context.source == null) return;
-        if (context.battleManager == null) return;
+        if (context == null)
+            return;
+
+        if (context.source == null)
+            return;
+
+        if (context.target == null)
+        {
+            Debug.LogWarning("[RandomEnemyMultiHitDamageEffectData] context.target 是 null，無法造成多段傷害");
+            return;
+        }
 
         for (int i = 0; i < hitCount; i++)
         {
-            BattleUnit randomTarget = context.battleManager.GetRandomAliveEnemyPublic();
-
-            if (randomTarget == null)
+            if (context.target.currentHp <= 0)
             {
-                Debug.Log("[RandomEnemyMultiHitDamageEffectData] 沒有可攻擊的敵人");
+                Debug.Log("[RandomEnemyMultiHitDamageEffectData] 目標已死亡，停止後續多段傷害");
                 return;
             }
 
-            context.source.DealDamageTo(randomTarget, damagePerHit);
+            context.source.DealDamageTo(context.target, damagePerHit);
 
-            Debug.Log($"[Random Multi Hit] 第 {i + 1} 次命中 {randomTarget.unitName}，基礎傷害 {damagePerHit}");
+            Debug.Log(
+                $"[Random Multi Hit] 第 {i + 1} 次命中 {context.target.unitName}，基礎傷害 {damagePerHit}"
+            );
         }
     }
 
@@ -41,6 +49,9 @@ public class RandomEnemyMultiHitDamageEffectData : CardEffectData, CardDescripti
 
             if (context != null && context.source != null)
                 previewDamage = context.source.ModifyOutgoingDamage(previewDamage);
+
+            if (context != null && context.target != null)
+                previewDamage = context.target.ModifyIncomingDamage(previewDamage);
 
             value = Mathf.Max(0, previewDamage);
             return true;

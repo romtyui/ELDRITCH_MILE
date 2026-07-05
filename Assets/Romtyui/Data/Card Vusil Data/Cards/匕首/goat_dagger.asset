@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
-  m_Name: goat_sword
+  m_Name: goat_dagger
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  cardId: goat_sword
-  cardName: goat_sword
-  description: "\u5C0D\u6240\u6709\u6575\u4EBA\u9020\u6210 {swordDamage} \u9EDE\u50B7\u5BB3\n
-    ({baseDamage} +  {usedEggCount}(\u5DF2\u4F7F\u7528\u5375\u6B21\u6578))"
-  visualData: {fileID: 11400000, guid: 1d29a85d81f0e6d438438fb152fdc58a, type: 2}
-  cardType: 0
+  cardId: goat_dagger
+  cardName: goat_dagger
+  description: "\u5C0D\u96A8\u6A5F\u6575\u4EBA\u9020\u6210 {damage} \u9EDE\u50B7\u5BB3\uFF0C\u91CD\u8907{bowHitCount}
+    \u6B21\u3002"
+  visualData: {fileID: 11400000, guid: f0d899786546e32498542be106a7835a, type: 2}
+  cardType: 1
   rarity: 0
-  targetType: 4
+  targetType: 3
   baseCost: 1
   exhaust: 0
   ethereal: 0
@@ -29,5 +29,5 @@ MonoBehaviour:
   isGodCard: 0
   godCardAnimation: {fileID: 0}
   effects:
-  - {fileID: 11400000, guid: 3d2d043dada87fa4abc39ae3af6d5f46, type: 2}
   - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
+  - {fileID: 11400000, guid: b11532d897f1d754a8613e4104ed1ee2, type: 2}

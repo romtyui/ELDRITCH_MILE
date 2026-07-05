@@ -10,16 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
-  m_Name: goat_sword
+  m_Name: goat_crossbow
   m_EditorClassIdentifier: Assembly-CSharp::CardData
-  cardId: goat_sword
-  cardName: goat_sword
-  description: "\u5C0D\u6240\u6709\u6575\u4EBA\u9020\u6210 {swordDamage} \u9EDE\u50B7\u5BB3\n
-    ({baseDamage} +  {usedEggCount}(\u5DF2\u4F7F\u7528\u5375\u6B21\u6578))"
-  visualData: {fileID: 11400000, guid: 1d29a85d81f0e6d438438fb152fdc58a, type: 2}
+  cardId: goat_crossbow
+  cardName: goat_crossbow
+  description: "\u7372\u5F97 {shieldBlock} \u9EDE\u8B77\u76FE\n({baseBlock} + {usedEggCount}(\u5DF2\u4F7F\u7528\u5375\u6B21\u6578)) "
+  visualData: {fileID: 11400000, guid: 08bc9206731e4ac47a863913c8268aae, type: 2}
   cardType: 0
   rarity: 0
-  targetType: 4
+  targetType: 2
   baseCost: 1
   exhaust: 0
   ethereal: 0
@@ -30,4 +29,4 @@ MonoBehaviour:
   godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 3d2d043dada87fa4abc39ae3af6d5f46, type: 2}
-  - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
+  - {fileID: 11400000, guid: 22aad712da0de044c97f638ece8a80c2, type: 2}
