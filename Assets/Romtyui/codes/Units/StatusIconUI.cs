@@ -45,7 +45,7 @@ public class StatusIconUI : MonoBehaviour
             }
 
             entries.Add(new TooltipEntry(title, body));
-            tooltipTrigger.SetEntries(entries, TooltipAnchorSide.Bottom);
+            tooltipTrigger.SetEntries(entries, tooltipTrigger.preferredSide);
         }
 
         gameObject.SetActive(true);
