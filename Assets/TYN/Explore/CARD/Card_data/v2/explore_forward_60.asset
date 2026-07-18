@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
+  m_Name: explore_forward_60
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardId: explore_A_4
+  cardName: explore_forward_60
+  description: "<color=#000000>\u884C\u52D560%</color> "
+  visualData: {fileID: 11400000, guid: dcc11a8e94685cc4dbb6eb9b507b2c03, type: 2}
+  cardType: 0
+  rarity: 0
+  targetType: 0
+  baseCost: 0
+  exhaust: 0
+  ethereal: 0
+  retain: 0
+  isToken: 0
+  tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
+  effects: []
+  explorationTargetMode: 1
+  explorationSuccessProbability: 0.6
+  explorationEffects:
+  - {fileID: 11400000, guid: dbb418d3d99caf74b8d874c0e7b79ab9, type: 2}

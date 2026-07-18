@@ -540,7 +540,7 @@ BoxCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8053315945937924450}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
@@ -595,7 +595,12 @@ MonoBehaviour:
   displayName: "\u6575\u4EBA"
   acceptAnyExplorationCard: 0
   acceptedCardIds:
-  - explore_A
+  - explore_A_1
+  - explore_A_2
+  - explore_A_3
+  - explore_A_4
+  - explore_A_5
+  - explore_A_6
   canInteractOnce: 0
   hasInteracted: 0
   onInteract:
@@ -626,6 +631,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyInteractable
   battleSceneName: BattleScene_v1
+  penaltyPerFail: 0.2
+  maxFailsAllowed: 1
 --- !u!1 &9179275595381981752
 GameObject:
   m_ObjectHideFlags: 0

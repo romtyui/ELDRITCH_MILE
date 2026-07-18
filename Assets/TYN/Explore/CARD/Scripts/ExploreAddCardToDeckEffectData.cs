@@ -3,7 +3,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "CardGame/Exploration Effects/Add Card To Discard Pile")]
 public class ExploreAddCardToDeckEffectData : ExplorationCardEffectData
 {
-    public CardData cardToAdd;
+    public CardDataExplore cardToAdd;
 
     public override void Execute(ExplorationCardResolveContext context)
     {

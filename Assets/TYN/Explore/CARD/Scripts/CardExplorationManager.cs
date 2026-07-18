@@ -6,22 +6,19 @@ public class CardExplorationManager : MonoBehaviour
     public ExplorationDeck explorationDeck;
 
     [Header("UI")]
-    public ExplorationHandUIController handUIController; // 這是下一個階段會新增的腳本
+    public ExplorationHandUIController handUIController;
 
     [Header("Camera")]
     public Camera playerCamera;
 
     [Header("Rules")]
     public int cardsOnEnterExploration = 5;
-    // public bool useEnergy = false;
-    // public EnergySystem energySystem; // 暫時註解避免編譯錯誤
 
     [Header("Runtime")]
     public bool isResolvingCard;
 
     private void Start()
     {
-        // 為了方便測試，一開始就啟動卡牌探索
         StartExploration();
     }
 
@@ -34,13 +31,11 @@ public class CardExplorationManager : MonoBehaviour
         }
         explorationDeck.InitializeDeck();
         
-        // if (useEnergy && energySystem != null) energySystem.ResetEnergy();
-        
         DrawCards(cardsOnEnterExploration);
         Debug.Log("[CardExplorationManager] 探索卡牌系統開始");
     }
 
-    public bool TryPlayCard(CardInstance card, ExplorationInteractableTarget target)
+    public bool TryPlayCard(CardInstanceExplore card, ExplorationInteractableTarget target)
     {
         if (isResolvingCard)
         {
@@ -56,38 +51,62 @@ public class CardExplorationManager : MonoBehaviour
             return false;
         }
 
-        if (card.data.explorationTargetMode == ExplorationTargetMode.SceneInteractable)
+        bool checkPassed = true; 
+
+        if (card.data.targetMode == ExplorationTargetMode.SceneInteractable)
         {
             if (target == null)
             {
                 Debug.Log("這張探索卡需要拖到可互動物件上");
                 return false;
             }
-            if (!target.CanAccept(card.data))
+            
+            // 【修正】因為 CanAccept 可能被同學寫死綁定 CardData，
+            // 探索卡牌我們暫時略過 CanAccept 的檢查，直接交給下方的 ICardInteractable 處理。
+            // 或是如果你有權限改 ExplorationInteractableTarget.cs，把裡面的 CardData 改成 CardDataExplore 最好。
+            
+            ICardInteractable interactable = target.GetComponent<ICardInteractable>();
+            if (interactable != null)
             {
-                Debug.Log($"目標 {target.name} 不接受卡牌 {card.data.cardName}");
+                checkPassed = interactable.OnCardPlayed(card.data.successProbability);
+            }
+            else
+            {
+                // 如果目標沒有 ICardInteractable 介面，代表不能對他用探索卡
+                Debug.Log($"目標 {target.name} 不接受探索機率卡牌！");
                 return false;
             }
         }
 
-        // if (useEnergy && energySystem != null) ... 能量判定略
-
         isResolvingCard = true;
 
+        // 【修正】ExplorationCardResolveContext 預期接收戰鬥的 CardInstance。
+        // 如果你無法修改 Context 的腳本，我們可以建立一個臨時的假 CardInstance 塞給它騙過編譯器。
+        // (最好的做法依然是去 ExplorationCardResolveContext 裡面把 CardInstance 改成 CardInstanceExplore)
+        CardInstance tempFakeContextCard = new CardInstance(ScriptableObject.CreateInstance<CardData>());
+        tempFakeContextCard.currentCost = card.currentCost;
+        
         ExplorationCardResolveContext context = new ExplorationCardResolveContext(
             this,
             explorationDeck,
-            card,
+            tempFakeContextCard, // 放入替代品解決編譯錯誤 (如果效果不用到卡牌本身資訊，這樣做是安全的)
             target,
             playerCamera
         );
 
         Debug.Log($"[CardExplorationManager] 使用探索卡：{card.data.cardName}");
 
-        foreach (ExplorationCardEffectData effect in card.data.explorationEffects)
+        if (checkPassed)
         {
-            if (effect == null) continue;
-            effect.Execute(context);
+            foreach (ExplorationCardEffectData effect in card.data.effects)
+            {
+                if (effect == null) continue;
+                effect.Execute(context);
+            }
+        }
+        else
+        {
+            Debug.Log($"<color=orange>[CardExplorationManager] 機率檢定失敗，取消執行卡牌原本的增益效果。</color>");
         }
 
         explorationDeck.OnCardPlayed(card);

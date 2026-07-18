@@ -6,11 +6,11 @@ public class ExplorationHandUIController : MonoBehaviour
     [Header("Refs")]
     public ExplorationDeck explorationDeck;
     public CardExplorationManager explorationManager; // 已更新為新名稱
-    public CardViewUI cardPrefab;
+    public CardViewUIExplore cardPrefab;
     public RectTransform handRoot;
     public HandFanLayout handFanLayout;
 
-    private readonly Dictionary<CardInstance, CardViewUI> cardViews = new();
+    private readonly Dictionary<CardInstanceExplore, CardViewUIExplore> cardViews = new();
 
     public void RefreshHandUI()
     {
@@ -21,7 +21,7 @@ public class ExplorationHandUIController : MonoBehaviour
             return;
         }
 
-        foreach (CardInstance card in explorationDeck.Hand)
+        foreach (CardInstanceExplore card in explorationDeck.Hand)
         {
             CreateCardView(card);
         }
@@ -29,11 +29,11 @@ public class ExplorationHandUIController : MonoBehaviour
         if (handFanLayout != null) handFanLayout.RefreshLayout();
     }
 
-    private CardViewUI CreateCardView(CardInstance card)
+    private CardViewUIExplore CreateCardView(CardInstanceExplore card)
     {
         if (card == null) return null;
 
-        CardViewUI view = Instantiate(cardPrefab, handRoot);
+        CardViewUIExplore view = Instantiate(cardPrefab, handRoot);
         view.gameObject.SetActive(true);
         view.Bind(card);
 
@@ -64,7 +64,7 @@ public class ExplorationHandUIController : MonoBehaviour
 
     private void ClearHandViews()
     {
-        foreach (KeyValuePair<CardInstance, CardViewUI> pair in cardViews)
+        foreach (KeyValuePair<CardInstanceExplore, CardViewUIExplore> pair in cardViews)
         {
             if (pair.Value != null) Destroy(pair.Value.gameObject);
         }

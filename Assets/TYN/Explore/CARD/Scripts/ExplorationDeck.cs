@@ -4,16 +4,16 @@ using UnityEngine;
 public class ExplorationDeck : MonoBehaviour
 {
     [Header("Deck")]
-    public List<CardData> startingDeck = new();
-    private List<CardInstance> drawPile = new();
-    private List<CardInstance> hand = new();
-    private List<CardInstance> discardPile = new();
-    private List<CardInstance> exhaustPile = new();
+    public List<CardDataExplore> startingDeck = new();
+    private List<CardInstanceExplore> drawPile = new();
+    private List<CardInstanceExplore> hand = new();
+    private List<CardInstanceExplore> discardPile = new();
+    private List<CardInstanceExplore> exhaustPile = new();
 
-    public IReadOnlyList<CardInstance> Hand => hand;
-    public IReadOnlyList<CardInstance> DrawPile => drawPile;
-    public IReadOnlyList<CardInstance> DiscardPile => discardPile;
-    public IReadOnlyList<CardInstance> ExhaustPile => exhaustPile;
+    public IReadOnlyList<CardInstanceExplore> Hand => hand;
+    public IReadOnlyList<CardInstanceExplore> DrawPile => drawPile;
+    public IReadOnlyList<CardInstanceExplore> DiscardPile => discardPile;
+    public IReadOnlyList<CardInstanceExplore> ExhaustPile => exhaustPile;
 
     public void InitializeDeck()
     {
@@ -22,22 +22,22 @@ public class ExplorationDeck : MonoBehaviour
         discardPile.Clear();
         exhaustPile.Clear();
 
-        foreach (CardData card in startingDeck)
+        foreach (CardDataExplore card in startingDeck)
         {
             if (card == null) continue;
-            drawPile.Add(new CardInstance(card));
+            drawPile.Add(new CardInstanceExplore(card));
         }
         Shuffle(drawPile);
     }
 
-    public CardInstance DrawOneCard()
+    public CardInstanceExplore DrawOneCard()
     {
         if (drawPile.Count == 0)
             ReshuffleDiscardIntoDraw();
         if (drawPile.Count == 0)
             return null;
 
-        CardInstance top = drawPile[0];
+        CardInstanceExplore top = drawPile[0];
         drawPile.RemoveAt(0);
         hand.Add(top);
         return top;
@@ -48,7 +48,7 @@ public class ExplorationDeck : MonoBehaviour
         for (int i = 0; i < amount; i++) DrawOneCard();
     }
 
-    public void OnCardPlayed(CardInstance card)
+    public void OnCardPlayed(CardInstanceExplore card)
     {
         if (card == null) return;
         if (hand.Remove(card))
@@ -62,7 +62,7 @@ public class ExplorationDeck : MonoBehaviour
 
     public void DiscardHand()
     {
-        foreach (CardInstance card in hand)
+        foreach (CardInstanceExplore card in hand)
         {
             if (card == null || card.data == null) continue;
             if (card.data.retain) continue;
@@ -71,15 +71,15 @@ public class ExplorationDeck : MonoBehaviour
         hand.RemoveAll(card => card == null || card.data == null || !card.data.retain);
     }
 
-    public bool IsCardInHand(CardInstance card)
+    public bool IsCardInHand(CardInstanceExplore card)
     {
         return hand.Contains(card);
     }
 
-    public void AddCardToDiscardPile(CardData cardData)
+    public void AddCardToDiscardPile(CardDataExplore cardData)
     {
         if (cardData == null) return;
-        discardPile.Add(new CardInstance(cardData));
+        discardPile.Add(new CardInstanceExplore(cardData));
     }
 
     private void ReshuffleDiscardIntoDraw()
@@ -89,7 +89,7 @@ public class ExplorationDeck : MonoBehaviour
         Shuffle(drawPile);
     }
 
-    private void Shuffle(List<CardInstance> list)
+    private void Shuffle(List<CardInstanceExplore> list)
     {
         for (int i = list.Count - 1; i > 0; i--)
         {

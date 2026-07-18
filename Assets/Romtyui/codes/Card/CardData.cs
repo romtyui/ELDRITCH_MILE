@@ -34,12 +34,6 @@ public class CardData : ScriptableObject
 
     [Header("Battle Effects")]
     public List<CardEffectData> effects = new();
-
-    [Header("Exploration Rules")]
-    public ExplorationTargetMode explorationTargetMode = ExplorationTargetMode.None;
-    
-    [Header("Exploration Effects")]
-    public List<ExplorationCardEffectData> explorationEffects = new();
 }
 
 public class CardInstance
@@ -83,10 +77,4 @@ public enum TargetType
     RandomEnemy,
     AllEnemies,
     AllCharacters
-}
-
-public enum ExplorationTargetMode
-{
-    None,
-    SceneInteractable
 }

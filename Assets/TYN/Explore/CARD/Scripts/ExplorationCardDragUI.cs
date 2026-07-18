@@ -7,7 +7,7 @@ public class ExplorationCardDragUI : MonoBehaviour, IBeginDragHandler, IDragHand
 {
     [Header("Refs")]
     public CardExplorationManager manager; // 已更新為新名稱
-    public CardViewUI cardViewUI;
+    public CardViewUIExplore cardViewUI;
     public HandFanLayout handLayout;
 
     [Header("Drag")]
@@ -30,7 +30,7 @@ public class ExplorationCardDragUI : MonoBehaviour, IBeginDragHandler, IDragHand
         canvasGroup = GetComponent<CanvasGroup>();
         rootCanvas = GetComponentInParent<Canvas>();
         
-        if (cardViewUI == null) cardViewUI = GetComponent<CardViewUI>();
+        if (cardViewUI == null) cardViewUI = GetComponent<CardViewUIExplore>();
         
         if (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
             canvasCamera = rootCanvas.worldCamera;
@@ -83,7 +83,7 @@ public class ExplorationCardDragUI : MonoBehaviour, IBeginDragHandler, IDragHand
             return;
         }
 
-        CardInstance card = cardViewUI.CardInstance;
+        CardInstanceExplore card = cardViewUI.CardInstance;
         ExplorationInteractableTarget target = GetExplorationTargetUnderPointer(eventData);
         bool played = false;
 
