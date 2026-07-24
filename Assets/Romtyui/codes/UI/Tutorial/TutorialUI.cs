@@ -31,6 +31,44 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
     public TMP_Text nextButtonText;
     public Button backButton;
     public Button skipButton;
+    [SerializeField]
+    private TutorialInverseMaskRaycastFilter inverseMaskRaycastFilter;
+    [Header("Condition Progress")]
+    public TMP_Text conditionProgressText;
+
+    [Header("Inverse Mask")]
+    [SerializeField] private UnityEngine.UI.Image overlayImage;
+
+    [SerializeField] private RectTransform highlightLocator;
+
+    [SerializeField] private Material inverseMaskMaterialTemplate;
+
+    [SerializeField]
+    private Color overlayColor =
+        new Color(0f, 0f, 0f, 0.75f);
+
+    [SerializeField] private float cornerRadius = 0.05f;
+
+    [SerializeField]
+    private Vector2 locatorPadding =
+        new Vector2(20f, 20f);
+
+    private Material runtimeInverseMaskMaterial;
+
+    private static readonly int OverlayColorId =
+    Shader.PropertyToID("_OverlayColor");
+
+    private static readonly int HoleCenterId =
+        Shader.PropertyToID("_HoleCenter");
+
+    private static readonly int HoleSizeId =
+        Shader.PropertyToID("_HoleSize");
+
+    private static readonly int CornerRadiusId =
+        Shader.PropertyToID("_CornerRadius");
+
+    private static readonly int HoleEnabledId =
+        Shader.PropertyToID("_HoleEnabled");
 
     [Header("Text")]
     public string nextText = "下一步";
@@ -50,6 +88,7 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
     {
         AutoFindReferences();
         BindButtons();
+        InitializeInverseMaskMaterial();
         Hide();
     }
 
@@ -57,7 +96,314 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
     {
         UnbindButtons();
     }
+    private void InitializeInverseMaskMaterial()
+    {
+        if (overlayImage == null)
+        {
+            Debug.LogWarning(
+                "[TutorialUI] Overlay Image 沒有指定",
+                this
+            );
 
+            return;
+        }
+
+        if (inverseMaskMaterialTemplate == null)
+        {
+            Debug.LogWarning(
+                "[TutorialUI] Inverse Mask Material Template 沒有指定",
+                this
+            );
+
+            return;
+        }
+
+        if (runtimeInverseMaskMaterial != null)
+            return;
+
+        runtimeInverseMaskMaterial =
+            new Material(inverseMaskMaterialTemplate);
+
+        runtimeInverseMaskMaterial.name =
+            inverseMaskMaterialTemplate.name + "_Runtime";
+
+        overlayImage.material =
+            runtimeInverseMaskMaterial;
+
+        runtimeInverseMaskMaterial.SetColor(
+            OverlayColorId,
+            overlayColor
+        );
+
+        runtimeInverseMaskMaterial.SetFloat(
+            CornerRadiusId,
+            cornerRadius
+        );
+
+        runtimeInverseMaskMaterial.SetFloat(
+            HoleEnabledId,
+            0f
+        );
+    }
+    public void UpdateHoleFromLocator()
+    {
+        InitializeInverseMaskMaterial();
+
+        if (runtimeInverseMaskMaterial == null)
+            return;
+
+        if (overlayImage == null)
+            return;
+
+        if (highlightLocator == null)
+        {
+            SetHoleEnabled(false);
+            return;
+        }
+
+        RectTransform overlayRect =
+            overlayImage.rectTransform;
+
+        if (overlayRect == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+
+        Vector3[] locatorWorldCorners =
+            new Vector3[4];
+
+        highlightLocator.GetWorldCorners(
+            locatorWorldCorners
+        );
+
+        Camera canvasCamera =
+            GetCanvasCamera();
+
+        Vector2 localBottomLeft;
+        Vector2 localTopRight;
+
+        bool gotBottomLeft =
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                overlayRect,
+                RectTransformUtility.WorldToScreenPoint(
+                    canvasCamera,
+                    locatorWorldCorners[0]
+                ),
+                canvasCamera,
+                out localBottomLeft
+            );
+
+        bool gotTopRight =
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                overlayRect,
+                RectTransformUtility.WorldToScreenPoint(
+                    canvasCamera,
+                    locatorWorldCorners[2]
+                ),
+                canvasCamera,
+                out localTopRight
+            );
+
+        if (!gotBottomLeft || !gotTopRight)
+            return;
+
+        Vector2 halfPadding =
+            locatorPadding * 0.5f;
+
+        localBottomLeft -= halfPadding;
+        localTopRight += halfPadding;
+
+        Rect overlayLocalRect =
+            overlayRect.rect;
+
+        float overlayWidth =
+            Mathf.Max(1f, overlayLocalRect.width);
+
+        float overlayHeight =
+            Mathf.Max(1f, overlayLocalRect.height);
+
+        Vector2 localCenter =
+            (localBottomLeft + localTopRight) * 0.5f;
+
+        Vector2 localSize =
+            localTopRight - localBottomLeft;
+
+        Vector2 holeCenter = new Vector2(
+            Mathf.InverseLerp(
+                overlayLocalRect.xMin,
+                overlayLocalRect.xMax,
+                localCenter.x
+            ),
+            Mathf.InverseLerp(
+                overlayLocalRect.yMin,
+                overlayLocalRect.yMax,
+                localCenter.y
+            )
+        );
+
+        Vector2 holeSize = new Vector2(
+            localSize.x / overlayWidth,
+            localSize.y / overlayHeight
+        );
+
+        holeSize.x =
+            Mathf.Clamp01(holeSize.x);
+
+        holeSize.y =
+            Mathf.Clamp01(holeSize.y);
+        
+        runtimeInverseMaskMaterial.SetVector(
+            HoleCenterId,
+            holeCenter
+        );
+
+        runtimeInverseMaskMaterial.SetVector(
+            HoleSizeId,
+            holeSize
+        );
+
+        runtimeInverseMaskMaterial.SetFloat(
+            CornerRadiusId,
+            cornerRadius
+        );
+
+        runtimeInverseMaskMaterial.SetFloat(
+            HoleEnabledId,
+            1f
+        );
+
+        if (inverseMaskRaycastFilter != null)
+        {
+            inverseMaskRaycastFilter.SetHole(
+                holeCenter,
+                holeSize,
+                cornerRadius
+            );
+        }
+    }
+    private Camera GetCanvasCamera()
+    {
+        if (overlayImage == null)
+            return null;
+
+        Canvas canvas =
+            overlayImage.GetComponentInParent<Canvas>();
+
+        if (canvas == null)
+            return null;
+
+        if (canvas.renderMode ==
+            RenderMode.ScreenSpaceOverlay)
+        {
+            return null;
+        }
+
+        if (canvas.worldCamera != null)
+            return canvas.worldCamera;
+
+        return Camera.main;
+    }
+
+    public void SetHoleEnabled(bool enabled)
+    {
+        InitializeInverseMaskMaterial();
+
+        if (runtimeInverseMaskMaterial != null)
+        {
+            runtimeInverseMaskMaterial.SetFloat(
+                HoleEnabledId,
+                enabled ? 1f : 0f
+            );
+        }
+
+        if (inverseMaskRaycastFilter != null)
+        {
+            inverseMaskRaycastFilter.SetHoleEnabled(
+                enabled
+            );
+        }
+    }
+    public void MoveLocatorToTarget(
+    RectTransform targetRect,
+    Vector2 padding
+)
+    {
+        if (highlightLocator == null)
+            return;
+
+        if (targetRect == null)
+        {
+            highlightLocator.gameObject.SetActive(false);
+            SetHoleEnabled(false);
+            return;
+        }
+
+        highlightLocator.gameObject.SetActive(true);
+
+        Vector3[] worldCorners =
+            new Vector3[4];
+
+        targetRect.GetWorldCorners(worldCorners);
+
+        RectTransform locatorParent =
+            highlightLocator.parent as RectTransform;
+
+        if (locatorParent == null)
+            return;
+
+        Camera canvasCamera =
+            GetCanvasCamera();
+
+        Vector2 localBottomLeft;
+        Vector2 localTopRight;
+
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            locatorParent,
+            RectTransformUtility.WorldToScreenPoint(
+                canvasCamera,
+                worldCorners[0]
+            ),
+            canvasCamera,
+            out localBottomLeft
+        );
+
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            locatorParent,
+            RectTransformUtility.WorldToScreenPoint(
+                canvasCamera,
+                worldCorners[2]
+            ),
+            canvasCamera,
+            out localTopRight
+        );
+
+        Vector2 center =
+            (localBottomLeft + localTopRight) * 0.5f;
+
+        Vector2 size =
+            localTopRight - localBottomLeft;
+
+        size += padding;
+
+        highlightLocator.anchorMin =
+            new Vector2(0.5f, 0.5f);
+
+        highlightLocator.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        highlightLocator.pivot =
+            new Vector2(0.5f, 0.5f);
+
+        highlightLocator.anchoredPosition =
+            center;
+
+        highlightLocator.sizeDelta =
+            size;
+
+        locatorPadding = Vector2.zero;
+
+        UpdateHoleFromLocator();
+    }
     private void AutoFindReferences()
     {
         if (rootObject == null)
@@ -159,6 +505,7 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
 
     public void SetStep(TutorialStepData step, int currentIndex, int totalCount, bool isLastStep)
     {
+        ClearConditionProgress();
         if (step == null)
             return;
 
@@ -199,7 +546,12 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
                 step.showNextButton &&
                 step.advanceMode == TutorialAdvanceMode.NextButton;
 
-            nextButton.gameObject.SetActive(showNext);
+            bool canShowNextButton =step.showNextButton &&step.advanceMode != TutorialAdvanceMode.WaitForSignal;
+
+            if (nextButton != null)
+            {
+                nextButton.gameObject.SetActive(canShowNextButton);
+            }
         }
 
         if (nextButtonText != null)
@@ -362,5 +714,29 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
         );
 
         return position;
+    }
+    public void SetConditionProgress(int current,int required)
+    {
+        if (conditionProgressText == null)
+            return;
+
+        if (required <= 1)
+        {
+            conditionProgressText.text = "";
+            conditionProgressText.gameObject.SetActive(false);
+            return;
+        }
+
+        conditionProgressText.gameObject.SetActive(true);
+        conditionProgressText.text =
+            $"操作進度：{current}/{required}";
+    }
+    public void ClearConditionProgress()
+    {
+        if (conditionProgressText == null)
+            return;
+
+        conditionProgressText.text = "";
+        conditionProgressText.gameObject.SetActive(false);
     }
 }

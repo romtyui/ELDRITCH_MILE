@@ -357,7 +357,7 @@ public class BattleManager : MonoBehaviour
             Debug.Log("[BattleManager] 卡牌或神牌動畫仍在結算中，不能切換到敵方回合");
             return;
         }
-
+        TutorialEventBus.Raise(BattleTutorialSignals.TurnEndButtonPressed);
         StartCoroutine(EndPlayerTurnRoutine());
 
 
@@ -424,9 +424,9 @@ public class BattleManager : MonoBehaviour
 
         RefreshHandUI();
 
-        TutorialEventBus.Raise(BattleTutorialSignals.TurnEnded);
 
         Debug.Log("玩家回合結束");
+        TutorialEventBus.Raise(BattleTutorialSignals.TurnEnded);
 
         if (turnPhaseBannerUI != null)
             yield return turnPhaseBannerUI.ShowEnemyTurn();

@@ -34,6 +34,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
     private GameObject thresholdLineObject;
     private RectTransform thresholdLineRect;
+    private bool dragSignalSent;
 
     private void Awake()
     {
@@ -114,6 +115,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
     public void OnPointerDown(PointerEventData eventData)
     {
         IsDragging = true;
+        dragSignalSent = false;
 
         pointerDownScreenPos = eventData.position;
         startAnchoredPosition = rectTransform.anchoredPosition;
@@ -168,6 +170,14 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
                 targetArrow.UpdateArrow(eventData.position);
 
             return;
+        }
+        if (!dragSignalSent)
+        {
+            dragSignalSent = true;
+
+            TutorialEventBus.Raise(
+                BattleTutorialSignals.CardDragStarted
+            );
         }
 
         if (useDirectDragMode)

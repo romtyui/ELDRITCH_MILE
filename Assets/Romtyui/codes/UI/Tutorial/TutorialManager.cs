@@ -17,6 +17,10 @@ public class TutorialManager : MonoBehaviour
     private Coroutine autoAdvanceCoroutine;
     private Coroutine signalAdvanceCoroutine;
 
+    [Header("Signal Progress")]
+    [SerializeField] private int currentSignalCount;
+    [SerializeField] private string waitingSignalId;
+
     public bool IsPlaying => isPlaying;
 
     private void Awake()
@@ -124,6 +128,9 @@ public class TutorialManager : MonoBehaviour
     {
         StopStepCoroutines();
 
+        currentSignalCount = 0;
+        waitingSignalId = string.Empty;
+
         TutorialStepData step = GetCurrentStep();
 
         if (step == null)
@@ -132,35 +139,69 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
-        bool isLastStep = currentStepIndex >= currentSequence.steps.Count - 1;
+        bool isLastStep =
+            currentStepIndex >= currentSequence.steps.Count - 1;
 
-        tutorialUI.SetStep(
-            step,
-            currentStepIndex,
-            currentSequence.steps.Count,
-            isLastStep
-        );
+        if (tutorialUI != null)
+        {
+            tutorialUI.SetStep(
+                step,
+                currentStepIndex,
+                currentSequence.steps.Count,
+                isLastStep
+            );
+        }
 
         TutorialTarget target = TutorialTarget.Find(step.targetId);
-        RectTransform targetRect = target != null ? target.RectTransform : null;
 
-        if (step.highlightTarget && targetRect != null)
+        RectTransform targetRect =
+            target != null ? target.RectTransform : null;
+
+        if (tutorialUI != null)
         {
-            tutorialUI.SetHighlight(targetRect, step.highlightPadding);
-            tutorialUI.PositionDialog(targetRect, step.dialogPosition, step.dialogSpacing);
+            if (step.highlightTarget && targetRect != null)
+            {
+                tutorialUI.MoveLocatorToTarget(targetRect,step.highlightPadding);
+
+                tutorialUI.PositionDialog(targetRect,step.dialogPosition,step.dialogSpacing);
+            }
+            else
+            {
+                tutorialUI.MoveLocatorToTarget(null,Vector2.zero);
+            }
         }
-        else
+
+        if (step.UsesSignal())
         {
-            tutorialUI.SetHighlight(null, Vector2.zero);
+            waitingSignalId = step.requiredSignal.Trim();
+
+            Debug.Log(
+                $"[TutorialManager] 等待操作：" +
+                $"{waitingSignalId}，" +
+                $"需要 {step.GetRequiredSignalCount()} 次"
+            );
         }
 
         if (step.logStep)
-            Debug.Log($"[TutorialManager] Step {currentStepIndex + 1}/{currentSequence.steps.Count}：{step.stepId}");
+        {
+            Debug.Log(
+                $"[TutorialManager] Step " +
+                $"{currentStepIndex + 1}/" +
+                $"{currentSequence.steps.Count}：" +
+                $"{step.stepId}"
+            );
+        }
 
         if (step.autoAdvanceAfterSeconds > 0f)
-            autoAdvanceCoroutine = StartCoroutine(AutoAdvanceRoutine(step.autoAdvanceAfterSeconds));
+        {
+            autoAdvanceCoroutine = StartCoroutine(
+                AutoAdvanceRoutine(
+                    step.autoAdvanceAfterSeconds,
+                    currentStepIndex
+                )
+            );
+        }
     }
-
     private TutorialStepData GetCurrentStep()
     {
         if (currentSequence == null || currentSequence.steps == null)
@@ -174,20 +215,41 @@ public class TutorialManager : MonoBehaviour
 
     public void NextStep()
     {
+        TryAdvanceStep(false);
+    }
+    private bool TryAdvanceStep(bool conditionCompleted)
+    {
         if (!isPlaying)
-            return;
+            return false;
+
+        TutorialStepData step = GetCurrentStep();
+
+        if (step == null)
+            return false;
+
+        if (step.advanceMode == TutorialAdvanceMode.WaitForSignal &&
+            step.requireConditionToAdvance &&
+            !conditionCompleted)
+        {
+            Debug.Log(
+                $"[TutorialManager] 這一步必須完成指定操作：" +
+                $"{step.requiredSignal}"
+            );
+
+            return false;
+        }
 
         currentStepIndex++;
 
         if (currentStepIndex >= currentSequence.steps.Count)
         {
             FinishTutorial();
-            return;
+            return true;
         }
 
         ShowCurrentStep();
+        return true;
     }
-
     public void PreviousStep()
     {
         if (!isPlaying)
@@ -261,7 +323,7 @@ public class TutorialManager : MonoBehaviour
         if (step.advanceMode != TutorialAdvanceMode.AnyScreenClick)
             return;
 
-        NextStep();
+        TryAdvanceStep(true);
     }
 
     private void HandleSignal(string signalId)
@@ -280,24 +342,51 @@ public class TutorialManager : MonoBehaviour
         if (string.IsNullOrWhiteSpace(step.requiredSignal))
             return;
 
+        if (string.IsNullOrWhiteSpace(signalId))
+            return;
+
+        string required = step.requiredSignal.Trim();
+        string received = signalId.Trim();
+
         if (!string.Equals(
-            step.requiredSignal.Trim(),
-            signalId.Trim(),
+            required,
+            received,
             System.StringComparison.OrdinalIgnoreCase
         ))
         {
             return;
         }
 
+        currentSignalCount++;
+
+        int requiredCount = step.GetRequiredSignalCount();
+
+        Debug.Log(
+            $"[TutorialManager] 收到教學事件：" +
+            $"{received}，進度 " +
+            $"{currentSignalCount}/{requiredCount}"
+        );
+
+        if (currentSignalCount < requiredCount)
+        {
+            if (tutorialUI != null)
+            {
+                tutorialUI.SetConditionProgress(
+                    currentSignalCount,
+                    requiredCount
+                );
+            }
+
+            return;
+        }
+
         if (signalAdvanceCoroutine != null)
             StopCoroutine(signalAdvanceCoroutine);
 
-        signalAdvanceCoroutine = StartCoroutine(
-            SignalAdvanceRoutine(step.signalAdvanceDelay, currentStepIndex)
-        );
+        signalAdvanceCoroutine = StartCoroutine(SignalAdvanceRoutine(step.signalAdvanceDelay,currentStepIndex));
     }
 
-    private IEnumerator SignalAdvanceRoutine(float delay, int expectedStepIndex)
+    private IEnumerator SignalAdvanceRoutine(float delay,int expectedStepIndex)
     {
         if (delay > 0f)
             yield return new WaitForSecondsRealtime(delay);
@@ -308,15 +397,31 @@ public class TutorialManager : MonoBehaviour
         if (currentStepIndex != expectedStepIndex)
             yield break;
 
-        NextStep();
+        TryAdvanceStep(true);
     }
 
-    private IEnumerator AutoAdvanceRoutine(float delay)
+    private IEnumerator AutoAdvanceRoutine(float delay,int expectedStepIndex)
     {
         yield return new WaitForSecondsRealtime(delay);
 
-        if (isPlaying)
-            NextStep();
+        if (!isPlaying)
+            yield break;
+
+        if (currentStepIndex != expectedStepIndex)
+            yield break;
+
+        TutorialStepData step = GetCurrentStep();
+
+        if (step == null)
+            yield break;
+
+        if (step.advanceMode == TutorialAdvanceMode.WaitForSignal &&
+            step.requireConditionToAdvance)
+        {
+            yield break;
+        }
+
+        TryAdvanceStep(true);
     }
 
     private void ApplyPauseState()

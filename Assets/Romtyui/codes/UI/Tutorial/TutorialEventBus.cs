@@ -12,7 +12,9 @@ public static class TutorialEventBus
 
         string normalized = signalId.Trim();
 
-        Debug.Log($"[TutorialEventBus] 發送事件：{normalized}");
+        Debug.Log(
+            $"[TutorialEventBus] 發送事件：{normalized}"
+        );
 
         OnSignalRaised?.Invoke(normalized);
     }
