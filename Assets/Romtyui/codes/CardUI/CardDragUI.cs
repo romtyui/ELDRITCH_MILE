@@ -132,6 +132,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
         rectTransform.SetAsLastSibling();
         canvasGroup.blocksRaycasts = false;
+        TutorialEventBus.Raise(BattleTutorialSignals.CardDragStarted);
 
         if (useTargetArrowMode)
         {
@@ -217,9 +218,15 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
                     break;
 
                 case TargetType.None:
+                    played = battleManager.TryPlayCard(card, null, cardViewUI);
+                    break;
                 case TargetType.Self:
                 case TargetType.RandomEnemy:
+                    played = battleManager.TryPlayCard(card, null, cardViewUI);
+                    break;
                 case TargetType.AllEnemies:
+                    played = battleManager.TryPlayCard(card, null, cardViewUI);
+                    break;
                 case TargetType.AllCharacters:
                     played = battleManager.TryPlayCard(card, null, cardViewUI);
                     break;

@@ -144,6 +144,8 @@ public class BattleManager : MonoBehaviour
 
         StartPlayerTurn();
 
+        TutorialEventBus.Raise(BattleTutorialSignals.BattleStarted);
+
         if (playerDeck != null)
             Debug.Log($"{playerDeck.Hand.Count}");
     }
@@ -337,6 +339,8 @@ public class BattleManager : MonoBehaviour
         else if (playerDeck != null)
             playerDeck.DrawCards(cardsPerTurn);
 
+        TutorialEventBus.Raise(BattleTutorialSignals.PlayerTurnStarted);
+
         if (turnPhaseBannerUI != null)
             yield return turnPhaseBannerUI.Hide();
     }
@@ -419,6 +423,8 @@ public class BattleManager : MonoBehaviour
             playerDeck.DiscardHandAtEndTurn();
 
         RefreshHandUI();
+
+        TutorialEventBus.Raise(BattleTutorialSignals.TurnEnded);
 
         Debug.Log("玩家回合結束");
 
@@ -527,6 +533,8 @@ public class BattleManager : MonoBehaviour
             return;
 
         currentPhase = BattlePhase.EnemyTurn;
+
+        TutorialEventBus.Raise(BattleTutorialSignals.EnemyTurnStarted);
 
         EnsureEnemiesRegistered();
 
@@ -750,6 +758,8 @@ public class BattleManager : MonoBehaviour
         RefreshStatusUI();
 
         RequestCheckBattleEnd();
+
+        TutorialEventBus.Raise(BattleTutorialSignals.CardPlayed);
 
         isResolvingCard = false;
 

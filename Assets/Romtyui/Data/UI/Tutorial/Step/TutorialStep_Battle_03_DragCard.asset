@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 915cab61ed86c724d8f03d93c90cdea6, type: 3}
+  m_Name: TutorialStep_Battle_03_DragCard
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
+  stepId: Battle_DragCard
+  message: "\u5C07\u5361\u724C\u5F80\u4E0A\u62D6\u66F3\u5373\u53EF\u6E96\u5099\u51FA\u724C\u3002\u653B\u64CA\u724C\u9700\u8981\u62D6\u5230\u6575\u4EBA\u8EAB\u4E0A\u3002"
+  exampleSprite: {fileID: 0}
+  hideExampleWhenEmpty: 1
+  advanceMode: 0
+  requiredSignal: 
+  signalAdvanceDelay: 0.15
+  showNextButton: 1
+  showBackButton: 1
+  showSkipButton: 1
+  allowBack: 1
+  targetId: HandArea
+  highlightTarget: 1
+  highlightPadding: {x: 20, y: 20}
+  dialogPosition: 5
+  dialogSpacing: 24
+  autoAdvanceAfterSeconds: 0
+  logStep: 1
