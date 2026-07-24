@@ -14,5 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSpeakerData
   speakerId: Campbell
   displayName: "\u574E\u8C9D\u723E"
-  portrait: {fileID: 8185295232607543082, guid: 5d4600a1a0719ae41930ca0e7c6b27d6, type: 3}
   defaultPortraitSide: 0
+  defaultPortraitStyleId: Default
+  portraitStyles:
+  - styleId: Style_1
+    portrait: {fileID: -2083888145709750821, guid: 5d4600a1a0719ae41930ca0e7c6b27d6, type: 3}
+  - styleId: Style_2
+    portrait: {fileID: 8185295232607543082, guid: 5d4600a1a0719ae41930ca0e7c6b27d6, type: 3}

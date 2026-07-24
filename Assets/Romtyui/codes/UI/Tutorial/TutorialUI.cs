@@ -1,5 +1,8 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Text;
+using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -103,7 +106,23 @@ public class TutorialUI :
         string.Empty;
 
     private bool isDialogueTyping;
+    private sealed class DialoguePortraitCue
+    {
+        public int visibleCharacterIndex;
+        public string styleId;
+    }
 
+    private readonly List<DialoguePortraitCue>
+        currentPortraitCues = new();
+
+    private int nextPortraitCueIndex;
+
+    private static readonly Regex PortraitTagRegex =
+        new Regex(
+            @"\{portrait\s*:\s*([^}]+)\}",
+            RegexOptions.IgnoreCase |
+            RegexOptions.Compiled
+        );
     [Header("Dialog Position")]
     public Vector2 defaultDialogPosition;
 
@@ -984,6 +1003,9 @@ public class TutorialUI :
 
         currentDialogueLine = line;
 
+        currentPortraitCues.Clear();
+        nextPortraitCueIndex = 0;
+
         if (line == null)
         {
             ClearDialogueVisuals();
@@ -991,10 +1013,19 @@ public class TutorialUI :
         }
 
         SetupDialogueSpeaker(line);
-        SetupDialoguePortrait(line);
 
         currentDialogueFullText =
-            line.text ?? string.Empty;
+            ParseDialogueText(
+                line,
+                line.text ?? string.Empty
+            );
+
+        SetupDialoguePortrait(
+            line,
+            line.GetInitialPortraitStyleId()
+        );
+
+        ApplyPortraitCuesUpTo(0);
 
         if (dialogueText == null)
         {
@@ -1008,14 +1039,15 @@ public class TutorialUI :
         }
 
         if (!line.useTypewriter ||
-            string.IsNullOrEmpty(
-                currentDialogueFullText))
+            string.IsNullOrEmpty(currentDialogueFullText))
         {
             dialogueText.text =
                 currentDialogueFullText;
 
             dialogueText.maxVisibleCharacters =
                 int.MaxValue;
+
+            ApplyAllPortraitCues();
 
             isDialogueTyping = false;
 
@@ -1028,9 +1060,83 @@ public class TutorialUI :
                 DialogueTypewriterRoutine(line)
             );
     }
-    private IEnumerator DialogueTypewriterRoutine(
-    TutorialDialogueLine line
+    private string ParseDialogueText(
+    TutorialDialogueLine line,
+    string rawText
 )
+    {
+        currentPortraitCues.Clear();
+        nextPortraitCueIndex = 0;
+
+        if (string.IsNullOrEmpty(rawText))
+            return string.Empty;
+
+        if (line == null ||
+            !line.allowInlinePortraitChange)
+        {
+            return rawText;
+        }
+
+        StringBuilder visibleText =
+            new StringBuilder();
+
+        MatchCollection matches =
+            PortraitTagRegex.Matches(rawText);
+
+        int sourceIndex = 0;
+
+        for (int i = 0; i < matches.Count; i++)
+        {
+            Match match = matches[i];
+
+            if (!match.Success)
+                continue;
+
+            int normalTextLength =
+                match.Index - sourceIndex;
+
+            if (normalTextLength > 0)
+            {
+                visibleText.Append(
+                    rawText,
+                    sourceIndex,
+                    normalTextLength
+                );
+            }
+
+            string styleId =
+                match.Groups[1].Value.Trim();
+
+            if (!string.IsNullOrWhiteSpace(styleId))
+            {
+                currentPortraitCues.Add(
+                    new DialoguePortraitCue
+                    {
+                        visibleCharacterIndex =
+                            visibleText.Length,
+
+                        styleId = styleId
+                    }
+                );
+            }
+
+            sourceIndex =
+                match.Index + match.Length;
+        }
+
+        if (sourceIndex < rawText.Length)
+        {
+            visibleText.Append(
+                rawText,
+                sourceIndex,
+                rawText.Length - sourceIndex
+            );
+        }
+
+        return visibleText.ToString();
+    }
+
+    private IEnumerator DialogueTypewriterRoutine(TutorialDialogueLine line)
     {
         if (dialogueText == null)
             yield break;
@@ -1058,14 +1164,20 @@ public class TutorialUI :
                 line.typewriterInterval
             );
 
+        ApplyPortraitCuesUpTo(0);
+
         for (int i = 0; i <= characterCount; i++)
         {
+            ApplyPortraitCuesUpTo(i);
+
             dialogueText.maxVisibleCharacters = i;
 
             yield return new WaitForSecondsRealtime(
                 interval
             );
         }
+
+        ApplyAllPortraitCues();
 
         dialogueText.maxVisibleCharacters =
             int.MaxValue;
@@ -1075,6 +1187,95 @@ public class TutorialUI :
 
         SetDialogueContinueIndicator(true);
     }
+    private void ApplyPortraitCuesUpTo(
+    int visibleCharacterIndex
+)
+    {
+        while (nextPortraitCueIndex <
+               currentPortraitCues.Count)
+        {
+            DialoguePortraitCue cue =
+                currentPortraitCues[
+                    nextPortraitCueIndex
+                ];
+
+            if (cue.visibleCharacterIndex >
+                visibleCharacterIndex)
+            {
+                break;
+            }
+
+            ApplyPortraitStyle(cue.styleId);
+
+            nextPortraitCueIndex++;
+        }
+    }
+    private void ApplyAllPortraitCues()
+    {
+        while (nextPortraitCueIndex <
+               currentPortraitCues.Count)
+        {
+            DialoguePortraitCue cue =
+                currentPortraitCues[
+                    nextPortraitCueIndex
+                ];
+
+            ApplyPortraitStyle(cue.styleId);
+
+            nextPortraitCueIndex++;
+        }
+    }
+    private void ApplyPortraitStyle(
+    string styleId
+)
+    {
+        if (currentDialogueLine == null)
+            return;
+
+        if (currentDialogueLine.speaker == null)
+            return;
+
+        Sprite portrait =
+            currentDialogueLine.speaker.GetPortrait(
+                styleId
+            );
+
+        if (portrait == null)
+        {
+            Debug.LogWarning(
+                $"[TutorialUI] 找不到立繪樣式：" +
+                $"{currentDialogueLine.speaker.displayName} / " +
+                $"{styleId}",
+                currentDialogueLine.speaker
+            );
+
+            return;
+        }
+
+        DialoguePortraitSide side =
+            currentDialogueLine.GetPortraitSide();
+
+        Image targetImage =
+            side == DialoguePortraitSide.Right
+                ? rightPortraitImage
+                : leftPortraitImage;
+
+        Image oppositeImage =
+            side == DialoguePortraitSide.Right
+                ? leftPortraitImage
+                : rightPortraitImage;
+
+        if (oppositeImage != null)
+            oppositeImage.gameObject.SetActive(false);
+
+        if (targetImage == null)
+            return;
+
+        targetImage.sprite = portrait;
+        targetImage.preserveAspect = true;
+        targetImage.gameObject.SetActive(true);
+    }
+
     public bool TryCompleteDialogueTyping()
     {
         if (!isDialogueTyping)
@@ -1096,14 +1297,20 @@ public class TutorialUI :
 
         if (dialogueText != null)
         {
-            dialogueText.text = currentDialogueFullText;
+            dialogueText.text =
+                currentDialogueFullText;
 
-            dialogueText.maxVisibleCharacters = int.MaxValue;
+            dialogueText.maxVisibleCharacters =
+                int.MaxValue;
         }
+
+        ApplyAllPortraitCues();
 
         isDialogueTyping = false;
 
-        SetDialogueContinueIndicator(currentDialogueLine != null);
+        SetDialogueContinueIndicator(
+            currentDialogueLine != null
+        );
     }
     private void StopDialogueTypewriter()
     {
@@ -1145,6 +1352,9 @@ public class TutorialUI :
         if (rightPortraitImage != null)
             rightPortraitImage.gameObject.SetActive(false);
 
+        currentPortraitCues.Clear();
+        nextPortraitCueIndex = 0;
+
         SetDialogueContinueIndicator(false);
     }
     private void SetupDialogueSpeaker(TutorialDialogueLine line)
@@ -1168,7 +1378,10 @@ public class TutorialUI :
                 ? line.speaker.displayName
                 : string.Empty;
     }
-    private void SetupDialoguePortrait(TutorialDialogueLine line)
+    private void SetupDialoguePortrait(
+    TutorialDialogueLine line,
+    string styleId
+)
     {
         if (leftPortraitImage != null)
             leftPortraitImage.gameObject.SetActive(false);
@@ -1182,8 +1395,19 @@ public class TutorialUI :
         if (line.speaker == null)
             return;
 
-        if (line.speaker.portrait == null)
+        Sprite portrait =
+            line.speaker.GetPortrait(styleId);
+
+        if (portrait == null)
+        {
+            Debug.LogWarning(
+                $"[TutorialUI] Speaker 沒有可用立繪：" +
+                $"{line.speaker.displayName}",
+                line.speaker
+            );
+
             return;
+        }
 
         DialoguePortraitSide side =
             line.GetPortraitSide();
@@ -1196,11 +1420,8 @@ public class TutorialUI :
         if (targetImage == null)
             return;
 
-        targetImage.sprite =
-            line.speaker.portrait;
-
+        targetImage.sprite = portrait;
         targetImage.preserveAspect = true;
-
         targetImage.gameObject.SetActive(true);
     }
     private void SetDialogueContinueIndicator(bool visible)

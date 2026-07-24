@@ -13,8 +13,20 @@ public class TutorialDialogueLine
     public DialoguePortraitSide portraitSide =
         DialoguePortraitSide.Left;
 
+    [Header("Portrait Style")]
+    [Tooltip(
+        "這句話開始時使用的立繪樣式 ID。" +
+        "留空會使用 Speaker 的 Default Portrait Style Id。"
+    )]
+    public string portraitStyleId = "Default";
+
+    [Tooltip(
+        "允許在文字內使用 {portrait:StyleId} 切換立繪"
+    )]
+    public bool allowInlinePortraitChange = true;
+
     [Header("Text")]
-    [TextArea(3, 10)]
+    [TextArea(3, 12)]
     public string text;
 
     [Header("Typewriter")]
@@ -35,5 +47,20 @@ public class TutorialDialogueLine
             return speaker.defaultPortraitSide;
 
         return DialoguePortraitSide.Left;
+    }
+
+    public string GetInitialPortraitStyleId()
+    {
+        if (!string.IsNullOrWhiteSpace(portraitStyleId))
+            return portraitStyleId.Trim();
+
+        if (speaker != null &&
+            !string.IsNullOrWhiteSpace(
+                speaker.defaultPortraitStyleId))
+        {
+            return speaker.defaultPortraitStyleId.Trim();
+        }
+
+        return "Default";
     }
 }
