@@ -13,13 +13,22 @@ MonoBehaviour:
   m_Name: TutorialStep_Battle_03_DragCard
   m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
   stepId: Battle_DragCard
+  stepType: 0
   message: "\u5C07\u5361\u724C\u5F80\u4E0A\u62D6\u66F3\u5373\u53EF\u6E96\u5099\u51FA\u724C\u3002\u653B\u64CA\u724C\u9700\u8981\u62D6\u5230\u6575\u4EBA\u8EAB\u4E0A\u3002"
+  speaker: {fileID: 0}
+  overridePortraitSide: 0
+  portraitSide: 0
+  useTypewriter: 1
+  typewriterInterval: 0.03
+  allowClickToCompleteText: 1
   exampleSprite: {fileID: 0}
   hideExampleWhenEmpty: 1
-  advanceMode: 0
-  requiredSignal: 
+  advanceMode: 2
+  requiredSignal: CardDragStarted
   signalAdvanceDelay: 0.15
-  showNextButton: 1
+  requiredSignalCount: 1
+  requireConditionToAdvance: 1
+  showNextButton: 0
   showBackButton: 1
   showSkipButton: 1
   allowBack: 1

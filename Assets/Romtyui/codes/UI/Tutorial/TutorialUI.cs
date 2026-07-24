@@ -1,62 +1,120 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class TutorialUI : MonoBehaviour, IPointerClickHandler
+public class TutorialUI :
+    MonoBehaviour,
+    IPointerClickHandler
 {
     [Header("Root")]
     public GameObject rootObject;
+
     public CanvasGroup rootCanvasGroup;
+
     public RectTransform overlayRect;
 
     [Header("Overlay")]
-    public Image darkOverlay;
+    public Image overlayImage;
 
-    [Header("Highlight")]
-    public RectTransform highlightFrame;
-    public Image highlightFrameImage;
+    [SerializeField]
+    private Material inverseMaskMaterialTemplate;
 
-    [Header("Dialog")]
-    public RectTransform dialogPanel;
-    public TMP_Text tutorialText;
-    public TMP_Text stepCounterText;
+    [SerializeField]
+    private TutorialInverseMaskRaycastFilter
+        inverseMaskRaycastFilter;
+
+    [SerializeField]
+    private Color overlayColor =
+        new Color(0f, 0f, 0f, 0.75f);
+
+    [SerializeField]
+    private float cornerRadius = 0.05f;
+
+    [Header("Highlight Locator")]
+    [SerializeField]
+    private RectTransform highlightLocator;
+
+    [Header("Dialogue Panel")]
+    [SerializeField]
+    private GameObject dialoguePanel;
+
+    [SerializeField]
+    private TMP_Text dialogueSpeakerNameText;
+
+    [SerializeField]
+    private TMP_Text dialogueText;
+
+    [SerializeField]
+    private Image leftPortraitImage;
+
+    [SerializeField]
+    private Image rightPortraitImage;
+
+    [SerializeField]
+    private GameObject dialogueContinueIndicator;
+
+    [SerializeField]
+    private Button dialogueClickArea;
+
+    [Header("Instruction Panel")]
+    [SerializeField]
+    private GameObject instructionPanel;
+
+    [SerializeField]
+    private RectTransform instructionPanelRect;
+
+    [SerializeField]
+    private TMP_Text tutorialText;
+
+    [SerializeField]
+    private TMP_Text stepCounterText;
+
 
     [Header("Example")]
     public Image exampleImage;
 
     [Header("Buttons")]
     public Button nextButton;
+
     public TMP_Text nextButtonText;
+
     public Button backButton;
+
     public Button skipButton;
-    [SerializeField]
-    private TutorialInverseMaskRaycastFilter inverseMaskRaycastFilter;
+
     [Header("Condition Progress")]
     public TMP_Text conditionProgressText;
 
-    [Header("Inverse Mask")]
-    [SerializeField] private UnityEngine.UI.Image overlayImage;
+    [Header("Text")]
+    public string nextText = "下一步";
 
-    [SerializeField] private RectTransform highlightLocator;
+    public string finishText = "完成";
 
-    [SerializeField] private Material inverseMaskMaterialTemplate;
+    [Header("對話")]
 
-    [SerializeField]
-    private Color overlayColor =
-        new Color(0f, 0f, 0f, 0.75f);
+    private Coroutine dialogueTypewriterCoroutine;
 
-    [SerializeField] private float cornerRadius = 0.05f;
+    private TutorialDialogueLine currentDialogueLine;
 
-    [SerializeField]
-    private Vector2 locatorPadding =
-        new Vector2(20f, 20f);
+    private string currentDialogueFullText =
+        string.Empty;
+
+    private bool isDialogueTyping;
+
+    [Header("Dialog Position")]
+    public Vector2 defaultDialogPosition;
+
+    public float screenEdgePadding = 24f;
 
     private Material runtimeInverseMaskMaterial;
 
+    private bool allowScreenClickAdvance;
+
     private static readonly int OverlayColorId =
-    Shader.PropertyToID("_OverlayColor");
+        Shader.PropertyToID("_OverlayColor");
 
     private static readonly int HoleCenterId =
         Shader.PropertyToID("_HoleCenter");
@@ -70,23 +128,26 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
     private static readonly int HoleEnabledId =
         Shader.PropertyToID("_HoleEnabled");
 
-    [Header("Text")]
-    public string nextText = "下一步";
-    public string finishText = "完成";
-
-    [Header("Safe Area")]
-    public float screenEdgePadding = 24f;
-
-    private bool allowScreenClickAdvance;
-
     public event Action NextClicked;
+
     public event Action BackClicked;
+
     public event Action SkipClicked;
+
     public event Action ScreenClicked;
+
+    public event Action DialogueClicked;
 
     private void Awake()
     {
         AutoFindReferences();
+
+        if (instructionPanelRect != null)
+        {
+            defaultDialogPosition =
+                instructionPanelRect.anchoredPosition;
+        }
+
         BindButtons();
         InitializeInverseMaskMaterial();
         Hide();
@@ -95,26 +156,346 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
     private void OnDestroy()
     {
         UnbindButtons();
-    }
-    private void InitializeInverseMaskMaterial()
-    {
-        if (overlayImage == null)
-        {
-            Debug.LogWarning(
-                "[TutorialUI] Overlay Image 沒有指定",
-                this
-            );
+        StopDialogueTypewriter();
 
+        if (runtimeInverseMaskMaterial != null)
+        {
+            if (Application.isPlaying)
+            {
+                Destroy(runtimeInverseMaskMaterial);
+            }
+            else
+            {
+                DestroyImmediate(runtimeInverseMaskMaterial);
+            }
+
+            runtimeInverseMaskMaterial = null;
+        }
+    }
+
+    private void AutoFindReferences()
+    {
+        if (rootObject == null)
+            rootObject = gameObject;
+
+        if (rootCanvasGroup == null)
+        {
+            rootCanvasGroup =
+                GetComponent<CanvasGroup>();
+        }
+
+        if (overlayRect == null)
+            overlayRect = transform as RectTransform;
+    }
+
+    private void BindButtons()
+    {
+        if (nextButton != null)
+        {
+            nextButton.onClick.AddListener(
+                HandleNextClicked
+            );
+        }
+
+        if (backButton != null)
+        {
+            backButton.onClick.AddListener(
+                HandleBackClicked
+            );
+        }
+
+        if (skipButton != null)
+        {
+            skipButton.onClick.AddListener(
+                HandleSkipClicked
+            );
+        }
+        if (dialogueClickArea != null)
+        {
+            dialogueClickArea.onClick.AddListener(
+                HandleDialogueClicked
+            );
+        }
+    }
+    private void HandleDialogueClicked()
+    {
+        DialogueClicked?.Invoke();
+    }
+    private void UnbindButtons()
+    {
+        if (nextButton != null)
+        {
+            nextButton.onClick.RemoveListener(
+                HandleNextClicked
+            );
+        }
+
+        if (backButton != null)
+        {
+            backButton.onClick.RemoveListener(
+                HandleBackClicked
+            );
+        }
+
+        if (skipButton != null)
+        {
+            skipButton.onClick.RemoveListener(
+                HandleSkipClicked
+            );
+        }
+        if (dialogueClickArea != null)
+        {
+            dialogueClickArea.onClick.RemoveListener(
+                HandleDialogueClicked
+            );
+        }
+    }
+
+    private void HandleNextClicked()
+    {
+        NextClicked?.Invoke();
+    }
+
+    private void HandleBackClicked()
+    {
+        BackClicked?.Invoke();
+    }
+
+    private void HandleSkipClicked()
+    {
+        SkipClicked?.Invoke();
+    }
+
+    public void OnPointerClick(
+        PointerEventData eventData
+    )
+    {
+        if (!allowScreenClickAdvance)
+            return;
+
+        GameObject clicked =
+            eventData.pointerCurrentRaycast.gameObject;
+
+        if (clicked != null)
+        {
+            if (nextButton != null &&
+                clicked.transform.IsChildOf(
+                    nextButton.transform))
+            {
+                return;
+            }
+
+            if (backButton != null &&
+                clicked.transform.IsChildOf(
+                    backButton.transform))
+            {
+                return;
+            }
+
+            if (skipButton != null &&
+                clicked.transform.IsChildOf(
+                    skipButton.transform))
+            {
+                return;
+            }
+        }
+
+        ScreenClicked?.Invoke();
+    }
+
+    public void Show(bool blockOtherUI)
+    {
+        if (rootObject != null)
+            rootObject.SetActive(true);
+
+        if (rootCanvasGroup != null)
+        {
+            rootCanvasGroup.alpha = 1f;
+            rootCanvasGroup.interactable = true;
+            rootCanvasGroup.blocksRaycasts =
+                blockOtherUI;
+        }
+    }
+
+    public void Hide()
+    {
+        StopDialogueTypewriter();
+
+        currentDialogueLine = null;
+        currentDialogueFullText = string.Empty;
+
+        SetHoleEnabled(false);
+
+        HideDialoguePanel();
+        HideInstructionPanel();
+
+        if (rootObject != null)
+            rootObject.SetActive(true);
+
+        if (rootCanvasGroup != null)
+        {
+            rootCanvasGroup.alpha = 0f;
+            rootCanvasGroup.interactable = false;
+            rootCanvasGroup.blocksRaycasts = false;
+        }
+    }
+
+    public void SetInstructionStep(
+    TutorialStepData step,
+    int currentIndex,
+    int totalCount,
+    bool isLastStep
+)
+    {
+        ClearConditionProgress();
+
+        if (step == null)
+            return;
+
+        if (tutorialText != null)
+            tutorialText.text = step.message;
+
+        if (stepCounterText != null)
+        {
+            stepCounterText.text =
+                $"{currentIndex + 1} / {totalCount}";
+        }
+
+        SetExampleImage(step);
+        SetButtons(step, currentIndex, isLastStep);
+
+        allowScreenClickAdvance =
+            step.advanceMode ==
+            TutorialAdvanceMode.AnyScreenClick;
+    }
+
+
+
+
+
+
+
+
+
+   
+
+
+
+
+
+    private void SetExampleImage(
+        TutorialStepData step
+    )
+    {
+        if (exampleImage == null)
+            return;
+
+        bool hasSprite =
+            step.exampleSprite != null;
+
+        exampleImage.sprite =
+            step.exampleSprite;
+
+        if (step.hideExampleWhenEmpty)
+        {
+            exampleImage.gameObject.SetActive(
+                hasSprite
+            );
+        }
+        else
+        {
+            exampleImage.gameObject.SetActive(true);
+        }
+
+        exampleImage.enabled = hasSprite;
+    }
+
+    private void SetButtons(
+        TutorialStepData step,
+        int currentIndex,
+        bool isLastStep
+    )
+    {
+        if (nextButton != null)
+        {
+            bool canShowNext =
+                step.showNextButton &&
+                step.advanceMode !=
+                TutorialAdvanceMode.WaitForSignal;
+
+            nextButton.gameObject.SetActive(
+                canShowNext
+            );
+        }
+
+        if (nextButtonText != null)
+        {
+            nextButtonText.text =
+                isLastStep
+                    ? finishText
+                    : nextText;
+        }
+
+        if (backButton != null)
+        {
+            bool showBack =
+                currentIndex > 0 &&
+                step.showBackButton &&
+                step.allowBack;
+
+            backButton.gameObject.SetActive(
+                showBack
+            );
+        }
+
+        if (skipButton != null)
+        {
+            skipButton.gameObject.SetActive(
+                step.showSkipButton
+            );
+        }
+    }
+
+    public void SetConditionProgress(
+        int current,
+        int required
+    )
+    {
+        if (conditionProgressText == null)
+            return;
+
+        if (required <= 1)
+        {
+            ClearConditionProgress();
             return;
         }
 
-        if (inverseMaskMaterialTemplate == null)
-        {
-            Debug.LogWarning(
-                "[TutorialUI] Inverse Mask Material Template 沒有指定",
-                this
-            );
+        conditionProgressText.gameObject.SetActive(
+            true
+        );
 
+        conditionProgressText.text =
+            $"操作進度：{current}/{required}";
+    }
+
+    public void ClearConditionProgress()
+    {
+        if (conditionProgressText == null)
+            return;
+
+        conditionProgressText.text =
+            string.Empty;
+
+        conditionProgressText.gameObject.SetActive(
+            false
+        );
+    }
+
+    private void InitializeInverseMaskMaterial()
+    {
+        if (overlayImage == null ||
+            inverseMaskMaterialTemplate == null)
+        {
             return;
         }
 
@@ -122,10 +503,13 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
             return;
 
         runtimeInverseMaskMaterial =
-            new Material(inverseMaskMaterialTemplate);
+            new Material(
+                inverseMaskMaterialTemplate
+            );
 
         runtimeInverseMaskMaterial.name =
-            inverseMaskMaterialTemplate.name + "_Runtime";
+            inverseMaskMaterialTemplate.name +
+            "_Runtime";
 
         overlayImage.material =
             runtimeInverseMaskMaterial;
@@ -145,113 +529,182 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
             0f
         );
     }
-    public void UpdateHoleFromLocator()
+
+    public void MoveLocatorToTarget(
+        RectTransform targetRect,
+        Vector2 padding
+    )
     {
         InitializeInverseMaskMaterial();
 
-        if (runtimeInverseMaskMaterial == null)
-            return;
-
-        if (overlayImage == null)
-            return;
-
         if (highlightLocator == null)
+            return;
+
+        if (targetRect == null)
         {
+            highlightLocator.gameObject.SetActive(
+                false
+            );
+
             SetHoleEnabled(false);
             return;
         }
 
-        RectTransform overlayRect =
-            overlayImage.rectTransform;
+        highlightLocator.gameObject.SetActive(
+            true
+        );
 
-        if (overlayRect == null)
+        RectTransform locatorParent =
+            highlightLocator.parent as RectTransform;
+
+        if (locatorParent == null)
             return;
+
+        Vector3[] worldCorners =
+            new Vector3[4];
+
+        targetRect.GetWorldCorners(worldCorners);
+
+        Camera canvasCamera =
+            GetCanvasCamera();
+
+        RectTransformUtility
+            .ScreenPointToLocalPointInRectangle(
+                locatorParent,
+                RectTransformUtility
+                    .WorldToScreenPoint(
+                        canvasCamera,
+                        worldCorners[0]
+                    ),
+                canvasCamera,
+                out Vector2 bottomLeft
+            );
+
+        RectTransformUtility
+            .ScreenPointToLocalPointInRectangle(
+                locatorParent,
+                RectTransformUtility
+                    .WorldToScreenPoint(
+                        canvasCamera,
+                        worldCorners[2]
+                    ),
+                canvasCamera,
+                out Vector2 topRight
+            );
+
+        Vector2 center =
+            (bottomLeft + topRight) * 0.5f;
+
+        Vector2 size =
+            topRight - bottomLeft;
+
+        size.x = Mathf.Abs(size.x);
+        size.y = Mathf.Abs(size.y);
+
+        size += padding * 2f;
+
+        highlightLocator.anchorMin =
+            new Vector2(0.5f, 0.5f);
+
+        highlightLocator.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        highlightLocator.pivot =
+            new Vector2(0.5f, 0.5f);
+
+        highlightLocator.anchoredPosition =
+            center;
+
+        highlightLocator.sizeDelta = size;
+
+        UpdateHoleFromLocator();
+    }
+
+    private void UpdateHoleFromLocator()
+    {
+        InitializeInverseMaskMaterial();
+
+        if (runtimeInverseMaskMaterial == null ||
+            overlayImage == null ||
+            highlightLocator == null)
+        {
+            return;
+        }
+
+        RectTransform maskRect =
+            overlayImage.rectTransform;
 
         Canvas.ForceUpdateCanvases();
 
-        Vector3[] locatorWorldCorners =
+        Vector3[] worldCorners =
             new Vector3[4];
 
         highlightLocator.GetWorldCorners(
-            locatorWorldCorners
+            worldCorners
         );
 
         Camera canvasCamera =
             GetCanvasCamera();
 
-        Vector2 localBottomLeft;
-        Vector2 localTopRight;
-
-        bool gotBottomLeft =
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                overlayRect,
-                RectTransformUtility.WorldToScreenPoint(
-                    canvasCamera,
-                    locatorWorldCorners[0]
-                ),
+        RectTransformUtility
+            .ScreenPointToLocalPointInRectangle(
+                maskRect,
+                RectTransformUtility
+                    .WorldToScreenPoint(
+                        canvasCamera,
+                        worldCorners[0]
+                    ),
                 canvasCamera,
-                out localBottomLeft
+                out Vector2 bottomLeft
             );
 
-        bool gotTopRight =
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                overlayRect,
-                RectTransformUtility.WorldToScreenPoint(
-                    canvasCamera,
-                    locatorWorldCorners[2]
-                ),
+        RectTransformUtility
+            .ScreenPointToLocalPointInRectangle(
+                maskRect,
+                RectTransformUtility
+                    .WorldToScreenPoint(
+                        canvasCamera,
+                        worldCorners[2]
+                    ),
                 canvasCamera,
-                out localTopRight
+                out Vector2 topRight
             );
 
-        if (!gotBottomLeft || !gotTopRight)
-            return;
-
-        Vector2 halfPadding =
-            locatorPadding * 0.5f;
-
-        localBottomLeft -= halfPadding;
-        localTopRight += halfPadding;
-
-        Rect overlayLocalRect =
-            overlayRect.rect;
-
-        float overlayWidth =
-            Mathf.Max(1f, overlayLocalRect.width);
-
-        float overlayHeight =
-            Mathf.Max(1f, overlayLocalRect.height);
+        Rect rect = maskRect.rect;
 
         Vector2 localCenter =
-            (localBottomLeft + localTopRight) * 0.5f;
+            (bottomLeft + topRight) * 0.5f;
 
         Vector2 localSize =
-            localTopRight - localBottomLeft;
+            topRight - bottomLeft;
+
+        localSize.x = Mathf.Abs(localSize.x);
+        localSize.y = Mathf.Abs(localSize.y);
 
         Vector2 holeCenter = new Vector2(
             Mathf.InverseLerp(
-                overlayLocalRect.xMin,
-                overlayLocalRect.xMax,
+                rect.xMin,
+                rect.xMax,
                 localCenter.x
             ),
             Mathf.InverseLerp(
-                overlayLocalRect.yMin,
-                overlayLocalRect.yMax,
+                rect.yMin,
+                rect.yMax,
                 localCenter.y
             )
         );
 
         Vector2 holeSize = new Vector2(
-            localSize.x / overlayWidth,
-            localSize.y / overlayHeight
+            localSize.x /
+            Mathf.Max(1f, rect.width),
+
+            localSize.y /
+            Mathf.Max(1f, rect.height)
         );
 
-        holeSize.x =
-            Mathf.Clamp01(holeSize.x);
+        holeSize.x = Mathf.Clamp01(holeSize.x);
+        holeSize.y = Mathf.Clamp01(holeSize.y);
 
-        holeSize.y =
-            Mathf.Clamp01(holeSize.y);
-        
         runtimeInverseMaskMaterial.SetVector(
             HoleCenterId,
             holeCenter
@@ -281,6 +734,26 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
             );
         }
     }
+
+    public void SetHoleEnabled(bool enabled)
+    {
+        InitializeInverseMaskMaterial();
+
+        if (runtimeInverseMaskMaterial != null)
+        {
+            runtimeInverseMaskMaterial.SetFloat(
+                HoleEnabledId,
+                enabled ? 1f : 0f
+            );
+        }
+
+        if (inverseMaskRaycastFilter != null)
+        {
+            inverseMaskRaycastFilter
+                .SetHoleEnabled(enabled);
+        }
+    }
+
     private Camera GetCanvasCamera()
     {
         if (overlayImage == null)
@@ -304,439 +777,439 @@ public class TutorialUI : MonoBehaviour, IPointerClickHandler
         return Camera.main;
     }
 
-    public void SetHoleEnabled(bool enabled)
+    public void PositionInstructionPanel(
+        RectTransform target,
+        TutorialDialogPosition position,
+        float spacing
+    )
     {
-        InitializeInverseMaskMaterial();
-
-        if (runtimeInverseMaskMaterial != null)
+        if (instructionPanelRect == null ||
+            overlayRect == null ||
+            target == null ||
+            position ==
+            TutorialDialogPosition.KeepCurrent)
         {
-            runtimeInverseMaskMaterial.SetFloat(
-                HoleEnabledId,
-                enabled ? 1f : 0f
-            );
-        }
-
-        if (inverseMaskRaycastFilter != null)
-        {
-            inverseMaskRaycastFilter.SetHoleEnabled(
-                enabled
-            );
-        }
-    }
-    public void MoveLocatorToTarget(
-    RectTransform targetRect,
-    Vector2 padding
-)
-    {
-        if (highlightLocator == null)
-            return;
-
-        if (targetRect == null)
-        {
-            highlightLocator.gameObject.SetActive(false);
-            SetHoleEnabled(false);
-            return;
-        }
-
-        highlightLocator.gameObject.SetActive(true);
-
-        Vector3[] worldCorners =
-            new Vector3[4];
-
-        targetRect.GetWorldCorners(worldCorners);
-
-        RectTransform locatorParent =
-            highlightLocator.parent as RectTransform;
-
-        if (locatorParent == null)
-            return;
-
-        Camera canvasCamera =
-            GetCanvasCamera();
-
-        Vector2 localBottomLeft;
-        Vector2 localTopRight;
-
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            locatorParent,
-            RectTransformUtility.WorldToScreenPoint(
-                canvasCamera,
-                worldCorners[0]
-            ),
-            canvasCamera,
-            out localBottomLeft
-        );
-
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            locatorParent,
-            RectTransformUtility.WorldToScreenPoint(
-                canvasCamera,
-                worldCorners[2]
-            ),
-            canvasCamera,
-            out localTopRight
-        );
-
-        Vector2 center =
-            (localBottomLeft + localTopRight) * 0.5f;
-
-        Vector2 size =
-            localTopRight - localBottomLeft;
-
-        size += padding;
-
-        highlightLocator.anchorMin =
-            new Vector2(0.5f, 0.5f);
-
-        highlightLocator.anchorMax =
-            new Vector2(0.5f, 0.5f);
-
-        highlightLocator.pivot =
-            new Vector2(0.5f, 0.5f);
-
-        highlightLocator.anchoredPosition =
-            center;
-
-        highlightLocator.sizeDelta =
-            size;
-
-        locatorPadding = Vector2.zero;
-
-        UpdateHoleFromLocator();
-    }
-    private void AutoFindReferences()
-    {
-        if (rootObject == null)
-            rootObject = gameObject;
-
-        if (rootCanvasGroup == null)
-            rootCanvasGroup = GetComponent<CanvasGroup>();
-
-        if (overlayRect == null)
-            overlayRect = transform as RectTransform;
-    }
-
-    private void BindButtons()
-    {
-        if (nextButton != null)
-            nextButton.onClick.AddListener(HandleNextClicked);
-
-        if (backButton != null)
-            backButton.onClick.AddListener(HandleBackClicked);
-
-        if (skipButton != null)
-            skipButton.onClick.AddListener(HandleSkipClicked);
-    }
-
-    private void UnbindButtons()
-    {
-        if (nextButton != null)
-            nextButton.onClick.RemoveListener(HandleNextClicked);
-
-        if (backButton != null)
-            backButton.onClick.RemoveListener(HandleBackClicked);
-
-        if (skipButton != null)
-            skipButton.onClick.RemoveListener(HandleSkipClicked);
-    }
-
-    private void HandleNextClicked()
-    {
-        NextClicked?.Invoke();
-    }
-
-    private void HandleBackClicked()
-    {
-        BackClicked?.Invoke();
-    }
-
-    private void HandleSkipClicked()
-    {
-        SkipClicked?.Invoke();
-    }
-
-    public void OnPointerClick(PointerEventData eventData)
-    {
-        if (!allowScreenClickAdvance)
-            return;
-
-        GameObject clicked = eventData.pointerCurrentRaycast.gameObject;
-
-        if (clicked != null)
-        {
-            if (nextButton != null && clicked.transform.IsChildOf(nextButton.transform))
-                return;
-
-            if (backButton != null && clicked.transform.IsChildOf(backButton.transform))
-                return;
-
-            if (skipButton != null && clicked.transform.IsChildOf(skipButton.transform))
-                return;
-        }
-
-        ScreenClicked?.Invoke();
-    }
-
-    public void Show(bool blockOtherUI)
-    {
-        if (rootObject != null)
-            rootObject.SetActive(true);
-
-        if (rootCanvasGroup != null)
-        {
-            rootCanvasGroup.alpha = 1f;
-            rootCanvasGroup.interactable = true;
-            rootCanvasGroup.blocksRaycasts = blockOtherUI;
-        }
-    }
-
-    public void Hide()
-    {
-        if (rootObject != null)
-            rootObject.SetActive(true);
-
-        if (rootCanvasGroup != null)
-        {
-            rootCanvasGroup.alpha = 0f;
-            rootCanvasGroup.interactable = false;
-            rootCanvasGroup.blocksRaycasts = false;
-        }
-    }
-
-    public void SetStep(TutorialStepData step, int currentIndex, int totalCount, bool isLastStep)
-    {
-        ClearConditionProgress();
-        if (step == null)
-            return;
-
-        if (tutorialText != null)
-            tutorialText.text = step.message;
-
-        if (stepCounterText != null)
-            stepCounterText.text = $"{currentIndex + 1} / {totalCount}";
-
-        SetExampleImage(step);
-        SetButtons(step, currentIndex, isLastStep);
-
-        allowScreenClickAdvance = step.advanceMode == TutorialAdvanceMode.AnyScreenClick;
-    }
-
-    private void SetExampleImage(TutorialStepData step)
-    {
-        if (exampleImage == null)
-            return;
-
-        bool hasSprite = step.exampleSprite != null;
-
-        exampleImage.sprite = step.exampleSprite;
-
-        if (step.hideExampleWhenEmpty)
-            exampleImage.gameObject.SetActive(hasSprite);
-        else
-            exampleImage.gameObject.SetActive(true);
-
-        exampleImage.enabled = hasSprite;
-    }
-
-    private void SetButtons(TutorialStepData step, int currentIndex, bool isLastStep)
-    {
-        if (nextButton != null)
-        {
-            bool showNext =
-                step.showNextButton &&
-                step.advanceMode == TutorialAdvanceMode.NextButton;
-
-            bool canShowNextButton =step.showNextButton &&step.advanceMode != TutorialAdvanceMode.WaitForSignal;
-
-            if (nextButton != null)
-            {
-                nextButton.gameObject.SetActive(canShowNextButton);
-            }
-        }
-
-        if (nextButtonText != null)
-            nextButtonText.text = isLastStep ? finishText : nextText;
-
-        if (backButton != null)
-        {
-            bool showBack =
-                currentIndex > 0 &&
-                step.showBackButton &&
-                step.allowBack;
-
-            backButton.gameObject.SetActive(showBack);
-        }
-
-        if (skipButton != null)
-            skipButton.gameObject.SetActive(step.showSkipButton);
-    }
-
-    public void SetHighlight(RectTransform target, Vector2 padding)
-    {
-        if (highlightFrame == null)
-            return;
-
-        if (target == null)
-        {
-            highlightFrame.gameObject.SetActive(false);
-            return;
-        }
-
-        if (overlayRect == null)
-            overlayRect = transform as RectTransform;
-
-        if (overlayRect == null)
-        {
-            highlightFrame.gameObject.SetActive(false);
             return;
         }
 
         Canvas.ForceUpdateCanvases();
 
-        highlightFrame.gameObject.SetActive(true);
+        Vector3[] worldCorners =
+            new Vector3[4];
 
-        Vector3[] targetCorners = new Vector3[4];
-        target.GetWorldCorners(targetCorners);
+        target.GetWorldCorners(worldCorners);
 
-        Vector2 bottomLeft = WorldToOverlayLocal(targetCorners[0]);
-        Vector2 topRight = WorldToOverlayLocal(targetCorners[2]);
+        Vector2 bottomLeft =
+            WorldToOverlayLocal(worldCorners[0]);
 
-        Vector2 center = (bottomLeft + topRight) * 0.5f;
-        Vector2 size = topRight - bottomLeft;
+        Vector2 topRight =
+            WorldToOverlayLocal(worldCorners[2]);
 
-        size.x = Mathf.Abs(size.x);
-        size.y = Mathf.Abs(size.y);
+        Vector2 center =
+            (bottomLeft + topRight) * 0.5f;
 
-        size += padding * 2f;
+        TutorialDialogPosition finalPosition =
+            position;
 
-        highlightFrame.anchorMin = new Vector2(0.5f, 0.5f);
-        highlightFrame.anchorMax = new Vector2(0.5f, 0.5f);
-        highlightFrame.pivot = new Vector2(0.5f, 0.5f);
-
-        highlightFrame.anchoredPosition = center;
-        highlightFrame.sizeDelta = size;
-
-        highlightFrame.SetAsLastSibling();
-
-        if (dialogPanel != null)
-            dialogPanel.SetAsLastSibling();
-    }
-    public void PositionDialog(RectTransform target, TutorialDialogPosition position, float spacing)
-    {
-        if (dialogPanel == null || overlayRect == null)
-            return;
-
-        if (target == null || position == TutorialDialogPosition.KeepCurrent)
-            return;
-
-        Vector3[] targetCorners = new Vector3[4];
-        target.GetWorldCorners(targetCorners);
-
-        Vector2 bottomLeft = WorldToOverlayLocal(targetCorners[0]);
-        Vector2 topRight = WorldToOverlayLocal(targetCorners[2]);
-        Vector2 center = (bottomLeft + topRight) * 0.5f;
-
-        TutorialDialogPosition finalPosition = position;
-
-        if (position == TutorialDialogPosition.Auto)
+        if (position ==
+            TutorialDialogPosition.Auto)
         {
-            float spaceAbove = overlayRect.rect.yMax - topRight.y;
-            float spaceBelow = bottomLeft.y - overlayRect.rect.yMin;
+            float spaceAbove =
+                overlayRect.rect.yMax -
+                topRight.y;
 
-            finalPosition = spaceAbove >= spaceBelow
-                ? TutorialDialogPosition.Top
-                : TutorialDialogPosition.Bottom;
+            float spaceBelow =
+                bottomLeft.y -
+                overlayRect.rect.yMin;
+
+            finalPosition =
+                spaceAbove >= spaceBelow
+                    ? TutorialDialogPosition.Top
+                    : TutorialDialogPosition.Bottom;
         }
 
-        Vector2 dialogSize = dialogPanel.rect.size;
+        Vector2 dialogSize =
+            instructionPanelRect.rect.size;
+
         Vector2 destination = center;
 
         switch (finalPosition)
         {
             case TutorialDialogPosition.Top:
-                destination.y = topRight.y + spacing + dialogSize.y * 0.5f;
+                destination.y =
+                    topRight.y +
+                    spacing +
+                    dialogSize.y * 0.5f;
                 break;
 
             case TutorialDialogPosition.Bottom:
-                destination.y = bottomLeft.y - spacing - dialogSize.y * 0.5f;
+                destination.y =
+                    bottomLeft.y -
+                    spacing -
+                    dialogSize.y * 0.5f;
                 break;
 
             case TutorialDialogPosition.Left:
-                destination.x = bottomLeft.x - spacing - dialogSize.x * 0.5f;
+                destination.x =
+                    bottomLeft.x -
+                    spacing -
+                    dialogSize.x * 0.5f;
                 break;
 
             case TutorialDialogPosition.Right:
-                destination.x = topRight.x + spacing + dialogSize.x * 0.5f;
+                destination.x =
+                    topRight.x +
+                    spacing +
+                    dialogSize.x * 0.5f;
                 break;
         }
 
-        dialogPanel.anchoredPosition = ClampDialogPosition(destination, dialogSize);
+        instructionPanelRect.anchoredPosition =
+            ClampDialogPosition(
+                destination,
+                dialogSize
+            );
     }
 
-    private Vector2 WorldToOverlayLocal(Vector3 worldPosition)
+    public void ResetInstructionPosition()
     {
-        Canvas canvas = overlayRect.GetComponentInParent<Canvas>();
+        if (instructionPanelRect != null)
+        {
+            instructionPanelRect.anchoredPosition =
+                defaultDialogPosition;
+        }
+    }
+
+    private Vector2 WorldToOverlayLocal(
+        Vector3 worldPosition
+    )
+    {
+        Canvas canvas =
+            overlayRect.GetComponentInParent<Canvas>();
 
         Camera cameraToUse = null;
 
-        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+        if (canvas != null &&
+            canvas.renderMode !=
+            RenderMode.ScreenSpaceOverlay)
+        {
             cameraToUse = canvas.worldCamera;
+        }
 
-        Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(cameraToUse, worldPosition);
+        Vector2 screenPoint =
+            RectTransformUtility.WorldToScreenPoint(
+                cameraToUse,
+                worldPosition
+            );
 
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            overlayRect,
-            screenPoint,
-            cameraToUse,
-            out Vector2 localPoint
-        );
+        RectTransformUtility
+            .ScreenPointToLocalPointInRectangle(
+                overlayRect,
+                screenPoint,
+                cameraToUse,
+                out Vector2 localPoint
+            );
 
         return localPoint;
     }
 
-    private Vector2 ClampDialogPosition(Vector2 position, Vector2 dialogSize)
+    private Vector2 ClampDialogPosition(
+        Vector2 position,
+        Vector2 dialogSize
+    )
     {
         Rect area = overlayRect.rect;
 
-        float halfWidth = dialogSize.x * 0.5f;
-        float halfHeight = dialogSize.y * 0.5f;
+        float halfWidth =
+            dialogSize.x * 0.5f;
+
+        float halfHeight =
+            dialogSize.y * 0.5f;
 
         position.x = Mathf.Clamp(
             position.x,
-            area.xMin + halfWidth + screenEdgePadding,
-            area.xMax - halfWidth - screenEdgePadding
+            area.xMin +
+            halfWidth +
+            screenEdgePadding,
+            area.xMax -
+            halfWidth -
+            screenEdgePadding
         );
 
         position.y = Mathf.Clamp(
             position.y,
-            area.yMin + halfHeight + screenEdgePadding,
-            area.yMax - halfHeight - screenEdgePadding
+            area.yMin +
+            halfHeight +
+            screenEdgePadding,
+            area.yMax -
+            halfHeight -
+            screenEdgePadding
         );
 
         return position;
     }
-    public void SetConditionProgress(int current,int required)
+    public void ShowDialoguePanel()
     {
-        if (conditionProgressText == null)
-            return;
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(true);
+    }
 
-        if (required <= 1)
+    public void HideDialoguePanel()
+    {
+        StopDialogueTypewriter();
+        ClearDialogueVisuals();
+
+        currentDialogueLine = null;
+        currentDialogueFullText = string.Empty;
+
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(false);
+    }
+
+    public void ShowInstructionPanel()
+    {
+        if (instructionPanel != null)
+            instructionPanel.SetActive(true);
+    }
+
+    public void HideInstructionPanel()
+    {
+        if (instructionPanel != null)
+            instructionPanel.SetActive(false);
+    }
+
+    public void ShowDialogueLine(TutorialDialogueLine line)
+    {
+        StopDialogueTypewriter();
+
+        currentDialogueLine = line;
+
+        if (line == null)
         {
-            conditionProgressText.text = "";
-            conditionProgressText.gameObject.SetActive(false);
+            ClearDialogueVisuals();
             return;
         }
 
-        conditionProgressText.gameObject.SetActive(true);
-        conditionProgressText.text =
-            $"操作進度：{current}/{required}";
+        SetupDialogueSpeaker(line);
+        SetupDialoguePortrait(line);
+
+        currentDialogueFullText =
+            line.text ?? string.Empty;
+
+        if (dialogueText == null)
+        {
+            Debug.LogWarning(
+                "[TutorialUI] Dialogue Text 沒有綁定",
+                this
+            );
+
+            SetDialogueContinueIndicator(false);
+            return;
+        }
+
+        if (!line.useTypewriter ||
+            string.IsNullOrEmpty(
+                currentDialogueFullText))
+        {
+            dialogueText.text =
+                currentDialogueFullText;
+
+            dialogueText.maxVisibleCharacters =
+                int.MaxValue;
+
+            isDialogueTyping = false;
+
+            SetDialogueContinueIndicator(true);
+            return;
+        }
+
+        dialogueTypewriterCoroutine =
+            StartCoroutine(
+                DialogueTypewriterRoutine(line)
+            );
     }
-    public void ClearConditionProgress()
+    private IEnumerator DialogueTypewriterRoutine(
+    TutorialDialogueLine line
+)
     {
-        if (conditionProgressText == null)
+        if (dialogueText == null)
+            yield break;
+
+        if (line == null)
+            yield break;
+
+        isDialogueTyping = true;
+
+        SetDialogueContinueIndicator(false);
+
+        dialogueText.text =
+            currentDialogueFullText;
+
+        dialogueText.maxVisibleCharacters = 0;
+
+        dialogueText.ForceMeshUpdate();
+
+        int characterCount =
+            dialogueText.textInfo.characterCount;
+
+        float interval =
+            Mathf.Max(
+                0.001f,
+                line.typewriterInterval
+            );
+
+        for (int i = 0; i <= characterCount; i++)
+        {
+            dialogueText.maxVisibleCharacters = i;
+
+            yield return new WaitForSecondsRealtime(
+                interval
+            );
+        }
+
+        dialogueText.maxVisibleCharacters =
+            int.MaxValue;
+
+        isDialogueTyping = false;
+        dialogueTypewriterCoroutine = null;
+
+        SetDialogueContinueIndicator(true);
+    }
+    public bool TryCompleteDialogueTyping()
+    {
+        if (!isDialogueTyping)
+            return false;
+
+        if (currentDialogueLine == null)
+            return false;
+
+        if (!currentDialogueLine.allowClickToCompleteText)
+            return false;
+
+        CompleteDialogueTypingImmediately();
+
+        return true;
+    }
+    public void CompleteDialogueTypingImmediately()
+    {
+        StopDialogueTypewriter();
+
+        if (dialogueText != null)
+        {
+            dialogueText.text = currentDialogueFullText;
+
+            dialogueText.maxVisibleCharacters = int.MaxValue;
+        }
+
+        isDialogueTyping = false;
+
+        SetDialogueContinueIndicator(currentDialogueLine != null);
+    }
+    private void StopDialogueTypewriter()
+    {
+        if (dialogueTypewriterCoroutine != null)
+        {
+            StopCoroutine(
+                dialogueTypewriterCoroutine
+            );
+
+            dialogueTypewriterCoroutine = null;
+        }
+
+        isDialogueTyping = false;
+    }
+    private void ClearDialogueVisuals()
+    {
+        if (dialogueSpeakerNameText != null)
+        {
+            dialogueSpeakerNameText.text =
+                string.Empty;
+
+            dialogueSpeakerNameText.gameObject.SetActive(
+                false
+            );
+        }
+
+        if (dialogueText != null)
+        {
+            dialogueText.text =
+                string.Empty;
+
+            dialogueText.maxVisibleCharacters =
+                int.MaxValue;
+        }
+
+        if (leftPortraitImage != null)
+            leftPortraitImage.gameObject.SetActive(false);
+
+        if (rightPortraitImage != null)
+            rightPortraitImage.gameObject.SetActive(false);
+
+        SetDialogueContinueIndicator(false);
+    }
+    private void SetupDialogueSpeaker(TutorialDialogueLine line)
+    {
+        if (dialogueSpeakerNameText == null)
             return;
 
-        conditionProgressText.text = "";
-        conditionProgressText.gameObject.SetActive(false);
+        bool hasName =
+            line != null &&
+            line.speaker != null &&
+            !string.IsNullOrWhiteSpace(
+                line.speaker.displayName
+            );
+
+        dialogueSpeakerNameText.gameObject.SetActive(
+            hasName
+        );
+
+        dialogueSpeakerNameText.text =
+            hasName
+                ? line.speaker.displayName
+                : string.Empty;
+    }
+    private void SetupDialoguePortrait(TutorialDialogueLine line)
+    {
+        if (leftPortraitImage != null)
+            leftPortraitImage.gameObject.SetActive(false);
+
+        if (rightPortraitImage != null)
+            rightPortraitImage.gameObject.SetActive(false);
+
+        if (line == null)
+            return;
+
+        if (line.speaker == null)
+            return;
+
+        if (line.speaker.portrait == null)
+            return;
+
+        DialoguePortraitSide side =
+            line.GetPortraitSide();
+
+        Image targetImage =
+            side == DialoguePortraitSide.Right
+                ? rightPortraitImage
+                : leftPortraitImage;
+
+        if (targetImage == null)
+            return;
+
+        targetImage.sprite =
+            line.speaker.portrait;
+
+        targetImage.preserveAspect = true;
+
+        targetImage.gameObject.SetActive(true);
+    }
+    private void SetDialogueContinueIndicator(bool visible)
+    {
+        if (dialogueContinueIndicator == null)
+            return;
+
+        dialogueContinueIndicator.SetActive(
+            visible
+        );
     }
 }

@@ -13,17 +13,26 @@ MonoBehaviour:
   m_Name: TutorialStep_Battle_04_PlayCard
   m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
   stepId: Battle_PlayCard
+  stepType: 0
   message: "\u6210\u529F\u6253\u51FA\u5361\u724C\u5F8C\uFF0C\u5361\u724C\u6703\u7D50\u7B97\u6548\u679C\u4E26\u9032\u5165\u68C4\u724C\u5340\u3002"
+  speaker: {fileID: 0}
+  overridePortraitSide: 0
+  portraitSide: 0
+  useTypewriter: 1
+  typewriterInterval: 0.03
+  allowClickToCompleteText: 1
   exampleSprite: {fileID: 0}
   hideExampleWhenEmpty: 1
-  advanceMode: 0
-  requiredSignal: 
+  advanceMode: 2
+  requiredSignal: CardPlayed
   signalAdvanceDelay: 0.15
-  showNextButton: 1
+  requiredSignalCount: 1
+  requireConditionToAdvance: 1
+  showNextButton: 0
   showBackButton: 1
   showSkipButton: 1
   allowBack: 1
-  targetId: HandArea
+  targetId: EnemyArea
   highlightTarget: 1
   highlightPadding: {x: 20, y: 20}
   dialogPosition: 5

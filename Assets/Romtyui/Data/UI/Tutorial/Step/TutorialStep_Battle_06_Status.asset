@@ -13,12 +13,21 @@ MonoBehaviour:
   m_Name: TutorialStep_Battle_06_Status
   m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
   stepId: Battle_Status
+  stepType: 0
   message: "\u9019\u88E1\u6703\u986F\u793A\u4F60\u76EE\u524D\u64C1\u6709\u7684\u72C0\u614B\uFF0C\u4F8B\u5982\u529B\u91CF\u3001\u865B\u5F31\u3001\u6613\u50B7\u7B49\u3002"
+  speaker: {fileID: 0}
+  overridePortraitSide: 0
+  portraitSide: 0
+  useTypewriter: 1
+  typewriterInterval: 0.03
+  allowClickToCompleteText: 1
   exampleSprite: {fileID: 0}
   hideExampleWhenEmpty: 1
   advanceMode: 0
   requiredSignal: 
   signalAdvanceDelay: 0.15
+  requiredSignalCount: 1
+  requireConditionToAdvance: 1
   showNextButton: 1
   showBackButton: 1
   showSkipButton: 1

@@ -1,48 +1,49 @@
 using UnityEngine;
 
-public class TutorialSignalEmitter : MonoBehaviour
+public class TutorialSignalEmitter :
+    MonoBehaviour
 {
-	[Header("Signal")]
-	[Tooltip("必須和 TutorialStepData.requiredSignal 一致")]
-	public string signalId;
+    [Header("Signal")]
+    [Tooltip("必須與 TutorialStepData.requiredSignal 相同")]
+    public string signalId;
 
-	[Header("Debug")]
-	public bool logSignal = true;
+    [Header("Debug")]
+    public bool logSignal = true;
 
-	public void Emit()
-	{
-		if (string.IsNullOrWhiteSpace(signalId))
-		{
-			Debug.LogWarning(
-				$"[TutorialSignalEmitter] " +
-				$"{gameObject.name} 沒有設定 signalId",
-				this
-			);
+    public void Emit()
+    {
+        Emit(signalId);
+    }
 
-			return;
-		}
+    public void Emit(
+        string overrideSignalId
+    )
+    {
+        if (string.IsNullOrWhiteSpace(
+                overrideSignalId))
+        {
+            Debug.LogWarning(
+                $"[TutorialSignalEmitter] " +
+                $"{gameObject.name} 沒有 Signal ID",
+                this
+            );
 
-		string finalSignal = signalId.Trim();
+            return;
+        }
 
-		if (logSignal)
-		{
-			Debug.Log(
-				$"[TutorialSignalEmitter] " +
-				$"{gameObject.name} 發送 {finalSignal}",
-				this
-			);
-		}
+        string finalSignal =
+            overrideSignalId.Trim();
 
-		TutorialEventBus.Raise(finalSignal);
-	}
+        if (logSignal)
+        {
+            Debug.Log(
+                $"[TutorialSignalEmitter] " +
+                $"{gameObject.name} 發送：" +
+                $"{finalSignal}",
+                this
+            );
+        }
 
-	public void Emit(string overrideSignalId)
-	{
-		if (string.IsNullOrWhiteSpace(overrideSignalId))
-			return;
-
-		TutorialEventBus.Raise(
-			overrideSignalId.Trim()
-		);
-	}
+        TutorialEventBus.Raise(finalSignal);
+    }
 }
