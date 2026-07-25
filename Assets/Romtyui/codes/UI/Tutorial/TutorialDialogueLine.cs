@@ -14,15 +14,10 @@ public class TutorialDialogueLine
         DialoguePortraitSide.Left;
 
     [Header("Portrait Style")]
-    [Tooltip(
-        "這句話開始時使用的立繪樣式 ID。" +
-        "留空會使用 Speaker 的 Default Portrait Style Id。"
-    )]
+    [Tooltip("這句對話開始時使用的立繪樣式")]
     public string portraitStyleId = "Default";
 
-    [Tooltip(
-        "允許在文字內使用 {portrait:StyleId} 切換立繪"
-    )]
+    [Tooltip("允許在文字中使用 {portrait:StyleId}")]
     public bool allowInlinePortraitChange = true;
 
     [Header("Text")]

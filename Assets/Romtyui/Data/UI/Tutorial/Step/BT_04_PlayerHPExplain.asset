@@ -10,31 +10,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 915cab61ed86c724d8f03d93c90cdea6, type: 3}
-  m_Name: TutorialStep_Battle_03_DragCard
+  m_Name: BT_04_PlayerHPExplain
   m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
-  stepId: Battle_DragCard
-  stepType: 0
-  message: "\u5C07\u5361\u724C\u5F80\u4E0A\u62D6\u66F3\u5373\u53EF\u6E96\u5099\u51FA\u724C\u3002\u653B\u64CA\u724C\u9700\u8981\u62D6\u5230\u6575\u4EBA\u8EAB\u4E0A\u3002"
-  speaker: {fileID: 0}
-  overridePortraitSide: 0
-  portraitSide: 0
-  useTypewriter: 1
-  typewriterInterval: 0.03
-  allowClickToCompleteText: 1
+  stepId: 
+  dialogueLines: []
+  message: "\u9019\u662F\u4F60\u7684\u751F\u547D\u503C\u3002\u53D7\u5230\u6575\u4EBA\u653B\u64CA\u6642\u751F\u547D\u6703\u964D\u4F4E\uFF1B\u751F\u547D\u6B78\u96F6\u5F8C\uFF0C\u9019\u5834\u6230\u9B25\u5C31\u6703\u5931\u6557\u3002"
+  dialogueOnly: 0
   exampleSprite: {fileID: 0}
   hideExampleWhenEmpty: 1
-  advanceMode: 2
-  requiredSignal: CardDragStarted
+  advanceMode: 0
+  requiredSignal: 
   signalAdvanceDelay: 0.15
   requiredSignalCount: 1
   requireConditionToAdvance: 1
-  showNextButton: 0
+  showNextButton: 1
   showBackButton: 1
   showSkipButton: 1
   allowBack: 1
-  targetId: HandArea
+  targetId: Battle_PlayerHP
   highlightTarget: 1
   highlightPadding: {x: 20, y: 20}
+  highlightDuringDialogue: 1
   dialogPosition: 5
   dialogSpacing: 24
   autoAdvanceAfterSeconds: 0

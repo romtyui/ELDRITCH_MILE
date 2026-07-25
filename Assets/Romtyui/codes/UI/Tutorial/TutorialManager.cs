@@ -283,18 +283,11 @@ public class TutorialManager : MonoBehaviour
                 isLastStep
             );
 
-            if (step.highlightTarget &&
-                targetRect != null)
+            if (step.highlightTarget &&targetRect != null)
             {
                 tutorialUI.MoveLocatorToTarget(
                     targetRect,
                     step.highlightPadding
-                );
-
-                tutorialUI.PositionInstructionPanel(
-                    targetRect,
-                    step.dialogPosition,
-                    step.dialogSpacing
                 );
             }
             else
@@ -303,7 +296,22 @@ public class TutorialManager : MonoBehaviour
                     null,
                     Vector2.zero
                 );
+            }
 
+            if (step.dialogPosition == TutorialDialogPosition.Center)
+            {
+                tutorialUI.CenterInstructionPanel();
+            }
+            else if (targetRect != null)
+            {
+                tutorialUI.PositionInstructionPanel(
+                    targetRect,
+                    step.dialogPosition,
+                    step.dialogSpacing
+                );
+            }
+            else
+            {
                 tutorialUI.ResetInstructionPosition();
             }
         }

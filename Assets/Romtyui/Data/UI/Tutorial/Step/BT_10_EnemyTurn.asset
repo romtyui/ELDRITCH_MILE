@@ -10,31 +10,36 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 915cab61ed86c724d8f03d93c90cdea6, type: 3}
-  m_Name: TutorialStep_Battle_04_PlayCard
+  m_Name: BT_10_EnemyTurn
   m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
-  stepId: Battle_PlayCard
-  stepType: 0
-  message: "\u6210\u529F\u6253\u51FA\u5361\u724C\u5F8C\uFF0C\u5361\u724C\u6703\u7D50\u7B97\u6548\u679C\u4E26\u9032\u5165\u68C4\u724C\u5340\u3002"
-  speaker: {fileID: 0}
-  overridePortraitSide: 0
-  portraitSide: 0
-  useTypewriter: 1
-  typewriterInterval: 0.03
-  allowClickToCompleteText: 1
+  stepId: 
+  dialogueLines:
+  - speaker: {fileID: 11400000, guid: 072085e8c94647149a700adcd64b275d, type: 2}
+    overridePortraitSide: 0
+    portraitSide: 0
+    portraitStyleId: Style_1
+    allowInlinePortraitChange: 0
+    text: "\u73FE\u5728\u8F2A\u5230\u6575\u4EBA\u884C\u52D5\u4E86\u3002\u7559\u610F\u5B83\u525B\u624D\u986F\u793A\u7684\u610F\u5716\u3002"
+    useTypewriter: 0
+    typewriterInterval: 0
+    allowClickToCompleteText: 0
+  message: 
+  dialogueOnly: 1
   exampleSprite: {fileID: 0}
   hideExampleWhenEmpty: 1
   advanceMode: 2
-  requiredSignal: CardPlayed
-  signalAdvanceDelay: 0.15
+  requiredSignal: Battle_EndTurnPressed
+  signalAdvanceDelay: 0.2
   requiredSignalCount: 1
   requireConditionToAdvance: 1
   showNextButton: 0
-  showBackButton: 1
-  showSkipButton: 1
-  allowBack: 1
-  targetId: EnemyArea
+  showBackButton: 0
+  showSkipButton: 0
+  allowBack: 0
+  targetId: Battle_EndTurnButton
   highlightTarget: 1
   highlightPadding: {x: 20, y: 20}
+  highlightDuringDialogue: 1
   dialogPosition: 5
   dialogSpacing: 24
   autoAdvanceAfterSeconds: 0

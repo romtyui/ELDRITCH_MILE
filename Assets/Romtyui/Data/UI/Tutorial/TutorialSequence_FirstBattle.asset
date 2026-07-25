@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d100e132a940a9a4aa9c742608c4b52a, type: 3}
+  m_Name: TutorialSequence_FirstBattle
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialSequenceData
+  tutorialId: BattleBasicTutorial
+  displayName: "\u6230\u9B25\u57FA\u790E\u6559\u5B78"
+  steps:
+  - {fileID: 11400000, guid: 077c6daef3ffa9c40b322232354ae972, type: 2}
+  - {fileID: 11400000, guid: 04624b357338f284599afcf546e6c27f, type: 2}
+  - {fileID: 11400000, guid: 7077a8a60c71b3b408b574f54887f5c7, type: 2}
+  - {fileID: 11400000, guid: da1689b9fa5c18545ba176d64f5350a8, type: 2}
+  - {fileID: 11400000, guid: ad69f8052453982458ea07b42ca18e37, type: 2}
+  - {fileID: 11400000, guid: b5ab22d4f82969847995828ce6f5f748, type: 2}
+  - {fileID: 11400000, guid: ba64f82fe9a72bc4dbaa0133a24aaf2a, type: 2}
+  - {fileID: 11400000, guid: b57185c33af3da640816fc39d21db40e, type: 2}
+  - {fileID: 11400000, guid: 85eaf9f5e73112e46929bcc575ecc90b, type: 2}
+  - {fileID: 11400000, guid: 0d7f7d03c5615e2418ef6cfca552cb80, type: 2}
+  - {fileID: 11400000, guid: 29654226a0f283849819917119173cde, type: 2}
+  onlyShowOnce: 0
+  pauseGame: 0
+  blockOtherUI: 1
+  saveCompletion: 1
+  skipCountsAsComplete: 1
+  startingStepIndex: 0

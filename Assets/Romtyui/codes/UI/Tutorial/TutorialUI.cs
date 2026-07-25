@@ -796,18 +796,28 @@ public class TutorialUI :
         return Camera.main;
     }
 
-    public void PositionInstructionPanel(
-        RectTransform target,
-        TutorialDialogPosition position,
-        float spacing
-    )
+    public void PositionInstructionPanel(RectTransform target,TutorialDialogPosition position,float spacing)
     {
-        if (instructionPanelRect == null ||
-            overlayRect == null ||
-            target == null ||
-            position ==
+        if (instructionPanelRect == null)
+            return;
+
+        if (position ==
             TutorialDialogPosition.KeepCurrent)
         {
+            return;
+        }
+
+        if (position ==
+            TutorialDialogPosition.Center)
+        {
+            CenterInstructionPanel();
+            return;
+        }
+
+        if (overlayRect == null ||
+            target == null)
+        {
+            CenterInstructionPanel();
             return;
         }
 
@@ -881,6 +891,10 @@ public class TutorialUI :
                     spacing +
                     dialogSize.x * 0.5f;
                 break;
+
+            case TutorialDialogPosition.Center:
+                CenterInstructionPanel();
+                return;
         }
 
         instructionPanelRect.anchoredPosition =
@@ -889,16 +903,31 @@ public class TutorialUI :
                 dialogSize
             );
     }
+    public void CenterInstructionPanel()
+    {
+        if (instructionPanelRect == null)
+            return;
 
+        instructionPanelRect.anchorMin =
+            new Vector2(0.5f, 0.5f);
+
+        instructionPanelRect.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        instructionPanelRect.pivot =
+            new Vector2(0.5f, 0.5f);
+
+        instructionPanelRect.anchoredPosition =
+            Vector2.zero;
+    }
     public void ResetInstructionPosition()
     {
-        if (instructionPanelRect != null)
-        {
-            instructionPanelRect.anchoredPosition =
-                defaultDialogPosition;
-        }
-    }
+        if (instructionPanelRect == null)
+            return;
 
+        instructionPanelRect.anchoredPosition =
+            defaultDialogPosition;
+    }
     private Vector2 WorldToOverlayLocal(
         Vector3 worldPosition
     )

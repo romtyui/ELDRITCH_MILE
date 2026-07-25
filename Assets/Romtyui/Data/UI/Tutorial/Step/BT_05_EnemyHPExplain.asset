@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 915cab61ed86c724d8f03d93c90cdea6, type: 3}
+  m_Name: BT_05_EnemyHPExplain
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
+  stepId: 
+  dialogueLines:
+  - speaker: {fileID: 11400000, guid: 072085e8c94647149a700adcd64b275d, type: 2}
+    overridePortraitSide: 0
+    portraitSide: 0
+    portraitStyleId: Style_1
+    allowInlinePortraitChange: 0
+    text: "\u60F3\u6D3B\u4E0B\u4F86\uFF0C\u5C31\u5FC5\u9808\u5728\u81EA\u5DF1\u5012\u4E0B\u4EE5\u524D\u5148\u64CA\u5012\u5C0D\u65B9\u3002"
+    useTypewriter: 0
+    typewriterInterval: 0
+    allowClickToCompleteText: 0
+  message: "\u9019\u662F\u6575\u4EBA\u7684\u751F\u547D\u503C\u3002\u4F7F\u7528\u653B\u64CA\u5361\u9020\u6210\u50B7\u5BB3\uFF0C\u5C07\u6575\u4EBA\u7684\u751F\u547D\u964D\u5230\u96F6\u5373\u53EF\u64CA\u6557\u5B83\u3002"
+  dialogueOnly: 0
+  exampleSprite: {fileID: 0}
+  hideExampleWhenEmpty: 1
+  advanceMode: 0
+  requiredSignal: 
+  signalAdvanceDelay: 0.15
+  requiredSignalCount: 1
+  requireConditionToAdvance: 1
+  showNextButton: 1
+  showBackButton: 1
+  showSkipButton: 1
+  allowBack: 1
+  targetId: Battle_EnemyHP
+  highlightTarget: 1
+  highlightPadding: {x: 20, y: 20}
+  highlightDuringDialogue: 1
+  dialogPosition: 5
+  dialogSpacing: 24
+  autoAdvanceAfterSeconds: 0
+  logStep: 1

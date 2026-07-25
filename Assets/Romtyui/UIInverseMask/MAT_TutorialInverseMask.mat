@@ -42,7 +42,9 @@ Material:
     m_Ints: []
     m_Floats:
     - _ColorMask: 15
+    - _CornerRadius: 0.05
     - _Corner_Radius: 0.05
+    - _HoleEnabled: 1
     - _Hole_Enabled: 1
     - _Stencil: 0
     - _StencilComp: 8
@@ -53,8 +55,11 @@ Material:
     - _UIMaskSoftnessY: 1
     m_Colors:
     - _ClipRect: {r: 0, g: 0, b: 0, a: 0}
-    - _Hole_Center: {r: 0.5, g: 0.17, b: 0, a: 0}
-    - _Hole_Size: {r: 0.53, g: 0.37, b: 0, a: 0}
+    - _HoleCenter: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _HoleSize: {r: 0.35, g: 0.25, b: 0, a: 0}
+    - _Hole_Center: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _Hole_Size: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _OverlayColor: {r: 0, g: 0, b: 0, a: 0.7490196}
     - _Overlay_Color: {r: 0, g: 0, b: 0, a: 0.7490196}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -10,17 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 915cab61ed86c724d8f03d93c90cdea6, type: 3}
-  m_Name: TutorialStep_Battle_06_Status
+  m_Name: BT_02_DrawPileExplain
   m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
-  stepId: Battle_Status
-  stepType: 0
-  message: "\u9019\u88E1\u6703\u986F\u793A\u4F60\u76EE\u524D\u64C1\u6709\u7684\u72C0\u614B\uFF0C\u4F8B\u5982\u529B\u91CF\u3001\u865B\u5F31\u3001\u6613\u50B7\u7B49\u3002"
-  speaker: {fileID: 0}
-  overridePortraitSide: 0
-  portraitSide: 0
-  useTypewriter: 1
-  typewriterInterval: 0.03
-  allowClickToCompleteText: 1
+  stepId: 
+  dialogueLines:
+  - speaker: {fileID: 11400000, guid: 072085e8c94647149a700adcd64b275d, type: 2}
+    overridePortraitSide: 0
+    portraitSide: 0
+    portraitStyleId: Style_1
+    allowInlinePortraitChange: 0
+    text: "\u6BCF\u500B\u73A9\u5BB6\u56DE\u5408\u958B\u59CB\u6642\uFF0C\u9B54\u5C0E\u66F8\u90FD\u6703\u66FF\u4F60\u6E96\u5099\u65B0\u7684\u5361\u724C\u3002"
+    useTypewriter: 0
+    typewriterInterval: 0
+    allowClickToCompleteText: 0
+  message: "\u9019\u88E1\u662F\u62BD\u724C\u5806\u3002\u6BCF\u56DE\u5408\u958B\u59CB\u6642\uFF0C\u7CFB\u7D71\u6703\u5F9E\u724C\u5806\u62BD\u51FA\u5361\u724C\u52A0\u5165\u4F60\u7684\u624B\u724C\u3002"
+  dialogueOnly: 0
   exampleSprite: {fileID: 0}
   hideExampleWhenEmpty: 1
   advanceMode: 0
@@ -32,9 +36,10 @@ MonoBehaviour:
   showBackButton: 1
   showSkipButton: 1
   allowBack: 1
-  targetId: PlayerStatusArea
+  targetId: Battle_DrawPile
   highlightTarget: 1
   highlightPadding: {x: 20, y: 20}
+  highlightDuringDialogue: 1
   dialogPosition: 5
   dialogSpacing: 24
   autoAdvanceAfterSeconds: 0

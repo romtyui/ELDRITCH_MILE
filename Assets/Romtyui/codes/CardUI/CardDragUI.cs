@@ -254,7 +254,12 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
         if (handLayout != null)
             handLayout.ClearAllSelection();
-
+        if (played)
+        {
+            TutorialEventBus.Raise(
+                "Battle_CardPlayed"
+            );
+        }
         if (!played)
         {
             ReturnToHand();

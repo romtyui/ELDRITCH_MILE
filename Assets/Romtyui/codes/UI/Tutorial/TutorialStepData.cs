@@ -11,6 +11,7 @@ public enum TutorialAdvanceMode
 public enum TutorialDialogPosition
 {
     KeepCurrent,
+    Center,
     Top,
     Bottom,
     Left,
