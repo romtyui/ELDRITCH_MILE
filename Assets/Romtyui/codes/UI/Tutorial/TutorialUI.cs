@@ -1462,4 +1462,60 @@ public class TutorialUI :
             visible
         );
     }
+    public void HideWaitInteractionVisuals()
+    {
+        HideInstructionPanel();
+        HideDialoguePanel();
+
+        SetHoleEnabled(false);
+
+        if (highlightLocator != null)
+        {
+            highlightLocator.gameObject.SetActive(
+                false
+            );
+        }
+
+        if (overlayImage != null)
+        {
+            overlayImage.gameObject.SetActive(
+                false
+            );
+        }
+    }
+    public void PrepareWaitInteractionVisuals()
+    {
+        HideDialoguePanel();
+
+        if (overlayImage != null)
+        {
+            overlayImage.gameObject.SetActive(
+                true
+            );
+        }
+
+        ShowInstructionPanel();
+    }
+    public void ShowCorrectionDialogueVisuals()
+    {
+        HideInstructionPanel();
+
+        if (overlayImage != null)
+        {
+            overlayImage.gameObject.SetActive(
+                true
+            );
+        }
+
+        SetHoleEnabled(false);
+
+        if (highlightLocator != null)
+        {
+            highlightLocator.gameObject.SetActive(
+                false
+            );
+        }
+
+        ShowDialoguePanel();
+    }
 }

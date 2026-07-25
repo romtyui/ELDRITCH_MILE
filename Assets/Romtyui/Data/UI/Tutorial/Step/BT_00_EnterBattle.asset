@@ -32,6 +32,10 @@ MonoBehaviour:
   signalAdvanceDelay: 0.15
   requiredSignalCount: 1
   requireConditionToAdvance: 1
+  hideVisualsAfterInteractionStart: 0
+  interactionStartSignal: 
+  incorrectSignals: []
+  correctionDialogueLines: []
   showNextButton: 1
   showBackButton: 1
   showSkipButton: 0
@@ -40,7 +44,7 @@ MonoBehaviour:
   highlightTarget: 0
   highlightPadding: {x: 20, y: 20}
   highlightDuringDialogue: 1
-  dialogPosition: 5
+  dialogPosition: 0
   dialogSpacing: 24
   autoAdvanceAfterSeconds: 0
   logStep: 1

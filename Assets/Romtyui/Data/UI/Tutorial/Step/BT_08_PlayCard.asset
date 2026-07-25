@@ -32,6 +32,21 @@ MonoBehaviour:
   signalAdvanceDelay: 0.2
   requiredSignalCount: 1
   requireConditionToAdvance: 1
+  hideVisualsAfterInteractionStart: 1
+  interactionStartSignal: Battle_CardGrabStarted
+  incorrectSignals:
+  - Battle_CardPlayCancelled
+  - Battle_CardPlayInvalid
+  correctionDialogueLines:
+  - speaker: {fileID: 11400000, guid: 072085e8c94647149a700adcd64b275d, type: 2}
+    overridePortraitSide: 0
+    portraitSide: 0
+    portraitStyleId: 
+    allowInlinePortraitChange: 0
+    text: "\u90A3\u6A23\u7121\u6CD5\u5B8C\u6210\u653B\u64CA\uFF0C\u5148\u78BA\u8A8D\u5361\u724C\u7684\u4F7F\u7528\u76EE\u6A19\u3002\n\u6293\u4F4F\u653B\u64CA\u5361\uFF0C\u5C07\u5B83\u62D6\u66F3\u5230\u6575\u4EBA\u8EAB\u4E0A\u3002"
+    useTypewriter: 0
+    typewriterInterval: 0
+    allowClickToCompleteText: 0
   showNextButton: 0
   showBackButton: 0
   showSkipButton: 0
@@ -40,7 +55,7 @@ MonoBehaviour:
   highlightTarget: 1
   highlightPadding: {x: 20, y: 20}
   highlightDuringDialogue: 1
-  dialogPosition: 5
+  dialogPosition: 0
   dialogSpacing: 24
   autoAdvanceAfterSeconds: 0
   logStep: 1

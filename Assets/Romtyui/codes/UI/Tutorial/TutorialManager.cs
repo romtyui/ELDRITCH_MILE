@@ -26,6 +26,9 @@ public class TutorialManager : MonoBehaviour
 
     private Coroutine signalAdvanceCoroutine;
 
+    private bool dialoguePauseApplied;
+    private float timeScaleBeforeDialogue = 1f;
+
     public bool IsPlaying => isPlaying;
 
     public TutorialStepData CurrentStep => GetCurrentStep();
@@ -33,15 +36,21 @@ public class TutorialManager : MonoBehaviour
     {
         None,
         Dialogue,
-        Instruction
+        Instruction,
+        CorrectionDialogue
     }
     [Header("Playback Phase")]
     [SerializeField]
-    private TutorialPlaybackPhase playbackPhase =
-    TutorialPlaybackPhase.None;
+    private TutorialPlaybackPhase playbackPhase = TutorialPlaybackPhase.None;
+
 
     [SerializeField]
     private int currentDialogueIndex = -1;
+    [SerializeField]
+    private int currentCorrectionDialogueIndex = -1;
+
+    [SerializeField]
+    private bool interactionVisualsHidden;
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -178,6 +187,8 @@ public class TutorialManager : MonoBehaviour
         waitingSignalId = string.Empty;
         currentDialogueIndex = -1;
         playbackPhase = TutorialPlaybackPhase.None;
+        currentCorrectionDialogueIndex = -1;
+        interactionVisualsHidden = false;
 
         TutorialStepData step = GetCurrentStep();
 
@@ -214,11 +225,10 @@ public class TutorialManager : MonoBehaviour
             );
         }
     }
-    private void StartDialoguePhase(
-    TutorialStepData step,
-    RectTransform targetRect
-)
+    private void StartDialoguePhase(TutorialStepData step,RectTransform targetRect)
     {
+        ApplyDialogueGlobalPause();
+
         playbackPhase =
             TutorialPlaybackPhase.Dialogue;
 
@@ -251,13 +261,11 @@ public class TutorialManager : MonoBehaviour
             );
         }
     }
-    private void StartInstructionPhase(
-    TutorialStepData step,
-    RectTransform targetRect
-)
+    private void StartInstructionPhase(TutorialStepData step, RectTransform targetRect)
     {
-        playbackPhase =
-            TutorialPlaybackPhase.Instruction;
+        RestoreDialogueGlobalPause();
+
+        playbackPhase = TutorialPlaybackPhase.Instruction;
 
         currentDialogueIndex = -1;
 
@@ -273,6 +281,9 @@ public class TutorialManager : MonoBehaviour
 
         if (tutorialUI != null)
         {
+            tutorialUI.PrepareWaitInteractionVisuals();
+            interactionVisualsHidden = false;
+
             tutorialUI.HideDialoguePanel();
             tutorialUI.ShowInstructionPanel();
 
@@ -343,6 +354,12 @@ public class TutorialManager : MonoBehaviour
         if (!isPlaying)
             return;
 
+        if (playbackPhase == TutorialPlaybackPhase.CorrectionDialogue)
+        {
+            ContinueCorrectionDialogue();
+            return;
+        }
+
         if (playbackPhase !=
             TutorialPlaybackPhase.Dialogue)
         {
@@ -388,6 +405,42 @@ public class TutorialManager : MonoBehaviour
             targetRect
         );
     }
+
+    private void ContinueCorrectionDialogue()
+    {
+        TutorialStepData step =
+            GetCurrentStep();
+
+        if (step == null)
+            return;
+
+        if (tutorialUI != null &&
+            tutorialUI.TryCompleteDialogueTyping())
+        {
+            return;
+        }
+
+        currentCorrectionDialogueIndex++;
+
+        if (step.correctionDialogueLines != null &&
+            currentCorrectionDialogueIndex <
+            step.correctionDialogueLines.Count)
+        {
+            if (tutorialUI != null)
+            {
+                tutorialUI.ShowDialogueLine(
+                    step.correctionDialogueLines[
+                        currentCorrectionDialogueIndex
+                    ]
+                );
+            }
+
+            return;
+        }
+
+        RestartCurrentInstructionStep();
+    }
+
     private TutorialStepData GetCurrentStep()
     {
         if (currentSequence == null ||
@@ -512,6 +565,8 @@ public class TutorialManager : MonoBehaviour
         bool saveCompletion
     )
     {
+        RestoreDialogueGlobalPause();
+
         if (saveCompletion &&
             currentSequence != null)
         {
@@ -572,7 +627,8 @@ public class TutorialManager : MonoBehaviour
         if (!isPlaying)
             return;
 
-        TutorialStepData step = GetCurrentStep();
+        TutorialStepData step =
+            GetCurrentStep();
 
         if (step == null)
             return;
@@ -583,25 +639,65 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
+        if (playbackPhase !=
+            TutorialPlaybackPhase.Instruction)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(
+                signalId))
+        {
+            return;
+        }
+
+        string received =
+            signalId.Trim();
+
+        /*
+         * 1. 玩家開始操作
+         */
+        if (step.UsesInteractionStartSignal() &&
+            string.Equals(
+                step.interactionStartSignal.Trim(),
+                received,
+                System.StringComparison
+                    .OrdinalIgnoreCase))
+        {
+            HandleInteractionStarted(step);
+            return;
+        }
+
+        /*
+         * 2. 玩家操作失敗
+         */
+        if (step.IsIncorrectSignal(received))
+        {
+            HandleIncorrectInteraction(
+                step,
+                received
+            );
+
+            return;
+        }
+
+        /*
+         * 3. 玩家操作成功
+         */
         if (string.IsNullOrWhiteSpace(
                 step.requiredSignal))
         {
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(signalId))
-            return;
-
         string required =
             step.requiredSignal.Trim();
-
-        string received =
-            signalId.Trim();
 
         if (!string.Equals(
                 required,
                 received,
-                System.StringComparison.OrdinalIgnoreCase))
+                System.StringComparison
+                    .OrdinalIgnoreCase))
         {
             return;
         }
@@ -612,9 +708,10 @@ public class TutorialManager : MonoBehaviour
             step.GetRequiredSignalCount();
 
         Debug.Log(
-            $"[TutorialManager] 收到事件：" +
+            $"[TutorialManager] 收到正確事件：" +
             $"{received}，進度 " +
-            $"{currentSignalCount}/{requiredCount}"
+            $"{currentSignalCount}/" +
+            $"{requiredCount}"
         );
 
         if (currentSignalCount < requiredCount)
@@ -637,14 +734,119 @@ public class TutorialManager : MonoBehaviour
             );
         }
 
-        signalAdvanceCoroutine = StartCoroutine(
-            SignalAdvanceRoutine(
-                step.signalAdvanceDelay,
-                currentStepIndex
-            )
-        );
+        signalAdvanceCoroutine =
+            StartCoroutine(
+                SignalAdvanceRoutine(
+                    step.signalAdvanceDelay,
+                    currentStepIndex
+                )
+            );
     }
 
+    private void HandleInteractionStarted(
+    TutorialStepData step
+)
+    {
+        if (step == null)
+            return;
+
+        if (!step.hideVisualsAfterInteractionStart)
+            return;
+
+        if (interactionVisualsHidden)
+            return;
+
+        interactionVisualsHidden = true;
+
+        if (tutorialUI != null)
+        {
+            tutorialUI.HideWaitInteractionVisuals();
+        }
+
+        Debug.Log(
+            $"[TutorialManager] 玩家開始操作，" +
+            $"暫時隱藏教學 UI：" +
+            $"{step.interactionStartSignal}"
+        );
+    }
+    private void HandleIncorrectInteraction(
+    TutorialStepData step,
+    string receivedSignal
+)
+    {
+        if (step == null)
+            return;
+
+        Debug.Log(
+            $"[TutorialManager] 收到錯誤操作：" +
+            $"{receivedSignal}"
+        );
+
+        StopStepCoroutines();
+
+        currentSignalCount = 0;
+        interactionVisualsHidden = false;
+
+        if (!step.HasCorrectionDialogue())
+        {
+            RestartCurrentInstructionStep();
+            return;
+        }
+
+        ApplyDialogueGlobalPause();
+
+        playbackPhase =
+            TutorialPlaybackPhase.CorrectionDialogue;
+
+        currentCorrectionDialogueIndex = 0;
+
+        if (tutorialUI != null)
+        {
+            tutorialUI.ShowCorrectionDialogueVisuals();
+
+            tutorialUI.ShowDialogueLine(
+                step.correctionDialogueLines[
+                    currentCorrectionDialogueIndex
+                ]
+            );
+        }
+    }
+    private void RestartCurrentInstructionStep()
+    {
+        
+
+        TutorialStepData step =
+            GetCurrentStep();
+
+        if (step == null)
+            return;
+
+        RestoreDialogueGlobalPause();
+
+        currentSignalCount = 0;
+        currentDialogueIndex = -1;
+        currentCorrectionDialogueIndex = -1;
+
+        interactionVisualsHidden = false;
+
+        TutorialTarget target =
+            TutorialTarget.Find(step.targetId);
+
+        RectTransform targetRect =
+            target != null
+                ? target.RectTransform
+                : null;
+
+        StartInstructionPhase(
+            step,
+            targetRect
+        );
+
+        Debug.Log(
+            $"[TutorialManager] 回到目前操作步驟：" +
+            $"{step.stepId}"
+        );
+    }
     private IEnumerator SignalAdvanceRoutine(
         float delay,
         int expectedStepIndex
@@ -733,5 +935,35 @@ public class TutorialManager : MonoBehaviour
             StopCoroutine(signalAdvanceCoroutine);
             signalAdvanceCoroutine = null;
         }
+    }
+    private void ApplyDialogueGlobalPause()
+    {
+        if (dialoguePauseApplied)
+            return;
+
+        dialoguePauseApplied = true;
+
+        timeScaleBeforeDialogue =
+            Time.timeScale;
+
+        Time.timeScale = 0f;
+
+        Debug.Log(
+            "[TutorialManager] 對話框顯示，全局暫停"
+        );
+    }
+    private void RestoreDialogueGlobalPause()
+    {
+        if (!dialoguePauseApplied)
+            return;
+
+        dialoguePauseApplied = false;
+
+        Time.timeScale =
+            timeScaleBeforeDialogue;
+
+        Debug.Log(
+            "[TutorialManager] 對話框結束，恢復時間"
+        );
     }
 }

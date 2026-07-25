@@ -24,7 +24,7 @@ MonoBehaviour:
     typewriterInterval: 0
     allowClickToCompleteText: 0
   message: "\u9019\u88E1\u662F\u62BD\u724C\u5806\u3002\u6BCF\u56DE\u5408\u958B\u59CB\u6642\uFF0C\u7CFB\u7D71\u6703\u5F9E\u724C\u5806\u62BD\u51FA\u5361\u724C\u52A0\u5165\u4F60\u7684\u624B\u724C\u3002"
-  dialogueOnly: 0
+  dialogueOnly: 1
   exampleSprite: {fileID: 0}
   hideExampleWhenEmpty: 1
   advanceMode: 0
@@ -32,6 +32,10 @@ MonoBehaviour:
   signalAdvanceDelay: 0.15
   requiredSignalCount: 1
   requireConditionToAdvance: 1
+  hideVisualsAfterInteractionStart: 0
+  interactionStartSignal: 
+  incorrectSignals: []
+  correctionDialogueLines: []
   showNextButton: 1
   showBackButton: 1
   showSkipButton: 1
@@ -40,7 +44,7 @@ MonoBehaviour:
   highlightTarget: 1
   highlightPadding: {x: 20, y: 20}
   highlightDuringDialogue: 1
-  dialogPosition: 5
+  dialogPosition: 0
   dialogSpacing: 24
   autoAdvanceAfterSeconds: 0
   logStep: 1

@@ -63,6 +63,32 @@ public class TutorialStepData : ScriptableObject
     [Tooltip("WaitForSignal 步驟是否禁止使用下一步按鈕跳過")]
     public bool requireConditionToAdvance = true;
 
+    [Header("Wait For Signal Interaction")]
+
+    [Tooltip(
+    "只對 WaitForSignal 有效。" +
+    "收到開始操作 Signal 後，暫時隱藏黑幕、高光與說明框。"
+)]
+    public bool hideVisualsAfterInteractionStart;
+
+    [Tooltip(
+        "玩家開始操作時發送的 Signal。" +
+        "例如抓起卡牌：Battle_CardGrabStarted"
+    )]
+    public string interactionStartSignal;
+
+    [Tooltip(
+        "代表玩家操作不正確的 Signal。" +
+        "可設定多種失敗情況。"
+    )]
+    public List<string> incorrectSignals = new();
+
+    [Tooltip(
+        "收到 Incorrect Signal 後播放的糾正對話。" +
+        "播放完會回到目前這個步驟。"
+    )]
+    public List<TutorialDialogueLine>
+        correctionDialogueLines = new();
     [Header("Buttons")]
     public bool showNextButton = true;
 
@@ -115,5 +141,63 @@ public class TutorialStepData : ScriptableObject
     public int GetRequiredSignalCount()
     {
         return Mathf.Max(1, requiredSignalCount);
+    }
+    public bool UsesInteractionStartSignal()
+    {
+        return
+            UsesSignal() &&
+            hideVisualsAfterInteractionStart &&
+            !string.IsNullOrWhiteSpace(
+                interactionStartSignal
+            );
+    }
+
+    public bool HasCorrectionDialogue()
+    {
+        return
+            correctionDialogueLines != null &&
+            correctionDialogueLines.Count > 0;
+    }
+
+    public bool IsIncorrectSignal(
+        string receivedSignal
+    )
+    {
+        if (string.IsNullOrWhiteSpace(
+                receivedSignal))
+        {
+            return false;
+        }
+
+        if (incorrectSignals == null)
+            return false;
+
+        string received =
+            receivedSignal.Trim();
+
+        for (int i = 0;
+             i < incorrectSignals.Count;
+             i++)
+        {
+            string incorrectSignal =
+                incorrectSignals[i];
+
+            if (string.IsNullOrWhiteSpace(
+                    incorrectSignal))
+            {
+                continue;
+            }
+
+            if (string.Equals(
+                    incorrectSignal.Trim(),
+                    received,
+                    System.StringComparison
+                        .OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

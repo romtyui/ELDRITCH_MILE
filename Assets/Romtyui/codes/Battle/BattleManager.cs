@@ -346,6 +346,7 @@ public class BattleManager : MonoBehaviour
     }
     public void EndPlayerTurn()
     {
+        TutorialEventBus.Raise("Battle_EndTurnPressed");
         if (currentPhase != BattlePhase.PlayerTurn)
             return;
 
@@ -760,6 +761,7 @@ public class BattleManager : MonoBehaviour
         RequestCheckBattleEnd();
 
         TutorialEventBus.Raise(BattleTutorialSignals.CardPlayed);
+        TutorialEventBus.Raise("Battle_CardPlayed");
 
         isResolvingCard = false;
 
