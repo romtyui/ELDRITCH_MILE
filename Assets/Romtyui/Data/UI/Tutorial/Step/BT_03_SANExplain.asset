@@ -23,6 +23,7 @@ MonoBehaviour:
     useTypewriter: 0
     typewriterInterval: 0
     allowClickToCompleteText: 0
+  pauseGameDuringDialogue: 1
   message: "\u9019\u662F\u4F60\u7684 SAN\u3002\u4F7F\u7528\u4EBA\u724C\u6703\u6D88\u8017
     SAN\uFF1B\u7576 SAN \u6B78\u96F6\u5F8C\uFF0C\u4F60\u5C07\u7121\u6CD5\u518D\u6062\u5FA9
     SAN\uFF0C\u5F8C\u7E8C\u6D88\u8017\u6703\u7531\u751F\u547D\u627F\u64D4\u3002"
@@ -46,7 +47,13 @@ MonoBehaviour:
   highlightTarget: 1
   highlightPadding: {x: 20, y: 20}
   highlightDuringDialogue: 1
-  dialogPosition: 0
+  dialogPosition: 6
   dialogSpacing: 24
+  positionDialoguePanel: 1
+  dialogueTargetId: Battle_SAN
+  dialoguePosition: 6
+  dialogueSpacing: 10
+  dialogueScreenPadding: {x: 24, y: 24}
+  followDialogueTarget: 1
   autoAdvanceAfterSeconds: 0
   logStep: 1

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
+using Random = UnityEngine.Random;
 
 public class BattleManager : MonoBehaviour
 {
@@ -68,6 +70,12 @@ public class BattleManager : MonoBehaviour
     public GodCardCorruptionAnimationController godCardCorruptionAnimationController;
 
     private bool isResolvingCard;
+
+    /*
+     * 玩家回合的抽牌、回合提示等流程全部完成，
+     * 正式可以開始操作時發送。
+     */
+    public event Action PlayerInputReady;
     private void Start()
     {
         StartBattle();
@@ -343,6 +351,16 @@ public class BattleManager : MonoBehaviour
 
         if (turnPhaseBannerUI != null)
             yield return turnPhaseBannerUI.Hide();
+
+        /*
+         * 抽牌動畫完成、玩家回合提示關閉後，
+         * 此刻才視為玩家正式可以操作。
+         */
+        PlayerInputReady?.Invoke();
+
+        Debug.Log(
+            $"[BattleManager] 玩家已可操作，第 {battleTurnNumber} 回合"
+        );
     }
     public void EndPlayerTurn()
     {

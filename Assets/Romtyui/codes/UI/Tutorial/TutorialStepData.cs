@@ -33,6 +33,14 @@ public class TutorialStepData : ScriptableObject
     [Tooltip("這些對話播放完畢後，才會顯示功能說明框")]
     public List<TutorialDialogueLine> dialogueLines = new();
 
+    [Header("Dialogue Pause")]
+
+    [Tooltip(
+    "開啟後，這個步驟播放對話時會將 Time.timeScale 設為 0。" +
+    "對話結束並進入 Instruction 或下一步時，會恢復原本的時間速度。"
+)]
+    public bool pauseGameDuringDialogue;
+
     [Header("Instruction")]
     [TextArea(3, 8)]
     public string message;
@@ -115,6 +123,42 @@ public class TutorialStepData : ScriptableObject
         TutorialDialogPosition.Auto;
 
     public float dialogSpacing = 24f;
+
+    [Header("Dialogue Position")]
+
+    [Tooltip(
+    "是否讓 DialoguePanel 依照指定目標定位。" +
+    "關閉時維持 Prefab 原本的位置。"
+)]
+    public bool positionDialoguePanel;
+
+    [Tooltip(
+        "對話框定位使用的 TutorialTarget ID。" +
+        "留空時自動使用 Highlight 的 targetId。"
+    )]
+    public string dialogueTargetId;
+
+    [Tooltip(
+        "對話框出現在目標的哪個方向。" +
+        "Auto 會自動選擇較不容易超出畫面的位置。"
+    )]
+    public TutorialDialogPosition dialoguePosition =
+        TutorialDialogPosition.Auto;
+
+    [Tooltip("對話框與目標之間的距離")]
+    public float dialogueSpacing = 24f;
+
+    [Tooltip(
+        "對話框距離畫面邊緣至少保留多少空間"
+    )]
+    public Vector2 dialogueScreenPadding =
+        new Vector2(24f, 24f);
+
+    [Tooltip(
+        "目標移動時，是否讓對話框持續跟隨。" +
+        "適合動畫物件、移動中的敵人或動態 UI。"
+    )]
+    public bool followDialogueTarget;
 
     [Header("Auto Advance")]
     [Tooltip("大於 0 時，在指定秒數後自動前進")]

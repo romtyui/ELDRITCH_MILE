@@ -44,6 +44,14 @@ public class TutorialUI :
     [SerializeField]
     private GameObject dialoguePanel;
 
+    [Header("Dialogue Position")]
+
+    [SerializeField]
+    private RectTransform dialoguePanelRect;
+
+    [SerializeField]
+    private RectTransform dialoguePositionBounds;
+
     [SerializeField]
     private TMP_Text dialogueSpeakerNameText;
 
@@ -1483,6 +1491,24 @@ public class TutorialUI :
             );
         }
     }
+    public void PrepareDialogueVisuals()
+    {
+        /*
+         * 上一個 WaitForSignal 步驟可能因為玩家開始操作，
+         * 呼叫 HideWaitInteractionVisuals() 關閉了黑底。
+         *
+         * 新步驟進入一般對話時，要把黑底重新開啟。
+         */
+        if (overlayImage != null)
+        {
+            overlayImage.gameObject.SetActive(
+                true
+            );
+        }
+
+        HideInstructionPanel();
+        ShowDialoguePanel();
+    }
     public void PrepareWaitInteractionVisuals()
     {
         HideDialoguePanel();
@@ -1517,5 +1543,396 @@ public class TutorialUI :
         }
 
         ShowDialoguePanel();
+    }
+    public void PositionDialoguePanel(
+    RectTransform target,
+    TutorialDialogPosition position,
+    float spacing,
+    Vector2 screenPadding
+)
+    {
+        if (dialoguePanelRect == null)
+            return;
+
+        if (position ==
+            TutorialDialogPosition.KeepCurrent)
+        {
+            return;
+        }
+
+        RectTransform bounds =
+            dialoguePositionBounds != null
+                ? dialoguePositionBounds
+                : overlayRect;
+
+        if (bounds == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+
+        if (position ==
+            TutorialDialogPosition.Center)
+        {
+            SetDialoguePanelCenter(bounds);
+            return;
+        }
+
+        if (target == null)
+        {
+            SetDialoguePanelCenter(bounds);
+            return;
+        }
+
+        Vector3[] targetWorldCorners =
+            new Vector3[4];
+
+        target.GetWorldCorners(
+            targetWorldCorners
+        );
+
+        Vector2 targetBottomLeft =
+            WorldToRectLocal(
+                bounds,
+                targetWorldCorners[0]
+            );
+
+        Vector2 targetTopRight =
+            WorldToRectLocal(
+                bounds,
+                targetWorldCorners[2]
+            );
+
+        Vector2 targetCenter =
+            (targetBottomLeft +
+             targetTopRight) * 0.5f;
+
+        Vector2 panelSize =
+            dialoguePanelRect.rect.size;
+
+        TutorialDialogPosition finalPosition =
+            position;
+
+        if (position ==
+            TutorialDialogPosition.Auto)
+        {
+            finalPosition =
+                GetBestDialoguePosition(
+                    bounds,
+                    targetBottomLeft,
+                    targetTopRight,
+                    panelSize,
+                    spacing,
+                    screenPadding
+                );
+        }
+
+        Vector2 destination =
+            targetCenter;
+
+        switch (finalPosition)
+        {
+            case TutorialDialogPosition.Top:
+                destination.y =
+                    targetTopRight.y +
+                    spacing +
+                    panelSize.y * 0.5f;
+                break;
+
+            case TutorialDialogPosition.Bottom:
+                destination.y =
+                    targetBottomLeft.y -
+                    spacing -
+                    panelSize.y * 0.5f;
+                break;
+
+            case TutorialDialogPosition.Left:
+                destination.x =
+                    targetBottomLeft.x -
+                    spacing -
+                    panelSize.x * 0.5f;
+                break;
+
+            case TutorialDialogPosition.Right:
+                destination.x =
+                    targetTopRight.x +
+                    spacing +
+                    panelSize.x * 0.5f;
+                break;
+
+            case TutorialDialogPosition.Center:
+                SetDialoguePanelCenter(bounds);
+                return;
+        }
+
+        destination =
+            ClampDialoguePosition(
+                bounds,
+                destination,
+                panelSize,
+                screenPadding
+            );
+
+        SetDialoguePanelPosition(
+            bounds,
+            destination
+        );
+    }
+    private Vector2 WorldToRectLocal(
+    RectTransform rect,
+    Vector3 worldPosition
+)
+    {
+        if (rect == null)
+            return Vector2.zero;
+
+        Canvas canvas =
+            rect.GetComponentInParent<Canvas>();
+
+        Camera eventCamera = null;
+
+        if (canvas != null &&
+            canvas.renderMode !=
+            RenderMode.ScreenSpaceOverlay)
+        {
+            eventCamera =
+                canvas.worldCamera != null
+                    ? canvas.worldCamera
+                    : Camera.main;
+        }
+
+        Vector2 screenPoint =
+            RectTransformUtility
+                .WorldToScreenPoint(
+                    eventCamera,
+                    worldPosition
+                );
+
+        RectTransformUtility
+            .ScreenPointToLocalPointInRectangle(
+                rect,
+                screenPoint,
+                eventCamera,
+                out Vector2 localPoint
+            );
+
+        return localPoint;
+    }
+    private TutorialDialogPosition
+    GetBestDialoguePosition(
+        RectTransform bounds,
+        Vector2 targetBottomLeft,
+        Vector2 targetTopRight,
+        Vector2 panelSize,
+        float spacing,
+        Vector2 screenPadding
+    )
+    {
+        Rect rect = bounds.rect;
+
+        float spaceTop =
+            rect.yMax -
+            screenPadding.y -
+            targetTopRight.y;
+
+        float spaceBottom =
+            targetBottomLeft.y -
+            rect.yMin -
+            screenPadding.y;
+
+        float spaceLeft =
+            targetBottomLeft.x -
+            rect.xMin -
+            screenPadding.x;
+
+        float spaceRight =
+            rect.xMax -
+            screenPadding.x -
+            targetTopRight.x;
+
+        float requiredTopBottom =
+            panelSize.y + spacing;
+
+        float requiredLeftRight =
+            panelSize.x + spacing;
+
+        bool canTop =
+            spaceTop >= requiredTopBottom;
+
+        bool canBottom =
+            spaceBottom >= requiredTopBottom;
+
+        bool canLeft =
+            spaceLeft >= requiredLeftRight;
+
+        bool canRight =
+            spaceRight >= requiredLeftRight;
+
+        /*
+         * 優先選擇完整放得下的位置。
+         */
+        if (canBottom)
+            return TutorialDialogPosition.Bottom;
+
+        if (canTop)
+            return TutorialDialogPosition.Top;
+
+        if (canRight)
+            return TutorialDialogPosition.Right;
+
+        if (canLeft)
+            return TutorialDialogPosition.Left;
+
+        /*
+         * 四個方向都放不下時，
+         * 選擇剩餘空間最大的方向，
+         * 最後還會再 Clamp 回螢幕內。
+         */
+        float largestSpace = spaceBottom;
+
+        TutorialDialogPosition best =
+            TutorialDialogPosition.Bottom;
+
+        if (spaceTop > largestSpace)
+        {
+            largestSpace = spaceTop;
+            best = TutorialDialogPosition.Top;
+        }
+
+        if (spaceRight > largestSpace)
+        {
+            largestSpace = spaceRight;
+            best = TutorialDialogPosition.Right;
+        }
+
+        if (spaceLeft > largestSpace)
+        {
+            best = TutorialDialogPosition.Left;
+        }
+
+        return best;
+    }
+    private Vector2 ClampDialoguePosition(
+    RectTransform bounds,
+    Vector2 position,
+    Vector2 panelSize,
+    Vector2 screenPadding
+)
+    {
+        if (bounds == null)
+            return position;
+
+        Rect rect =
+            bounds.rect;
+
+        float halfWidth =
+            panelSize.x * 0.5f;
+
+        float halfHeight =
+            panelSize.y * 0.5f;
+
+        float minX =
+            rect.xMin +
+            halfWidth +
+            screenPadding.x;
+
+        float maxX =
+            rect.xMax -
+            halfWidth -
+            screenPadding.x;
+
+        float minY =
+            rect.yMin +
+            halfHeight +
+            screenPadding.y;
+
+        float maxY =
+            rect.yMax -
+            halfHeight -
+            screenPadding.y;
+
+        /*
+         * 對話框比整個畫面還大時，
+         * 避免 Mathf.Clamp 的 min 大於 max。
+         */
+        if (minX > maxX)
+        {
+            position.x =
+                rect.center.x;
+        }
+        else
+        {
+            position.x =
+                Mathf.Clamp(
+                    position.x,
+                    minX,
+                    maxX
+                );
+        }
+
+        if (minY > maxY)
+        {
+            position.y =
+                rect.center.y;
+        }
+        else
+        {
+            position.y =
+                Mathf.Clamp(
+                    position.y,
+                    minY,
+                    maxY
+                );
+        }
+
+        return position;
+    }
+    private void SetDialoguePanelPosition(
+    RectTransform bounds,
+    Vector2 boundsLocalPosition
+)
+    {
+        if (dialoguePanelRect == null ||
+            bounds == null)
+        {
+            return;
+        }
+
+        Vector3 worldPosition =
+            bounds.TransformPoint(
+                boundsLocalPosition
+            );
+
+        RectTransform panelParent =
+            dialoguePanelRect.parent
+                as RectTransform;
+
+        if (panelParent == null)
+            return;
+
+        Vector3 parentLocalPosition =
+            panelParent.InverseTransformPoint(
+                worldPosition
+            );
+
+        dialoguePanelRect.anchoredPosition =
+            new Vector2(
+                parentLocalPosition.x,
+                parentLocalPosition.y
+            );
+    }
+    private void SetDialoguePanelCenter(
+    RectTransform bounds
+)
+    {
+        if (dialoguePanelRect == null ||
+            bounds == null)
+        {
+            return;
+        }
+
+        SetDialoguePanelPosition(
+            bounds,
+            bounds.rect.center
+        );
     }
 }

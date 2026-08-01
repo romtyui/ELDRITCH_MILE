@@ -32,6 +32,8 @@ public class TutorialManager : MonoBehaviour
     public bool IsPlaying => isPlaying;
 
     public TutorialStepData CurrentStep => GetCurrentStep();
+
+    private RectTransform currentDialogueTargetRect;
     public enum TutorialPlaybackPhase
     {
         None,
@@ -48,6 +50,7 @@ public class TutorialManager : MonoBehaviour
     private int currentDialogueIndex = -1;
     [SerializeField]
     private int currentCorrectionDialogueIndex = -1;
+
 
     [SerializeField]
     private bool interactionVisualsHidden;
@@ -70,7 +73,55 @@ public class TutorialManager : MonoBehaviour
 
         BindUIEvents();
     }
+    private void LateUpdate()
+    {
+        if (!isPlaying)
+            return;
 
+        bool isDialoguePhase =
+            playbackPhase ==
+                TutorialPlaybackPhase.Dialogue ||
+            playbackPhase ==
+                TutorialPlaybackPhase
+                    .CorrectionDialogue;
+
+        if (!isDialoguePhase)
+            return;
+
+        TutorialStepData step =
+            GetCurrentStep();
+
+        if (step == null)
+            return;
+
+        if (!step.positionDialoguePanel)
+            return;
+
+        if (!step.followDialogueTarget)
+            return;
+
+        if (tutorialUI == null)
+            return;
+
+        if (currentDialogueTargetRect == null)
+        {
+            currentDialogueTargetRect =
+                GetDialogueTargetRect(
+                    step,
+                    null
+                );
+        }
+
+        if (currentDialogueTargetRect == null)
+            return;
+
+        tutorialUI.PositionDialoguePanel(
+            currentDialogueTargetRect,
+            step.dialoguePosition,
+            step.dialogueSpacing,
+            step.dialogueScreenPadding
+        );
+    }
     private void OnEnable()
     {
         TutorialEventBus.OnSignalRaised += HandleSignal;
@@ -79,6 +130,11 @@ public class TutorialManager : MonoBehaviour
     private void OnDisable()
     {
         TutorialEventBus.OnSignalRaised -= HandleSignal;
+        /*
+     * 防止物件在對話期間被停用後，
+     * Time.timeScale 永遠停在 0。
+     */
+        RestoreDialogueGlobalPause();
     }
 
     private void OnDestroy()
@@ -87,6 +143,15 @@ public class TutorialManager : MonoBehaviour
             Instance = null;
 
         UnbindUIEvents();
+
+        /*
+         * 先恢復單一步驟對話暫停。
+         */
+        RestoreDialogueGlobalPause();
+
+        /*
+         * 再恢復 Sequence 層級的 pauseGame。
+         */
         RestoreTimeScale();
     }
 
@@ -185,12 +250,15 @@ public class TutorialManager : MonoBehaviour
 
         currentSignalCount = 0;
         waitingSignalId = string.Empty;
-        currentDialogueIndex = -1;
-        playbackPhase = TutorialPlaybackPhase.None;
-        currentCorrectionDialogueIndex = -1;
-        interactionVisualsHidden = false;
 
-        TutorialStepData step = GetCurrentStep();
+        currentDialogueIndex = -1;
+        currentDialogueTargetRect = null;
+
+        playbackPhase =
+            TutorialPlaybackPhase.None;
+
+        TutorialStepData step =
+            GetCurrentStep();
 
         if (step == null)
         {
@@ -199,7 +267,9 @@ public class TutorialManager : MonoBehaviour
         }
 
         TutorialTarget target =
-            TutorialTarget.Find(step.targetId);
+            TutorialTarget.Find(
+                step.targetId
+            );
 
         RectTransform targetRect =
             target != null
@@ -208,11 +278,17 @@ public class TutorialManager : MonoBehaviour
 
         if (step.HasDialogue())
         {
-            StartDialoguePhase(step, targetRect);
+            StartDialoguePhase(
+                step,
+                targetRect
+            );
         }
         else
         {
-            StartInstructionPhase(step, targetRect);
+            StartInstructionPhase(
+                step,
+                targetRect
+            );
         }
 
         if (step.logStep)
@@ -227,18 +303,68 @@ public class TutorialManager : MonoBehaviour
     }
     private void StartDialoguePhase(TutorialStepData step,RectTransform targetRect)
     {
-        ApplyDialogueGlobalPause();
+        if (step == null)
+            return;
 
-        playbackPhase =
-            TutorialPlaybackPhase.Dialogue;
+        if (step.pauseGameDuringDialogue)
+        {
+            ApplyDialogueGlobalPause();
+        }
+        else
+        {
+            RestoreDialogueGlobalPause();
+        }
+
+        playbackPhase = TutorialPlaybackPhase.Dialogue;
 
         currentDialogueIndex = 0;
 
+        /*
+         * 記住這一步 DialoguePanel 要跟隨的目標。
+         *
+         * step.dialogueTargetId 有填：
+         * 使用 dialogueTargetId。
+         *
+         * dialogueTargetId 沒填：
+         * 使用 step.targetId。
+         */
+        currentDialogueTargetRect =
+            GetDialogueTargetRect(
+                step,
+                targetRect
+            );
+
         if (tutorialUI != null)
         {
-            tutorialUI.HideInstructionPanel();
-            tutorialUI.ShowDialoguePanel();
+            tutorialUI.PrepareDialogueVisuals();
 
+            /*
+             * 先顯示第一句對話，
+             * 讓 TMP 與 Layout 更新對話框尺寸。
+             */
+            tutorialUI.ShowDialogueLine(
+                step.dialogueLines[
+                    currentDialogueIndex
+                ]
+            );
+
+            /*
+             * 開啟對話框定位時，
+             * 先在進入 Step 的當下定位一次。
+             */
+            if (step.positionDialoguePanel)
+            {
+                tutorialUI.PositionDialoguePanel(
+                    currentDialogueTargetRect,
+                    step.dialoguePosition,
+                    step.dialogueSpacing,
+                    step.dialogueScreenPadding
+                );
+            }
+
+            /*
+             * 以下保留你原本的對話期間高光功能。
+             */
             if (step.highlightDuringDialogue &&
                 step.highlightTarget &&
                 targetRect != null)
@@ -255,11 +381,85 @@ public class TutorialManager : MonoBehaviour
                     Vector2.zero
                 );
             }
-
-            tutorialUI.ShowDialogueLine(
-                step.dialogueLines[currentDialogueIndex]
-            );
         }
+    }
+    private RectTransform GetDialogueTargetRect(
+    TutorialStepData step,
+    RectTransform fallbackTargetRect
+)
+    {
+        if (step == null)
+            return null;
+
+        string finalTargetId =
+            step.dialogueTargetId;
+
+        /*
+         * Dialogue Target Id 沒有填寫時，
+         * 改用原本高光區的 Target Id。
+         */
+        if (string.IsNullOrWhiteSpace(
+                finalTargetId))
+        {
+            finalTargetId =
+                step.targetId;
+        }
+
+        /*
+         * 兩個 Target Id 都沒有設定，
+         * 這個對話就沒有定位目標。
+         */
+        if (string.IsNullOrWhiteSpace(
+                finalTargetId))
+        {
+            return null;
+        }
+
+        finalTargetId =
+            finalTargetId.Trim();
+
+        string highlightTargetId =
+            string.IsNullOrWhiteSpace(
+                step.targetId)
+                ? string.Empty
+                : step.targetId.Trim();
+
+        /*
+         * 對話框和高光區使用相同目標時，
+         * 直接使用 ShowCurrentStep 已找到的 targetRect。
+         */
+        if (string.Equals(
+                finalTargetId,
+                highlightTargetId,
+                System.StringComparison
+                    .OrdinalIgnoreCase))
+        {
+            return fallbackTargetRect;
+        }
+
+        /*
+         * Dialogue Target Id 與高光 Target Id 不同，
+         * 重新搜尋對話專用的 TutorialTarget。
+         */
+        TutorialTarget dialogueTarget =
+            TutorialTarget.Find(
+                finalTargetId
+            );
+
+        if (dialogueTarget == null)
+        {
+            Debug.LogWarning(
+                $"[TutorialManager] " +
+                $"Step「{step.stepId}」" +
+                $"找不到 Dialogue Target：" +
+                $"{finalTargetId}",
+                step
+            );
+
+            return null;
+        }
+
+        return dialogueTarget.RectTransform;
     }
     private void StartInstructionPhase(TutorialStepData step, RectTransform targetRect)
     {
@@ -380,17 +580,31 @@ public class TutorialManager : MonoBehaviour
 
         currentDialogueIndex++;
 
-        if (currentDialogueIndex <
-            step.dialogueLines.Count)
-        {
-            tutorialUI.ShowDialogueLine(
-                step.dialogueLines[
-                    currentDialogueIndex
-                ]
-            );
+if (currentDialogueIndex <
+    step.dialogueLines.Count)
+{
+    tutorialUI.ShowDialogueLine(
+        step.dialogueLines[
+            currentDialogueIndex
+        ]
+    );
 
-            return;
-        }
+    /*
+     * 新一句文字可能改變 DialoguePanel 尺寸，
+     * 因此重新定位並重新 Clamp。
+     */
+    if (step.positionDialoguePanel)
+    {
+        tutorialUI.PositionDialoguePanel(
+            currentDialogueTargetRect,
+            step.dialoguePosition,
+            step.dialogueSpacing,
+            step.dialogueScreenPadding
+        );
+    }
+
+    return;
+}
 
         TutorialTarget target =
             TutorialTarget.Find(step.targetId);
@@ -440,6 +654,8 @@ public class TutorialManager : MonoBehaviour
 
         RestartCurrentInstructionStep();
     }
+
+
 
     private TutorialStepData GetCurrentStep()
     {
@@ -793,7 +1009,14 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
-        ApplyDialogueGlobalPause();
+        if (step.pauseGameDuringDialogue)
+        {
+            ApplyDialogueGlobalPause();
+        }
+        else
+        {
+            RestoreDialogueGlobalPause();
+        }
 
         playbackPhase =
             TutorialPlaybackPhase.CorrectionDialogue;

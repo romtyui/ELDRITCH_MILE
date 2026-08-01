@@ -23,6 +23,7 @@ MonoBehaviour:
     useTypewriter: 1
     typewriterInterval: 0.05
     allowClickToCompleteText: 0
+  pauseGameDuringDialogue: 1
   message: 
   dialogueOnly: 1
   exampleSprite: {fileID: 0}
@@ -44,7 +45,13 @@ MonoBehaviour:
   highlightTarget: 0
   highlightPadding: {x: 20, y: 20}
   highlightDuringDialogue: 1
-  dialogPosition: 0
+  dialogPosition: 1
   dialogSpacing: 24
+  positionDialoguePanel: 1
+  dialogueTargetId: 
+  dialoguePosition: 1
+  dialogueSpacing: 10
+  dialogueScreenPadding: {x: 24, y: 24}
+  followDialogueTarget: 1
   autoAdvanceAfterSeconds: 0
   logStep: 1

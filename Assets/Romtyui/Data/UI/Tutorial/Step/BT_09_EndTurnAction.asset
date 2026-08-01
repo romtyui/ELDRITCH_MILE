@@ -23,6 +23,7 @@ MonoBehaviour:
     useTypewriter: 0
     typewriterInterval: 0
     allowClickToCompleteText: 0
+  pauseGameDuringDialogue: 1
   message: "\u9EDE\u64CA\u300C\u7D50\u675F\u56DE\u5408\u300D\uFF0C\u8B93\u6575\u4EBA\u958B\u59CB\u884C\u52D5\u3002"
   dialogueOnly: 0
   exampleSprite: {fileID: 0}
@@ -32,7 +33,7 @@ MonoBehaviour:
   signalAdvanceDelay: 0.2
   requiredSignalCount: 1
   requireConditionToAdvance: 1
-  hideVisualsAfterInteractionStart: 0
+  hideVisualsAfterInteractionStart: 1
   interactionStartSignal: 
   incorrectSignals: []
   correctionDialogueLines: []
@@ -44,7 +45,13 @@ MonoBehaviour:
   highlightTarget: 1
   highlightPadding: {x: 20, y: 20}
   highlightDuringDialogue: 1
-  dialogPosition: 0
+  dialogPosition: 6
   dialogSpacing: 24
+  positionDialoguePanel: 1
+  dialogueTargetId: Battle_EndTurnButton
+  dialoguePosition: 6
+  dialogueSpacing: 10
+  dialogueScreenPadding: {x: 24, y: 24}
+  followDialogueTarget: 1
   autoAdvanceAfterSeconds: 0
   logStep: 1

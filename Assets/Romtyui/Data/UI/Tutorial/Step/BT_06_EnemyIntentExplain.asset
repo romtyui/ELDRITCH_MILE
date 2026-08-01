@@ -23,6 +23,7 @@ MonoBehaviour:
     useTypewriter: 0
     typewriterInterval: 0
     allowClickToCompleteText: 0
+  pauseGameDuringDialogue: 1
   message: "\u6575\u4EBA\u4E0A\u65B9\u6703\u986F\u793A\u4E0B\u4E00\u6B21\u884C\u52D5\u610F\u5716\u3002\u4F60\u53EF\u4EE5\u4E8B\u5148\u77E5\u9053\u5B83\u6E96\u5099\u653B\u64CA\u3001\u9632\u79A6\u6216\u4F7F\u7528\u7279\u6B8A\u80FD\u529B\u3002"
   dialogueOnly: 1
   exampleSprite: {fileID: 0}
@@ -44,7 +45,13 @@ MonoBehaviour:
   highlightTarget: 1
   highlightPadding: {x: 20, y: 20}
   highlightDuringDialogue: 1
-  dialogPosition: 0
+  dialogPosition: 6
   dialogSpacing: 24
+  positionDialoguePanel: 1
+  dialogueTargetId: Battle_EnemyIntent
+  dialoguePosition: 6
+  dialogueSpacing: 10
+  dialogueScreenPadding: {x: 24, y: 24}
+  followDialogueTarget: 1
   autoAdvanceAfterSeconds: 0
   logStep: 1
