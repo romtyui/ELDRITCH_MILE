@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System;
 
 [RequireComponent(typeof(RectTransform))]
 public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler
@@ -14,7 +15,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
     private RectTransform rectTransform;
     private HandFanLayout handLayout;
     private CardHoverUI hoverUI;
-    private TargetArrowUI targetArrow;
+    [SerializeField] private TargetArrowUI targetArrow;
     private CanvasGroup canvasGroup;
     private CardViewUI cardViewUI;
     private BattleManager battleManager;
@@ -25,7 +26,8 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
     private bool tutorialGrabStarted;
 
-    private bool useTargetArrowMode;
+
+    [SerializeField] private bool useTargetArrowMode;
     private bool useDirectDragMode;
 
     [Header("Play Threshold Debug")]
@@ -122,11 +124,35 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         IsDragging = true;
         tutorialGrabStarted = true;
 
-        pointerDownScreenPos = eventData.position;
-        startAnchoredPosition =
-            rectTransform.anchoredPosition;
+        /*
+         * 每次開始拖牌時，
+         * 根據目前這張卡的 TargetType 決定操作模式。
+         */
+        useTargetArrowMode =
+            ShouldUseTargetArrowMode();
 
-        ShowThresholdLine();
+        useDirectDragMode =
+            ShouldUseDirectDragMode();
+
+        /*
+         * 每次重新拖牌都要重設。
+         */
+        dragSignalSent = false;
+
+        pointerDownScreenPos = eventData.position;
+        startAnchoredPosition = rectTransform.anchoredPosition;
+
+        /*
+         * 只有直接拖曳型卡牌才顯示出牌門檻線。
+         */
+        if (useDirectDragMode)
+        {
+            ShowThresholdLine();
+        }
+        else
+        {
+            HideThresholdLine();
+        }
 
         if (handLayout != null &&
             hoverUI != null)
@@ -141,17 +167,33 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
         EnsureTargetArrow();
 
-        if (targetArrow != null)
+        /*
+         * 只有 SingleEnemy 才顯示 TargetArrow。
+         */
+        if (useTargetArrowMode)
         {
-            targetArrow.Show(rectTransform);
-            targetArrow.UpdateArrow(
-                eventData.position
-            );
-        }
+            if (targetArrow != null)
+            {
+                targetArrow.Show(
+                    rectTransform
+                );
 
-        TutorialEventBus.Raise(
-            "Battle_CardGrabStarted"
-        );
+                targetArrow.UpdateArrow(
+                    eventData.position
+                );
+            }
+        }
+        else
+        {
+            /*
+             * 防止上一張 SingleEnemy 卡留下箭頭。
+             */
+            if (targetArrow != null)
+            {
+                targetArrow.Hide();
+            }
+        }
+        TutorialEventBus.Raise("Battle_CardGrabStarted");
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -159,27 +201,51 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         if (!IsDragging)
             return;
 
+        /*
+         * =====================================================
+         * 模式 1：
+         * SingleEnemy
+         *
+         * 卡牌不移動，
+         * 只有 TargetArrow 跟著滑鼠。
+         * =====================================================
+         */
         if (useTargetArrowMode)
         {
             EnsureTargetArrow();
 
             if (targetArrow != null)
-                targetArrow.UpdateArrow(eventData.position);
+            {
+                targetArrow.UpdateArrow(
+                    eventData.position
+                );
+            }
 
             return;
         }
-        if (!dragSignalSent)
-        {
-            dragSignalSent = true;
 
-            TutorialEventBus.Raise(
-                BattleTutorialSignals.CardDragStarted
-            );
-        }
-
+        /*
+         * =====================================================
+         * 模式 2：
+         * 不需要手動指定單體敵人的牌
+         *
+         * 卡牌本體直接跟隨滑鼠。
+         * =====================================================
+         */
         if (useDirectDragMode)
         {
-            UpdateDirectDragPosition(eventData.position);
+            if (!dragSignalSent)
+            {
+                dragSignalSent = true;
+
+                TutorialEventBus.Raise(
+                    BattleTutorialSignals.CardDragStarted
+                );
+            }
+
+            UpdateDirectDragPosition(
+                eventData.position
+            );
         }
     }
 
@@ -211,22 +277,23 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
                 eventData.position
             );
 
-        if (draggedToPlayArea &&
-            battleManager != null &&
-            cardViewUI != null &&
-            cardViewUI.CardInstance != null)
+        /*
+         * TargetArrow 模式：
+         * 不需要經過出牌門檻，
+         * 只需要最後有有效敵人。
+         *
+         * DirectDrag 模式：
+         * 必須拖過出牌門檻。
+         */
+        bool canAttemptPlay = useTargetArrowMode || (useDirectDragMode && draggedToPlayArea);
+
+        if (canAttemptPlay &&  battleManager != null && cardViewUI != null && cardViewUI.CardInstance != null)
         {
-            CardInstance card =
-                cardViewUI.CardInstance;
+            CardInstance card = cardViewUI.CardInstance;
 
-            BattleTargetUI hoveredTarget =
-                BattleTargetUI
-                    .CurrentHoveredTarget;
+            BattleTargetUI hoveredTarget = BattleTargetUI.CurrentHoveredTarget;
 
-            BattleUnit targetUnit =
-                hoveredTarget != null
-                    ? hoveredTarget.battleUnit
-                    : null;
+            BattleUnit targetUnit = hoveredTarget != null? hoveredTarget.battleUnit: null;
 
             string targetName =targetUnit != null? targetUnit.name : "null";
 
@@ -298,9 +365,16 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         }
         else
         {
-            Debug.Log(
-                "沒有拖出手牌區，不出牌"
-            );
+            if (useDirectDragMode && !draggedToPlayArea)
+            {
+                Debug.Log("卡牌沒有拖過出牌範圍，不出牌");
+            }
+            else
+            {
+                Debug.Log(
+                    "目前無法嘗試出牌"
+                );
+            }
         }
 
         if (handLayout != null)
@@ -321,6 +395,10 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         }
 
         tutorialGrabStarted = false;
+
+        useTargetArrowMode = false;
+        useDirectDragMode = false;
+        dragSignalSent = false;
     }
 
     private bool IsDraggedToPlayArea(Vector2 pointerUpScreenPos)
