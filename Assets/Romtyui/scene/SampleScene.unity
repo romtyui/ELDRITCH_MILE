@@ -1799,7 +1799,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &136833517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2186,6 +2186,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 148372200}
+  - component: {fileID: 148372201}
   m_Layer: 5
   m_Name: GodCardAnimationRoot
   m_TagString: Untagged
@@ -2200,19 +2201,47 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 148372199}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -90}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1588166948}
-  m_Father: {fileID: 1133561396}
+  m_Father: {fileID: 1411174359}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &148372201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 148372199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95f455d99d38ff44eb0dc69e78d8d3f6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GodCardCorruptionAnimationController
+  animationRoot: {fileID: 1411174359}
+  centerPoint: {fileID: 1496350169}
+  moveToCenterDuration: 0.35
+  shakeDuration: 0.45
+  shakeStrength: 12
+  defaultAnimationData: {fileID: 0}
+  blackoutCanvasGroup: {fileID: 0}
+  blackoutAlpha: 0.75
+  blackoutFadeDuration: 0.25
+  tentacleRoot: {fileID: 0}
+  tentacleAnimator: {fileID: 0}
+  tentacleTriggerName: PlayGodCorruption
+  animatedCorruptedCardTemplate: {fileID: 0}
+  animatedCardCanvasGroup: {fileID: 0}
+  animationTimeout: 5
+  godCardFadeDuration: 0.2
 --- !u!1 &153268939
 GameObject:
   m_ObjectHideFlags: 0
@@ -3132,6 +3161,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 140
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 180
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
@@ -3504,7 +3535,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 22.059875, y: -21.333069}
+  m_AnchoredPosition: {x: 22.059814, y: -21.333008}
   m_SizeDelta: {x: -1004.4596, y: -652.20264}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &205668589
@@ -6400,6 +6431,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 140
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 180
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
@@ -6851,6 +6884,107 @@ MonoBehaviour:
   m_SolverEditorData:
   - color: {r: 0, g: 1, b: 0, a: 1}
     showGizmo: 1
+--- !u!1 &302511547
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 302511548}
+  - component: {fileID: 302511549}
+  m_Layer: 5
+  m_Name: GeneralCardPlayAnimationRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &302511548
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 302511547}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1411174359}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &302511549
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 302511547}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8240085c9357164ab9cd058c3b282f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GeneralCardPlayAnimationController
+  animationType: 0
+  animationRoot: {fileID: 302511548}
+  playedCardPosition: {x: 400, y: 70}
+  displayScale: {x: 0.9, y: 1.15}
+  punchScale: {x: 1.08, y: 1.08}
+  moveDuration: 0.18
+  punchDuration: 0.08
+  holdDuration: 0.12
+  fadeDuration: 0.16
+  fastStretchScale: {x: 1.05, y: 1.25}
+  fastSettleDuration: 0.07
+  heavyChargeScale: {x: 0.92, y: 0.88}
+  heavyImpactScale: {x: 1.25, y: 1.35}
+  heavyChargeDuration: 0.12
+  heavyImpactDuration: 0.07
+  heavyRecoverDuration: 0.09
+  bounceHeight: 55
+  bounceUpDuration: 0.1
+  bounceDownDuration: 0.08
+  bounceRecoverDuration: 0.08
+  bounceUpScale: {x: 0.95, y: 1.12}
+  bounceSquashScale: {x: 1.15, y: 0.9}
+  shakeDuration: 0.22
+  shakeAmount: 10
+  shakeRotation: 3
+  shakeScale: {x: 1.05, y: 1.05}
+  popStartScale: {x: 0.35, y: 0.35}
+  popOvershootScale: {x: 1.18, y: 1.18}
+  popInDuration: 0.1
+  popRecoverDuration: 0.08
+  dropStartHeight: 350
+  dropDuration: 0.18
+  dropSquashScale: {x: 1.18, y: 0.88}
+  dropRecoverDuration: 0.09
+  spinStartRotation: -180
+  spinStartScale: {x: 0.45, y: 0.45}
+  spinDuration: 0.22
+  flipStartXScale: 0.05
+  flipOvershootX: 1.12
+  flipOpenDuration: 0.12
+  flipRecoverDuration: 0.07
+  slamStartHeight: 450
+  slamDownDuration: 0.1
+  slamOvershootDistance: 18
+  slamImpactScale: {x: 1.3, y: 0.78}
+  slamBounceHeight: 28
+  slamBounceDuration: 0.08
+  slamRecoverDuration: 0.08
+  flashStartScale: {x: 1.35, y: 1.35}
+  flashInDuration: 0.05
+  flashMiddleAlpha: 0.25
+  flashRecoverDuration: 0.08
+  disappearScale: {x: 0.75, y: 0.75}
 --- !u!1 &303902498
 GameObject:
   m_ObjectHideFlags: 0
@@ -15460,6 +15594,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 140
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 180
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
@@ -16274,7 +16410,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &814629485
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16339,7 +16475,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.24310303, y: 1.6539917}
+  m_AnchoredPosition: {x: 0.24316406, y: 1.6540527}
   m_SizeDelta: {x: 0.48621, y: -10.308}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &814629487
@@ -18875,7 +19011,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.2432251, y: -6.357605}
+  m_AnchoredPosition: {x: -0.24316406, y: -6.357666}
   m_SizeDelta: {x: 0.4864502, y: 12.7178955}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &936462191
@@ -19216,6 +19352,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 140
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 180
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
@@ -22939,7 +23077,6 @@ RectTransform:
   m_Children:
   - {fileID: 1496350169}
   - {fileID: 1411174359}
-  - {fileID: 148372200}
   - {fileID: 1128878578}
   - {fileID: 2144444385}
   - {fileID: 1616668950}
@@ -24908,6 +25045,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 140
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 180
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
@@ -26311,6 +26450,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 140
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 180
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
@@ -28447,13 +28588,15 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 90}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 148372200}
+  - {fileID: 302511548}
   m_Father: {fileID: 1133561396}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 259.16, y: 152.901}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1411174360
 MonoBehaviour:
@@ -28500,7 +28643,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1411174358}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 95f455d99d38ff44eb0dc69e78d8d3f6, type: 3}
   m_Name: 
@@ -36733,6 +36876,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 50
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 100
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0}
@@ -38160,6 +38305,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 140
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 180
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
@@ -38476,7 +38623,7 @@ MonoBehaviour:
   enemies: []
   playerDeck: {fileID: 1461659477}
   energySystem: {fileID: 1663680723}
-  cardsPerTurn: 5
+  cardsPerTurn: 10
   enemyActionDelay: 0.5
   handUIController: {fileID: 134465710}
   playerStatusBarUI: {fileID: 1382759484}
@@ -38489,6 +38636,8 @@ MonoBehaviour:
   enemyFormationSpawner: {fileID: 75625396}
   transformAnimationController: {fileID: 769923249}
   godCardCorruptionAnimationController: {fileID: 1588166951}
+  generalCardPlayAnimationController: {fileID: 302511549}
+  cardHitEffectController: {fileID: 0}
 --- !u!4 &1791172256
 Transform:
   m_ObjectHideFlags: 0
@@ -41749,7 +41898,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -17.107971, y: 17.223999}
+  m_AnchoredPosition: {x: -17.10791, y: 17.223999}
   m_SizeDelta: {x: -1097.5, y: -627.4292}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2000370730
@@ -42128,6 +42277,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 140
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 180
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}
@@ -42836,6 +42987,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 140
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 180
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0.8}

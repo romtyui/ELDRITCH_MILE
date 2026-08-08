@@ -34,6 +34,14 @@ public class CardData : ScriptableObject
 
     [Header("Effects")]
     public List<CardEffectData> effects = new();
+
+    [Header("Hit Effect")]
+
+    [Tooltip(
+    "這張卡成功打出後使用的命中特效。" +
+    "空著代表不播放額外命中特效。"
+)]
+    public CardHitEffectData hitEffect;
 }
 
 public class CardInstance

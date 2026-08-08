@@ -69,6 +69,12 @@ public class BattleManager : MonoBehaviour
     [Header("God Card Corruption Animation")]
     public GodCardCorruptionAnimationController godCardCorruptionAnimationController;
 
+    [Header("General Card Play Animation")]
+    public GeneralCardPlayAnimationController generalCardPlayAnimationController;
+    
+    [Header("Card Hit Effect")]
+    public CardHitEffectController cardHitEffectController;
+
     private bool isResolvingCard;
 
     /*
@@ -662,8 +668,18 @@ public class BattleManager : MonoBehaviour
         StartCoroutine(PlayCardRoutine(card, finalTarget, playedCardView));
         return true;
     }
-    private IEnumerator PlayCardRoutine(CardInstance card, BattleUnit finalTarget, CardViewUI playedCardView)
+    private IEnumerator PlayCardRoutine(
+      CardInstance card,
+      BattleUnit finalTarget,
+      CardViewUI playedCardView
+  )
     {
+        /*
+         * =========================================================
+         * 開始結算卡牌
+         * =========================================================
+         */
+
         isResolvingCard = true;
 
         if (card == null || card.data == null)
@@ -672,120 +688,543 @@ public class BattleManager : MonoBehaviour
             yield break;
         }
 
+
+        /*
+         * =========================================================
+         * 扣除卡牌費用
+         * =========================================================
+         */
+
         energySystem.Spend(card.currentCost);
 
         RefreshPlayerBarsUI();
 
-        bool isTransformCard = HasTransformEffect(card);
 
-        if (playedCardView != null && handUIController != null)
+        /*
+         * =========================================================
+         * 判斷是不是神牌 / 轉化牌
+         * =========================================================
+         */
+
+        bool isTransformCard =
+            HasTransformEffect(card);
+
+
+        /*
+         * =========================================================
+         * 成功打出的 CardView
+         * 先從手牌 UI 脫離
+         * =========================================================
+         *
+         * 注意：
+         *
+         * 一般卡和神牌都一定會進來。
+         *
+         * 差別只有它們要被移到哪個 AnimationRoot。
+         * =========================================================
+         */
+
+        if (playedCardView != null &&
+            handUIController != null)
         {
             Transform parent = null;
+
+
+            /*
+             * -----------------------------------------------------
+             * 神牌 / 轉化牌
+             * -----------------------------------------------------
+             */
 
             if (isTransformCard)
             {
                 GodCardAnimationData animationData = null;
 
-                if (card != null && card.data != null)
-                    animationData = card.data.godCardAnimation;
+                if (card != null &&
+                    card.data != null)
+                {
+                    animationData =
+                        card.data.godCardAnimation;
+                }
 
-                if (animationData != null && godCardCorruptionAnimationController != null)
-                    parent = godCardCorruptionAnimationController.AnimationRoot;
-                else if (transformAnimationController != null)
-                    parent = transformAnimationController.AnimationRoot;
+
+                /*
+                 * 有神牌專屬污染動畫。
+                 */
+                if (animationData != null &&
+                    godCardCorruptionAnimationController != null)
+                {
+                    parent =
+                        godCardCorruptionAnimationController
+                            .AnimationRoot;
+                }
+
+                /*
+                 * 沒有專屬神牌動畫，
+                 * 使用原本的轉化動畫 Root。
+                 */
+                else if (
+                    transformAnimationController != null
+                )
+                {
+                    parent =
+                        transformAnimationController
+                            .AnimationRoot;
+                }
             }
 
-            handUIController.DetachCardViewForPlay(card, parent);
+
+            /*
+             * -----------------------------------------------------
+             * 一般卡
+             * -----------------------------------------------------
+             */
+
+            else
+            {
+                if (generalCardPlayAnimationController != null)
+                {
+                    parent =
+                        generalCardPlayAnimationController
+                            .AnimationRoot;
+                }
+            }
+
+
+            /*
+             * -----------------------------------------------------
+             * 不論一般卡還是神牌，
+             * 都必須先離開 HandUI。
+             * -----------------------------------------------------
+             */
+
+            handUIController.DetachCardViewForPlay(
+                card,
+                parent
+            );
         }
 
+
+        /*
+         * =========================================================
+         * 原本牌組邏輯
+         * =========================================================
+         *
+         * 從 hand 移除，
+         * 並依卡牌規則進入棄牌 / 消耗區。
+         * =========================================================
+         */
+
         if (playerDeck != null)
+        {
             playerDeck.OnCardPlayed(card);
+        }
+
+
+        Debug.Log(
+            $"打出卡牌: {card.data.cardName}"
+        );
+
+
+        /*
+         * =========================================================
+         * 一般卡成功出牌 Intro
+         * =========================================================
+         *
+         * 神牌 / 轉化牌不會播放這個。
+         *
+         * 一般卡：
+         *
+         * 飛到展示位置
+         * → 放大
+         * → Punch
+         * → 停留
+         * =========================================================
+         */
+
+        if (!isTransformCard &&
+            playedCardView != null &&
+            generalCardPlayAnimationController != null)
+        {
+            yield return
+                generalCardPlayAnimationController.PlayIntro(
+                    playedCardView
+                );
+        }
+
+
+        /*
+         * =========================================================
+         * 更新剩餘手牌
+         * =========================================================
+         *
+         * 原本 RefreshHandUI 功能保留。
+         *
+         * 但是改成一般卡 Intro 播完後才執行。
+         *
+         * 避免正在播放動畫的 CardView
+         * 被手牌刷新提前處理掉。
+         * =========================================================
+         */
 
         if (!isTransformCard)
+        {
             RefreshHandUI();
+        }
 
-        Debug.Log($"���X�d�P: {card.data.cardName}");
+
+        /*
+         * =========================================================
+         * 卡牌 Effects 結算
+         * =========================================================
+         */
+
+
+        /*
+         * ---------------------------------------------------------
+         * AllEnemies
+         * ---------------------------------------------------------
+         *
+         * 每一隻存活敵人
+         * 都完整執行這張卡的 Effects。
+         * ---------------------------------------------------------
+         */
 
         if (card.data.targetType == TargetType.AllEnemies)
         {
             List<EnemyUnit> aliveEnemies = GetAliveEnemies();
 
-            for (int enemyIndex = 0; enemyIndex < aliveEnemies.Count; enemyIndex++)
+            /*
+             * =========================================================
+             * AllEnemies 命中特效
+             * =========================================================
+             *
+             * 所有敵人同時生成特效。
+             * =========================================================
+             */
+
+            if (card.data.hitEffect != null &&  cardHitEffectController != null)
             {
-                EnemyUnit enemy = aliveEnemies[enemyIndex];
-
-                if (enemy == null) continue;
-                if (!enemy.gameObject.activeInHierarchy) continue;
-                if (enemy.currentHp <= 0) continue;
-
-                CardResolveContext enemyContext = new CardResolveContext(
-                    playerUnit,
-                    enemy,
-                    card,
-                    this
-                );
-
-                for (int effectIndex = 0; effectIndex < card.data.effects.Count; effectIndex++)
+                bool hitSoundPlayed = false;
+                for (int effectTargetIndex = 0; effectTargetIndex < aliveEnemies.Count; effectTargetIndex++)
                 {
-                    CardEffectData effect = card.data.effects[effectIndex];
+                    EnemyUnit effectTarget = aliveEnemies[effectTargetIndex];
+
+                    if (effectTarget == null)
+                        continue;
+
+                    if (!effectTarget.gameObject.activeInHierarchy)
+                        continue;
+
+                    if (effectTarget.currentHp <= 0)
+                        continue;
+
+
+                    /*
+                     * 第一個有效敵人播放：
+                     *
+                     * VFX + SFX
+                     *
+                     * 其他敵人只播放：
+                     *
+                     * VFX
+                     */
+                    cardHitEffectController.SpawnEffectOnTarget(
+                        card.data.hitEffect,
+                        effectTarget,
+                        !hitSoundPlayed
+                    );
+
+
+                    hitSoundPlayed = true;
+                }
+
+
+                /*
+                 * 所有 VFX 都生成後，
+                 * 統一等待命中時間。
+                 */
+                yield return
+                    cardHitEffectController.WaitForImpact(
+                        card.data.hitEffect
+                    );
+            }
+            for (
+                int enemyIndex = 0;
+                enemyIndex < aliveEnemies.Count;
+                enemyIndex++
+            )
+            {
+                EnemyUnit enemy =
+                    aliveEnemies[enemyIndex];
+
+
+                if (enemy == null)
+                    continue;
+
+                if (!enemy.gameObject.activeInHierarchy)
+                    continue;
+
+                if (enemy.currentHp <= 0)
+                    continue;
+
+
+                CardResolveContext enemyContext =
+                    new CardResolveContext(
+                        playerUnit,
+                        enemy,
+                        card,
+                        this
+                    );
+
+
+                /*
+                 * 這隻敵人完整執行一次
+                 * 卡牌全部 Effects。
+                 */
+
+                for (
+                    int effectIndex = 0;
+                    effectIndex < card.data.effects.Count;
+                    effectIndex++
+                )
+                {
+                    CardEffectData effect =
+                        card.data.effects[effectIndex];
+
 
                     if (effect == null)
                         continue;
 
-                    effect.Execute(enemyContext);
+
+                    effect.Execute(
+                        enemyContext
+                    );
                 }
             }
         }
+
+
+        /*
+         * ---------------------------------------------------------
+         * 其他 TargetType
+         * ---------------------------------------------------------
+         */
+
         else
         {
-            CardResolveContext context = new CardResolveContext(
-                playerUnit,
-                finalTarget,
-                card,
-                this
-            );
+            /*
+             * =========================================================
+             * 卡牌命中特效
+             * =========================================================
+             *
+             * SingleEnemy
+             * RandomEnemy
+             * Self
+             *
+             * 都已經有 finalTarget。
+             *
+             * None 則沒有角色目標，
+             * 改播在畫面中央。
+             * =========================================================
+             */
 
-            for (int i = 0; i < card.data.effects.Count; i++)
+            if (card.data.hitEffect != null &&
+                cardHitEffectController != null)
             {
-                CardEffectData effect = card.data.effects[i];
+                if (card.data.targetType == TargetType.None)
+                {
+                    yield return
+                        cardHitEffectController.PlayAtCenter(
+                            card.data.hitEffect
+                        );
+                }
+                else if (
+                    card.data.targetType == TargetType.SingleEnemy ||
+                    card.data.targetType == TargetType.RandomEnemy ||
+                    card.data.targetType == TargetType.Self
+                )
+                {
+                    yield return
+                        cardHitEffectController.PlayOnTarget(
+                            card.data.hitEffect,
+                            finalTarget
+                        );
+                }
+            }
+
+            /*
+             * 原本 CardResolveContext 保留。
+             */
+            CardResolveContext context =
+                new CardResolveContext(
+                    playerUnit,
+                    finalTarget,
+                    card,
+                    this
+                );
+
+
+            for (
+                int i = 0;
+                i < card.data.effects.Count;
+                i++
+            )
+            {
+                CardEffectData effect =
+                    card.data.effects[i];
+
 
                 if (effect == null)
                     continue;
 
-                if (effect is TransformRandomCardByPoolEffectData transformEffect)
+
+                /*
+                 * -------------------------------------------------
+                 * 神牌 / 卡牌轉化效果
+                 * -------------------------------------------------
+                 *
+                 * 保留你原本需要等待動畫完成的流程。
+                 * -------------------------------------------------
+                 */
+
+                if (
+                    effect is
+                    TransformRandomCardByPoolEffectData
+                        transformEffect
+                )
                 {
-                    yield return ResolveTransformCardEffect(
-                        transformEffect,
-                        context,
-                        playedCardView
-                    );
+                    yield return
+                        ResolveTransformCardEffect(
+                            transformEffect,
+                            context,
+                            playedCardView
+                        );
                 }
+
+
+                /*
+                 * -------------------------------------------------
+                 * 普通 CardEffect
+                 * -------------------------------------------------
+                 */
+
                 else
                 {
-                    effect.Execute(context);
+                    effect.Execute(
+                        context
+                    );
                 }
             }
         }
 
-        if (!isTransformCard && playedCardView != null)
+
+        /*
+         * =========================================================
+         * 一般卡 Outro
+         * =========================================================
+         *
+         * 神牌 / 轉化牌使用自己原本的收尾。
+         *
+         * 一般卡：
+         *
+         * Effects 完成
+         * → 縮小
+         * → 淡出
+         * → Destroy
+         * =========================================================
+         */
+
+        if (!isTransformCard &&
+            playedCardView != null)
         {
-            Destroy(playedCardView.gameObject);
+            /*
+             * 有一般卡動畫 Controller。
+             */
+            if (
+                generalCardPlayAnimationController != null
+            )
+            {
+                yield return
+                    generalCardPlayAnimationController.PlayOutro(
+                        playedCardView
+                    );
+            }
+
+
+            /*
+             * 原本 Destroy 功能保留。
+             *
+             * 只是從「直接 Destroy」
+             * 改成「Outro 播完再 Destroy」。
+             */
+            if (playedCardView != null)
+            {
+                Destroy(
+                    playedCardView.gameObject
+                );
+            }
         }
+
+
+        /*
+         * =========================================================
+         * 卡牌結算完成後 UI
+         * =========================================================
+         */
 
         RefreshPlayerBarsUI();
 
         RefreshStatusUI();
 
+
+        /*
+         * =========================================================
+         * 勝負判定
+         * =========================================================
+         */
+
         RequestCheckBattleEnd();
 
-        TutorialEventBus.Raise(BattleTutorialSignals.CardPlayed);
-        TutorialEventBus.Raise("Battle_CardPlayed");
+
+        /*
+         * =========================================================
+         * 新手教學 Signal
+         * =========================================================
+         *
+         * 你原本兩個 Signal 全部保留。
+         * =========================================================
+         */
+
+        TutorialEventBus.Raise(
+            BattleTutorialSignals.CardPlayed
+        );
+
+        TutorialEventBus.Raise(
+            "Battle_CardPlayed"
+        );
+
+
+        /*
+         * =========================================================
+         * 最重要：
+         * 卡牌完整結算結束
+         * =========================================================
+         *
+         * 這個現在已經不會被
+         *
+         * playedCardView != null
+         * handUIController != null
+         *
+         * 等 UI 條件包住。
+         * =========================================================
+         */
 
         isResolvingCard = false;
 
+
         yield break;
     }
-
     private EnemyUnit GetRandomAliveEnemy()
     {
         List<EnemyUnit> aliveEnemies = new List<EnemyUnit>();
