@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f265687a43fd75a48a280e8477932338, type: 3}
+  m_Name: RoomContent_Village
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Explore.RoomContentData
+  entries:
+  - prefab: {fileID: 3602004590472384861, guid: 329a6d1cd6d60fd44bd1266f519e3318, type: 3}
+    weight: 1
+    placement: 0
+    tag: 
+    maxPerRoom: 0
+  - prefab: {fileID: 8227302718710912474, guid: aafd2b20a2ae7cf4d8144a44fe203a9d, type: 3}
+    weight: 1
+    placement: 0
+    tag: 
+    maxPerRoom: 0
+  - prefab: {fileID: 2091240249446018818, guid: 521a23a61eef15248abc5fcdbeec3d1b, type: 3}
+    weight: 1
+    placement: 0
+    tag: 
+    maxPerRoom: 0
+  minFilled: 2
+  maxFilled: 5

@@ -73,3 +73,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 JEMGA_project/Temp/
+
+# MCP 設定：含本機絕對路徑（uvx.exe 位置），不同機器不通用
+.mcp.json

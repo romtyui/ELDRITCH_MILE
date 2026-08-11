@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 966927c2a5887794ca843a3863c836e0, type: 3}
+  m_Name: MapGenerationSettings
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.MapGenerationSettings
+  mapLayers: 5
+  startNodeCount: 2
+  midLayerMin: 2
+  midLayerMax: 3
+  combatChance: 0.55
+  shopChance: 0.15
+  specialEventChance: 0.1
+  verticalMargin: 10
+  horizontalMargin: 20
+  horizontalJitter: 5
+  useDemoRoute: 0
+  demoRouteKinds: 01000000000000000100000002000000
