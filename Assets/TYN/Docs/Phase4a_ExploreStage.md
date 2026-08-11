@@ -48,6 +48,7 @@
 | `Portrait Root` | `GameObject` | `character`（可留空） |
 | `Portrait Image` | `Image` | `character` 裡的 Image（可留空） |
 | `Dimmer` | `GameObject` | `black_background`（可留空） |
+| `Option Box` | `GameObject` | `option_box`。**顯示純文字訊息時會自動隱藏** —— 系統提示與一般對白都沒有選項，留著會擋畫面也會誤導玩家。Phase 4c 要用時由打牌 UI 呼叫 `SetOptionsVisible(true)` |
 | `Advance Button` | `Button` | 蓋住對話框的透明 Button（見下） |
 
 **打字機**
@@ -93,6 +94,61 @@
 | `Dialogue Box` | `DialogueBoxUI` | 剛設定好的 `dialogbox` |
 
 只有一個欄位。沒拖的話會噴紅字，所有訊息改印到 Console。
+
+---
+
+## 步驟 1.5 — UI 統一開關（`UIDirector`）
+
+> **為什麼要有**：原本每個系統各自 `SetActive`，很容易出現「換了環節但上個環節的 UI 還開著」。
+> 更麻煩的是**沒有任何一個地方說得出「現在應該有哪些 UI」**，愈到後期愈難查。
+>
+> 改成宣告式之後，關閉不再依賴「有人記得去呼叫」，而是**環節切換的必然結果**。
+
+### 業界的三分法
+
+| 分類 | 判準 | 管理方式 |
+|---|---|---|
+| **Panel** | 「屬於某個環節，換環節就該消失」 | 狀態機：宣告 `Visible In Stages`，自動開關 |
+| **Dialog** | 「疊在當前畫面上，關掉要回到原本的地方」 | 堆疊 LIFO，換環節時全部收掉 |
+| **Widget** | 「不是獨立畫面，是別人的一部分」 | `UIDirector` 完全不管 |
+
+**判斷原則：每個 UI 只能有一個擁有者。** 已經有專屬控制器的（例如 `dialogbox` 由 `DialogueBoxUI` 管、`[MAP_OVERLAY]` 由 `MapView` 管）一律標 **Widget**，否則兩邊搶著開關會打架。
+
+### 1.5.1 掛上 `UIDirector`
+
+`[SYSTEM]` 底下 `Add Component` → **`UI Director`**：
+
+| 欄位 | 值 |
+|---|---|
+| `Verbose Log` | 開發期建議 ✓，會印出每次環節切換開了幾個、關了幾個 |
+
+### 1.5.2 在各 UI 上掛 `UIPanel`
+
+| 物件 | Kind | Visible In Stages | 說明 |
+|---|---|---|---|
+| `dialogbox` | **Widget** | — | 由 `DialogueBoxUI` + `PopupService` 佇列控制 |
+| `character` / `black_background` | **Widget** | — | 同上，是對話框的一部分 |
+| `[MAP_OVERLAY]` | **Widget** | — | 由 `MapView` 的下拉／收起控制 |
+| `Canvas_Popup` / `Canvas_Stage` / `Canvas_Tooltip` | **不用掛** | — | 只是容器，本身不開關 |
+| `ExploreUI` | **Panel** | `Explore` | 探索環節專屬 |
+| `ExitTag` | **Widget** | — | `ExploreUI` 的一部分，位置由 `BookmarkHover` 控制 |
+| `ContinueAskPanel` | **Dialog** | — | 掛了之後 `ExploreStageController` 會自動改走 `UIDirector` 的堆疊 |
+
+> `UIPanel` 上若同時有 `FadePanel`，開關會自動用淡入淡出。
+
+### 1.5.3 現在的效果有限，但 4c 之後很關鍵
+
+老實說**目前大部分 UI 都住在 Stage prefab 裡，換環節時本來就會被 Destroy**，所以 `UIDirector` 現在沒什麼事做。
+
+它的價值在 Phase 4c 之後才會顯現 —— 手牌區、選項列、機率預覽標籤這些會是**常駐在場景裡**的面板，那時「哪個環節該顯示哪些」就必須有人統一管。現在花五分鐘設好，之後就不必回頭重構。
+
+### 1.5.4 已經自動處理的事
+
+不需要你手動接：
+
+- **換 Stage 時清空訊息佇列** —— `GameFlowManager` 統一呼叫 `PopupService.CloseAll()`，不必每個 Stage 各寫一次
+- **換 Stage 時關掉所有 Dialog** —— `UIDirector.ApplyStage()` 內建
+- **系統提示時關掉選項框** —— `DialogueBoxUI.Open()` 每次都會重設，所以不管上一則訊息留下什麼狀態都是乾淨的
 
 ---
 
@@ -154,6 +210,7 @@
 |---|---|---|
 | `Display Name` | string | 例如「舊木箱」 |
 | `Single Use` | bool | ✓ 開過就不能再開 |
+| **`After Interact`** | enum | **`Auto`**（預設）／`KeepVisible`／`Disappear`。見下 |
 | `Target Renderer` | `SpriteRenderer` | 留空會自動抓同物件上的 |
 | `Interacted Sprite` | `Sprite` | `chest_open.png` |
 | `Show Grab Cursor` | bool | ✓（C8 抓取手勢） |
@@ -166,6 +223,21 @@
 | `Attribute` | `ExploreAttribute` | 僅 `RequiresCheck` 用（C17） |
 | `Preview Label` | `TextMeshPro` | hover 顯示成功率用。**4c 才會用到，先留空** |
 | **`Visual Variants`** | `List<VisualVariant>` | **不同轉向／樣式的圖，生成時隨機挑一組**。見下 |
+
+### 互動完之後物件怎麼處理（`After Interact`）
+
+| 值 | 行為 |
+|---|---|
+| **`Auto`**（預設） | 有 `Interacted Sprite` → 換圖留著；**沒有 → 從畫面消失** |
+| `KeepVisible` | 一律留著 |
+| `Disappear` | 一律消失 |
+
+`Auto` 對應直覺：**撿走的道具不該還躺在原地**，開過的箱子則應該留著（換成開啟的圖）。
+
+所以：
+- 可拾取道具（`InspectableInteractable` 的 `Pickup`）→ 不填 `Interacted Sprite`，撿完自動消失
+- 沒有做開啟圖的寶箱 → 同樣自動消失
+- 有做開啟圖的寶箱 → 填了就會留著換圖
 
 ### 隨機轉向的圖（C6）
 
@@ -288,37 +360,49 @@ Stage_Explore                      ← 普通 GameObject（Transform，不是 Re
 |---|---|---|
 | `Room Root` | `Transform` | `RoomRoot` |
 | `Room Library` | `RoomLibrary` | 步驟 2.2 的資產 |
-| `Exit Tag` | `TwoStageConfirm` | `ExitTag`（見步驟 6） |
+| `Exit Tag` | `Button` | `ExitTag` 上的 Button（見步驟 6） |
 | `Continue Ask Panel` | `GameObject` | `ContinueAskPanel` |
 | `Encounter` | `DialogueEncounterController` | **4c 才會用，先留空** |
 
 ---
 
-## 步驟 6 — ExitTag：兩段式離開（C14）
+## 步驟 6 — ExitTag：離開入口（C14）
 
 把 EventScene 裡現有的 `ExitTag`（已掛 `BookmarkHover`）**移進 `Stage_Explore.prefab`**。
 
 > 為什麼放進 prefab 而不是常駐：Stage 結束時離開標籤本來就該跟著消失；商店之後會有自己的一份。
 > 而且 prefab 不能引用場景物件，`ExploreStageController.exitTag` 需要指到 prefab 內部。
 
-`ExitTag` 上要有**兩個**元件：
+### 兩段式確認由「滑下 + 面板」構成，標籤本身只要單擊
 
-| 元件 | 職責 | 欄位 |
+```
+hover ──▶ 標籤從上緣滑下（提示）──▶ 點一下 ──▶ 「要探索其他的東西嗎？」──▶ 選離開
+          ↑ 第一段：BookmarkHover              ↑ 第二段：確認面板
+```
+
+企劃的 C14 要的是「先提示、再確認」，滑下就是提示、面板就是確認 —— **標籤上不需要再做一次點兩下**，否則會變成三段（hover → 點 → 再點 → 面板 → 選離開），太囉嗦。
+
+`ExitTag` 需要的元件：
+
+| 元件 | 職責 | 設定 |
 |---|---|---|
-| `Bookmark Hover` | **第一段**：hover 時從上緣滑下（已存在，不用改） | `Hidden Y` 正數往上藏、`Shown Y` = 0、`Move Speed` = 10 |
-| `Two Stage Confirm` | **第二段**：再點一次確認 | 見下 |
+| `Image` | 標籤圖像 | `Raycast Target` ✓ |
+| `Bookmark Hover` | hover 時從上緣滑下（已存在，不用改） | `Hidden Y` 正數往上藏、`Shown Y` = 0、`Move Speed` = 10 |
+| **`Button`** | 接收點擊 | `OnClick` **留空** —— `ExploreStageController` 會自動接上 |
 
-`TwoStageConfirm` 欄位：
+> `Button` 與 `BookmarkHover` 掛在同一個物件上不會衝突，Unity 會把 pointer 事件送給所有 handler。
+>
+> `Button` 的 `Transition` 建議設 `None` —— 顏色變化會跟 `BookmarkHover` 的滑動搶視覺焦點。
 
-| 欄位 | 型別 | 建議值 | 說明 |
-|---|---|---|---|
-| `Armed Timeout` | float | `3` | 進入待確認後多久自動解除。`0` = 不解除 |
-| `Disarm On Pointer Exit` | bool | ✓ | 滑鼠移開就取消 |
-| `On Armed` | UnityEvent | 建議接文字變更 | 第一次點擊。例如把 Text 改成「再點一次確認離開」 |
-| `On Disarmed` | UnityEvent | 建議接文字還原 | 逾時或滑鼠移開 |
-| `On Confirmed` | UnityEvent | **留空** | 由 `ExploreStageController` 在執行時自動接上 `RequestExit()` |
+### 離開流程是單一出口
 
-> `On Confirmed` 留空是刻意的 —— 程式會 `AddListener`。你可以另外在這裡加視覺／音效回饋，不會衝突。
+```
+房間全部互動完（C13）─┐
+                     ├─▶ 「要探索其他的東西嗎？」─┬─ YES → 留在房間
+玩家點 ExitTag（C14）─┘                         └─ NO  → 真正離開 → 地圖下拉
+```
+
+玩家永遠只看到同一個確認介面，不會「有時候直接走掉、有時候跳窗」；也讓**不小心點到離開有一次挽回機會**。
 
 ---
 
@@ -332,6 +416,8 @@ Stage_Explore                      ← 普通 GameObject（Transform，不是 Re
 | `Btn_No`（離開） | `Stage_Explore` 根物件 | `ExploreStageController → OnChooseLeave ()` |
 
 面板初始狀態設為**停用**（程式也會在 `OnStageEnter` 關掉它，但先關比較不會在編輯時擋畫面）。
+
+在 `ContinueAskPanel` 上加 **`UIPanel`**，`Kind` 設 **`Dialog`** —— `ExploreStageController` 會自動改走 `UIDirector` 的堆疊，換環節時就會被 `CloseAllDialogs()` 一併收掉。
 
 ### 讓它和 MapBanner 外觀一致
 
@@ -379,16 +465,18 @@ Stage_Explore                      ← 普通 GameObject（Transform，不是 Re
 - [ ] Console 出現 `[房間] Room_xxx 填入 N / M 個位子`
 - [ ] 房間裡的物件**位置與角度每次不同**（回主選單重開一局比較，C6）
 - [ ] 滑鼠移到寶箱上 → **游標變成張開的手**（C8）
-- [ ] 點寶箱 → Loot 彈窗跳出、圖換成打開的箱子
-- [ ] 點可調查物 → 文字彈窗
+- [ ] 點寶箱 → **對話框**顯示「打開了 X。」並列出道具、圖換成打開的箱子
+- [ ] 訊息有**打字機效果**，點一下跳完，再點一下關閉
+- [ ] 訊息顯示時**選項框是關閉的**
+- [ ] 點可調查物（Pickup 類型、沒填 Interacted Sprite）→ 顯示訊息後**物件從畫面消失**
 - [ ] **鑰匙測試（C7）**：先點沒鑰匙的箱子 → 出現「鎖住了」；開出鑰匙後再點 → 開得了
-- [ ] 全部點完 → 關掉最後一個彈窗後 → **跳出「要探索其他的東西嗎？」**
+- [ ] 全部點完 → 關掉最後一則訊息後 → **跳出「要探索其他的東西嗎？」**
 - [ ] 選「繼續探索」→ 面板關閉，留在房間
-- [ ] 再次觸發後選「離開」→ 走離開流程
 - [ ] 滑鼠移到 `ExitTag` → **標籤從上緣滑下**
-- [ ] 點一下 → 文字變成「再點一次確認」
-- [ ] 再點一下 → 畫面淡黑 → **地圖自動下拉**（C1/C2）
+- [ ] 點一下 → **跳出「要探索其他的東西嗎？」**（不是直接離開，也不用點兩下）
+- [ ] 選「離開」→ 畫面淡黑 → **地圖自動下拉**（C1/C2）
 - [ ] 回到地圖後，剛才那個節點變成已走過，棋子在上面
+- [ ] 若 `UIDirector` 的 `Verbose Log` 開著，每次環節切換會印出開關了幾個面板
 
 ---
 
@@ -410,7 +498,12 @@ Stage_Explore                      ← 普通 GameObject（Transform，不是 Re
 | UI 正常但房間看不見 | `StageHost` 的 `Custom Parent` 沒指到 `WorldRoot` | 步驟 8 |
 | 房間看不見 | 房間是世界空間物件卻掛在 Overlay Canvas 底下 | 步驟 8 的註記 |
 | 每次進同一節點擺設都不一樣 | 正常 —— 種子是 `runSeed ^ nodeId`，**同一場 run 內**同一節點才會一致 |  |
-| ExitTag 點一下就直接離開 | 只掛了 `BookmarkHover`，沒掛 `TwoStageConfirm`，或 `On Confirmed` 被手動接了東西 | 步驟 6 |
+| ExitTag 點一下就直接離開，沒跳確認面板 | `ExploreStageController.Continue Ask Panel` 沒拖 | 步驟 5 |
+| ExitTag 點了沒反應 | `ExitTag` 上沒有 `Button`，或 Image 的 `Raycast Target` 沒勾 | 步驟 6 |
+| 換環節後上一個環節的 UI 還開著 | 該面板的 `UIPanel.Kind` 設成 `Widget`，或 `Visible In Stages` 沒填 | 步驟 1.5.2 |
+| 面板被兩邊搶著開關、閃爍 | 同一個 UI 有兩個擁有者 | 已有專屬控制器的一律標 `Widget` |
+| 撿完道具物件還留在原地 | `After Interact` 設成 `KeepVisible`，或填了 `Interacted Sprite` | 步驟 3.1 |
+| 系統提示時選項框還開著 | `DialogueBoxUI.Option Box` 沒拖 | 步驟 1.1 |
 
 ---
 

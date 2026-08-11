@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace EldritchMile.Explore
 {
@@ -26,8 +27,10 @@ namespace EldritchMile.Explore
         public RoomLibrary roomLibrary;
 
         [Header("離開 (C13/C14)")]
-        [Tooltip("ExitTag 物件。掛 BookmarkHover(第一段) + TwoStageConfirm(第二段)")]
-        public TwoStageConfirm exitTag;
+        [Tooltip("ExitTag 上的 Button。\n" +
+                 "兩段式確認由「hover 滑下提示 → 點擊跳出確認面板」構成，" +
+                 "所以標籤本身只需要單擊，不必再做二次點擊")]
+        public Button exitTag;
 
         [Tooltip("房間清空後詢問是否繼續探索的面板。\n" +
                  "若上面掛了 FadePanel 就會用淡入（與 MapBanner 外觀一致），否則直接 SetActive")]
@@ -40,15 +43,33 @@ namespace EldritchMile.Explore
         private RoomController room;
         private RunContext run;
         private FadePanel continueAskFade;
+        private UIPanel continueAskUI;
+        private bool uiRefsResolved;
+        private bool continueAskShown;
 
-        /// 統一走這裡開關詢問面板，有 FadePanel 就淡入，沒有就硬切
+        /// <summary>
+        /// 統一走這裡開關詢問面板。三段 fallback：
+        ///   1. 面板掛了 UIPanel(Dialog) → 交給 UIDirector 的堆疊管理，
+        ///      這樣換環節時 CloseAllDialogs() 會自動收掉，不必靠這裡記得關
+        ///   2. 只掛了 FadePanel → 自己淡入淡出
+        ///   3. 都沒有 → SetActive
+        /// </summary>
         private void SetContinueAskVisible(bool visible)
         {
             if (continueAskPanel == null) return;
 
-            if (continueAskFade == null)
+            if (!uiRefsResolved)
             {
+                uiRefsResolved = true;
                 continueAskFade = continueAskPanel.GetComponent<FadePanel>();
+                continueAskUI = continueAskPanel.GetComponent<UIPanel>();
+            }
+
+            if (continueAskUI != null && continueAskUI.kind == UIKind.Dialog && UIDirector.Instance != null)
+            {
+                if (visible) UIDirector.Instance.PushDialog(continueAskUI);
+                else UIDirector.Instance.CloseDialog(continueAskUI);
+                return;
             }
 
             if (continueAskFade != null)
@@ -77,12 +98,13 @@ namespace EldritchMile.Explore
 
             SpawnRoom(run.pendingNode);
 
+            continueAskShown = false;
             SetContinueAskVisible(false);
 
             if (exitTag != null)
             {
-                exitTag.onConfirmed.RemoveListener(RequestExit);
-                exitTag.onConfirmed.AddListener(RequestExit);
+                exitTag.onClick.RemoveListener(ShowContinueAsk);
+                exitTag.onClick.AddListener(ShowContinueAsk);
             }
 
         }
@@ -98,7 +120,7 @@ namespace EldritchMile.Explore
 
         public override IEnumerator OnStageExit()
         {
-            if (exitTag != null) exitTag.onConfirmed.RemoveListener(RequestExit);
+            if (exitTag != null) exitTag.onClick.RemoveListener(ShowContinueAsk);
 
             if (room != null) room.OnRoomCleared -= HandleRoomCleared;
 
@@ -167,30 +189,47 @@ namespace EldritchMile.Explore
             ShowContinueAsk();
         }
 
-        private void ShowContinueAsk()
+        /// <summary>
+        /// 顯示「要探索其他的東西嗎？」。
+        ///
+        /// 【單一出口】兩條路都走這裡：
+        ///   · 房間所有東西都互動完（C13）
+        ///   · 玩家主動點 ExitTag（C14 的兩段式確認之後）
+        ///
+        /// 好處是玩家永遠只會看到同一個確認介面，不會「有時候直接走掉、有時候跳窗」；
+        /// 也讓「不小心點到離開」有一次挽回機會。
+        /// </summary>
+        public void ShowContinueAsk()
         {
+            if (continueAskShown) return;   // 避免清空與點擊同時觸發跳兩次
+            continueAskShown = true;
             SetContinueAskVisible(true);
         }
 
         /// 「要探索其他的東西嗎？」→ YES。留在房間，玩家自己找還沒點過的東西。
         public void OnContinueExploring()
         {
+            continueAskShown = false;
             SetContinueAskVisible(false);
         }
 
-        /// 「要探索其他的東西嗎？」→ NO。走離開流程。
+        /// 「要探索其他的東西嗎？」→ NO。真正離開。
         public void OnChooseLeave()
         {
+            continueAskShown = false;
             SetContinueAskVisible(false);
             RequestExit();
         }
 
         // ==========================================
-        // C14：離開（兩段式確認後才會走到這）
+        // 離開
         // ==========================================
+        /// <summary>
+        /// 真正離開房間。只有確認面板的「離開」會走到這裡。
+        /// C2：Stage 結束是自動回報，接著地圖會自己下拉。
+        /// </summary>
         public void RequestExit()
         {
-            // C2：Stage 結束是自動回報，接著地圖會自己下拉
             ReportComplete(StageResult.Completed);
         }
     }

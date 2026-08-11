@@ -392,7 +392,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &195567724
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1000,6 +1000,7 @@ GameObject:
   - component: {fileID: 407060548}
   - component: {fileID: 407060547}
   - component: {fileID: 407060546}
+  - component: {fileID: 407060550}
   m_Layer: 0
   m_Name: _TEMP_DialogueUI
   m_TagString: Untagged
@@ -1041,12 +1042,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d89af608413ee4b9c3752ec4ad05cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.DialogueBoxUI
-  root: {fileID: 1367195476}
+  root: {fileID: 407060544}
   bodyText: {fileID: 2031421464}
   nameBox: {fileID: 1594026980}
   nameText: {fileID: 1364016841}
   portraitRoot: {fileID: 2028291919}
   portraitImage: {fileID: 464193592}
+  optionBox: {fileID: 195567723}
   dimmer: {fileID: 816323013}
   advanceButton: {fileID: 99592063}
   charsPerSecond: 40
@@ -1122,6 +1124,22 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &407060550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 407060544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91d37d050f319d949aadb5d8e3a39b83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.UIPanel
+  kind: 2
+  visibleInStages: 
+  alwaysVisible: 0
+  useFadeIfAvailable: 1
 --- !u!1 &456520573
 GameObject:
   m_ObjectHideFlags: 0
@@ -1450,7 +1468,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &464193591
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1953,6 +1971,7 @@ GameObject:
   - component: {fileID: 816323014}
   - component: {fileID: 816323016}
   - component: {fileID: 816323015}
+  - component: {fileID: 816323017}
   m_Layer: 5
   m_Name: black_background
   m_TagString: Untagged
@@ -2017,6 +2036,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 816323013}
   m_CullTransparentMesh: 1
+--- !u!114 &816323017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 816323013}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91d37d050f319d949aadb5d8e3a39b83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.UIPanel
+  kind: 2
+  visibleInStages: 
+  alwaysVisible: 0
+  useFadeIfAvailable: 1
 --- !u!1 &891389806
 GameObject:
   m_ObjectHideFlags: 0
@@ -4168,6 +4203,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1745722951}
+  - component: {fileID: 1745722952}
   m_Layer: 0
   m_Name: '[SYSTEM]'
   m_TagString: Untagged
@@ -4194,6 +4230,19 @@ Transform:
   - {fileID: 802593045}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1745722952
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1745722950}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4eb5fe0541f79d54eb1646c417322f24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.UIDirector
+  verboseLog: 1
 --- !u!1 &1785196182
 GameObject:
   m_ObjectHideFlags: 0
@@ -4419,6 +4468,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2028291920}
+  - component: {fileID: 2028291921}
   m_Layer: 0
   m_Name: PotraitRoot
   m_TagString: Untagged
@@ -4446,6 +4496,22 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2028291921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2028291919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91d37d050f319d949aadb5d8e3a39b83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.UIPanel
+  kind: 2
+  visibleInStages: 
+  alwaysVisible: 0
+  useFadeIfAvailable: 1
 --- !u!1 &2031421461
 GameObject:
   m_ObjectHideFlags: 0

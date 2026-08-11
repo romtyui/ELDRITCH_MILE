@@ -18,11 +18,28 @@ namespace EldritchMile.Explore
     public abstract class InteractableBase : MonoBehaviour,
         IInteractable, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
+        /// <summary>互動完成後這個物件怎麼處理。</summary>
+        public enum AfterInteract
+        {
+            /// 有 Interacted Sprite 就換圖留著；沒有就從畫面消失。
+            /// 這對應直覺：撿走的道具不該還躺在原地，開過的箱子則應該留著（換成開啟的圖）。
+            Auto,
+
+            /// 一律留在畫面上
+            KeepVisible,
+
+            /// 一律消失
+            Disappear,
+        }
+
         [Header("基本")]
         public string displayName = "未命名物件";
 
         [Tooltip("互動一次後就不能再互動")]
         public bool singleUse = true;
+
+        [Tooltip("互動完成後怎麼處理這個物件")]
+        public AfterInteract afterInteract = AfterInteract.Auto;
 
         [Header("視覺切換")]
         [Tooltip("留空會自動抓同物件上的 SpriteRenderer")]
@@ -115,13 +132,27 @@ namespace EldritchMile.Explore
         protected void MarkDone()
         {
             hasInteracted = true;
+            SetCursor(CursorType.Idle);
 
-            if (targetRenderer != null && interactedSprite != null)
+            bool hasSwapSprite = interactedSprite != null;
+
+            bool disappear =
+                afterInteract == AfterInteract.Disappear ||
+                (afterInteract == AfterInteract.Auto && !hasSwapSprite);
+
+            if (disappear)
+            {
+                // 先回報再隱藏 —— ReportInteracted 可能會觸發「房間清空」的後續流程，
+                // 物件已停用時仍需正常計數
+                if (room != null) room.ReportInteracted(this);
+                gameObject.SetActive(false);
+                return;
+            }
+
+            if (hasSwapSprite && targetRenderer != null)
             {
                 targetRenderer.sprite = interactedSprite;
             }
-
-            SetCursor(CursorType.Idle);
 
             if (room != null) room.ReportInteracted(this);
         }

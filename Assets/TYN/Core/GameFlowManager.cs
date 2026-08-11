@@ -248,6 +248,10 @@ namespace EldritchMile.Core
         {
             StageType previous = currentStage;
 
+            // 換環節時把訊息佇列清乾淨。放在這裡而不是各 Stage 的 OnStageExit ——
+            // 否則每新增一個 Stage 就要記得再寫一次，遲早會有人漏掉。
+            PopupService.Instance?.CloseAll();
+
             if (stageHost != null && stageHost.Current != null)
             {
                 yield return stageHost.Current.OnStageExit();
@@ -265,6 +269,10 @@ namespace EldritchMile.Core
                     controller.OnStageEnter(Run);
                 }
             }
+
+            // 統一套用這個環節該有的 UI 狀態：該開的開、上個環節殘留的關掉。
+            // 放在 Stage 載入之後，新 prefab 裡的面板才掃得到。
+            UIDirector.Instance?.ApplyStage(next);
 
             OnStageChanged?.Invoke(previous, next);
         }

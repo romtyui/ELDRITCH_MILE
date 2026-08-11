@@ -153,15 +153,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Explore.ChestInteractable
   displayName: "\u820A\u6728\u7BB1"
   singleUse: 1
+  afterInteract: 0
   targetRenderer: {fileID: 0}
-  interactedSprite: {fileID: 21300000, guid: 5d39ee4eda07dfd4581c76a4ca1ae83c, type: 3}
+  interactedSprite: {fileID: 0}
   visualVariants:
   - normal: {fileID: 21300000, guid: 5d39ee4eda07dfd4581c76a4ca1ae83c, type: 3}
-    interacted: {fileID: 21300000, guid: 5d39ee4eda07dfd4581c76a4ca1ae83c, type: 3}
+    interacted: {fileID: 0}
   - normal: {fileID: 21300000, guid: 9639822202a68d44d9838223b552fb5f, type: 3}
-    interacted: {fileID: 21300000, guid: 9639822202a68d44d9838223b552fb5f, type: 3}
+    interacted: {fileID: 0}
   - normal: {fileID: 21300000, guid: 3dab73beb31ab4642a6a4f75e05aead2, type: 3}
-    interacted: {fileID: 21300000, guid: 3dab73beb31ab4642a6a4f75e05aead2, type: 3}
+    interacted: {fileID: 0}
   showGrabCursor: 1
   openMode: 0
   requiredKeyId: key_warehouse

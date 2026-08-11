@@ -35,6 +35,10 @@ namespace EldritchMile.Core
         public GameObject portraitRoot;
         public Image portraitImage;
 
+        [Tooltip("選項框（option_box）。顯示純文字訊息時會自動隱藏 —— " +
+                 "系統提示與一般對白都沒有選項，留著會擋住畫面也會誤導玩家")]
+        public GameObject optionBox;
+
         [Tooltip("背景壓黑。可留空")]
         public GameObject dimmer;
 
@@ -191,11 +195,24 @@ namespace EldritchMile.Core
             OnAdvanced?.Invoke();
         }
 
+        /// <summary>
+        /// 開啟對話框並回到「純文字」狀態。
+        ///
+        /// 選項框預設關閉 —— 只有明確要顯示選項時才由 Phase 4c 的打牌 UI 打開。
+        /// 這樣不管上一則訊息留下什麼狀態，每次開啟都是乾淨的。
+        /// </summary>
         private void Open()
         {
             IsShowing = true;
             if (root != null) root.SetActive(true);
             if (dimmer != null) dimmer.SetActive(true);
+            if (optionBox != null) optionBox.SetActive(false);
+        }
+
+        /// <summary>Phase 4c：要顯示選項時由打牌 UI 呼叫。</summary>
+        public void SetOptionsVisible(bool visible)
+        {
+            if (optionBox != null) optionBox.SetActive(visible);
         }
 
         private void SetBody(string message)
