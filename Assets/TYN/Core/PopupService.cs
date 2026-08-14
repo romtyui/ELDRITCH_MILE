@@ -27,12 +27,21 @@ namespace EldritchMile.Core
         public event Action OnAllClosed;
 
         private readonly Queue<PendingMessage> pending = new Queue<PendingMessage>();
+        private bool closeAfterDrain;
+
+        [Header("自動推進")]
+        [Tooltip("結算類訊息（獲得道具等）自動推進的停留秒數。\n" +
+                 "**預設 0 = 等玩家點擊**，因為玩家通常想自己控制看完的節奏。\n" +
+                 "留這個欄位是給長文本用的 —— 一大串內容要玩家連點很多下才煩人，" +
+                 "那種情況再調成 1.5~2.5 秒")]
+        public float settlementAutoAdvance = 0f;
 
         private struct PendingMessage
         {
             public string body;
             public string speaker;      // null = 系統提示
             public Sprite portrait;
+            public float autoAdvance;   // >0 = 這則自動推進
         }
 
         public bool IsAnyOpen => dialogueBox != null && dialogueBox.IsShowing;
@@ -74,6 +83,32 @@ namespace EldritchMile.Core
         }
 
         /// <summary>
+        /// 系統提示，但借用立繪位置顯示一張特寫圖。
+        /// 用於「你正在處理這個東西」的情境 —— 開箱、檢查物件、與 NPC 周旋。
+        /// </summary>
+        public void ShowSystemWithCloseUp(string content, Sprite closeUp)
+        {
+            Enqueue(new PendingMessage { body = content, speaker = null, portrait = closeUp });
+        }
+
+        /// <summary>
+        /// 等目前排隊的訊息都播完再關閉對話框。
+        ///
+        /// 【為什麼不直接 CloseAll】玩家可能正在讀最後一句。直接關掉會把話截斷，
+        /// 但放著不管又會留下一個沒人負責關的框。折衷是「播完就收」。
+        /// </summary>
+        public void CloseWhenDrained()
+        {
+            if (!IsAnyOpen && pending.Count == 0)
+            {
+                dialogueBox?.Hide();
+                return;
+            }
+
+            closeAfterDrain = true;
+        }
+
+        /// <summary>
         /// 開啟容器 —— 走系統提示公版。
         /// 格式（「打開了 X。」「獲得了：…」）在 DialogueBoxUI 的 Inspector 調，不寫死在程式裡。
         /// </summary>
@@ -85,18 +120,37 @@ namespace EldritchMile.Core
                 return;
             }
 
-            if (IsAnyOpen)
+            // 開箱結果屬於結算內容 —— 自動推進，玩家不必再點
+            Enqueue(new PendingMessage
             {
-                // 已有訊息在顯示，轉成一般文字排隊（格式先組好）
-                Enqueue(new PendingMessage { body = BuildLootText(containerName, items), speaker = null });
-                return;
-            }
-
-            dialogueBox.ShowContainerOpened(containerName, items);
+                body = BuildLootText(containerName, items),
+                speaker = null,
+                autoAdvance = settlementAutoAdvance,
+            });
         }
 
         /// <summary>與 ShowText 相同，保留舊名稱以示語意：這則訊息不急，排在後面。</summary>
         public void QueueText(string content) => ShowText(content);
+
+        /// <summary>
+        /// 【即時替換，不排隊、不需點擊】把對話框正文直接換掉。
+        ///
+        /// 用於打牌環節的判定結果 —— C18③ 要求「即時反應」。
+        /// 若走一般的排隊流程，玩家每出一張牌就得點掉一則訊息才能出下一張，
+        /// 而 C18 的設計是連續嘗試，那樣會被打斷得很嚴重。
+        /// </summary>
+        public void ShowInstant(string content)
+        {
+            if (dialogueBox == null)
+            {
+                Warn(content);
+                return;
+            }
+
+            // 蓋掉排隊中的內容 —— 判定結果永遠是當下最該看到的東西
+            pending.Clear();
+            dialogueBox.ShowSystem(content);
+        }
 
         public void CloseAll()
         {
@@ -135,13 +189,23 @@ namespace EldritchMile.Core
 
                 if (string.IsNullOrEmpty(msg.speaker))
                 {
-                    dialogueBox.ShowSystem(msg.body);
+                    // 系統提示也可能帶特寫圖（借立繪位置）
+                    if (msg.portrait != null) dialogueBox.ShowSystem(msg.body, msg.portrait);
+                    else dialogueBox.ShowSystem(msg.body);
                 }
                 else
                 {
                     dialogueBox.ShowSpeech(msg.speaker, msg.body, msg.portrait);
                 }
+
+                dialogueBox.ScheduleAutoAdvance(msg.autoAdvance);
                 return;
+            }
+
+            if (closeAfterDrain)
+            {
+                closeAfterDrain = false;
+                dialogueBox?.Hide();
             }
 
             OnAllClosed?.Invoke();

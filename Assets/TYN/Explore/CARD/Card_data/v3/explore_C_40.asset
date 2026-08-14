@@ -10,16 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3de8ac28ae4c9ea479ebb7528c20d183, type: 3}
-  m_Name: explore_forward_80
+  m_Name: explore_C_40
   m_EditorClassIdentifier: Assembly-CSharp::CardDataExplore
-  cardId: explore_A_5
-  cardName: explore_forward_80
-  description: "<color=#000000>\u6A5F\u738780%</color> "
-  visualData: {fileID: 0}
+  cardId: explore_C_40
+  cardName: explore_C_40
+  description: "<color=#000000>C\u5C6C\u6027\u6A5F\u738740%</color> "
+  visualData: {fileID: 11400000, guid: 5049acea4cf8c4e48be736933ba9b0cf, type: 2}
   targetMode: 1
   baseCost: 0
   exhaust: 0
   ethereal: 0
   retain: 0
-  successProbability: 0.8
+  successProbability: 0.4
+  attribute: 3
   effects: []

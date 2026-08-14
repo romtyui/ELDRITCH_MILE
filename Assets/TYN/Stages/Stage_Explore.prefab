@@ -954,6 +954,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1125687408260626293}
   - component: {fileID: 7984980795381068321}
+  - component: {fileID: 4677082942379712021}
   m_Layer: 0
   m_Name: Stage_Explore
   m_TagString: Untagged
@@ -994,7 +995,36 @@ MonoBehaviour:
   roomLibrary: {fileID: 11400000, guid: e084caf92c615374b8e8565ba03b1c97, type: 2}
   exitTag: {fileID: 4453551890473637009}
   continueAskPanel: {fileID: 3421436478176035620}
-  encounter: {fileID: 0}
+  explorationDeck: {fileID: 4677082942379712021}
+  cardsPerEncounter: 5
+--- !u!114 &4677082942379712021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8572939326980691503}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e58c9f8ac31a59640a118b5b0e39288d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExplorationDeck
+  startingDeck:
+  - {fileID: 11400000, guid: 9cf10e01924a3a942827358fdd9f44c5, type: 2}
+  - {fileID: 11400000, guid: a30896da214d0344c8f5b544a07fe7c1, type: 2}
+  - {fileID: 11400000, guid: 8313a3fde9fde6b4995d0402cd528f3b, type: 2}
+  - {fileID: 11400000, guid: 68812a871eb8673458b72925a297b1ed, type: 2}
+  - {fileID: 11400000, guid: 15d7923be9ad7c74cae4db179d16d86c, type: 2}
+  - {fileID: 11400000, guid: b75c2fb856e9fc1479ec3493ae8353bf, type: 2}
+  - {fileID: 11400000, guid: 33dcb4d97a3b32d4bb8e8774dbbf17a3, type: 2}
+  - {fileID: 11400000, guid: cd2a4686fc72c0744b247a0f7e29202a, type: 2}
+  - {fileID: 11400000, guid: f309416836cedc342a9a6e4b319bc50c, type: 2}
+  - {fileID: 11400000, guid: 60b0e24b29b872647bbd0ea2d7e83448, type: 2}
+  - {fileID: 11400000, guid: deb5f17059dd83848b7f6d1218ea08ca, type: 2}
+  - {fileID: 11400000, guid: 6acf0b05977feeb439315c5b759bd810, type: 2}
+  - {fileID: 11400000, guid: dac83f70887dcdb4cbc67a93cebd1f78, type: 2}
+  - {fileID: 11400000, guid: 1bf63432e86ea724d88fc3f444a33e18, type: 2}
+  - {fileID: 11400000, guid: adba106958b080744a82d29cfa8458a7, type: 2}
 --- !u!1 &8594464936495762003
 GameObject:
   m_ObjectHideFlags: 0

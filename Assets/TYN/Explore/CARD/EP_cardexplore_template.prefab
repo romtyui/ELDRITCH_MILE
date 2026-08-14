@@ -224,10 +224,8 @@ GameObject:
   - component: {fileID: 1642369399234427315}
   - component: {fileID: 4101764242204955370}
   - component: {fileID: 7061152117717055133}
-  - component: {fileID: 6527062563422769323}
-  - component: {fileID: 6700992212427329717}
-  - component: {fileID: 886466029722763458}
   - component: {fileID: 7990279869557354020}
+  - component: {fileID: 7610830492503787267}
   m_Layer: 5
   m_Name: EP_cardexplore_template
   m_TagString: Untagged
@@ -308,52 +306,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &6527062563422769323
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6980322034624452678}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 688c35a53b65adb45ac77284d30d2744, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CardHoverUI
---- !u!114 &6700992212427329717
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6980322034624452678}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1423c03e6fbcda46acfcca76738d568, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
-  playThresholdPixels: 100
-  playThresholdY: 100
-  showPlayThresholdLine: 1
-  thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0}
-  thresholdLineHeight: 4
---- !u!114 &886466029722763458
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6980322034624452678}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c0c528d19493d247b7ad615e8bb926f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
-  targetRect: {fileID: 5874904220462938685}
-  preferredSide: 1
-  openMode: 0
-  stopEventPropagation: 0
-  entries: []
 --- !u!114 &7990279869557354020
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -372,10 +324,25 @@ MonoBehaviour:
   costText: {fileID: 0}
   descriptionText: {fileID: 0}
   defaultVisualData: {fileID: 11400000, guid: 0496ca94e40f1e14a870e770d19b6d9d, type: 2}
-  tooltipTrigger: {fileID: 886466029722763458}
+  tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 11400000, guid: 3aadaae2006dbaf43af6adb5281661c0, type: 2}
   keywordColor: '#FFD45A'
   cardTooltipSide: 3
+--- !u!114 &7610830492503787267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6980322034624452678}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b98f96f31977834fadcac9c68206901, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Explore.ExploreCardDrag
+  playThresholdPixels: 80
+  dragScale: 0.9
+  selectedLift: 70
 --- !u!1 &7359196310470104987
 GameObject:
   m_ObjectHideFlags: 0

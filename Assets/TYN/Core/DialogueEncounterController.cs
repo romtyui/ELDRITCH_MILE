@@ -21,6 +21,12 @@ namespace EldritchMile.Core
     /// </summary>
     public class DialogueEncounterController : MonoBehaviour
     {
+        /// <summary>
+        /// 常駐在 EventScene。因為手牌區與對話框是同一組構圖，兩者都住在場景裡，
+        /// 而 Stage prefab 無法在 Inspector 引用場景物件 —— 所以用單例讓 Stage 找得到。
+        /// </summary>
+        public static DialogueEncounterController Instance { get; private set; }
+
         [Header("衰減設定 (Q11 待定，先用線性)")]
         [Tooltip("勾選：每次衰減 1/手牌數，讓最後一張剛好接近 0。取消：使用下方固定值")]
         public bool decayScaledToHandSize = true;
@@ -43,11 +49,24 @@ namespace EldritchMile.Core
         /// 每次衰減扣掉多少。Q11 暫行做法：1 / 手牌總數。
         public float DecayStep { get; private set; } = 0.2f;
 
-        private readonly List<CardDataExplore> hand = new List<CardDataExplore>();
+        // ⚠️ 存 CardInstanceExplore 而非 CardDataExplore。
+        // 用 Data 的話，手上有兩張同名卡時 List.Remove 會移除「第一張符合的」，
+        // 玩家出了 B 卻消耗掉 A —— 在牌組會重複的卡牌遊戲裡這是必然會踩到的 bug。
+        private readonly List<CardInstanceExplore> hand = new List<CardInstanceExplore>();
         private readonly List<IProbabilityTarget> targets = new List<IProbabilityTarget>();
 
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(this);
+                return;
+            }
+            Instance = this;
+        }
+
         // ── 事件，供 UI 掛載 ──
-        public event Action<CardDataExplore, IProbabilityTarget, bool, float> OnCardResolved;
+        public event Action<CardInstanceExplore, IProbabilityTarget, bool, float> OnCardResolved;
         public event Action<IProbabilityTarget> OnPrimaryTargetChanged;
         public event Action OnHandChanged;
         public event Action OnEncounterEnded;
@@ -55,7 +74,7 @@ namespace EldritchMile.Core
         // ==========================================
         // 開始 / 結束
         // ==========================================
-        public void Begin(IReadOnlyList<CardDataExplore> startingHand, IReadOnlyList<IProbabilityTarget> encounterTargets)
+        public void Begin(IReadOnlyList<CardInstanceExplore> startingHand, IReadOnlyList<IProbabilityTarget> encounterTargets)
         {
             hand.Clear();
             targets.Clear();
@@ -143,7 +162,7 @@ namespace EldritchMile.Core
         /// 順序固定為 擲骰 → 消耗手牌 → 目標衰減 → 通知結果，不可顛倒
         /// （衰減若早於擲骰，這一張就會吃到自己造成的懲罰）。
         /// </summary>
-        public bool PlayCard(CardDataExplore card, IProbabilityTarget target)
+        public bool PlayCard(CardInstanceExplore card, IProbabilityTarget target)
         {
             if (!isActive)
             {
@@ -151,7 +170,7 @@ namespace EldritchMile.Core
                 return false;
             }
 
-            if (card == null) return false;
+            if (card == null || card.data == null) return false;
 
             // 已選定主要目標時，出牌一律作用在它身上
             IProbabilityTarget actual = PrimaryTarget ?? target;
@@ -164,7 +183,7 @@ namespace EldritchMile.Core
 
             if (!hand.Contains(card))
             {
-                Debug.LogWarning($"[打牌] {card.cardName} 不在手牌中");
+                Debug.LogWarning($"[打牌] {card.data.cardName} 不在手牌中");
                 return false;
             }
 
@@ -176,7 +195,7 @@ namespace EldritchMile.Core
 
             // 1. 擲骰
             float usedRate;
-            bool success = ProbabilityCheck.Instance.Roll(card, actual, out usedRate);
+            bool success = ProbabilityCheck.Instance.Roll(card.data, actual, out usedRate);
 
             // 2. 消耗手牌（C18⑤：出過的牌會消耗）
             hand.Remove(card);
@@ -201,7 +220,7 @@ namespace EldritchMile.Core
             return success;
         }
 
-        public IReadOnlyList<CardDataExplore> Hand => hand;
+        public IReadOnlyList<CardInstanceExplore> Hand => hand;
         public IReadOnlyList<IProbabilityTarget> Targets => targets;
     }
 }

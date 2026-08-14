@@ -63,12 +63,21 @@ namespace EldritchMile.Explore
                  "⚠️ 若圖本身已有不同轉向，建議把 SpawnSlot 的 Rotation Range 設成 0,0，避免又轉一次")]
         public System.Collections.Generic.List<VisualVariant> visualVariants = new System.Collections.Generic.List<VisualVariant>();
 
+        [Header("特寫圖")]
+        [Tooltip("互動時借用對話框的立繪位置顯示的放大圖。\n" +
+                 "冒險遊戲的慣例：把注意力從場景拉到「你正在處理的這個東西」上。\n" +
+                 "留空則不顯示，立繪位置維持空白")]
+        public Sprite closeUpSprite;
+
         [Header("游標 (C8)")]
         [Tooltip("滑過時是否顯示可抓取的手勢")]
         public bool showGrabCursor = true;
 
         protected bool hasInteracted;
         protected RoomController room;
+
+        /// 所屬的探索 Stage。房間生成在 Stage 底下，所以往上找得到。
+        protected ExploreStageController stage;
 
         public string DisplayName => displayName;
         public bool CanInteract => !(singleUse && hasInteracted);
@@ -83,10 +92,20 @@ namespace EldritchMile.Explore
         {
             room = GetComponentInParent<RoomController>();
             if (room != null) room.Register(this);
+
+            stage = GetComponentInParent<ExploreStageController>();
         }
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            // 兩段式出牌的第二段：手上有選取的卡就是要打在這，
+            // 不是要執行這個物件本來的互動（例如又跳一次「上了鎖」的提示）。
+            if (stage != null && this is IProbabilityTarget target &&
+                stage.TryPlaySelectedCardOn(target))
+            {
+                return;
+            }
+
             if (!CanInteract) return;
             Interact();
         }

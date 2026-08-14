@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,7 +38,16 @@ namespace EldritchMile.Explore
         public GameObject continueAskPanel;
 
         [Header("打牌環節 (C18)")]
-        public DialogueEncounterController encounter;
+        [Tooltip("手牌來源。牌組內容從 RunContext.exploreDeck 同步過來")]
+        public ExplorationDeck explorationDeck;
+
+        [Tooltip("每次開始打牌環節抽幾張。C18⑤：這個數字同時也是可嘗試的次數上限")]
+        [Min(1)] public int cardsPerEncounter = 5;
+
+        // 打牌環節的 UI 與規則引擎都常駐在 EventScene（手牌與對話框是同一組構圖），
+        // 而 prefab 無法在 Inspector 引用場景物件，所以執行時才解析。
+        private DialogueEncounterController Encounter => DialogueEncounterController.Instance;
+        private ExploreHandUI HandUI => ExploreHandUI.Instance;
 
         private GameObject currentRoom;
         private RoomController room;
@@ -46,6 +56,17 @@ namespace EldritchMile.Explore
         private UIPanel continueAskUI;
         private bool uiRefsResolved;
         private bool continueAskShown;
+
+        // 中途結束時保留的手牌，防止重抽（見 BeginEncounter 的說明）
+        private IProbabilityTarget suspendedTarget;
+        private readonly List<CardInstanceExplore> suspendedHand = new List<CardInstanceExplore>();
+
+        // 延後播報的開箱結果
+        private string pendingLootName;
+        private readonly List<string> pendingLoot = new List<string>();
+
+        /// 本次遭遇針對的目標（世界物件，非對話框裡的化身）
+        private IProbabilityTarget currentEncounterTarget;
 
         /// <summary>
         /// 統一走這裡開關詢問面板。三段 fallback：
@@ -96,7 +117,10 @@ namespace EldritchMile.Explore
                 return;
             }
 
+            SyncDeckFromRun();
             SpawnRoom(run.pendingNode);
+
+            HandUI?.Hide();
 
             continueAskShown = false;
             SetContinueAskVisible(false);
@@ -136,6 +160,32 @@ namespace EldritchMile.Explore
             yield break;
         }
 
+        /// <summary>
+        /// 把整場 run 的探索牌組灌進場上的 ExplorationDeck。
+        ///
+        /// 【為什麼要這一步】牌組的真相在 `RunContext.exploreDeck`（跨房間保存），
+        /// 而 `ExplorationDeck` 是每個 Stage prefab 自帶的執行期物件，會隨 Stage 生滅。
+        /// 不同步的話，玩家在前一個房間獲得的卡進不了下一個房間。
+        /// </summary>
+        private void SyncDeckFromRun()
+        {
+            if (explorationDeck == null || run == null) return;
+
+            if (run.exploreDeck.Count == 0)
+            {
+                // run 還沒有牌組（第一次進探索）→ 用 prefab 上設定的起始牌組當種子
+                run.exploreDeck.AddRange(explorationDeck.startingDeck);
+            }
+            else
+            {
+                explorationDeck.startingDeck.Clear();
+                explorationDeck.startingDeck.AddRange(run.exploreDeck);
+            }
+
+            explorationDeck.InitializeDeck();
+            Debug.Log($"[探索] 牌組同步完成：{explorationDeck.startingDeck.Count} 張");
+        }
+
         // ==========================================
         // 房間生成
         // ==========================================
@@ -172,15 +222,8 @@ namespace EldritchMile.Explore
         // ==========================================
         private void HandleRoomCleared()
         {
-            if (PopupService.Instance != null && PopupService.Instance.IsAnyOpen)
-            {
-                // 等玩家把當前彈窗關掉再問，避免蓋在一起
-                PopupService.Instance.OnAllClosed += AskContinueOnce;
-            }
-            else
-            {
-                ShowContinueAsk();
-            }
+            // 等待邏輯統一在 ShowContinueAsk 裡，這裡直接呼叫即可
+            ShowContinueAsk();
         }
 
         private void AskContinueOnce()
@@ -202,6 +245,24 @@ namespace EldritchMile.Explore
         public void ShowContinueAsk()
         {
             if (continueAskShown) return;   // 避免清空與點擊同時觸發跳兩次
+
+            // ⚠️ 不可以疊在對話框上面。
+            // 打牌結束後還有結果與獲得道具要播，這時跳確認面板會蓋住玩家正在讀的內容。
+            // 兩個入口（房間清空、點 ExitTag）都要等 —— 之前只有前者有等，
+            // 所以點 ExitTag 會直接疊上去。
+            bool busy = (PopupService.Instance != null && PopupService.Instance.IsAnyOpen)
+                     || (Encounter != null && Encounter.IsActive);
+
+            if (busy)
+            {
+                if (PopupService.Instance != null)
+                {
+                    PopupService.Instance.OnAllClosed -= AskContinueOnce;
+                    PopupService.Instance.OnAllClosed += AskContinueOnce;
+                }
+                return;
+            }
+
             continueAskShown = true;
             SetContinueAskVisible(true);
         }
@@ -219,6 +280,188 @@ namespace EldritchMile.Explore
             continueAskShown = false;
             SetContinueAskVisible(false);
             RequestExit();
+        }
+
+        // ==========================================
+        // C18：打牌環節
+        // ==========================================
+
+        /// <summary>
+        /// 開始一次打牌環節，對象是玩家點的那個目標。
+        ///
+        /// 【C18②⑤】從探索牌組抽 `cardsPerEncounter` 張。手牌數量同時就是
+        /// 「可以嘗試幾次」的上限，不需要另外設次數限制。
+        /// </summary>
+        public void BeginEncounter(IProbabilityTarget target, string promptText = null, Sprite closeUp = null)
+        {
+            if (Encounter == null)
+            {
+                Debug.LogWarning(
+                    "[探索] 場上找不到 DialogueEncounterController。\n" +
+                    "它應該常駐在 EventScene（與對話框、手牌區同一組），不是放在 Stage prefab 裡。"
+                );
+                return;
+            }
+
+            if (Encounter.IsActive) return;
+
+            if (!string.IsNullOrEmpty(promptText))
+            {
+                PopupService.Instance?.ShowText(promptText);
+            }
+
+            // 在對話框裡生成對象化身：卡片打在它身上、機率顯示在它頭上。
+            // 世界裡的寶箱維持狀態真相，但不再是拖曳目標 —— 它可能被遮住或位置不佳。
+            IProbabilityTarget encounterTarget = target;
+
+            DialogueBoxUI box = PopupService.Instance != null ? PopupService.Instance.dialogueBox : null;
+            if (box != null)
+            {
+                box.HoldOpen = true;   // 打牌期間點擊只推進文字，不關閉對話框
+
+                EncounterTargetView view = box.SpawnTargetView(target, closeUp);
+                if (view != null)
+                {
+                    encounterTarget = view;
+
+                    // 兩段式出牌的第二段：點大圖 = 把選取的卡打在它身上。
+                    // 世界裡的寶箱現在被壓黑層擋著，點不到也不該被點。
+                    view.OnClicked += HandleTargetViewClicked;
+                }
+            }
+
+            // ⚠️ 防止「點結束再點一次目標」來重抽手牌。
+            //
+            // 衰減本身已經限制了總嘗試次數（衰減記在目標上，不會因為重進而重置），
+            // 但重抽會讓玩家能一直換一手更好的屬性組合去試 —— 那等於繞過了
+            // 「這次遭遇你只有這幾張牌」的設計。
+            //
+            // 所以中途結束時手牌會被保留，同一個目標再進來就接著用剩下的。
+            var hand = new List<CardInstanceExplore>();
+
+            if (suspendedTarget == target && suspendedHand.Count > 0)
+            {
+                hand.AddRange(suspendedHand);
+                Debug.Log($"[打牌] 接續上次中斷的手牌：{hand.Count} 張");
+            }
+            else if (explorationDeck != null)
+            {
+                explorationDeck.DrawCards(cardsPerEncounter);
+                hand.AddRange(explorationDeck.Hand);
+            }
+
+            suspendedTarget = null;
+            suspendedHand.Clear();
+            currentEncounterTarget = target;
+
+            if (hand.Count == 0)
+            {
+                Debug.LogWarning("[探索] 牌組抽不到任何卡，打牌環節不會開始");
+                return;
+            }
+
+            // 先開手牌區再 Begin —— 手牌區在 Start 才訂閱事件，
+            // 順序反了就會漏掉第一次的 OnHandChanged，卡片畫不出來。
+            HandUI?.Show();
+
+            Encounter.OnEncounterEnded -= HandleEncounterEnded;
+            Encounter.OnEncounterEnded += HandleEncounterEnded;
+
+            // 目前一次只針對一個目標。Phase 6 的多選項對話會傳入整組選項。
+            Encounter.Begin(hand, new List<IProbabilityTarget> { encounterTarget });
+        }
+
+        /// <summary>
+        /// 兩段式出牌的第二段。互動物件被點擊時先問這裡 ——
+        /// 回傳 true 代表這次點擊已經當成出牌用掉了。
+        /// </summary>
+        /// <summary>
+        /// 由互動物件回報「這次開箱拿到什麼」，延後到打牌結束才播報。
+        /// 道具本身在成功當下就已經入袋，這裡只管播報時機。
+        /// </summary>
+        public void DeferLootReport(string containerName, List<string> items)
+        {
+            pendingLootName = containerName;
+            pendingLoot.Clear();
+            if (items != null) pendingLoot.AddRange(items);
+        }
+
+        private void HandleTargetViewClicked(EncounterTargetView view)
+        {
+            TryPlaySelectedCardOn(view);
+        }
+
+        public bool TryPlaySelectedCardOn(IProbabilityTarget target)
+        {
+            if (HandUI == null || Encounter == null || !Encounter.IsActive) return false;
+            return HandUI.TryPlaySelectedOn(target);
+        }
+
+        /// <summary>
+        /// C18⑥：玩家按下「結束」。
+        /// ⚠️ 只有玩家主動按、或手牌用盡才會結束 —— 判定成功**不會**自動結束，
+        /// 因為蓄意失敗是合法策略（C18⑦）。
+        /// </summary>
+        public void EndEncounter()
+        {
+            if (Encounter != null && Encounter.IsActive) Encounter.EndEncounter();
+        }
+
+        private void HandleEncounterEnded()
+        {
+            if (Encounter == null) return;
+
+            Encounter.OnEncounterEnded -= HandleEncounterEnded;
+
+            // 還有手牌沒出完 = 玩家按了結束中途離開 → 把剩下的存起來。
+            // 同一個目標再進來時接續使用，避免用「結束再點一次」重抽一手更好的牌。
+            // 手牌用盡才離開的話不留 —— 那次遭遇已經用完了。
+            if (Encounter.HasCardsLeft)
+            {
+                suspendedTarget = Encounter.PrimaryTarget ?? currentEncounterTarget;
+                suspendedHand.Clear();
+                suspendedHand.AddRange(Encounter.Hand);
+                Debug.Log($"[打牌] 中途結束，保留 {suspendedHand.Count} 張手牌");
+            }
+            else
+            {
+                suspendedTarget = null;
+                suspendedHand.Clear();
+            }
+
+            currentEncounterTarget = null;
+            HandUI?.Hide();
+
+            // 打牌期間壓下來的開箱結果，現在才播報
+            if (pendingLoot.Count > 0 || !string.IsNullOrEmpty(pendingLootName))
+            {
+                PopupService.Instance?.ShowLoot(pendingLootName, pendingLoot);
+                pendingLootName = null;
+                pendingLoot.Clear();
+            }
+
+            // 解除 HoldOpen，對話框才收得掉；對象大圖也一併移除
+            DialogueBoxUI box = PopupService.Instance != null ? PopupService.Instance.dialogueBox : null;
+            if (box != null)
+            {
+                box.HoldOpen = false;
+                box.ClearTargetViews();
+            }
+
+            // 結束打牌就收掉對話框 —— 但等排隊中的訊息（成功/失敗的後續）播完再收，
+            // 不會把玩家正在讀的最後一句截斷。內容是空的就立刻收。
+            PopupService.Instance?.CloseWhenDrained();
+
+            // 【關鍵】按「結束」本身就相當於在對話框上點一下：
+            //   · 成功 → 目前顯示「鎖開了」，推進一次就接到「獲得了…」
+            //   · 失敗 → 目前顯示「沒能撬開」，後面沒東西了，推進一次就關掉
+            // 沒有這一下的話，玩家按完結束還要再手動點一次才有反應，很像卡住。
+            // 用 AdvanceImmediate：文字還在打的時候按結束，也要一次做完，
+            // 不能只是「把字補完」然後又停在那裡等下一次點擊。
+            box?.AdvanceImmediate();
+
+            // Q13 暫行做法：環節結束就把剩下的手牌棄掉，下次重抽
+            if (explorationDeck != null) explorationDeck.DiscardHand();
         }
 
         // ==========================================

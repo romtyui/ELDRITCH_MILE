@@ -110,14 +110,9 @@ namespace EldritchMile.Core
             return Roll(card, target, out _);
         }
 
-        /// <summary>
-        /// 從卡片讀屬性。
-        /// 【Phase 4b】CardDataExplore 目前還沒有 attribute 欄位（它在保留/改寫清單中），
-        /// 待該階段加上後，把這裡改成 return card.attribute 即可。
-        /// </summary>
         private ExploreAttribute GetCardAttribute(CardDataExplore card)
         {
-            return ExploreAttribute.None;
+            return card != null ? card.attribute : ExploreAttribute.None;
         }
     }
 }

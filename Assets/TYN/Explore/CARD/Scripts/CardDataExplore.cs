@@ -29,6 +29,10 @@ public class CardDataExplore : ScriptableObject
     [Tooltip("這張卡牌在探索時使用的基礎成功機率 (0.0 = 0%, 1.0 = 100%)")]
     [Range(0f, 1f)]
     public float successProbability = 1.0f;
+
+    [Tooltip("C17：卡牌屬性。與互動目標的屬性查相剋表決定最終機率。\n" +
+             "相剋只會往下扣（1× / 0.5× / 0×），所以上面那個機率就是這張卡的上限")]
+    public EldritchMile.Core.ExploreAttribute attribute = EldritchMile.Core.ExploreAttribute.None;
     
     [Header("Exploration Effects")]
     public List<ExplorationCardEffectData> effects = new();

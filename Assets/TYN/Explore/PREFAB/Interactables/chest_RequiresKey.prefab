@@ -153,6 +153,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Explore.ChestInteractable
   displayName: "\u820A\u6728\u7BB1"
   singleUse: 1
+  afterInteract: 0
   targetRenderer: {fileID: 0}
   interactedSprite: {fileID: 21300000, guid: 406fc770f99e270498b50b59a3988cd0, type: 3}
   visualVariants: []
@@ -161,6 +162,7 @@ MonoBehaviour:
   requiredKeyId: key_warehouse
   lockedText: "\u9396\u4F4F\u4E86\u3002\u5F97\u5148\u627E\u5230\u9470\u5319\u3002"
   consumeKey: 1
+  checkPromptText: 
   lootItems: []
   grantedItemIds: []
   attribute: 0

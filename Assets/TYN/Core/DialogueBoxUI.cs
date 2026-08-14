@@ -45,6 +45,17 @@ namespace EldritchMile.Core
         [Tooltip("點擊推進的按鈕。建議是蓋住整個對話框的透明 Button")]
         public Button advanceButton;
 
+        [Header("打牌環節的對象大圖")]
+        [Tooltip("生成在 Portrait Root 底下的對象化身 prefab。\n" +
+                 "需含 Image（勾 Preserve Aspect）與機率標籤，掛 EncounterTargetView")]
+        public EncounterTargetView targetViewPrefab;
+
+        /// <summary>
+        /// 打牌期間為 true —— 點擊只推進文字，**不會關閉對話框**。
+        /// 因為對象大圖就在框裡，關掉的話玩家就沒有東西可以出牌了。
+        /// </summary>
+        public bool HoldOpen { get; set; }
+
         [Header("打字機")]
         [Tooltip("每秒顯示幾個字。設 0 = 不用打字機，直接全部顯示")]
         public float charsPerSecond = 40f;
@@ -82,6 +93,40 @@ namespace EldritchMile.Core
         public event System.Action OnAdvanced;
 
         private Coroutine typing;
+        private Coroutine autoAdvance;
+
+        /// <summary>
+        /// 排定自動推進：文字打完後等 seconds 秒自動 Advance()。
+        /// seconds <= 0 表示不自動，維持等玩家點擊。
+        ///
+        /// 用於「結束打牌 → 結算 → 獲得道具」這種連續播報 ——
+        /// 玩家已經按了結束，不該還要再點好幾下才看得完後續。
+        /// </summary>
+        public void ScheduleAutoAdvance(float seconds)
+        {
+            CancelAutoAdvance();
+            if (seconds <= 0f || !IsShowing) return;
+
+            autoAdvance = StartCoroutine(AutoAdvanceRoutine(seconds));
+        }
+
+        private IEnumerator AutoAdvanceRoutine(float seconds)
+        {
+            while (IsTyping) yield return null;              // 先讓字打完
+            yield return new WaitForSecondsRealtime(seconds); // 再給讀的時間
+
+            autoAdvance = null;
+            Advance();
+        }
+
+        private void CancelAutoAdvance()
+        {
+            if (autoAdvance != null)
+            {
+                StopCoroutine(autoAdvance);
+                autoAdvance = null;
+            }
+        }
 
         private void Awake()
         {
@@ -93,8 +138,13 @@ namespace EldritchMile.Core
         // 對外 API
         // ==========================================
 
-        /// <summary>系統提示：沒有說話者，用公版樣式。</summary>
-        public void ShowSystem(string message)
+        /// <summary>
+        /// 系統提示：沒有說話者，用公版樣式。
+        ///
+        /// closeUp 可選 —— 借立繪位置顯示互動對象的特寫圖（開箱、檢查物件時）。
+        /// 這是冒險遊戲的慣例：把注意力從整個場景拉到「你正在處理的這個東西」。
+        /// </summary>
+        public void ShowSystem(string message, Sprite closeUp = null)
         {
             Open();
 
@@ -102,7 +152,13 @@ namespace EldritchMile.Core
             if (nameBox != null) nameBox.SetActive(hasName);
             if (hasName && nameText != null) nameText.text = systemSpeakerName;
 
-            if (portraitRoot != null) portraitRoot.SetActive(false);
+            // 打牌期間立繪位置放的是對象大圖（SpawnTargetView 生成的），
+            // 後續訊息不可以把它關掉，否則玩家就沒有東西可以出牌了。
+            if (spawnedTargets.Count == 0)
+            {
+                if (portraitRoot != null) portraitRoot.SetActive(closeUp != null);
+                if (portraitImage != null && closeUp != null) portraitImage.sprite = closeUp;
+            }
 
             if (bodyText != null) bodyText.color = systemTextColor;
             SetBody(message);
@@ -116,8 +172,11 @@ namespace EldritchMile.Core
             if (nameBox != null) nameBox.SetActive(!string.IsNullOrEmpty(speaker));
             if (nameText != null) nameText.text = speaker;
 
-            if (portraitRoot != null) portraitRoot.SetActive(portrait != null);
-            if (portraitImage != null && portrait != null) portraitImage.sprite = portrait;
+            if (spawnedTargets.Count == 0)
+            {
+                if (portraitRoot != null) portraitRoot.SetActive(portrait != null);
+                if (portraitImage != null && portrait != null) portraitImage.sprite = portrait;
+            }
 
             if (bodyText != null) bodyText.color = speechTextColor;
             SetBody(message);
@@ -172,7 +231,10 @@ namespace EldritchMile.Core
         public void Hide()
         {
             StopTyping();
+            CancelAutoAdvance();
             IsShowing = false;
+            HoldOpen = false;
+            ClearTargetViews();
 
             if (root != null) root.SetActive(false);
             if (dimmer != null) dimmer.SetActive(false);
@@ -180,7 +242,11 @@ namespace EldritchMile.Core
 
         public void HideImmediate() => Hide();
 
-        /// <summary>點擊推進：文字還在跑就跳完，跑完了就關閉並通知。</summary>
+        /// <summary>
+        /// 點擊推進：文字還在跑就跳完，跑完了就通知（由 PopupService 決定播下一則或收掉）。
+        ///
+        /// HoldOpen 期間不關閉 —— 打牌時對象大圖就在框裡，關掉玩家就沒東西可打了。
+        /// </summary>
         public void Advance()
         {
             if (!IsShowing) return;
@@ -191,9 +257,66 @@ namespace EldritchMile.Core
                 return;
             }
 
-            Hide();
+            if (!HoldOpen) Hide();
             OnAdvanced?.Invoke();
         }
+
+        /// <summary>
+        /// 強制推進一格：文字還在跑就先補完，然後直接進到下一句（或關閉）。
+        ///
+        /// 與 Advance() 的差別：Advance() 在打字中只會「跳完文字」，
+        /// 得再點一次才會推進 —— 那是給玩家點擊用的正確行為。
+        /// 但「按結束」是一個明確的指令，玩家不會預期還要再點一下，
+        /// 所以這裡一次做完。
+        /// </summary>
+        public void AdvanceImmediate()
+        {
+            if (!IsShowing) return;
+
+            if (IsTyping) SkipTyping();
+            Advance();
+        }
+
+        // ==========================================
+        // 打牌環節的對象大圖
+        // ==========================================
+
+        /// <summary>
+        /// 在立繪位置生成一個對象化身，回傳它。卡片會打在這上面。
+        ///
+        /// 【為什麼用生成而不是直接換 character 的圖】立繪 Image 的尺寸與比例是為人物
+        /// 調好的，塞寶箱之類的圖會被拉伸。每次生成一個帶 Preserve Aspect 的新 Image，
+        /// 什麼比例的圖都不會變形。
+        /// </summary>
+        public EncounterTargetView SpawnTargetView(IProbabilityTarget source, Sprite closeUp)
+        {
+            if (targetViewPrefab == null || portraitRoot == null)
+            {
+                Debug.LogWarning("[對話框] 沒有指定 Target View Prefab 或 Portrait Root，無法顯示對象大圖");
+                return null;
+            }
+
+            ClearTargetViews();
+
+            portraitRoot.SetActive(true);
+
+            EncounterTargetView view = Instantiate(targetViewPrefab, portraitRoot.transform);
+            view.Bind(source, closeUp);
+            spawnedTargets.Add(view);
+
+            return view;
+        }
+
+        public void ClearTargetViews()
+        {
+            for (int i = 0; i < spawnedTargets.Count; i++)
+            {
+                if (spawnedTargets[i] != null) Destroy(spawnedTargets[i].gameObject);
+            }
+            spawnedTargets.Clear();
+        }
+
+        private readonly List<EncounterTargetView> spawnedTargets = new List<EncounterTargetView>();
 
         /// <summary>
         /// 開啟對話框並回到「純文字」狀態。
@@ -217,6 +340,9 @@ namespace EldritchMile.Core
 
         private void SetBody(string message)
         {
+            // 換內容就取消上一則排定的自動推進，否則新句子會被舊計時器提早跳掉
+            CancelAutoAdvance();
+
             if (bodyText == null)
             {
                 Debug.LogWarning($"[對話框] 沒有指定 Body Text，內容只能印出來：{message}");

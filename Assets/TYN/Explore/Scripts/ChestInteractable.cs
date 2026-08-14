@@ -40,6 +40,10 @@ namespace EldritchMile.Explore
         [Tooltip("開鎖成功後是否消耗鑰匙")]
         public bool consumeKey = false;
 
+        [Tooltip("RequiresCheck 時，開始打牌環節前顯示的提示")]
+        [TextArea(2, 3)]
+        public string checkPromptText = "上了鎖。也許能用點手段撬開。";
+
         [Header("內容物")]
         public List<string> lootItems = new List<string>();
 
@@ -65,16 +69,21 @@ namespace EldritchMile.Explore
             CurrentDecayMultiplier = Mathf.Max(0f, CurrentDecayMultiplier - step);
         }
 
+        [Header("判定結果文字 (C18③)")]
+        [Tooltip("判定成功時即時顯示的一句話")]
+        [TextArea(2, 3)]
+        public string successText = "鎖「喀」地一聲鬆開了。";
+
+        [Tooltip("判定失敗時即時顯示的一句話")]
+        [TextArea(2, 3)]
+        public string failText = "沒能撬開。鎖紋風不動。";
+
         public void OnCheckResult(bool success, float usedRate)
         {
-            if (success)
-            {
-                Open();
-            }
-            else
-            {
-                PopupService.Instance?.ShowText($"「{displayName}」沒能打開…");
-            }
+            // C18③：即時替換對話框正文，不排隊、不需點擊 —— 玩家可以馬上出下一張
+            PopupService.Instance?.ShowInstant(success ? successText : failText);
+
+            if (success) Open();
         }
 
         public void ShowPreview(float rate, Effectiveness eff)
@@ -121,9 +130,16 @@ namespace EldritchMile.Explore
                     break;
 
                 case OpenMode.RequiresCheck:
-                    // 判定由打牌環節驅動（玩家把機率卡拖到這個目標上），
-                    // 直接點擊只提示，不自動擲骰。
-                    PopupService.Instance?.ShowText("上了鎖。也許能用點手段撬開。");
+                    // C18：點擊只是「開始打牌環節」，不會自動擲骰。
+                    // 實際判定要玩家把機率卡拖到這個目標上，而且可以連續嘗試。
+                    if (stage != null)
+                    {
+                        stage.BeginEncounter(this, checkPromptText, closeUpSprite);
+                    }
+                    else
+                    {
+                        PopupService.Instance?.ShowText(checkPromptText);
+                    }
                     break;
             }
         }
@@ -132,12 +148,27 @@ namespace EldritchMile.Explore
         {
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
 
+            // 道具立刻入袋（狀態不能延後，否則中途離開會遺失）
             if (run != null)
             {
                 foreach (string id in grantedItemIds) run.AddItem(id);
             }
 
-            PopupService.Instance?.ShowLoot(displayName, lootItems);
+            // 但「獲得了什麼」的**播報**要等打牌環節結束。
+            // 打牌期間畫面焦點在大圖與手牌，中途跳出道具清單會打斷節奏，
+            // 而且玩家可能還想繼續出牌（C18⑦）。
+            bool duringEncounter = DialogueEncounterController.Instance != null
+                                && DialogueEncounterController.Instance.IsActive;
+
+            if (duringEncounter && stage != null)
+            {
+                stage.DeferLootReport(displayName, lootItems);
+            }
+            else
+            {
+                PopupService.Instance?.ShowLoot(displayName, lootItems);
+            }
+
             MarkDone();
         }
     }
