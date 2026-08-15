@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 #if UNITY_EDITOR
@@ -65,7 +65,7 @@ public class AllCardDatabase : ScriptableObject
         EditorUtility.SetDirty(this);
         AssetDatabase.SaveAssets();
 
-        Debug.Log($"[AllCardDatabase] ¤w¦¬¶°©Ò¦³ CardData¡A¼Æ¶q = {cards.Count}");
+        Debug.Log($"[AllCardDatabase] å·²æ”¶é›†æ‰€æœ‰ CardDataï¼Œæ•¸é‡ = {cards.Count}");
     }
 
     [ContextMenu("Editor/Sort By Name")]

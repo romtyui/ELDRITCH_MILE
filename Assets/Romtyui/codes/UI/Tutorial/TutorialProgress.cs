@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public static class TutorialProgress
 {
@@ -20,7 +20,7 @@ public static class TutorialProgress
         PlayerPrefs.SetInt(BuildKey(tutorialId), 1);
         PlayerPrefs.Save();
 
-        Debug.Log($"[TutorialProgress] §¹¦¨±Ğ¾Ç¡G{tutorialId}");
+        Debug.Log($"[TutorialProgress] å®Œæˆæ•™å­¸ï¼š{tutorialId}");
     }
 
     public static void ResetTutorial(string tutorialId)
@@ -31,7 +31,7 @@ public static class TutorialProgress
         PlayerPrefs.DeleteKey(BuildKey(tutorialId));
         PlayerPrefs.Save();
 
-        Debug.Log($"[TutorialProgress] ­«¸m±Ğ¾Ç¡G{tutorialId}");
+        Debug.Log($"[TutorialProgress] é‡ç½®æ•™å­¸ï¼š{tutorialId}");
     }
 
     private static string BuildKey(string tutorialId)

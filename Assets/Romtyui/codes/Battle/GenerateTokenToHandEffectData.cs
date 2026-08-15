@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Effects/Token/Generate Token To Hand")]
 public class GenerateTokenToHandEffectData : CardEffectData
@@ -16,18 +16,18 @@ public class GenerateTokenToHandEffectData : CardEffectData
 
         if (tokenCardData == null)
         {
-            Debug.LogWarning("[GenerateTokenToHandEffectData] tokenCardData ¨S¦³«ü©w");
+            Debug.LogWarning("[GenerateTokenToHandEffectData] tokenCardData æ²’æœ‰æŒ‡å®š");
             return;
         }
 
         if (!tokenCardData.isToken)
         {
-            Debug.LogWarning($"[GenerateTokenToHandEffectData] {tokenCardData.cardName} ¨S¦³¤Ä isToken");
+            Debug.LogWarning($"[GenerateTokenToHandEffectData] {tokenCardData.cardName} æ²’æœ‰å‹¾ isToken");
         }
 
         if (!tokenCardData.retain)
         {
-            Debug.LogWarning($"[GenerateTokenToHandEffectData] {tokenCardData.cardName} ¨S¦³¤Ä retain¡A¦^¦Xµ²§ô·|³Q±ó±¼");
+            Debug.LogWarning($"[GenerateTokenToHandEffectData] {tokenCardData.cardName} æ²’æœ‰å‹¾ retainï¼Œå›åˆçµæŸæœƒè¢«æ£„æ‰");
         }
 
         for (int i = 0; i < amount; i++)
@@ -35,6 +35,6 @@ public class GenerateTokenToHandEffectData : CardEffectData
             context.battleManager.AddCardToHand(tokenCardData);
         }
 
-        Debug.Log($"[Token] ¥Í¦¨ {amount} ±i Token ¨ì¤âµP¡G{tokenCardData.cardName}");
+        Debug.Log($"[Token] ç”Ÿæˆ {amount} å¼µ Token åˆ°æ‰‹ç‰Œï¼š{tokenCardData.cardName}");
     }
 }

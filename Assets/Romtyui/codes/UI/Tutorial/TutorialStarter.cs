@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class TutorialStarter : MonoBehaviour
@@ -15,8 +15,8 @@ public class TutorialStarter : MonoBehaviour
     public int waitFrames = 1;
     public float delaySeconds = 0f;
     /*
-     * Á×§K¨C¦¸ª±®a¦^¦X©âµP§¹¦¨«á¡A
-     * ³£­«·s±Ò°Ê¦P¤@­Ó±Ð¾Ç¡C
+     * é¿å…æ¯æ¬¡çŽ©å®¶å›žåˆæŠ½ç‰Œå®Œæˆå¾Œï¼Œ
+     * éƒ½é‡æ–°å•Ÿå‹•åŒä¸€å€‹æ•™å­¸ã€‚
      */
     private bool hasRequestedTutorial;
 
@@ -48,13 +48,13 @@ public class TutorialStarter : MonoBehaviour
     {
         if (sequence == null)
         {
-            Debug.LogWarning("[TutorialStarter] sequence ¨S¦³«ü©w", this);
+            Debug.LogWarning("[TutorialStarter] sequence æ²’æœ‰æŒ‡å®š", this);
             return;
         }
 
         if (TutorialManager.Instance == null)
         {
-            Debug.LogWarning("[TutorialStarter] ³õ´º¤¤§ä¤£¨ì TutorialManager", this);
+            Debug.LogWarning("[TutorialStarter] å ´æ™¯ä¸­æ‰¾ä¸åˆ° TutorialManager", this);
             return;
         }
 
@@ -67,8 +67,8 @@ public class TutorialStarter : MonoBehaviour
     private void Start()
     {
         /*
-         * OnEnable °õ¦æ®É¡ABattleManager ¥i¯àÁÙ¨S·Ç³Æ¦n¡C
-         * Start ¦A¸É¸j¤@¦¸¡C
+         * OnEnable åŸ·è¡Œæ™‚ï¼ŒBattleManager å¯èƒ½é‚„æ²’æº–å‚™å¥½ã€‚
+         * Start å†è£œç¶ä¸€æ¬¡ã€‚
          */
         TryBindBattleManager();
     }
@@ -100,7 +100,7 @@ public class TutorialStarter : MonoBehaviour
         if (battleManager == null)
         {
             Debug.LogWarning(
-                "[TutorialStarter] ³õ´º¤¤§ä¤£¨ì BattleManager",
+                "[TutorialStarter] å ´æ™¯ä¸­æ‰¾ä¸åˆ° BattleManager",
                 this
             );
 
@@ -108,7 +108,7 @@ public class TutorialStarter : MonoBehaviour
         }
 
         /*
-         * ¥ý²¾°£¦A¥[¤J¡AÁ×§K­«½Æ­q¾\¡C
+         * å…ˆç§»é™¤å†åŠ å…¥ï¼Œé¿å…é‡è¤‡è¨‚é–±ã€‚
          */
         battleManager.PlayerInputReady -=
             HandlePlayerInputReady;
@@ -119,14 +119,14 @@ public class TutorialStarter : MonoBehaviour
     private void HandlePlayerInputReady()
     {
         /*
-         * «O¯d­ì¥» Play On Start ªº±±¨î¡C
+         * ä¿ç•™åŽŸæœ¬ Play On Start çš„æŽ§åˆ¶ã€‚
          */
         if (!playOnStart)
             return;
 
         /*
-         * PlayerInputReady ¨C­Óª±®a¦^¦X³£¥i¯àÄ²µo¡A
-         * ¦ý³o­Ó Starter ¥u¦Û°Ê½Ð¨D¤@¦¸¡C
+         * PlayerInputReady æ¯å€‹çŽ©å®¶å›žåˆéƒ½å¯èƒ½è§¸ç™¼ï¼Œ
+         * ä½†é€™å€‹ Starter åªè‡ªå‹•è«‹æ±‚ä¸€æ¬¡ã€‚
          */
         if (hasRequestedTutorial)
             return;
@@ -148,8 +148,8 @@ public class TutorialStarter : MonoBehaviour
     private IEnumerator PlayAfterPlayerReadyRoutine()
     {
         /*
-         * «O¯d­ì¥» Wait Frames ¥\¯à¡C
-         * ¦ý²{¦b§ï¦¨©âµP§¹¦¨«á¤~¶}©lµ¥«Ý¡C
+         * ä¿ç•™åŽŸæœ¬ Wait Frames åŠŸèƒ½ã€‚
+         * ä½†ç¾åœ¨æ”¹æˆæŠ½ç‰Œå®Œæˆå¾Œæ‰é–‹å§‹ç­‰å¾…ã€‚
          */
         int finalWaitFrames =
             Mathf.Max(0, waitFrames);
@@ -162,8 +162,8 @@ public class TutorialStarter : MonoBehaviour
         }
 
         /*
-         * «O¯d­ì¥» Delay Seconds ¥\¯à¡C
-         * ¨Ï¥Î Realtime¡A¤£¨ü Time.timeScale ¼vÅT¡C
+         * ä¿ç•™åŽŸæœ¬ Delay Seconds åŠŸèƒ½ã€‚
+         * ä½¿ç”¨ Realtimeï¼Œä¸å— Time.timeScale å½±éŸ¿ã€‚
          */
         if (delaySeconds > 0f)
         {

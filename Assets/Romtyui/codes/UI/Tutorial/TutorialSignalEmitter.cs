@@ -1,10 +1,10 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class TutorialSignalEmitter :
     MonoBehaviour
 {
     [Header("Signal")]
-    [Tooltip("¥²¶·»P TutorialStepData.requiredSignal ¬Û¦P")]
+    [Tooltip("å¿…é ˆèˆ‡ TutorialStepData.requiredSignal ç›¸åŒ")]
     public string signalId;
 
     [Header("Debug")]
@@ -24,7 +24,7 @@ public class TutorialSignalEmitter :
         {
             Debug.LogWarning(
                 $"[TutorialSignalEmitter] " +
-                $"{gameObject.name} ¨S¦³ Signal ID",
+                $"{gameObject.name} æ²’æœ‰ Signal ID",
                 this
             );
 
@@ -38,7 +38,7 @@ public class TutorialSignalEmitter :
         {
             Debug.Log(
                 $"[TutorialSignalEmitter] " +
-                $"{gameObject.name} µo°e¡G" +
+                $"{gameObject.name} ç™¼é€ï¼š" +
                 $"{finalSignal}",
                 this
             );

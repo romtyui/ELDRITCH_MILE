@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,10 +26,10 @@ public class TooltipUI : MonoBehaviour
     public Vector2 screenPadding = new Vector2(20f, 20f);
 
     [Header("Clamp")]
-    [Tooltip("�O�_�j���� Tooltip �d�b Canvas �e����")]
+    [Tooltip("是否強制讓 Tooltip 留在 Canvas 畫面內")]
     public bool clampToCanvas = true;
 
-    [Tooltip("��ܮɬO�_�j��ץ� container �� Anchor / Pivot�C��ĳ���}")]
+    [Tooltip("顯示時是否強制修正 container 的 Anchor / Pivot。建議打開")]
     public bool forceTopLeftPivot = true;
 
     private Canvas rootCanvas;
@@ -70,13 +70,13 @@ public class TooltipUI : MonoBehaviour
         if (!forceTopLeftPivot)
             return;
 
-        // �o�̫ܭ��n�G
-        // Reposition() ��X�Ӫ���m�O�u�H Canvas ���߬����I�v�� local position�C
-        // �ҥH container �� anchor �n�T�w�b Canvas ���ߡC
+        // 這裡很重要：
+        // Reposition() 算出來的位置是「以 Canvas 中心為原點」的 local position。
+        // 所以 container 的 anchor 要固定在 Canvas 中心。
         container.anchorMin = new Vector2(0.5f, 0.5f);
         container.anchorMax = new Vector2(0.5f, 0.5f);
 
-        // �� anchoredPosition �N�� Tooltip ���W����m�C
+        // 讓 anchoredPosition 代表 Tooltip 左上角位置。
         container.pivot = new Vector2(0f, 1f);
     }
 
@@ -196,7 +196,7 @@ public class TooltipUI : MonoBehaviour
         float targetCenterY = (targetBounds.min.y + targetBounds.max.y) * 0.5f;
         float tooltipHalfHeight = tooltipSize.y * 0.5f;
 
-        // �]�� container pivot �O���W���A�ҥH�o�Ǧ�m���O Tooltip ���W���y�СC
+        // 因為 container pivot 是左上角，所以這些位置都是 Tooltip 左上角座標。
 
         Vector2 leftPos = new Vector2(
             targetBounds.min.x - tooltipSize.x - sideOffset.x,
@@ -304,7 +304,7 @@ public class TooltipUI : MonoBehaviour
         float minY = rect.yMin + size.y + screenPadding.y;
         float maxY = rect.yMax - screenPadding.y;
 
-        // �p�G Tooltip �Ӥj�A�קK Mathf.Clamp min > max �ɭP��m���`�C
+        // 如果 Tooltip 太大，避免 Mathf.Clamp min > max 導致位置異常。
         if (maxX < minX)
             maxX = minX;
 

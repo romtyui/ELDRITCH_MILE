@@ -1,4 +1,4 @@
-//using UnityEngine;
+ï»¿//using UnityEngine;
 
 //public class DrawAnimationEventRelay : MonoBehaviour
 //{
@@ -8,7 +8,7 @@
 //    {
 //        if (handUIController == null)
 //        {
-//            Debug.LogWarning("[DrawAnimationEventRelay] handUIController ¨S¦³«ü©w");
+//            Debug.LogWarning("[DrawAnimationEventRelay] handUIController æ²’æœ‰æŒ‡å®š");
 //            return;
 //        }
 

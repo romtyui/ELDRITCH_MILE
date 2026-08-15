@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -100,11 +100,11 @@ public class TutorialUI :
     public TMP_Text conditionProgressText;
 
     [Header("Text")]
-    public string nextText = "¤U¤@¨B";
+    public string nextText = "ä¸‹ä¸€æ­¥";
 
-    public string finishText = "§¹¦¨";
+    public string finishText = "å®Œæˆ";
 
-    [Header("¹ï¸Ü")]
+    [Header("å°è©±")]
 
     private Coroutine dialogueTypewriterCoroutine;
 
@@ -502,7 +502,7 @@ public class TutorialUI :
         );
 
         conditionProgressText.text =
-            $"¾Þ§@¶i«×¡G{current}/{required}";
+            $"æ“ä½œé€²åº¦ï¼š{current}/{required}";
     }
 
     public void ClearConditionProgress()
@@ -1067,7 +1067,7 @@ public class TutorialUI :
         if (dialogueText == null)
         {
             Debug.LogWarning(
-                "[TutorialUI] Dialogue Text ¨S¦³¸j©w",
+                "[TutorialUI] Dialogue Text æ²’æœ‰ç¶å®š",
                 this
             );
 
@@ -1280,7 +1280,7 @@ public class TutorialUI :
         if (portrait == null)
         {
             Debug.LogWarning(
-                $"[TutorialUI] §ä¤£¨ì¥ßÃ¸¼Ë¦¡¡G" +
+                $"[TutorialUI] æ‰¾ä¸åˆ°ç«‹ç¹ªæ¨£å¼ï¼š" +
                 $"{currentDialogueLine.speaker.displayName} / " +
                 $"{styleId}",
                 currentDialogueLine.speaker
@@ -1438,7 +1438,7 @@ public class TutorialUI :
         if (portrait == null)
         {
             Debug.LogWarning(
-                $"[TutorialUI] Speaker ¨S¦³¥i¥Î¥ßÃ¸¡G" +
+                $"[TutorialUI] Speaker æ²’æœ‰å¯ç”¨ç«‹ç¹ªï¼š" +
                 $"{line.speaker.displayName}",
                 line.speaker
             );
@@ -1494,10 +1494,10 @@ public class TutorialUI :
     public void PrepareDialogueVisuals()
     {
         /*
-         * ¤W¤@­Ó WaitForSignal ¨BÆJ¥i¯à¦]¬°ª±®a¶}©l¾Þ§@¡A
-         * ©I¥s HideWaitInteractionVisuals() Ãö³¬¤F¶Â©³¡C
+         * ä¸Šä¸€å€‹ WaitForSignal æ­¥é©Ÿå¯èƒ½å› ç‚ºçŽ©å®¶é–‹å§‹æ“ä½œï¼Œ
+         * å‘¼å« HideWaitInteractionVisuals() é—œé–‰äº†é»‘åº•ã€‚
          *
-         * ·s¨BÆJ¶i¤J¤@¯ë¹ï¸Ü®É¡A­n§â¶Â©³­«·s¶}±Ò¡C
+         * æ–°æ­¥é©Ÿé€²å…¥ä¸€èˆ¬å°è©±æ™‚ï¼Œè¦æŠŠé»‘åº•é‡æ–°é–‹å•Ÿã€‚
          */
         if (overlayImage != null)
         {
@@ -1768,7 +1768,7 @@ public class TutorialUI :
             spaceRight >= requiredLeftRight;
 
         /*
-         * Àu¥ý¿ï¾Ü§¹¾ã©ñ±o¤Uªº¦ì¸m¡C
+         * å„ªå…ˆé¸æ“‡å®Œæ•´æ”¾å¾—ä¸‹çš„ä½ç½®ã€‚
          */
         if (canBottom)
             return TutorialDialogPosition.Bottom;
@@ -1783,9 +1783,9 @@ public class TutorialUI :
             return TutorialDialogPosition.Left;
 
         /*
-         * ¥|­Ó¤è¦V³£©ñ¤£¤U®É¡A
-         * ¿ï¾Ü³Ñ¾lªÅ¶¡³Ì¤jªº¤è¦V¡A
-         * ³Ì«áÁÙ·|¦A Clamp ¦^¿Ã¹õ¤º¡C
+         * å››å€‹æ–¹å‘éƒ½æ”¾ä¸ä¸‹æ™‚ï¼Œ
+         * é¸æ“‡å‰©é¤˜ç©ºé–“æœ€å¤§çš„æ–¹å‘ï¼Œ
+         * æœ€å¾Œé‚„æœƒå† Clamp å›žèž¢å¹•å…§ã€‚
          */
         float largestSpace = spaceBottom;
 
@@ -1851,8 +1851,8 @@ public class TutorialUI :
             screenPadding.y;
 
         /*
-         * ¹ï¸Ü®Ø¤ñ¾ã­Óµe­±ÁÙ¤j®É¡A
-         * Á×§K Mathf.Clamp ªº min ¤j©ó max¡C
+         * å°è©±æ¡†æ¯”æ•´å€‹ç•«é¢é‚„å¤§æ™‚ï¼Œ
+         * é¿å… Mathf.Clamp çš„ min å¤§æ–¼ maxã€‚
          */
         if (minX > maxX)
         {

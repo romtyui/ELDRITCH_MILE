@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class BattleManagerEnableWatcher : MonoBehaviour
 {
@@ -49,17 +49,17 @@ public class BattleManagerEnableWatcher : MonoBehaviour
 
         if (battleManager == null)
         {
-            Debug.LogWarning("[BattleManagerEnableWatcher] BattleManager ¨S¦³«ü©w");
+            Debug.LogWarning("[BattleManagerEnableWatcher] BattleManager æ²’æœ‰æŒ‡å®š");
             return;
         }
 
         if (battleManager.autoStartNextBattleOnWin)
         {
-            Debug.Log("[BattleManagerEnableWatcher] autoStartNextBattleOnWin = true¡A¤£¨Ï¥Î¥~³¡ Enable ­«¶}¾Ô°«");
+            Debug.Log("[BattleManagerEnableWatcher] autoStartNextBattleOnWin = trueï¼Œä¸ä½¿ç”¨å¤–éƒ¨ Enable é‡é–‹æˆ°é¬¥");
             return;
         }
 
-        Debug.Log("[BattleManagerEnableWatcher] °»´ú¨ì BattleManager ±qÃö³¬ÅÜ¶}±Ò¡A¶}©l¤U¤@³õ¾Ô°«");
+        Debug.Log("[BattleManagerEnableWatcher] åµæ¸¬åˆ° BattleManager å¾é—œé–‰è®Šé–‹å•Ÿï¼Œé–‹å§‹ä¸‹ä¸€å ´æˆ°é¬¥");
 
         battleManager.StartNextBattleKeepHpSanAndDeck();
     }

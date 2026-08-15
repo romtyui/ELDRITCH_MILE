@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Effects/Gain Temporary Strength")]
 public class GainTemporaryStrengthEffectData : CardEffectData
@@ -12,6 +12,6 @@ public class GainTemporaryStrengthEffectData : CardEffectData
 
         context.source.ApplyStatus(StatusType.TemporaryStrength, amount);
 
-        Debug.Log($"{context.source.unitName} Àò±oÁ{®É¤O¶q {amount}");
+        Debug.Log($"{context.source.unitName} ç²å¾—è‡¨æ™‚åŠ›é‡ {amount}");
     }
 }

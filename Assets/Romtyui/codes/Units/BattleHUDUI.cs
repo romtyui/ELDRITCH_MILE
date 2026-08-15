@@ -1,4 +1,4 @@
-using TMPro;
+ï»¿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,22 +17,22 @@ public class BattleHUDUI : MonoBehaviour
     public TMP_Text maxEnergyText;
 
     [Header("Block UI")]
-    [Tooltip("¾ã­ÓÅ@¬Ş UI Root¡A«ØÄ³¬O¥]§t Image ©M Text ªº¤÷ª«¥ó")]
+    [Tooltip("æ•´å€‹è­·ç›¾ UI Rootï¼Œå»ºè­°æ˜¯åŒ…å« Image å’Œ Text çš„çˆ¶ç‰©ä»¶")]
     public GameObject blockRoot;
 
-    [Tooltip("Å@¬Ş¹Ï¤ù")]
+    [Tooltip("è­·ç›¾åœ–ç‰‡")]
     public Image blockImage;
 
-    [Tooltip("Å@¬Ş¼Æ­È¤å¦r")]
+    [Tooltip("è­·ç›¾æ•¸å€¼æ–‡å­—")]
     public TMP_Text blockText;
 
-    [Tooltip("¨S¦³Å@¬Ş®É¬O§_ÁôÂÃ¾ã­ÓÅ@¬Ş UI")]
+    [Tooltip("æ²’æœ‰è­·ç›¾æ™‚æ˜¯å¦éš±è—æ•´å€‹è­·ç›¾ UI")]
     public bool hideBlockWhenZero = true;
 
-    [Tooltip("Å@¬Ş¤å¦r«eºó¡A¨Ò¦pªÅ¦r¦ê¡B¬Ş¡BBlock")]
+    [Tooltip("è­·ç›¾æ–‡å­—å‰ç¶´ï¼Œä¾‹å¦‚ç©ºå­—ä¸²ã€ç›¾ã€Block")]
     public string blockTextPrefix = "";
 
-    [Tooltip("Å@¬Ş¤å¦r«áºó")]
+    [Tooltip("è­·ç›¾æ–‡å­—å¾Œç¶´")]
     public string blockTextSuffix = "";
 
     private void OnEnable()
@@ -90,7 +90,7 @@ public class BattleHUDUI : MonoBehaviour
     {
         if (battleUnit == null)
         {
-            Debug.LogWarning("[BattleHUDUI] battleUnit ¨S¦³«ü©w");
+            Debug.LogWarning("[BattleHUDUI] battleUnit æ²’æœ‰æŒ‡å®š");
             RefreshBlock();
             return;
         }
@@ -108,7 +108,7 @@ public class BattleHUDUI : MonoBehaviour
     {
         if (energySystem == null)
         {
-            Debug.LogWarning("[BattleHUDUI] energySystem ¨S¦³«ü©w");
+            Debug.LogWarning("[BattleHUDUI] energySystem æ²’æœ‰æŒ‡å®š");
             return;
         }
 

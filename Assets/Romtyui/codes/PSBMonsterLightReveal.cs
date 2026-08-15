@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -42,19 +42,19 @@ public class PSBMonsterLightReveal : MonoBehaviour
     [Range(0f, 1f)]
     public float lightPower = 1f;
 
-    [Tooltip("lightPower = 0 ®É¡A´¶³q«¬ºA³Ì§C³z©ú«×")]
+    [Tooltip("lightPower = 0 æ™‚ï¼Œæ™®é€šå‹æ…‹æœ€ä½é€æ˜åº¦")]
     [Range(0f, 1f)]
     public float minNormalAlpha = 0f;
 
-    [Tooltip("lightPower = 1 ®É¡A´¶³q«¬ºA³Ì°ª³z©ú«×")]
+    [Tooltip("lightPower = 1 æ™‚ï¼Œæ™®é€šå‹æ…‹æœ€é«˜é€æ˜åº¦")]
     [Range(0f, 1f)]
     public float maxNormalAlpha = 1f;
 
-    [Tooltip("lightPower = 0 ®É¡A¶Â·t«¬ºA³Ì°ª³z©ú«×")]
+    [Tooltip("lightPower = 0 æ™‚ï¼Œé»‘æš—å‹æ…‹æœ€é«˜é€æ˜åº¦")]
     [Range(0f, 1f)]
     public float maxDarkAlpha = 1f;
 
-    [Tooltip("lightPower = 1 ®É¡A¶Â·t«¬ºA³Ì§C³z©ú«×")]
+    [Tooltip("lightPower = 1 æ™‚ï¼Œé»‘æš—å‹æ…‹æœ€ä½é€æ˜åº¦")]
     [Range(0f, 1f)]
     public float minDarkAlpha = 0f;
 
@@ -117,7 +117,7 @@ public class PSBMonsterLightReveal : MonoBehaviour
     {
         if (normalRoot == null && darkRoot == null)
         {
-            Debug.LogWarning("[PSBMonsterLightReveal] normalRoot ©M darkRoot ³£¬O null¡AµLªkµù¥U©Çª«");
+            Debug.LogWarning("[PSBMonsterLightReveal] normalRoot å’Œ darkRoot éƒ½æ˜¯ nullï¼Œç„¡æ³•è¨»å†Šæ€ªç‰©");
             return;
         }
 
@@ -126,14 +126,14 @@ public class PSBMonsterLightReveal : MonoBehaviour
         if (existing != null)
         {
             existing.RefreshRenderers();
-            Debug.Log($"[PSBMonsterLightReveal] ¤w¦s¦b¡A¨ê·s©Çª« roots¡Gnormal = {GetName(normalRoot)}, dark = {GetName(darkRoot)}");
+            Debug.Log($"[PSBMonsterLightReveal] å·²å­˜åœ¨ï¼Œåˆ·æ–°æ€ªç‰© rootsï¼šnormal = {GetName(normalRoot)}, dark = {GetName(darkRoot)}");
             return;
         }
 
         MonsterRevealTarget target = new MonsterRevealTarget(normalRoot, darkRoot);
         monsterTargets.Add(target);
 
-        Debug.Log($"[PSBMonsterLightReveal] ¦Û°Êµù¥U©Çª« roots¡Gnormal = {GetName(normalRoot)}, dark = {GetName(darkRoot)}");
+        Debug.Log($"[PSBMonsterLightReveal] è‡ªå‹•è¨»å†Šæ€ªç‰© rootsï¼šnormal = {GetName(normalRoot)}, dark = {GetName(darkRoot)}");
     }
 
     public void UnregisterMonster(Transform normalRoot, Transform darkRoot)

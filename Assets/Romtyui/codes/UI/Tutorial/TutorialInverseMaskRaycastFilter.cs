@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class TutorialInverseMaskRaycastFilter :
     MonoBehaviour,
@@ -55,7 +55,7 @@ public class TutorialInverseMaskRaycastFilter :
     {
         if (!holeEnabled)
         {
-            // ¨S¦³¬}®É¡A¾ã¤ù¶Â¹õ¾×¦í¾Ş§@
+            // æ²’æœ‰æ´æ™‚ï¼Œæ•´ç‰‡é»‘å¹•æ“‹ä½æ“ä½œ
             return true;
         }
 
@@ -108,12 +108,12 @@ public class TutorialInverseMaskRaycastFilter :
             );
 
         /*
-         * true¡G
-         * DarkOverlay ±µ¦¬ Raycast¡Aªı¾×¤U­± UI¡C
+         * trueï¼š
+         * DarkOverlay æ¥æ”¶ Raycastï¼Œé˜»æ“‹ä¸‹é¢ UIã€‚
          *
-         * false¡G
-         * DarkOverlay ¤£±µ¦¬ Raycast¡A
-         * ÂIÀ»¬ï³z¨ì¤U­± UI¡C
+         * falseï¼š
+         * DarkOverlay ä¸æ¥æ”¶ Raycastï¼Œ
+         * é»æ“Šç©¿é€åˆ°ä¸‹é¢ UIã€‚
          */
         return !isInsideHole;
     }

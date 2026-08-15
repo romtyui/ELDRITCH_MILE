@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(
     menuName = "CardGame/Card Animation/Card Hit Effect Data"
@@ -7,45 +7,45 @@ public class CardHitEffectData : ScriptableObject
 {
     [Header("Effect Prefab")]
 
-    [Tooltip("©R¤¤¥Ø¼Ğ®É¥Í¦¨ªº¯S®Ä Prefab")]
+    [Tooltip("å‘½ä¸­ç›®æ¨™æ™‚ç”Ÿæˆçš„ç‰¹æ•ˆ Prefab")]
     public GameObject effectPrefab;
 
 
     [Header("Position")]
 
-    [Tooltip("¬Û¹ï©ó¥Ø¼Ğ¦ì¸mªºÃB¥~°¾²¾")]
+    [Tooltip("ç›¸å°æ–¼ç›®æ¨™ä½ç½®çš„é¡å¤–åç§»")]
     public Vector2 positionOffset =
         Vector2.zero;
 
 
     [Header("Scale")]
 
-    [Tooltip("¯S®Ä XY ÁY©ñ")]
+    [Tooltip("ç‰¹æ•ˆ XY ç¸®æ”¾")]
     public Vector2 scale =
         Vector2.one;
 
 
     [Header("Rotation")]
 
-    [Tooltip("¯S®Ä Z ¶b±ÛÂà")]
+    [Tooltip("ç‰¹æ•ˆ Z è»¸æ—‹è½‰")]
     public float rotationZ = 0f;
 
 
     [Header("Timing")]
 
     [Tooltip(
-        "¯S®Ä¥Í¦¨«á¡Aµ¥«İ¦h¤[¤~¯u¥¿°õ¦æ¥dµP®ÄªG¡C" +
-        "¨Ò¦p¼C¥ú 0.1 ¬í«á¬å¨ì¼Ä¤H¡A´N¶ñ 0.1¡C"
+        "ç‰¹æ•ˆç”Ÿæˆå¾Œï¼Œç­‰å¾…å¤šä¹…æ‰çœŸæ­£åŸ·è¡Œå¡ç‰Œæ•ˆæœã€‚" +
+        "ä¾‹å¦‚åŠå…‰ 0.1 ç§’å¾Œç åˆ°æ•µäººï¼Œå°±å¡« 0.1ã€‚"
     )]
     public float impactDelay = 0.1f;
 
-    [Tooltip("¯S®Ä¥Í¦¨¦h¤[«á¦Û°Ê§R°£")]
+    [Tooltip("ç‰¹æ•ˆç”Ÿæˆå¤šä¹…å¾Œè‡ªå‹•åˆªé™¤")]
     public float lifeTime = 0.6f;
 
 
     [Header("Audio")]
 
-    [Tooltip("©R¤¤¯S®Ä¼½©ñ®Éªº­µ®Ä")]
+    [Tooltip("å‘½ä¸­ç‰¹æ•ˆæ’­æ”¾æ™‚çš„éŸ³æ•ˆ")]
     public AudioClip hitSfx;
 
     [Range(0f, 1f)]

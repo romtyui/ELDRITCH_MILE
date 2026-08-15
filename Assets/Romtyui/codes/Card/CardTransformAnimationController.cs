@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class CardTransformAnimationController : MonoBehaviour
@@ -55,10 +55,10 @@ public class CardTransformAnimationController : MonoBehaviour
             yield return MoveRectWorld(rect, centerPoint.position, moveToCenterDuration);
         }
 
-        // ¤§«á³o¸Ì¥i¥H´«¦¨¡G
-        // 1. Åã¥Ü±MÄİª«¥ó
-        // 2. ¼½©ñ IK °Êµe
-        // 3. µ¥°Êµeµ²§ô
+        // ä¹‹å¾Œé€™è£¡å¯ä»¥æ›æˆï¼š
+        // 1. é¡¯ç¤ºå°ˆå±¬ç‰©ä»¶
+        // 2. æ’­æ”¾ IK å‹•ç•«
+        // 3. ç­‰å‹•ç•«çµæŸ
         yield return new WaitForSeconds(specialAnimationWaitTime);
     }
 
@@ -69,13 +69,13 @@ public class CardTransformAnimationController : MonoBehaviour
 
         if (cardPrefab == null)
         {
-            Debug.LogWarning("[CardTransformAnimationController] cardPrefab ¨S¦³«ü©w");
+            Debug.LogWarning("[CardTransformAnimationController] cardPrefab æ²’æœ‰æŒ‡å®š");
             yield break;
         }
 
         if (bagSpawnPoint == null || bagPoint == null)
         {
-            Debug.LogWarning("[CardTransformAnimationController] bagSpawnPoint ©Î bagPoint ¨S¦³«ü©w");
+            Debug.LogWarning("[CardTransformAnimationController] bagSpawnPoint æˆ– bagPoint æ²’æœ‰æŒ‡å®š");
             yield break;
         }
 
@@ -84,8 +84,8 @@ public class CardTransformAnimationController : MonoBehaviour
         CardViewUI bagCardView = Instantiate(cardPrefab, parent);
         bagCardView.gameObject.SetActive(true);
 
-        // ³o¸ÌÅã¥Ü¡u³Q¿ï¤¤¡B³Q´À´«ªº­ì©lµP¡v
-        // ¨Ò¦p M ³QÅÜ¦¨ M_A¡A³o¸ÌÅã¥Ü M ¶i¤J¥]¥]
+        // é€™è£¡é¡¯ç¤ºã€Œè¢«é¸ä¸­ã€è¢«æ›¿æ›çš„åŸå§‹ç‰Œã€
+        // ä¾‹å¦‚ M è¢«è®Šæˆ M_Aï¼Œé€™è£¡é¡¯ç¤º M é€²å…¥åŒ…åŒ…
         CardInstance displayInstance = new CardInstance(result.resultCardData);
         bagCardView.Bind(displayInstance);
 
@@ -104,7 +104,7 @@ public class CardTransformAnimationController : MonoBehaviour
 
         canvasGroup.alpha = 1f;
 
-        // M_A ¥X²{¦b¥]¥]¤W¤è«á¡A¥ı°±¯d¤@¬q®É¶¡
+        // M_A å‡ºç¾åœ¨åŒ…åŒ…ä¸Šæ–¹å¾Œï¼Œå…ˆåœç•™ä¸€æ®µæ™‚é–“
         if (bagSpawnStayTime > 0f)
             yield return new WaitForSeconds(bagSpawnStayTime);
 
@@ -126,7 +126,7 @@ public class CardTransformAnimationController : MonoBehaviour
 
         Destroy(bagCardView.gameObject);
 
-        Debug.Log($"[ÅÜ¤Æ°Êµe] {result.originalCardData.cardName} ¶i¤J¥]¥]¡AÅÜ¦¨ {result.resultCardData.cardName}");
+        Debug.Log($"[è®ŠåŒ–å‹•ç•«] {result.originalCardData.cardName} é€²å…¥åŒ…åŒ…ï¼Œè®Šæˆ {result.resultCardData.cardName}");
     }
 
     public IEnumerator FinishPlayedTransformCard(CardViewUI playedCardView)

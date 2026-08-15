@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -20,22 +20,22 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
     }
 
     [Header("Token")]
-    [Tooltip("­n­pºâªº Token ID¡C¥²¶·©M§Z Token CardData ªº Token Id ¤@¼Ë")]
+    [Tooltip("è¦è¨ˆç®—çš„ Token IDã€‚å¿…é ˆå’Œåµ Token CardData çš„ Token Id ä¸€æ¨£")]
     public string tokenId = "egg";
 
     [Header("Damage Bonus")]
-    [Tooltip("¨C¨Ï¥Î¹L 1 ¦¸«ü©w Token¡AÅı«áÄò¶Ë®`®ÄªGªº¨C¤@¤U¶Ë®`¼W¥[¦h¤Ö")]
+    [Tooltip("æ¯ä½¿ç”¨é 1 æ¬¡æŒ‡å®š Tokenï¼Œè®“å¾ŒçºŒå‚·å®³æ•ˆæœçš„æ¯ä¸€ä¸‹å‚·å®³å¢åŠ å¤šå°‘")]
     public int damagePerUsedToken = 1;
 
     [Header("Patch Rule")]
-    [Tooltip("¥u¼vÅT³o­Ó®ÄªG«á­±ªº¶Ë®`®ÄªG¡C«ØÄ³¥´¶}¡AÁ×§K¼vÅT¤w¸g°õ¦æ¹Lªº®ÄªG")]
+    [Tooltip("åªå½±éŸ¿é€™å€‹æ•ˆæœå¾Œé¢çš„å‚·å®³æ•ˆæœã€‚å»ºè­°æ‰“é–‹ï¼Œé¿å…å½±éŸ¿å·²ç¶“åŸ·è¡Œéçš„æ•ˆæœ")]
     public bool onlyPatchEffectsAfterThis = true;
 
-    [Tooltip("¨S¦³¨Ï¥Î¹L Token ®É¬O§_¤£°µ¥ô¦ó¨Æ")]
+    [Tooltip("æ²’æœ‰ä½¿ç”¨é Token æ™‚æ˜¯å¦ä¸åšä»»ä½•äº‹")]
     public bool skipWhenNoUsedToken = true;
 
     [Header("Description Preview")]
-    [Tooltip("´y­z¹wÄı¥Î¡C·í¤£¦b¾Ô°«¤¤©ÎÅª¤£¨ì BattleDeck ®É¡A¥ı¥Î³o­Ó¼Æ­È¹wÄı")]
+    [Tooltip("æè¿°é è¦½ç”¨ã€‚ç•¶ä¸åœ¨æˆ°é¬¥ä¸­æˆ–è®€ä¸åˆ° BattleDeck æ™‚ï¼Œå…ˆç”¨é€™å€‹æ•¸å€¼é è¦½")]
     public int previewUsedTokenCount = 0;
 
     private bool isPatchActive;
@@ -57,7 +57,7 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
 
         if (isPatchActive)
         {
-            Debug.Log("[UsedTokenScaledDamageEffectData] ¶Ë®`¥[¦¨¤w¸g®M¥Î¤¤¡A¥»¦¸¤£­«½Æ¥[¦¨");
+            Debug.Log("[UsedTokenScaledDamageEffectData] å‚·å®³åŠ æˆå·²ç¶“å¥—ç”¨ä¸­ï¼Œæœ¬æ¬¡ä¸é‡è¤‡åŠ æˆ");
             return;
         }
 
@@ -65,7 +65,7 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
 
         if (bonusPerHit <= 0 && skipWhenNoUsedToken)
         {
-            Debug.Log("[UsedTokenScaledDamageEffectData] ¤w¨Ï¥Î Token ¦¸¼Æ¬° 0¡A¤£®M¥Î¶Ë®`¥[¦¨");
+            Debug.Log("[UsedTokenScaledDamageEffectData] å·²ä½¿ç”¨ Token æ¬¡æ•¸ç‚º 0ï¼Œä¸å¥—ç”¨å‚·å®³åŠ æˆ");
             return;
         }
 
@@ -73,7 +73,7 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
 
         if (patches.Count == 0)
         {
-            Debug.LogWarning("[UsedTokenScaledDamageEffectData] §ä¤£¨ì¥i¥[¦¨ªº¶Ë®`®ÄªG");
+            Debug.LogWarning("[UsedTokenScaledDamageEffectData] æ‰¾ä¸åˆ°å¯åŠ æˆçš„å‚·å®³æ•ˆæœ");
             return;
         }
 
@@ -85,7 +85,7 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
         context.battleManager.StartCoroutine(RestorePatchesNextFrame());
 
         Debug.Log(
-            $"[UsedTokenScaledDamageEffectData] ¤w®M¥Î¶Ë®`¥[¦¨¡CtokenId={tokenId}, " +
+            $"[UsedTokenScaledDamageEffectData] å·²å¥—ç”¨å‚·å®³åŠ æˆã€‚tokenId={tokenId}, " +
             $"used={GetUsedTokenCount(context)}, bonusPerHit={bonusPerHit}, patches={patches.Count}"
         );
     }
@@ -208,7 +208,7 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
         isPatchActive = false;
         activePatches.Clear();
 
-        Debug.Log("[UsedTokenScaledDamageEffectData] ¤wÁÙ­ì¶Ë®`®ÄªG­ì©l¼Æ­È");
+        Debug.Log("[UsedTokenScaledDamageEffectData] å·²é‚„åŸå‚·å®³æ•ˆæœåŸå§‹æ•¸å€¼");
     }
 
     private void RestorePatches()
@@ -419,7 +419,7 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
             key == "usedTokenCount" ||
             key == "playedTokenCount" ||
             key == "eggCount" ||
-            key == "¤w¨Ï¥Î¹L§Zªº¦¸¼Æ")
+            key == "å·²ä½¿ç”¨éåµçš„æ¬¡æ•¸")
         {
             value = GetUsedTokenCount(context);
             return true;
@@ -428,7 +428,7 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
         if (key == "bonusDamage" ||
             key == "usedTokenBonusDamage" ||
             key == "tokenBonusDamage" ||
-            key == "ÃB¥~¶Ë®`")
+            key == "é¡å¤–å‚·å®³")
         {
             value = GetBonusDamagePerHit(context);
             return true;
@@ -439,7 +439,7 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
             key == "scaledDamage" ||
             key == "damagePerHit" ||
             key == "finalDamage" ||
-            key == "Á`¶Ë®`")
+            key == "ç¸½å‚·å®³")
         {
             value = GetScaledDamagePerHit(context);
             return true;
@@ -448,7 +448,7 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
         if (key == "hitCount" ||
             key == "repeatCount" ||
             key == "bowHitCount" ||
-            key == "­«½Æ¦¸¼Æ")
+            key == "é‡è¤‡æ¬¡æ•¸")
         {
             value = GetFirstHitCount(context);
             return true;
@@ -456,7 +456,7 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
 
         if (key == "totalDamageAllHits" ||
             key == "allHitDamage" ||
-            key == "Á`¬q¼Æ¶Ë®`")
+            key == "ç¸½æ®µæ•¸å‚·å®³")
         {
             value = GetScaledTotalDamage(context);
             return true;

@@ -1,4 +1,4 @@
-public static class TutorialSignals
+﻿public static class TutorialSignals
 {
     public const string BookOpened =
         "BookOpened";

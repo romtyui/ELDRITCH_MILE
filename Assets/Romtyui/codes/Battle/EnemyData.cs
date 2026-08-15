@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 public enum EnemyAnimationType
 {
@@ -22,13 +22,13 @@ public class EnemyData : ScriptableObject
     public GameObject normalVisualPrefab;
     public GameObject darkVisualPrefab;
 
-    [Tooltip("©Çª« PSB ¥Í¦¨«áªº¦ì¸m°¾²¾")]
+    [Tooltip("æ€ªç‰© PSB ç”Ÿæˆå¾Œçš„ä½ç½®åç§»")]
     public Vector2 visualAnchoredPosition = Vector2.zero;
 
-    [Tooltip("©Çª« PSB ¥Í¦¨«áªºÁY©ñ¡CPSB ¦pªG¤Ó¤p¡A³o¸Ì¥i¥H³] 50¡B80¡B100")]
+    [Tooltip("æ€ªç‰© PSB ç”Ÿæˆå¾Œçš„ç¸®æ”¾ã€‚PSB å¦‚æœå¤ªå°ï¼Œé€™è£¡å¯ä»¥è¨­ 50ã€80ã€100")]
     public Vector3 visualScale = Vector3.one;
 
-    [Tooltip("©Çª« PSB ¥Í¦¨«áªº±ÛÂà")]
+    [Tooltip("æ€ªç‰© PSB ç”Ÿæˆå¾Œçš„æ—‹è½‰")]
     public Vector3 visualEulerAngles = Vector3.zero;
     [Header("Damage Popup")]
     public Vector2 damagePopupOffset = new Vector2(0f, 80f);

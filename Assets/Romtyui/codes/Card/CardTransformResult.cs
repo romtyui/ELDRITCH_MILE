@@ -1,4 +1,4 @@
-public class CardTransformResult
+﻿public class CardTransformResult
 {
     public bool success;
     public CardData originalCardData;

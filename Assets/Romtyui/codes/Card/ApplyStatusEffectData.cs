@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public enum ApplyStatusTargetMode
 {
@@ -12,11 +12,11 @@ public class ApplyStatusEffectData : CardEffectData, CardDescriptionValueProvide
     [Header("Status")]
     public StatusType statusType;
 
-    [Tooltip("­n®M¥Îªºª¬ºA¼h¼Æ")]
+    [Tooltip("è¦å¥—ç”¨çš„ç‹€æ…‹å±¤æ•¸")]
     public int amount = 1;
 
     [Header("Apply Target")]
-    [Tooltip("Source = ¥XµPªÌ¦Û¤v¡CTarget = CardData ¨M©wªº¥Ø¼Ğ")]
+    [Tooltip("Source = å‡ºç‰Œè€…è‡ªå·±ã€‚Target = CardData æ±ºå®šçš„ç›®æ¨™")]
     public ApplyStatusTargetMode applyTarget = ApplyStatusTargetMode.Target;
 
     public override void Execute(CardResolveContext context)
@@ -29,7 +29,7 @@ public class ApplyStatusEffectData : CardEffectData, CardDescriptionValueProvide
         if (targetUnit == null)
         {
             Debug.LogWarning(
-                $"[ApplyStatusEffectData] §ä¤£¨ì¥i®M¥Îª¬ºAªº¥Ø¼Ğ¡CStatus = {statusType}, ApplyTarget = {applyTarget}"
+                $"[ApplyStatusEffectData] æ‰¾ä¸åˆ°å¯å¥—ç”¨ç‹€æ…‹çš„ç›®æ¨™ã€‚Status = {statusType}, ApplyTarget = {applyTarget}"
             );
             return;
         }
@@ -42,7 +42,7 @@ public class ApplyStatusEffectData : CardEffectData, CardDescriptionValueProvide
         targetUnit.ApplyStatus(statusType, finalAmount);
 
         Debug.Log(
-            $"[ApplyStatusEffectData] {targetUnit.unitName} Àò±o {statusType} x{finalAmount}"
+            $"[ApplyStatusEffectData] {targetUnit.unitName} ç²å¾— {statusType} x{finalAmount}"
         );
     }
 
@@ -70,7 +70,7 @@ public class ApplyStatusEffectData : CardEffectData, CardDescriptionValueProvide
         if (key == "statusAmount" ||
             key == "status" ||
             key == "amount" ||
-            key == "ª¬ºA¼h¼Æ")
+            key == "ç‹€æ…‹å±¤æ•¸")
         {
             value = Mathf.Max(0, amount);
             return true;

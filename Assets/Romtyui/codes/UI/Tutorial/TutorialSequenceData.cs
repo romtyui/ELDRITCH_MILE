@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(
@@ -8,10 +8,10 @@ using UnityEngine;
 public class TutorialSequenceData : ScriptableObject
 {
     [Header("Identity")]
-    [Tooltip("¨C¤@®M±Ğ¾Ç³£­n¤£¦P ID")]
+    [Tooltip("æ¯ä¸€å¥—æ•™å­¸éƒ½è¦ä¸åŒ ID")]
     public string tutorialId = "Tutorial_Default";
 
-    public string displayName = "·s¤â±Ğ¾Ç";
+    public string displayName = "æ–°æ‰‹æ•™å­¸";
 
     [Header("Steps")]
     public List<TutorialStepData> steps = new();
@@ -19,10 +19,10 @@ public class TutorialSequenceData : ScriptableObject
     [Header("Play Rules")]
     public bool onlyShowOnce = true;
 
-    [Tooltip("¾Ô°«±Ğ¾Ç«ØÄ³ false¡AÁ×§K©ìµP¡B°Êµe³Q¼È°±")]
+    [Tooltip("æˆ°é¬¥æ•™å­¸å»ºè­° falseï¼Œé¿å…æ‹–ç‰Œã€å‹•ç•«è¢«æš«åœ")]
     public bool pauseGame = false;
 
-    [Tooltip("¬O§_Åı±Ğ¾Ç UI ¾×¦í¨ä¥L UI")]
+    [Tooltip("æ˜¯å¦è®“æ•™å­¸ UI æ“‹ä½å…¶ä»– UI")]
     public bool blockOtherUI = true;
 
     public bool saveCompletion = true;

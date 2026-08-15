@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/God Card/God Card Animation")]
 public class GodCardAnimationData : ScriptableObject
@@ -9,7 +9,7 @@ public class GodCardAnimationData : ScriptableObject
     [Header("Animator")]
     public RuntimeAnimatorController animatorController;
 
-    [Tooltip("­nÄ²µoªº Animator Trigger ¦WºÙ")]
+    [Tooltip("è¦è§¸ç™¼çš„ Animator Trigger åç¨±")]
     public string triggerName = "PlayGodCorruption";
 
     [Header("Blackout")]
@@ -17,6 +17,6 @@ public class GodCardAnimationData : ScriptableObject
     public float blackoutAlpha = 0.75f;
 
     [Header("Timing")]
-    [Tooltip("µ¥«İ°Êµeµ²§ô¨Æ¥óªº³Ìªø®É¶¡¡AÁ×§K¥d¦º")]
+    [Tooltip("ç­‰å¾…å‹•ç•«çµæŸäº‹ä»¶çš„æœ€é•·æ™‚é–“ï¼Œé¿å…å¡æ­»")]
     public float animationTimeout = 5f;
 }

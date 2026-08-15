@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,10 +11,10 @@ public enum DialoguePortraitSide
 [Serializable]
 public class DialoguePortraitStyle
 {
-    [Tooltip("¼Ë¦¡ ID¡A¨Ò¦p Default¡BSmile¡BAngry")]
+    [Tooltip("æ¨£å¼ IDï¼Œä¾‹å¦‚ Defaultã€Smileã€Angry")]
     public string styleId = "Default";
 
-    [Tooltip("³o­Ó¼Ë¦¡¹ïÀ³ªº¥ßÃ¸")]
+    [Tooltip("é€™å€‹æ¨£å¼å°æ‡‰çš„ç«‹ç¹ª")]
     public Sprite portrait;
 }
 
@@ -34,10 +34,10 @@ public class DialogueSpeakerData : ScriptableObject
         DialoguePortraitSide.Left;
 
     [Header("Portrait Styles")]
-    [Tooltip("Dialogue Line ¨S¦³«ü©w¼Ë¦¡®É¨Ï¥Î")]
+    [Tooltip("Dialogue Line æ²’æœ‰æŒ‡å®šæ¨£å¼æ™‚ä½¿ç”¨")]
     public string defaultPortraitStyleId = "Default";
 
-    [Tooltip("¨¤¦â¥i¨Ï¥Îªº©Ò¦³¥ßÃ¸¼Ë¦¡")]
+    [Tooltip("è§’è‰²å¯ä½¿ç”¨çš„æ‰€æœ‰ç«‹ç¹ªæ¨£å¼")]
     public List<DialoguePortraitStyle> portraitStyles = new();
 
     public Sprite GetPortrait(string styleId)

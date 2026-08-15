@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Effects/Gain Block")]
 public class GainBlockEffectData : CardEffectData

@@ -1,25 +1,25 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Effects/Token/Used Token Scaled Block")]
 public class UsedTokenScaledBlockEffectData : CardEffectData, CardDescriptionValueProvider
 {
     [Header("Token")]
-    [Tooltip("­n­pºâªº Token ID¡C¥²¶·©M§Z Token CardData ªº Token Id ¤@¼Ë")]
+    [Tooltip("è¦è¨ˆç®—çš„ Token IDã€‚å¿…é ˆå’Œåµ Token CardData çš„ Token Id ä¸€æ¨£")]
     public string tokenId = "egg";
 
     [Header("Block Bonus")]
-    [Tooltip("¨C¨Ï¥Î¹L 1 ¦¸«ü©w Token¡A¼W¥[¦h¤ÖÃB¥~Å@¬Ş")]
+    [Tooltip("æ¯ä½¿ç”¨é 1 æ¬¡æŒ‡å®š Tokenï¼Œå¢åŠ å¤šå°‘é¡å¤–è­·ç›¾")]
     public int blockPerUsedToken = 1;
 
     [Header("Fallback")]
-    [Tooltip("¦pªG¦P¤@±i¥d§ä¤£¨ì GainBlockEffectData¡A¬O§_¨Ï¥Î fallbackBaseBlock")]
+    [Tooltip("å¦‚æœåŒä¸€å¼µå¡æ‰¾ä¸åˆ° GainBlockEffectDataï¼Œæ˜¯å¦ä½¿ç”¨ fallbackBaseBlock")]
     public bool useFallbackBaseBlockIfMissingSourceEffect = true;
 
-    [Tooltip("§ä¤£¨ì GainBlockEffectData ®É¨Ï¥Îªº³Æ¥Î°òÂ¦Å@¬Ş")]
+    [Tooltip("æ‰¾ä¸åˆ° GainBlockEffectData æ™‚ä½¿ç”¨çš„å‚™ç”¨åŸºç¤è­·ç›¾")]
     public int fallbackBaseBlock = 0;
 
     [Header("Description Preview")]
-    [Tooltip("´y­z¹wÄı¥Î¡C·í¤£¦b¾Ô°«¤¤©ÎÅª¤£¨ì BattleDeck ®É¡A¥ı¥Î³o­Ó¼Æ­È¹wÄı")]
+    [Tooltip("æè¿°é è¦½ç”¨ã€‚ç•¶ä¸åœ¨æˆ°é¬¥ä¸­æˆ–è®€ä¸åˆ° BattleDeck æ™‚ï¼Œå…ˆç”¨é€™å€‹æ•¸å€¼é è¦½")]
     public int previewUsedTokenCount = 0;
 
     public override void Execute(CardResolveContext context)
@@ -37,7 +37,7 @@ public class UsedTokenScaledBlockEffectData : CardEffectData, CardDescriptionVal
 
         if (bonusBlock <= 0)
         {
-            Debug.Log("[UsedTokenScaledBlockEffectData] ÃB¥~Å@¬Ş¬° 0¡A¤£°õ¦æ°l¥[Å@¬Ş");
+            Debug.Log("[UsedTokenScaledBlockEffectData] é¡å¤–è­·ç›¾ç‚º 0ï¼Œä¸åŸ·è¡Œè¿½åŠ è­·ç›¾");
             return;
         }
 
@@ -149,7 +149,7 @@ public class UsedTokenScaledBlockEffectData : CardEffectData, CardDescriptionVal
             key == "usedTokenCount" ||
             key == "playedTokenCount" ||
             key == "eggCount" ||
-            key == "¤w¨Ï¥Î¹L§Zªº¦¸¼Æ")
+            key == "å·²ä½¿ç”¨éåµçš„æ¬¡æ•¸")
         {
             value = GetUsedTokenCount(context);
             return true;
@@ -157,7 +157,7 @@ public class UsedTokenScaledBlockEffectData : CardEffectData, CardDescriptionVal
 
         if (key == "baseBlock" ||
             key == "baseShieldBlock" ||
-            key == "°òÂ¦Å@¬Ş")
+            key == "åŸºç¤è­·ç›¾")
         {
             value = GetBaseBlockFromSourceEffect(context);
             return true;
@@ -166,7 +166,7 @@ public class UsedTokenScaledBlockEffectData : CardEffectData, CardDescriptionVal
         if (key == "usedTokenBonusBlock" ||
             key == "bonusBlock" ||
             key == "tokenBonusBlock" ||
-            key == "ÃB¥~Å@¬Ş")
+            key == "é¡å¤–è­·ç›¾")
         {
             value = GetPreviewBonusBlock(context);
             return true;
@@ -175,7 +175,7 @@ public class UsedTokenScaledBlockEffectData : CardEffectData, CardDescriptionVal
         if (key == "shieldBlock" ||
             key == "totalBlock" ||
             key == "finalBlock" ||
-            key == "Á`Å@¬Ş")
+            key == "ç¸½è­·ç›¾")
         {
             value = GetPreviewTotalBlock(context);
             return true;

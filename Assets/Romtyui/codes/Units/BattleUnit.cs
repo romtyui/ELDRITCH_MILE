@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -53,7 +53,7 @@ public class BattleUnit : MonoBehaviour
 
         OnStatusChanged?.Invoke();
 
-        Debug.Log($"{unitName} ªº {statusType} ¤w¦b¦^¦Xµ²§ô²M°£¡A­ì¥»¼h¼Æ¡G{oldAmount}");
+        Debug.Log($"{unitName} çš„ {statusType} å·²åœ¨å›åˆçµæŸæ¸…é™¤ï¼ŒåŸæœ¬å±¤æ•¸ï¼š{oldAmount}");
     }
 
     public virtual void ClearAllStatuses()
@@ -61,7 +61,7 @@ public class BattleUnit : MonoBehaviour
         statuses.Clear();
         OnStatusChanged?.Invoke();
 
-        Debug.Log($"{unitName} ªº©Ò¦³ª¬ºA¤w²M°£");
+        Debug.Log($"{unitName} çš„æ‰€æœ‰ç‹€æ…‹å·²æ¸…é™¤");
     }
 
     public virtual void FullResetUnit()
@@ -73,7 +73,7 @@ public class BattleUnit : MonoBehaviour
 
         OnHpChanged?.Invoke();
 
-        Debug.Log($"{unitName} ¤w§¹¥ş­«¸m");
+        Debug.Log($"{unitName} å·²å®Œå…¨é‡ç½®");
     }
     public virtual void DealDamageTo(BattleUnit target, int baseDamage)
     {
@@ -90,7 +90,7 @@ public class BattleUnit : MonoBehaviour
 
         target.TakeDamage(damage);
 
-        Debug.Log($"{unitName} ¹ï {target.unitName} ³y¦¨ {damage} ¶Ë®`");
+        Debug.Log($"{unitName} å° {target.unitName} é€ æˆ {damage} å‚·å®³");
     }
 
     public virtual int ModifyOutgoingDamage(int damage)
@@ -168,7 +168,7 @@ public class BattleUnit : MonoBehaviour
             enemy.ShowDamagePopup(realHpDamage);
         }
 
-        Debug.Log($"{unitName} ¨ü¨ì {amount} ¶Ë®`¡A¹ê»Ú¦©¦å {realHpDamage}¡A³Ñ¾l HP: {currentHp}");
+        Debug.Log($"{unitName} å—åˆ° {amount} å‚·å®³ï¼Œå¯¦éš›æ‰£è¡€ {realHpDamage}ï¼Œå‰©é¤˜ HP: {currentHp}");
 
         if (currentHp <= 0)
         {
@@ -191,7 +191,7 @@ public class BattleUnit : MonoBehaviour
 
         RemoveStatus(StatusType.Regeneration, 1);
 
-        Debug.Log($"{unitName} ¨ü¨ì¶Ë®`¡A¦A¥Í¼h¼Æ´î¤Ö 1¡A³Ñ¾l {GetStatus(StatusType.Regeneration)}");
+        Debug.Log($"{unitName} å—åˆ°å‚·å®³ï¼Œå†ç”Ÿå±¤æ•¸æ¸›å°‘ 1ï¼Œå‰©é¤˜ {GetStatus(StatusType.Regeneration)}");
     }
     protected virtual void OnAfterHpDamageTaken(int realHpDamage)
     {
@@ -205,7 +205,7 @@ public class BattleUnit : MonoBehaviour
 
         OnHpChanged?.Invoke();
 
-        Debug.Log($"{unitName} ¦^´_ {amount} HP¡A·í«e HP: {currentHp}");
+        Debug.Log($"{unitName} å›å¾© {amount} HPï¼Œç•¶å‰ HP: {currentHp}");
     }
 
     public virtual void GainBlock(int amount)
@@ -216,7 +216,7 @@ public class BattleUnit : MonoBehaviour
 
         OnHpChanged?.Invoke();
 
-        Debug.Log($"{unitName} Àò±o {finalBlock} ®æ¾×¡A·í«e®æ¾×: {block}");
+        Debug.Log($"{unitName} ç²å¾— {finalBlock} æ ¼æ“‹ï¼Œç•¶å‰æ ¼æ“‹: {block}");
     }
 
     public virtual void ResetBlock()
@@ -237,7 +237,7 @@ public class BattleUnit : MonoBehaviour
 
         OnStatusChanged?.Invoke();
 
-        Debug.Log($"{unitName} Àò±oª¬ºA {statusType} x{amount}");
+        Debug.Log($"{unitName} ç²å¾—ç‹€æ…‹ {statusType} x{amount}");
     }
 
     public virtual void RemoveStatus(StatusType statusType, int amount)
@@ -277,7 +277,7 @@ public class BattleUnit : MonoBehaviour
 
         OnStatusChanged?.Invoke();
 
-        Debug.Log($"{unitName} ªº {statusType} ³Q³]©w¬° {amount}");
+        Debug.Log($"{unitName} çš„ {statusType} è¢«è¨­å®šç‚º {amount}");
     }
     public void NotifyUnitChanged()
     {
@@ -320,7 +320,7 @@ public class BattleUnit : MonoBehaviour
 
         OnStatusChanged?.Invoke();
 
-        Debug.Log($"[BattleUnit] {unitName} ¤wÁÙ­ìª¬ºA§Ö·Ó¡A¼Æ¶q = {statuses.Count}");
+        Debug.Log($"[BattleUnit] {unitName} å·²é‚„åŸç‹€æ…‹å¿«ç…§ï¼Œæ•¸é‡ = {statuses.Count}");
     }
 
     private void ResolvePoisonAtTurnStart()
@@ -330,7 +330,7 @@ public class BattleUnit : MonoBehaviour
         if (poison <= 0)
             return;
 
-        Debug.Log($"{unitName} ¤¤¬r¡A¨ü¨ì {poison} ¶Ë®`");
+        Debug.Log($"{unitName} ä¸­æ¯’ï¼Œå—åˆ° {poison} å‚·å®³");
 
         TakeDamage(poison);
 
@@ -345,7 +345,7 @@ public class BattleUnit : MonoBehaviour
 
         GainBlock(harden);
 
-        Debug.Log($"{unitName} ªºµw¤Æµo°Ê¡A¦^¦X¶}©lÀò±o {harden} ÂIÅ@¬Ş");
+        Debug.Log($"{unitName} çš„ç¡¬åŒ–ç™¼å‹•ï¼Œå›åˆé–‹å§‹ç²å¾— {harden} é»è­·ç›¾");
     }
     private void ResolveRegenerationAtTurnStart()
     {
@@ -364,7 +364,7 @@ public class BattleUnit : MonoBehaviour
 
         Heal(healAmount);
 
-        Debug.Log($"{unitName} ªº¦A¥Íµo°Ê¡A¼h¼Æ {regeneration}¡A«ì´_ {healAmount} ÂI¥Í©R");
+        Debug.Log($"{unitName} çš„å†ç”Ÿç™¼å‹•ï¼Œå±¤æ•¸ {regeneration}ï¼Œæ¢å¾© {healAmount} é»ç”Ÿå‘½");
     }
     private void TickTemporaryStatuses()
     {
@@ -372,8 +372,8 @@ public class BattleUnit : MonoBehaviour
         TickStatus(StatusType.Vulnerable);
         TickStatus(StatusType.Frail);
 
-        // Strength ³q±`¤£¦ÛµM¤U­°¡A©Ò¥H¤£ Tick¡C
-        // Poison ¤w¸g¦b OnTurnStart ¸Ì³B²z¡C
+        // Strength é€šå¸¸ä¸è‡ªç„¶ä¸‹é™ï¼Œæ‰€ä»¥ä¸ Tickã€‚
+        // Poison å·²ç¶“åœ¨ OnTurnStart è£¡è™•ç†ã€‚
     }
 
     private void TickStatus(StatusType statusType)
@@ -388,13 +388,13 @@ public class BattleUnit : MonoBehaviour
 
         OnStatusChanged?.Invoke();
 
-        Debug.Log($"{unitName} ª¬ºA {statusType} ¦^¦Xµ²§ô´î¤Ö 1");
+        Debug.Log($"{unitName} ç‹€æ…‹ {statusType} å›åˆçµæŸæ¸›å°‘ 1");
     }
     protected virtual void OnDamagedButAlive()
     {
     }
     protected virtual void Die()
     {
-        Debug.Log($"{unitName} ¦º¤`");
+        Debug.Log($"{unitName} æ­»äº¡");
     }
 }

@@ -1,9 +1,9 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 
 // =============================================================
-// ¤@¯ë¥d¦¨¥\¥XµP°ÊµeºØÃş
+// ä¸€èˆ¬å¡æˆåŠŸå‡ºç‰Œå‹•ç•«ç¨®é¡
 // =============================================================
 
 public enum GeneralCardPlayAnimationType
@@ -19,33 +19,33 @@ public enum GeneralCardPlayAnimationType
     Shake,
 
     /*
-     * ª½±µ¦b®i¥Ü¦ì¸m¼u¥X¡C
-     * ¤£±q¤âµP¦ì¸m­¸¹L¥h¡C
+     * ç›´æ¥åœ¨å±•ç¤ºä½ç½®å½ˆå‡ºã€‚
+     * ä¸å¾æ‰‹ç‰Œä½ç½®é£›éå»ã€‚
      */
     PopIn,
 
     /*
-     * ±q®i¥Ü¦ì¸m¤W¤è±¼¤U¨Ó¡C
+     * å¾å±•ç¤ºä½ç½®ä¸Šæ–¹æ‰ä¸‹ä¾†ã€‚
      */
     DropDown,
 
     /*
-     * ª½±µ¦b®i¥Ü¦ì¸m±ÛÂà¥X²{¡C
+     * ç›´æ¥åœ¨å±•ç¤ºä½ç½®æ—‹è½‰å‡ºç¾ã€‚
      */
     SpinIn,
 
     /*
-     * ¼ÒÀÀÂ½µP¡C
+     * æ¨¡æ“¬ç¿»ç‰Œã€‚
      */
     Flip,
 
     /*
-     * ±q¤W¤è§Ö³t¯{¤U¡C
+     * å¾ä¸Šæ–¹å¿«é€Ÿç ¸ä¸‹ã€‚
      */
     Slam,
 
     /*
-     * ª½±µ°{²{¦b®i¥Ü¦ì¸m¡C
+     * ç›´æ¥é–ƒç¾åœ¨å±•ç¤ºä½ç½®ã€‚
      */
     Flash
 }
@@ -60,29 +60,29 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Animation Type")]
 
     [Tooltip(
-        "¤@¯ë¥d¦¨¥\¥XµP®É¨Ï¥Îªººt¥X¼Ò¦¡¡C\n\n" +
+        "ä¸€èˆ¬å¡æˆåŠŸå‡ºç‰Œæ™‚ä½¿ç”¨çš„æ¼”å‡ºæ¨¡å¼ã€‚\n\n" +
 
-        "Default = ­¸¨ì¤¤¥¡ + Punch\n" +
+        "Default = é£›åˆ°ä¸­å¤® + Punch\n" +
 
-        "Fast = ­¸¨ì¤¤¥¡ + §Ö³t©Ô¦ù\n" +
+        "Fast = é£›åˆ°ä¸­å¤® + å¿«é€Ÿæ‹‰ä¼¸\n" +
 
-        "Heavy = ­¸¨ì¤¤¥¡ + »W¤OÃzµo\n" +
+        "Heavy = é£›åˆ°ä¸­å¤® + è“„åŠ›çˆ†ç™¼\n" +
 
-        "Bounce = ­¸¨ì¤¤¥¡ + ¤W¤U¼u¸õ\n" +
+        "Bounce = é£›åˆ°ä¸­å¤® + ä¸Šä¸‹å½ˆè·³\n" +
 
-        "Shake = ­¸¨ì¤¤¥¡ + ¾_°Ê\n" +
+        "Shake = é£›åˆ°ä¸­å¤® + éœ‡å‹•\n" +
 
-        "PopIn = ª½±µ¦b®i¥Ü¦ì¸m¼u¥X\n" +
+        "PopIn = ç›´æ¥åœ¨å±•ç¤ºä½ç½®å½ˆå‡º\n" +
 
-        "DropDown = ±q¤W¤è±¼¤U\n" +
+        "DropDown = å¾ä¸Šæ–¹æ‰ä¸‹\n" +
 
-        "SpinIn = ±ÛÂà¥X²{\n" +
+        "SpinIn = æ—‹è½‰å‡ºç¾\n" +
 
-        "Flip = Â½µP¥X²{\n" +
+        "Flip = ç¿»ç‰Œå‡ºç¾\n" +
 
-        "Slam = ±q¤W¤è­«¯{\n" +
+        "Slam = å¾ä¸Šæ–¹é‡ç ¸\n" +
 
-        "Flash = ª½±µ°{²{"
+        "Flash = ç›´æ¥é–ƒç¾"
     )]
     public GeneralCardPlayAnimationType animationType =
         GeneralCardPlayAnimationType.Default;
@@ -95,7 +95,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Animation Root")]
 
     [Tooltip(
-        "¤@¯ë¥d¦¨¥\¥´¥X«á¡A¼È®É²¾¨ì³o­Ó UI Root ¼½©ñ°Êµe"
+        "ä¸€èˆ¬å¡æˆåŠŸæ‰“å‡ºå¾Œï¼Œæš«æ™‚ç§»åˆ°é€™å€‹ UI Root æ’­æ”¾å‹•ç•«"
     )]
     public RectTransform animationRoot;
 
@@ -107,7 +107,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Played Card Position")]
 
     [Tooltip(
-        "¥dµP¦¨¥\¥´¥X«á¥D­n®i¥Üªº¦ì¸m"
+        "å¡ç‰ŒæˆåŠŸæ‰“å‡ºå¾Œä¸»è¦å±•ç¤ºçš„ä½ç½®"
     )]
     public Vector2 playedCardPosition =
         new Vector2(
@@ -123,7 +123,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Scale")]
 
     [Tooltip(
-        "¥dµP¥¿±`®i¥Ü®Éªº XY ÁY©ñ"
+        "å¡ç‰Œæ­£å¸¸å±•ç¤ºæ™‚çš„ XY ç¸®æ”¾"
     )]
     public Vector2 displayScale =
         new Vector2(
@@ -133,7 +133,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "Default ¼Ò¦¡ Punch ®Éªº XY ÃB¥~­¿²v"
+        "Default æ¨¡å¼ Punch æ™‚çš„ XY é¡å¤–å€ç‡"
     )]
     public Vector2 punchScale =
         new Vector2(
@@ -149,28 +149,28 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Timing")]
 
     [Tooltip(
-        "»İ­n±q¤âµP­¸¨ì®i¥Ü¦ì¸mªº¼Ò¦¡¡A²¾°Ê©Ò»İ®É¶¡"
+        "éœ€è¦å¾æ‰‹ç‰Œé£›åˆ°å±•ç¤ºä½ç½®çš„æ¨¡å¼ï¼Œç§»å‹•æ‰€éœ€æ™‚é–“"
     )]
     public float moveDuration =
         0.18f;
 
 
     [Tooltip(
-        "Default ¼Ò¦¡ Punch Á`®É¶¡"
+        "Default æ¨¡å¼ Punch ç¸½æ™‚é–“"
     )]
     public float punchDuration =
         0.08f;
 
 
     [Tooltip(
-        "Intro §¹¦¨«á¡A¥¿¦¡°õ¦æ¥dµP®ÄªG«e°±¯d¦h¤["
+        "Intro å®Œæˆå¾Œï¼Œæ­£å¼åŸ·è¡Œå¡ç‰Œæ•ˆæœå‰åœç•™å¤šä¹…"
     )]
     public float holdDuration =
         0.12f;
 
 
     [Tooltip(
-        "®ÄªGµ²ºâ§¹¦¨«á²H¥X®É¶¡"
+        "æ•ˆæœçµç®—å®Œæˆå¾Œæ·¡å‡ºæ™‚é–“"
     )]
     public float fadeDuration =
         0.16f;
@@ -183,7 +183,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Fast Settings")]
 
     [Tooltip(
-        "§Ö³t§ğÀ»©Ô¦ù®É¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "å¿«é€Ÿæ”»æ“Šæ‹‰ä¼¸æ™‚ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 fastStretchScale =
         new Vector2(
@@ -193,7 +193,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "Fast ©Ô¦ù + ¦^¥¿©Ò¨Ï¥Îªº®É¶¡"
+        "Fast æ‹‰ä¼¸ + å›æ­£æ‰€ä½¿ç”¨çš„æ™‚é–“"
     )]
     public float fastSettleDuration =
         0.07f;
@@ -206,7 +206,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Heavy Settings")]
 
     [Tooltip(
-        "Heavy »W¤O®É¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "Heavy è“„åŠ›æ™‚ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 heavyChargeScale =
         new Vector2(
@@ -216,7 +216,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "Heavy ÃzµoÀş¶¡¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "Heavy çˆ†ç™¼ç¬é–“ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 heavyImpactScale =
         new Vector2(
@@ -226,21 +226,21 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "Heavy ÁY¤p»W¤O®É¶¡"
+        "Heavy ç¸®å°è“„åŠ›æ™‚é–“"
     )]
     public float heavyChargeDuration =
         0.12f;
 
 
     [Tooltip(
-        "Heavy Ãzµo©ñ¤jªº®É¶¡"
+        "Heavy çˆ†ç™¼æ”¾å¤§çš„æ™‚é–“"
     )]
     public float heavyImpactDuration =
         0.07f;
 
 
     [Tooltip(
-        "Heavy Ãzµo«á¦^¥¿®É¶¡"
+        "Heavy çˆ†ç™¼å¾Œå›æ­£æ™‚é–“"
     )]
     public float heavyRecoverDuration =
         0.09f;
@@ -253,35 +253,35 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Bounce Settings")]
 
     [Tooltip(
-        "Bounce ©¹¤W¼uªº°ª«×"
+        "Bounce å¾€ä¸Šå½ˆçš„é«˜åº¦"
     )]
     public float bounceHeight =
         55f;
 
 
     [Tooltip(
-        "Bounce ©¹¤W¼uªº®É¶¡"
+        "Bounce å¾€ä¸Šå½ˆçš„æ™‚é–“"
     )]
     public float bounceUpDuration =
         0.10f;
 
 
     [Tooltip(
-        "Bounce ©¹¤UÀ£ªº®É¶¡"
+        "Bounce å¾€ä¸‹å£“çš„æ™‚é–“"
     )]
     public float bounceDownDuration =
         0.08f;
 
 
     [Tooltip(
-        "Bounce ¦^¨ì¥¿±`¦ì¸mªº®É¶¡"
+        "Bounce å›åˆ°æ­£å¸¸ä½ç½®çš„æ™‚é–“"
     )]
     public float bounceRecoverDuration =
         0.08f;
 
 
     [Tooltip(
-        "Bounce ©¹¤W®É¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "Bounce å¾€ä¸Šæ™‚ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 bounceUpScale =
         new Vector2(
@@ -291,7 +291,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "Bounce ¸¨¤UÀ£«ó®É¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "Bounce è½ä¸‹å£“æ‰æ™‚ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 bounceSquashScale =
         new Vector2(
@@ -307,28 +307,28 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Shake Settings")]
 
     [Tooltip(
-        "Shake Á`¾_°Ê®É¶¡"
+        "Shake ç¸½éœ‡å‹•æ™‚é–“"
     )]
     public float shakeDuration =
         0.22f;
 
 
     [Tooltip(
-        "Shake ¥ª¥k³Ì¤j¦ì²¾"
+        "Shake å·¦å³æœ€å¤§ä½ç§»"
     )]
     public float shakeAmount =
         10f;
 
 
     [Tooltip(
-        "Shake ³Ì¤j±ÛÂà¨¤«×"
+        "Shake æœ€å¤§æ—‹è½‰è§’åº¦"
     )]
     public float shakeRotation =
         3f;
 
 
     [Tooltip(
-        "Shake ®É¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "Shake æ™‚ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 shakeScale =
         new Vector2(
@@ -344,7 +344,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Pop In Settings")]
 
     [Tooltip(
-        "PopIn ­è¥X²{®É¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "PopIn å‰›å‡ºç¾æ™‚ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 popStartScale =
         new Vector2(
@@ -354,7 +354,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "PopIn ²Ä¤@¦¸¼u¤j®É¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "PopIn ç¬¬ä¸€æ¬¡å½ˆå¤§æ™‚ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 popOvershootScale =
         new Vector2(
@@ -364,14 +364,14 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "PopIn ±q¤pÅÜ¤jªº®É¶¡"
+        "PopIn å¾å°è®Šå¤§çš„æ™‚é–“"
     )]
     public float popInDuration =
         0.10f;
 
 
     [Tooltip(
-        "PopIn ±q Overshoot ¦^¥¿ªº®É¶¡"
+        "PopIn å¾ Overshoot å›æ­£çš„æ™‚é–“"
     )]
     public float popRecoverDuration =
         0.08f;
@@ -384,21 +384,21 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Drop Down Settings")]
 
     [Tooltip(
-        "DropDown ±q®i¥Ü¦ì¸m¤W¤è¦h°ª¶}©l±¼¸¨"
+        "DropDown å¾å±•ç¤ºä½ç½®ä¸Šæ–¹å¤šé«˜é–‹å§‹æ‰è½"
     )]
     public float dropStartHeight =
         350f;
 
 
     [Tooltip(
-        "DropDown ±¼¸¨©Ò»İ®É¶¡"
+        "DropDown æ‰è½æ‰€éœ€æ™‚é–“"
     )]
     public float dropDuration =
         0.18f;
 
 
     [Tooltip(
-        "±¼¸¨¨ì®i¥Ü¦ì¸m®ÉÀ£«óªº XY ­¿²v"
+        "æ‰è½åˆ°å±•ç¤ºä½ç½®æ™‚å£“æ‰çš„ XY å€ç‡"
     )]
     public Vector2 dropSquashScale =
         new Vector2(
@@ -408,7 +408,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "DropDown ¸¨¦a«á«ì´_ªº®É¶¡"
+        "DropDown è½åœ°å¾Œæ¢å¾©çš„æ™‚é–“"
     )]
     public float dropRecoverDuration =
         0.09f;
@@ -421,14 +421,14 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Spin In Settings")]
 
     [Tooltip(
-        "SpinIn ­è¶}©l®Éªº±ÛÂà¨¤«×"
+        "SpinIn å‰›é–‹å§‹æ™‚çš„æ—‹è½‰è§’åº¦"
     )]
     public float spinStartRotation =
         -180f;
 
 
     [Tooltip(
-        "SpinIn ­è¶}©l®É¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "SpinIn å‰›é–‹å§‹æ™‚ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 spinStartScale =
         new Vector2(
@@ -438,7 +438,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "SpinIn ±ÛÂà§¹¦¨®É¶¡"
+        "SpinIn æ—‹è½‰å®Œæˆæ™‚é–“"
     )]
     public float spinDuration =
         0.22f;
@@ -451,8 +451,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Flip Settings")]
 
     [Tooltip(
-        "Flip ¶}©l®É X ¶bÀ£ÁYµ{«×¡C\n" +
-        "¨Ò¦p 0.05 ¥Nªí´X¥G¹³¤@±øª½½u¡C"
+        "Flip é–‹å§‹æ™‚ X è»¸å£“ç¸®ç¨‹åº¦ã€‚\n" +
+        "ä¾‹å¦‚ 0.05 ä»£è¡¨å¹¾ä¹åƒä¸€æ¢ç›´ç·šã€‚"
     )]
     [Range(0.01f, 1f)]
     public float flipStartXScale =
@@ -460,21 +460,21 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "Flip ²Ä¤@¦¸®i¶}«áªº X ¶b Overshoot ­¿²v"
+        "Flip ç¬¬ä¸€æ¬¡å±•é–‹å¾Œçš„ X è»¸ Overshoot å€ç‡"
     )]
     public float flipOvershootX =
         1.12f;
 
 
     [Tooltip(
-        "Flip ±q²Ó½u®i¶}ªº®É¶¡"
+        "Flip å¾ç´°ç·šå±•é–‹çš„æ™‚é–“"
     )]
     public float flipOpenDuration =
         0.12f;
 
 
     [Tooltip(
-        "Flip ±q Overshoot ¦^¥¿ªº®É¶¡"
+        "Flip å¾ Overshoot å›æ­£çš„æ™‚é–“"
     )]
     public float flipRecoverDuration =
         0.07f;
@@ -487,28 +487,28 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Slam Settings")]
 
     [Tooltip(
-        "Slam ±q®i¥Ü¦ì¸m¤W¤è¦h°ª¶}©l"
+        "Slam å¾å±•ç¤ºä½ç½®ä¸Šæ–¹å¤šé«˜é–‹å§‹"
     )]
     public float slamStartHeight =
         450f;
 
 
     [Tooltip(
-        "Slam ¯{¤U¨Óªº®É¶¡"
+        "Slam ç ¸ä¸‹ä¾†çš„æ™‚é–“"
     )]
     public float slamDownDuration =
         0.10f;
 
 
     [Tooltip(
-        "Slam ¸¨¦a®É©¹¤U¶W¹L®i¥Ü¦ì¸m¦h¤Ö"
+        "Slam è½åœ°æ™‚å¾€ä¸‹è¶…éå±•ç¤ºä½ç½®å¤šå°‘"
     )]
     public float slamOvershootDistance =
         18f;
 
 
     [Tooltip(
-        "Slam ¸¨¦aÀş¶¡¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "Slam è½åœ°ç¬é–“ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 slamImpactScale =
         new Vector2(
@@ -518,21 +518,21 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "Slam ¸¨¦a«á¼u¦^ªº°ª«×"
+        "Slam è½åœ°å¾Œå½ˆå›çš„é«˜åº¦"
     )]
     public float slamBounceHeight =
         28f;
 
 
     [Tooltip(
-        "Slam ²Ä¤@¦¸¦^¼u®É¶¡"
+        "Slam ç¬¬ä¸€æ¬¡å›å½ˆæ™‚é–“"
     )]
     public float slamBounceDuration =
         0.08f;
 
 
     [Tooltip(
-        "Slam ³Ì«á¦^¨ì¥¿±`¦ì¸mªº®É¶¡"
+        "Slam æœ€å¾Œå›åˆ°æ­£å¸¸ä½ç½®çš„æ™‚é–“"
     )]
     public float slamRecoverDuration =
         0.08f;
@@ -545,7 +545,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Flash Settings")]
 
     [Tooltip(
-        "Flash ¥X²{®É¡A¬Û¹ï Display Scale ªº XY ­¿²v"
+        "Flash å‡ºç¾æ™‚ï¼Œç›¸å° Display Scale çš„ XY å€ç‡"
     )]
     public Vector2 flashStartScale =
         new Vector2(
@@ -555,14 +555,14 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "Flash ²Ä¤@¦¸¥X²{ªº®É¶¡"
+        "Flash ç¬¬ä¸€æ¬¡å‡ºç¾çš„æ™‚é–“"
     )]
     public float flashInDuration =
         0.05f;
 
 
     [Tooltip(
-        "Flash ¤¤¶¡§Ö³tÅÜ²Hªº³Ì§C Alpha"
+        "Flash ä¸­é–“å¿«é€Ÿè®Šæ·¡çš„æœ€ä½ Alpha"
     )]
     [Range(0f, 1f)]
     public float flashMiddleAlpha =
@@ -570,7 +570,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
     [Tooltip(
-        "Flash ²Ä¤G¦¸°{«G«ì´_ªº®É¶¡"
+        "Flash ç¬¬äºŒæ¬¡é–ƒäº®æ¢å¾©çš„æ™‚é–“"
     )]
     public float flashRecoverDuration =
         0.08f;
@@ -583,7 +583,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     [Header("Outro")]
 
     [Tooltip(
-        "®ø¥¢®Éªº XY ÁY©ñ"
+        "æ¶ˆå¤±æ™‚çš„ XY ç¸®æ”¾"
     )]
     public Vector2 disappearScale =
         new Vector2(
@@ -641,7 +641,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * Detach «e«á«O¯d¤U¨Óªº¥dµPª¬ºA¡C
+         * Detach å‰å¾Œä¿ç•™ä¸‹ä¾†çš„å¡ç‰Œç‹€æ…‹ã€‚
          */
         Vector2 startPosition =
             cardRect.anchoredPosition;
@@ -664,12 +664,12 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         // =====================================================
-        // ¨CºØ°Êµe¦Û¤v¨M©w¡G
+        // æ¯ç¨®å‹•ç•«è‡ªå·±æ±ºå®šï¼š
         //
-        // ­n¤£­n­¸¨ì¤¤¥¡
-        // ­n¤£­nÀş¶¡¥X²{
-        // ­n¤£­n±q¤W­±±¼¤U
-        // ­n¤£­n±ÛÂà
+        // è¦ä¸è¦é£›åˆ°ä¸­å¤®
+        // è¦ä¸è¦ç¬é–“å‡ºç¾
+        // è¦ä¸è¦å¾ä¸Šé¢æ‰ä¸‹
+        // è¦ä¸è¦æ—‹è½‰
         // =====================================================
 
         switch (animationType)
@@ -788,8 +788,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
             // =================================================
             // PopIn
             //
-            // ¤£­¸¡C
-            // ª½±µ¥X²{¦b playedCardPosition¡C
+            // ä¸é£›ã€‚
+            // ç›´æ¥å‡ºç¾åœ¨ playedCardPositionã€‚
             // =================================================
 
             case GeneralCardPlayAnimationType.PopIn:
@@ -806,8 +806,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
             // =================================================
             // DropDown
             //
-            // ¤£±q¤âµP­¸¡C
-            // ±q playedCardPosition ¤W¤è±¼¤U¨Ó¡C
+            // ä¸å¾æ‰‹ç‰Œé£›ã€‚
+            // å¾ playedCardPosition ä¸Šæ–¹æ‰ä¸‹ä¾†ã€‚
             // =================================================
 
             case GeneralCardPlayAnimationType.DropDown:
@@ -824,8 +824,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
             // =================================================
             // SpinIn
             //
-            // ¤£±q¤âµP­¸¡C
-            // ¦b¤¤¥¡±ÛÂà¥X²{¡C
+            // ä¸å¾æ‰‹ç‰Œé£›ã€‚
+            // åœ¨ä¸­å¤®æ—‹è½‰å‡ºç¾ã€‚
             // =================================================
 
             case GeneralCardPlayAnimationType.SpinIn:
@@ -843,8 +843,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
             // =================================================
             // Flip
             //
-            // ¤£­¸¡C
-            // ª½±µ¦b®i¥Ü¦ì¸m°µÂ½µP¡C
+            // ä¸é£›ã€‚
+            // ç›´æ¥åœ¨å±•ç¤ºä½ç½®åšç¿»ç‰Œã€‚
             // =================================================
 
             case GeneralCardPlayAnimationType.Flip:
@@ -861,7 +861,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
             // =================================================
             // Slam
             //
-            // ±q¤W¤è§Ö³t¯{¤U¡C
+            // å¾ä¸Šæ–¹å¿«é€Ÿç ¸ä¸‹ã€‚
             // =================================================
 
             case GeneralCardPlayAnimationType.Slam:
@@ -878,8 +878,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
             // =================================================
             // Flash
             //
-            // ¤£²¾°Ê¡C
-            // ¦b®i¥Ü¦ì¸mÀş¶¡°{²{¡C
+            // ä¸ç§»å‹•ã€‚
+            // åœ¨å±•ç¤ºä½ç½®ç¬é–“é–ƒç¾ã€‚
             // =================================================
 
             case GeneralCardPlayAnimationType.Flash:
@@ -896,8 +896,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
         /*
          * =====================================================
-         * µL½×­ş¤@ºØ Intro¡A
-         * ³Ì«á³£«OÃÒ¦^¨ì¬Û¦P®i¥Üª¬ºA¡C
+         * ç„¡è«–å“ªä¸€ç¨® Introï¼Œ
+         * æœ€å¾Œéƒ½ä¿è­‰å›åˆ°ç›¸åŒå±•ç¤ºç‹€æ…‹ã€‚
          * =====================================================
          */
 
@@ -919,7 +919,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
         /*
          * =====================================================
-         * ³Ì«á°±¯d¡C
+         * æœ€å¾Œåœç•™ã€‚
          * =====================================================
          */
 
@@ -1114,7 +1114,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * »W¤OÁY¤p¡C
+         * è“„åŠ›ç¸®å°ã€‚
          */
         yield return AnimateScaleSmooth(
             cardRect,
@@ -1125,7 +1125,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ¬ğµMÃzµo¡C
+         * çªç„¶çˆ†ç™¼ã€‚
          */
         yield return AnimateScale(
             cardRect,
@@ -1136,7 +1136,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * «ì´_¡C
+         * æ¢å¾©ã€‚
          */
         yield return AnimateScaleSmooth(
             cardRect,
@@ -1196,7 +1196,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ©¹¤W¡C
+         * å¾€ä¸Šã€‚
          */
         yield return AnimatePositionAndScale(
             cardRect,
@@ -1209,7 +1209,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ©¹¤UÀ£¡C
+         * å¾€ä¸‹å£“ã€‚
          */
         yield return AnimatePositionAndScale(
             cardRect,
@@ -1222,7 +1222,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ¦^¥¿¡C
+         * å›æ­£ã€‚
          */
         yield return AnimatePositionAndScale(
             cardRect,
@@ -1265,7 +1265,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ¶}©l¾_°Ê¥H«e¥ıµy·L©ñ¤j¡C
+         * é–‹å§‹éœ‡å‹•ä»¥å‰å…ˆç¨å¾®æ”¾å¤§ã€‚
          */
         yield return AnimateScale(
             cardRect,
@@ -1295,8 +1295,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
             /*
-             * ¶V±µªñµ²§ô¡A
-             * ¾_°Ê´T«×¶V¤p¡C
+             * è¶Šæ¥è¿‘çµæŸï¼Œ
+             * éœ‡å‹•å¹…åº¦è¶Šå°ã€‚
              */
             float strength =
                 1f - t;
@@ -1373,8 +1373,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     )
     {
         /*
-         * ª½±µ©ñ¨ì®i¥Ü¦ì¸m¡C
-         * §¹¥ş¤£¼½©ñ­¸¦æ¡C
+         * ç›´æ¥æ”¾åˆ°å±•ç¤ºä½ç½®ã€‚
+         * å®Œå…¨ä¸æ’­æ”¾é£›è¡Œã€‚
          */
         cardRect.anchoredPosition =
             playedCardPosition;
@@ -1403,8 +1403,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ¤p ¡÷ ¤j¡C
-         * Alpha ¦P®É¥X²{¡C
+         * å° â†’ å¤§ã€‚
+         * Alpha åŒæ™‚å‡ºç¾ã€‚
          */
         yield return AnimateScaleAndAlpha(
             cardRect,
@@ -1418,7 +1418,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * Overshoot ¡÷ ¥¿±`¡C
+         * Overshoot â†’ æ­£å¸¸ã€‚
          */
         yield return AnimateScaleSmooth(
             cardRect,
@@ -1463,7 +1463,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ª½±µ²¾¨ìµe­±¤W¤è¡C
+         * ç›´æ¥ç§»åˆ°ç•«é¢ä¸Šæ–¹ã€‚
          */
         cardRect.anchoredPosition =
             startPosition;
@@ -1478,10 +1478,10 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ±q¤W¤è±¼¸¨¡C
+         * å¾ä¸Šæ–¹æ‰è½ã€‚
          *
-         * ¸¨¤U®É³vº¥¥X²{¡A
-         * ¨ÃÅÜ¦¨ Squash Scale¡C
+         * è½ä¸‹æ™‚é€æ¼¸å‡ºç¾ï¼Œ
+         * ä¸¦è®Šæˆ Squash Scaleã€‚
          */
         yield return AnimatePositionScaleAndAlpha(
             cardRect,
@@ -1501,7 +1501,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ¸¨¦a¤§«á¦^¥¿¡C
+         * è½åœ°ä¹‹å¾Œå›æ­£ã€‚
          */
         yield return AnimateScaleSmooth(
             cardRect,
@@ -1536,8 +1536,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     )
     {
         /*
-         * ¤£±q¤âµP²¾°Ê¡C
-         * ª½±µ¦b¤¤¥¡¥Í¦¨±ÛÂà·P¡C
+         * ä¸å¾æ‰‹ç‰Œç§»å‹•ã€‚
+         * ç›´æ¥åœ¨ä¸­å¤®ç”Ÿæˆæ—‹è½‰æ„Ÿã€‚
          */
 
         cardRect.anchoredPosition =
@@ -1647,8 +1647,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     )
     {
         /*
-         * Unity UI ¨S¦³¯u¥¿ªº 3D Â½¥d»İ¨D®É¡A
-         * ¥Î X Scale À£«ó¥i¥H°µ¥X«D±`Ã­©wªºÂ½µP·P¡C
+         * Unity UI æ²’æœ‰çœŸæ­£çš„ 3D ç¿»å¡éœ€æ±‚æ™‚ï¼Œ
+         * ç”¨ X Scale å£“æ‰å¯ä»¥åšå‡ºéå¸¸ç©©å®šçš„ç¿»ç‰Œæ„Ÿã€‚
          */
 
         cardRect.anchoredPosition =
@@ -1686,7 +1686,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ²Ó½u ¡÷ ®i¶}¡C
+         * ç´°ç·š â†’ å±•é–‹ã€‚
          */
         yield return AnimateScaleAndAlpha(
             cardRect,
@@ -1703,7 +1703,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * Overshoot ¡÷ ¥¿±`¡C
+         * Overshoot â†’ æ­£å¸¸ã€‚
          */
         yield return AnimateScaleSmooth(
             cardRect,
@@ -1764,7 +1764,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ±q¤W¤è¥X²{¡C
+         * å¾ä¸Šæ–¹å‡ºç¾ã€‚
          */
         cardRect.anchoredPosition =
             startPosition;
@@ -1779,7 +1779,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * §Ö³t©¹¤U¯{¡C
+         * å¿«é€Ÿå¾€ä¸‹ç ¸ã€‚
          */
         yield return AnimatePositionAndScale(
             cardRect,
@@ -1795,7 +1795,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ¸¨¦a«á©¹¤W¼u¡C
+         * è½åœ°å¾Œå¾€ä¸Šå½ˆã€‚
          */
         yield return AnimatePositionAndScale(
             cardRect,
@@ -1811,7 +1811,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ³Ì«á¸¨¦^®i¥Ü¦ì¸m¡C
+         * æœ€å¾Œè½å›å±•ç¤ºä½ç½®ã€‚
          */
         yield return AnimatePositionAndScale(
             cardRect,
@@ -1846,8 +1846,8 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
     )
     {
         /*
-         * ª½±µ¦b¤¤¥¡¥X²{¡C
-         * §¹¥ş¤£­¸¡C
+         * ç›´æ¥åœ¨ä¸­å¤®å‡ºç¾ã€‚
+         * å®Œå…¨ä¸é£›ã€‚
          */
 
         cardRect.anchoredPosition =
@@ -1870,7 +1870,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ²Ä¤@¦¸Àş¶¡«G°_¡C
+         * ç¬¬ä¸€æ¬¡ç¬é–“äº®èµ·ã€‚
          */
         yield return AnimateScaleAndAlpha(
             cardRect,
@@ -1887,7 +1887,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * §Ö³tÅÜ²H¡C
+         * å¿«é€Ÿè®Šæ·¡ã€‚
          */
         yield return AnimateAlpha(
             canvasGroup,
@@ -1899,7 +1899,7 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
 
         /*
-         * ¦A«ì´_§¹¾ã Alpha¡C
+         * å†æ¢å¾©å®Œæ•´ Alphaã€‚
          */
         yield return AnimateAlpha(
             canvasGroup,
@@ -2458,10 +2458,10 @@ public class GeneralCardPlayAnimationController : MonoBehaviour
 
         /*
          * =====================================================
-         * ­ì¥» Outro ¥\¯à«O¯d¡G
+         * åŸæœ¬ Outro åŠŸèƒ½ä¿ç•™ï¼š
          *
-         * Scale ¡õ
-         * Alpha ¡õ
+         * Scale â†“
+         * Alpha â†“
          * =====================================================
          */
 

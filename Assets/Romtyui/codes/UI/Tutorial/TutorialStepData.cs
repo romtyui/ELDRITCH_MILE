@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 public enum TutorialAdvanceMode
@@ -26,18 +26,18 @@ public enum TutorialDialogPosition
 public class TutorialStepData : ScriptableObject
 {
     [Header("Basic")]
-    [Tooltip("¨C­Ó¨BÆJ³Ì¦n¨Ï¥Î¤£¦P ID")]
+    [Tooltip("æ¯å€‹æ­¥é©Ÿæœ€å¥½ä½¿ç”¨ä¸åŒ ID")]
     public string stepId;
 
     [Header("Dialogue Before Instruction")]
-    [Tooltip("³o¨Ç¹ï¸Ü¼½©ñ§¹²¦«á¡A¤~·|Åã¥Ü¥\¯à»¡©ú®Ø")]
+    [Tooltip("é€™äº›å°è©±æ’­æ”¾å®Œç•¢å¾Œï¼Œæ‰æœƒé¡¯ç¤ºåŠŸèƒ½èªªæ˜æ¡†")]
     public List<TutorialDialogueLine> dialogueLines = new();
 
     [Header("Dialogue Pause")]
 
     [Tooltip(
-    "¶}±Ò«á¡A³o­Ó¨BÆJ¼½©ñ¹ï¸Ü®É·|±N Time.timeScale ³]¬° 0¡C" +
-    "¹ï¸Üµ²§ô¨Ã¶i¤J Instruction ©Î¤U¤@¨B®É¡A·|«ì´_­ì¥»ªº®É¶¡³t«×¡C"
+    "é–‹å•Ÿå¾Œï¼Œé€™å€‹æ­¥é©Ÿæ’­æ”¾å°è©±æ™‚æœƒå°‡ Time.timeScale è¨­ç‚º 0ã€‚" +
+    "å°è©±çµæŸä¸¦é€²å…¥ Instruction æˆ–ä¸‹ä¸€æ­¥æ™‚ï¼Œæœƒæ¢å¾©åŸæœ¬çš„æ™‚é–“é€Ÿåº¦ã€‚"
 )]
     public bool pauseGameDuringDialogue;
 
@@ -45,7 +45,7 @@ public class TutorialStepData : ScriptableObject
     [TextArea(3, 8)]
     public string message;
 
-    [Tooltip("¶}±Ò«á¡A¼½©ñ§¹¹ï¸Ü´Nª½±µ¶i¤J¤U¤@¨B¡A¤£Åã¥Ü¥\¯à»¡©ú®Ø")]
+    [Tooltip("é–‹å•Ÿå¾Œï¼Œæ’­æ”¾å®Œå°è©±å°±ç›´æ¥é€²å…¥ä¸‹ä¸€æ­¥ï¼Œä¸é¡¯ç¤ºåŠŸèƒ½èªªæ˜æ¡†")]
     public bool dialogueOnly;
 
     [Header("Example Image")]
@@ -57,43 +57,43 @@ public class TutorialStepData : ScriptableObject
     public TutorialAdvanceMode advanceMode =
         TutorialAdvanceMode.NextButton;
 
-    [Tooltip("Advance Mode ¬° WaitForSignal ®Éµ¥«İªº¨Æ¥ó ID")]
+    [Tooltip("Advance Mode ç‚º WaitForSignal æ™‚ç­‰å¾…çš„äº‹ä»¶ ID")]
     public string requiredSignal;
 
-    [Tooltip("¦¬¨ì¥¿½T¨Æ¥ó«á¡A©µ¿ğ¦h¤[¤~¶i¤J¤U¤@¨B")]
+    [Tooltip("æ”¶åˆ°æ­£ç¢ºäº‹ä»¶å¾Œï¼Œå»¶é²å¤šä¹…æ‰é€²å…¥ä¸‹ä¸€æ­¥")]
     [Min(0f)]
     public float signalAdvanceDelay = 0.15f;
 
-    [Tooltip("­n¦¬¨ì´X¦¸¥¿½T¨Æ¥ó¤~ºâ§¹¦¨")]
+    [Tooltip("è¦æ”¶åˆ°å¹¾æ¬¡æ­£ç¢ºäº‹ä»¶æ‰ç®—å®Œæˆ")]
     [Min(1)]
     public int requiredSignalCount = 1;
 
-    [Tooltip("WaitForSignal ¨BÆJ¬O§_¸T¤î¨Ï¥Î¤U¤@¨B«ö¶s¸õ¹L")]
+    [Tooltip("WaitForSignal æ­¥é©Ÿæ˜¯å¦ç¦æ­¢ä½¿ç”¨ä¸‹ä¸€æ­¥æŒ‰éˆ•è·³é")]
     public bool requireConditionToAdvance = true;
 
     [Header("Wait For Signal Interaction")]
 
     [Tooltip(
-    "¥u¹ï WaitForSignal ¦³®Ä¡C" +
-    "¦¬¨ì¶}©l¾Ş§@ Signal «á¡A¼È®ÉÁôÂÃ¶Â¹õ¡B°ª¥ú»P»¡©ú®Ø¡C"
+    "åªå° WaitForSignal æœ‰æ•ˆã€‚" +
+    "æ”¶åˆ°é–‹å§‹æ“ä½œ Signal å¾Œï¼Œæš«æ™‚éš±è—é»‘å¹•ã€é«˜å…‰èˆ‡èªªæ˜æ¡†ã€‚"
 )]
     public bool hideVisualsAfterInteractionStart;
 
     [Tooltip(
-        "ª±®a¶}©l¾Ş§@®Éµo°eªº Signal¡C" +
-        "¨Ò¦p§ì°_¥dµP¡GBattle_CardGrabStarted"
+        "ç©å®¶é–‹å§‹æ“ä½œæ™‚ç™¼é€çš„ Signalã€‚" +
+        "ä¾‹å¦‚æŠ“èµ·å¡ç‰Œï¼šBattle_CardGrabStarted"
     )]
     public string interactionStartSignal;
 
     [Tooltip(
-        "¥Nªíª±®a¾Ş§@¤£¥¿½Tªº Signal¡C" +
-        "¥i³]©w¦hºØ¥¢±Ñ±¡ªp¡C"
+        "ä»£è¡¨ç©å®¶æ“ä½œä¸æ­£ç¢ºçš„ Signalã€‚" +
+        "å¯è¨­å®šå¤šç¨®å¤±æ•—æƒ…æ³ã€‚"
     )]
     public List<string> incorrectSignals = new();
 
     [Tooltip(
-        "¦¬¨ì Incorrect Signal «á¼½©ñªºªÈ¥¿¹ï¸Ü¡C" +
-        "¼½©ñ§¹·|¦^¨ì¥Ø«e³o­Ó¨BÆJ¡C"
+        "æ”¶åˆ° Incorrect Signal å¾Œæ’­æ”¾çš„ç³¾æ­£å°è©±ã€‚" +
+        "æ’­æ”¾å®Œæœƒå›åˆ°ç›®å‰é€™å€‹æ­¥é©Ÿã€‚"
     )]
     public List<TutorialDialogueLine>
         correctionDialogueLines = new();
@@ -107,7 +107,7 @@ public class TutorialStepData : ScriptableObject
     public bool allowBack = true;
 
     [Header("Highlight")]
-    [Tooltip("¹ïÀ³³õ´º¤¤ªº TutorialTarget.targetId")]
+    [Tooltip("å°æ‡‰å ´æ™¯ä¸­çš„ TutorialTarget.targetId")]
     public string targetId;
 
     public bool highlightTarget;
@@ -115,7 +115,7 @@ public class TutorialStepData : ScriptableObject
     public Vector2 highlightPadding =
         new Vector2(20f, 20f);
 
-    [Tooltip("¼½©ñ«e¸m¹ï¸Ü®É¡A¬O§_´N¥ıÅã¥Ü°ª«G¬}¤f")]
+    [Tooltip("æ’­æ”¾å‰ç½®å°è©±æ™‚ï¼Œæ˜¯å¦å°±å…ˆé¡¯ç¤ºé«˜äº®æ´å£")]
     public bool highlightDuringDialogue;
 
     [Header("Instruction Position")]
@@ -127,41 +127,41 @@ public class TutorialStepData : ScriptableObject
     [Header("Dialogue Position")]
 
     [Tooltip(
-    "¬O§_Åı DialoguePanel ¨Ì·Ó«ü©w¥Ø¼Ğ©w¦ì¡C" +
-    "Ãö³¬®Éºû«ù Prefab ­ì¥»ªº¦ì¸m¡C"
+    "æ˜¯å¦è®“ DialoguePanel ä¾ç…§æŒ‡å®šç›®æ¨™å®šä½ã€‚" +
+    "é—œé–‰æ™‚ç¶­æŒ Prefab åŸæœ¬çš„ä½ç½®ã€‚"
 )]
     public bool positionDialoguePanel;
 
     [Tooltip(
-        "¹ï¸Ü®Ø©w¦ì¨Ï¥Îªº TutorialTarget ID¡C" +
-        "¯dªÅ®É¦Û°Ê¨Ï¥Î Highlight ªº targetId¡C"
+        "å°è©±æ¡†å®šä½ä½¿ç”¨çš„ TutorialTarget IDã€‚" +
+        "ç•™ç©ºæ™‚è‡ªå‹•ä½¿ç”¨ Highlight çš„ targetIdã€‚"
     )]
     public string dialogueTargetId;
 
     [Tooltip(
-        "¹ï¸Ü®Ø¥X²{¦b¥Ø¼Ğªº­ş­Ó¤è¦V¡C" +
-        "Auto ·|¦Û°Ê¿ï¾Ü¸û¤£®e©ö¶W¥Xµe­±ªº¦ì¸m¡C"
+        "å°è©±æ¡†å‡ºç¾åœ¨ç›®æ¨™çš„å“ªå€‹æ–¹å‘ã€‚" +
+        "Auto æœƒè‡ªå‹•é¸æ“‡è¼ƒä¸å®¹æ˜“è¶…å‡ºç•«é¢çš„ä½ç½®ã€‚"
     )]
     public TutorialDialogPosition dialoguePosition =
         TutorialDialogPosition.Auto;
 
-    [Tooltip("¹ï¸Ü®Ø»P¥Ø¼Ğ¤§¶¡ªº¶ZÂ÷")]
+    [Tooltip("å°è©±æ¡†èˆ‡ç›®æ¨™ä¹‹é–“çš„è·é›¢")]
     public float dialogueSpacing = 24f;
 
     [Tooltip(
-        "¹ï¸Ü®Ø¶ZÂ÷µe­±Ãä½t¦Ü¤Ö«O¯d¦h¤ÖªÅ¶¡"
+        "å°è©±æ¡†è·é›¢ç•«é¢é‚Šç·£è‡³å°‘ä¿ç•™å¤šå°‘ç©ºé–“"
     )]
     public Vector2 dialogueScreenPadding =
         new Vector2(24f, 24f);
 
     [Tooltip(
-        "¥Ø¼Ğ²¾°Ê®É¡A¬O§_Åı¹ï¸Ü®Ø«ùÄò¸òÀH¡C" +
-        "¾A¦X°Êµeª«¥ó¡B²¾°Ê¤¤ªº¼Ä¤H©Î°ÊºA UI¡C"
+        "ç›®æ¨™ç§»å‹•æ™‚ï¼Œæ˜¯å¦è®“å°è©±æ¡†æŒçºŒè·Ÿéš¨ã€‚" +
+        "é©åˆå‹•ç•«ç‰©ä»¶ã€ç§»å‹•ä¸­çš„æ•µäººæˆ–å‹•æ…‹ UIã€‚"
     )]
     public bool followDialogueTarget;
 
     [Header("Auto Advance")]
-    [Tooltip("¤j©ó 0 ®É¡A¦b«ü©w¬í¼Æ«á¦Û°Ê«e¶i")]
+    [Tooltip("å¤§æ–¼ 0 æ™‚ï¼Œåœ¨æŒ‡å®šç§’æ•¸å¾Œè‡ªå‹•å‰é€²")]
     [Min(0f)]
     public float autoAdvanceAfterSeconds;
 

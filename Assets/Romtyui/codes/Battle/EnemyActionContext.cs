@@ -1,4 +1,4 @@
-public class EnemyActionContext
+﻿public class EnemyActionContext
 {
     public EnemyUnit enemy;
     public BattleUnit player;

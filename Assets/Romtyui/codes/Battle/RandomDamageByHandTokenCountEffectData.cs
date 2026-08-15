@@ -1,27 +1,27 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Effects/Random Damage By Used Token Count")]
 public class RandomDamageByHandTokenCountEffectData : CardEffectData, CardDescriptionValueProvider
 {
     [Header("Token")]
-    [Tooltip("­n­pºâªº Token ID¡C¥²¶·©M§Z Token CardData ªº Token Id ¤@¼Ë")]
+    [Tooltip("è¦è¨ˆç®—çš„ Token IDã€‚å¿…é ˆå’Œåµ Token CardData çš„ Token Id ä¸€æ¨£")]
     public string tokenId = "egg";
 
     [Header("Extra Hit Settings")]
-    [Tooltip("¨C¨Ï¥Î¹L 1 ¦¸«ü©w Token¡A°l¥[´X¦¸§ğÀ»")]
+    [Tooltip("æ¯ä½¿ç”¨é 1 æ¬¡æŒ‡å®š Tokenï¼Œè¿½åŠ å¹¾æ¬¡æ”»æ“Š")]
     public int extraHitPerUsedToken = 1;
 
-    [Tooltip("¦pªG§ä¤£¨ì RandomEnemyMultiHitDamageEffectData¡A¬O§_¨Ï¥Î fallbackDamagePerHit")]
+    [Tooltip("å¦‚æœæ‰¾ä¸åˆ° RandomEnemyMultiHitDamageEffectDataï¼Œæ˜¯å¦ä½¿ç”¨ fallbackDamagePerHit")]
     public bool useFallbackDamageIfMissingSourceEffect = true;
 
-    [Tooltip("§ä¤£¨ì RandomEnemyMultiHitDamageEffectData ®É¨Ï¥Îªº³Æ¥Î¶Ë®`")]
+    [Tooltip("æ‰¾ä¸åˆ° RandomEnemyMultiHitDamageEffectData æ™‚ä½¿ç”¨çš„å‚™ç”¨å‚·å®³")]
     public int fallbackDamagePerHit = 3;
 
-    [Tooltip("§ä¤£¨ì RandomEnemyMultiHitDamageEffectData ®É¨Ï¥Îªº³Æ¥Î«O©³¦¸¼Æ")]
+    [Tooltip("æ‰¾ä¸åˆ° RandomEnemyMultiHitDamageEffectData æ™‚ä½¿ç”¨çš„å‚™ç”¨ä¿åº•æ¬¡æ•¸")]
     public int fallbackBaseHitCount = 3;
 
     [Header("Description Preview")]
-    [Tooltip("´y­z¹wÄı¥Î¡C·í¤£¦b¾Ô°«¤¤©ÎÅª¤£¨ì BattleDeck ®É¡A¥ı¥Î³o­Ó¼Æ­È¹wÄı")]
+    [Tooltip("æè¿°é è¦½ç”¨ã€‚ç•¶ä¸åœ¨æˆ°é¬¥ä¸­æˆ–è®€ä¸åˆ° BattleDeck æ™‚ï¼Œå…ˆç”¨é€™å€‹æ•¸å€¼é è¦½")]
     public int previewUsedTokenCount = 0;
 
     public override void Execute(CardResolveContext context)
@@ -39,7 +39,7 @@ public class RandomDamageByHandTokenCountEffectData : CardEffectData, CardDescri
 
         if (extraHitCount <= 0)
         {
-            Debug.Log("[RandomDamageByHandTokenCountEffectData] °l¥[§ğÀ»¦¸¼Æ¬° 0¡A¤£°õ¦æ°l¥[¶Ë®`");
+            Debug.Log("[RandomDamageByHandTokenCountEffectData] è¿½åŠ æ”»æ“Šæ¬¡æ•¸ç‚º 0ï¼Œä¸åŸ·è¡Œè¿½åŠ å‚·å®³");
             return;
         }
 
@@ -51,14 +51,14 @@ public class RandomDamageByHandTokenCountEffectData : CardEffectData, CardDescri
 
             if (randomTarget == null)
             {
-                Debug.Log("[RandomDamageByHandTokenCountEffectData] ¨S¦³¥i§ğÀ»ªº¼Ä¤H");
+                Debug.Log("[RandomDamageByHandTokenCountEffectData] æ²’æœ‰å¯æ”»æ“Šçš„æ•µäºº");
                 return;
             }
 
             context.source.DealDamageTo(randomTarget, damagePerHit);
 
             Debug.Log(
-                $"[RandomDamageByHandTokenCountEffectData] °l¥[²Ä {i + 1} ¦¸©R¤¤ {randomTarget.unitName}¡A°òÂ¦¶Ë®` {damagePerHit}"
+                $"[RandomDamageByHandTokenCountEffectData] è¿½åŠ ç¬¬ {i + 1} æ¬¡å‘½ä¸­ {randomTarget.unitName}ï¼ŒåŸºç¤å‚·å®³ {damagePerHit}"
             );
         }
     }
@@ -152,7 +152,7 @@ public class RandomDamageByHandTokenCountEffectData : CardEffectData, CardDescri
             key == "usedTokenCount" ||
             key == "playedTokenCount" ||
             key == "eggCount" ||
-            key == "¤w¨Ï¥Î¹L§Zªº¦¸¼Æ")
+            key == "å·²ä½¿ç”¨éåµçš„æ¬¡æ•¸")
         {
             value = GetUsedTokenCount(context);
             return true;
@@ -160,7 +160,7 @@ public class RandomDamageByHandTokenCountEffectData : CardEffectData, CardDescri
 
         if (key == "extraHitCount" ||
             key == "extraCount" ||
-            key == "°l¥[¦¸¼Æ")
+            key == "è¿½åŠ æ¬¡æ•¸")
         {
             value = GetExtraHitCount(context);
             return true;
@@ -168,7 +168,7 @@ public class RandomDamageByHandTokenCountEffectData : CardEffectData, CardDescri
 
         if (key == "baseHitCount" ||
             key == "baseCount" ||
-            key == "«O©³¦¸¼Æ")
+            key == "ä¿åº•æ¬¡æ•¸")
         {
             value = GetBaseHitCountFromSourceEffect(context);
             return true;
@@ -177,7 +177,7 @@ public class RandomDamageByHandTokenCountEffectData : CardEffectData, CardDescri
         if (key == "bowHitCount" ||
             key == "totalHitCount" ||
             key == "repeatCount" ||
-            key == "­«½Æ¦¸¼Æ")
+            key == "é‡è¤‡æ¬¡æ•¸")
         {
             value = GetTotalHitCount(context);
             return true;

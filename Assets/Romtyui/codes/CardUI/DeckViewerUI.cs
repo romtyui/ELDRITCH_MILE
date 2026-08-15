@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,7 +13,7 @@ public class DeckViewerUI : MonoBehaviour
     public CardViewUI cardPrefab;
 
     [Header("Center Title")]
-    [Tooltip("¦pªG¤£·QÅã¥Ü¤¤¶¡¼ĞÃD¡A´NÃö±¼")]
+    [Tooltip("å¦‚æœä¸æƒ³é¡¯ç¤ºä¸­é–“æ¨™é¡Œï¼Œå°±é—œæ‰")]
     public bool showCenterTitle = false;
 
     public TMP_Text titleText;
@@ -39,10 +39,10 @@ public class DeckViewerUI : MonoBehaviour
     public Image handButtonImage;
 
     [Header("Tab Text Label")]
-    public string drawPileLabel = "µP²Õ°Ï";
-    public string discardPileLabel = "±óµP°Ï";
-    public string exhaustPileLabel = "®ø¯Ó°Ï";
-    public string handLabel = "¤âµP°Ï";
+    public string drawPileLabel = "ç‰Œçµ„å€";
+    public string discardPileLabel = "æ£„ç‰Œå€";
+    public string exhaustPileLabel = "æ¶ˆè€—å€";
+    public string handLabel = "æ‰‹ç‰Œå€";
 
     [Header("Tab Colors")]
     public Color activeTabColor = Color.white;
@@ -186,19 +186,19 @@ public class DeckViewerUI : MonoBehaviour
     {
         if (battleDeck == null)
         {
-            Debug.LogWarning("[DeckViewerUI] battleDeck ¨S¦³«ü©w");
+            Debug.LogWarning("[DeckViewerUI] battleDeck æ²’æœ‰æŒ‡å®š");
             return;
         }
 
         if (cardPrefab == null)
         {
-            Debug.LogWarning("[DeckViewerUI] cardPrefab ¨S¦³«ü©w");
+            Debug.LogWarning("[DeckViewerUI] cardPrefab æ²’æœ‰æŒ‡å®š");
             return;
         }
 
         if (contentRoot == null)
         {
-            Debug.LogWarning("[DeckViewerUI] contentRoot ¨S¦³«ü©w");
+            Debug.LogWarning("[DeckViewerUI] contentRoot æ²’æœ‰æŒ‡å®š");
             return;
         }
 
@@ -211,7 +211,7 @@ public class DeckViewerUI : MonoBehaviour
 
         if (cards == null)
         {
-            Debug.LogWarning($"[DeckViewerUI] {currentMode} cards ¬O null");
+            Debug.LogWarning($"[DeckViewerUI] {currentMode} cards æ˜¯ null");
             return;
         }
 
@@ -223,7 +223,7 @@ public class DeckViewerUI : MonoBehaviour
 
             if (card == null || card.data == null)
             {
-                Debug.LogWarning($"[DeckViewerUI] ²Ä {i} ±i¥d¬O null");
+                Debug.LogWarning($"[DeckViewerUI] ç¬¬ {i} å¼µå¡æ˜¯ null");
                 continue;
             }
 
@@ -256,7 +256,7 @@ public class DeckViewerUI : MonoBehaviour
 
             spawnedCards.Add(view);
 
-            Debug.Log($"[DeckViewerUI] ¥Í¦¨¥dµP UI¡G{card.data.cardName}");
+            Debug.Log($"[DeckViewerUI] ç”Ÿæˆå¡ç‰Œ UIï¼š{card.data.cardName}");
         }
     }
 
@@ -382,19 +382,19 @@ public class DeckViewerUI : MonoBehaviour
         switch (mode)
         {
             case DeckViewMode.DrawPile:
-                return "©âµP°ï";
+                return "æŠ½ç‰Œå †";
 
             case DeckViewMode.DiscardPile:
-                return "±óµP°Ï";
+                return "æ£„ç‰Œå€";
 
             case DeckViewMode.ExhaustPile:
-                return "®ø¯Ó°Ï";
+                return "æ¶ˆè€—å€";
 
             case DeckViewMode.Hand:
-                return "¥Ø«e¤âµP";
+                return "ç›®å‰æ‰‹ç‰Œ";
 
             default:
-                return "µP°ï";
+                return "ç‰Œå †";
         }
     }
 

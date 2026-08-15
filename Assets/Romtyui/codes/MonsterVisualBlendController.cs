@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class MonsterVisualBlendController : MonoBehaviour
 {
@@ -10,7 +10,7 @@ public class MonsterVisualBlendController : MonoBehaviour
     [Range(0f, 1f)]
     public float lightPower = 1f;
 
-    [Tooltip("¤Ä¿ï«á¡AlightPower ¶V°ª normal ¶V©úÅã¡Adark ¶V²H¡C")]
+    [Tooltip("å‹¾é¸å¾Œï¼ŒlightPower è¶Šé«˜ normal è¶Šæ˜é¡¯ï¼Œdark è¶Šæ·¡ã€‚")]
     public bool normalVisibleWhenLight = true;
 
     private SpriteRenderer[] normalRenderers;

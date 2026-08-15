@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 public class BattleDeck : MonoBehaviour
@@ -55,7 +55,7 @@ public class BattleDeck : MonoBehaviour
     {
         InitializeDeck();
 
-        Debug.Log("[BattleDeck] ­«·s¶}©l·s¹CÀ¸¡GµP²Õ¤w±q startingDeck ­««Ø");
+        Debug.Log("[BattleDeck] é‡æ–°é–‹å§‹æ–°éŠæˆ²ï¼šç‰Œçµ„å·²å¾ startingDeck é‡å»º");
     }
 
     public void PrepareForNextBattleKeepDeck()
@@ -72,8 +72,8 @@ public class BattleDeck : MonoBehaviour
         if (exhaustPile == null)
             exhaustPile = new List<CardInstance>();
 
-        // ¤U¤@³õ¾Ô°«¡G¤£­«»s¦¨ startingDeck¡A¦Ó¬O«O¯d¥Ø«e¾Ô°«¤¤ªºµP
-        // §â¤âµP¡B±óµP¡B®ø¯ÓµP¾ã²z¦^©âµP°ï
+        // ä¸‹ä¸€å ´æˆ°é¬¥ï¼šä¸é‡è£½æˆ startingDeckï¼Œè€Œæ˜¯ä¿ç•™ç›®å‰æˆ°é¬¥ä¸­çš„ç‰Œ
+        // æŠŠæ‰‹ç‰Œã€æ£„ç‰Œã€æ¶ˆè€—ç‰Œæ•´ç†å›æŠ½ç‰Œå †
         for (int i = 0; i < hand.Count; i++)
         {
             if (hand[i] != null)
@@ -100,7 +100,7 @@ public class BattleDeck : MonoBehaviour
 
         RefreshDebugView();
 
-        Debug.Log($"[BattleDeck] ¤U¤@³õ¾Ô°«·Ç³Æ§¹¦¨¡G«O¯d¥Ø«eµP²Õ¡A©âµP°ï¼Æ¶q = {drawPile.Count}");
+        Debug.Log($"[BattleDeck] ä¸‹ä¸€å ´æˆ°é¬¥æº–å‚™å®Œæˆï¼šä¿ç•™ç›®å‰ç‰Œçµ„ï¼ŒæŠ½ç‰Œå †æ•¸é‡ = {drawPile.Count}");
     }
 
     public void DrawCards(int amount)
@@ -119,16 +119,16 @@ public class BattleDeck : MonoBehaviour
         if (discardPile == null)
             discardPile = new List<CardInstance>();
 
-        // µP²ÕªÅ¤F¡A´N§â±óµP°ï¬~¦^µP²Õ
+        // ç‰Œçµ„ç©ºäº†ï¼Œå°±æŠŠæ£„ç‰Œå †æ´—å›ç‰Œçµ„
         if (drawPile.Count == 0)
         {
             ReshuffleDiscardIntoDraw();
         }
 
-        // ¬~¦^«áÁÙ¬O¨SµP¡A¥Nªí©âµP°ï©M±óµP°ï³£ªÅ
+        // æ´—å›å¾Œé‚„æ˜¯æ²’ç‰Œï¼Œä»£è¡¨æŠ½ç‰Œå †å’Œæ£„ç‰Œå †éƒ½ç©º
         if (drawPile.Count == 0)
         {
-            Debug.Log("[BattleDeck] ©âµP°ï©M±óµP°ï³£¨S¦³µP¡AµLªk©âµP");
+            Debug.Log("[BattleDeck] æŠ½ç‰Œå †å’Œæ£„ç‰Œå †éƒ½æ²’æœ‰ç‰Œï¼Œç„¡æ³•æŠ½ç‰Œ");
             RefreshDebugView();
             return null;
         }
@@ -182,7 +182,7 @@ public class BattleDeck : MonoBehaviour
     {
         if (transformPool == null)
         {
-            Debug.LogWarning("[BattleDeck] transformPool ¬O null¡AµLªkÅÜ´«µP");
+            Debug.LogWarning("[BattleDeck] transformPool æ˜¯ nullï¼Œç„¡æ³•è®Šæ›ç‰Œ");
             return new CardTransformResult(false);
         }
 
@@ -193,7 +193,7 @@ public class BattleDeck : MonoBehaviour
 
         if (validIndexes.Count == 0)
         {
-            Debug.Log("[BattleDeck] ©âµP°ï¨S¦³¥iÅÜ¤ÆªºµP¡A¹Á¸Õ±N±óµP°ï¬~¦^©âµP°ï");
+            Debug.Log("[BattleDeck] æŠ½ç‰Œå †æ²’æœ‰å¯è®ŠåŒ–çš„ç‰Œï¼Œå˜—è©¦å°‡æ£„ç‰Œå †æ´—å›æŠ½ç‰Œå †");
 
             ReshuffleDiscardIntoDraw();
 
@@ -202,7 +202,7 @@ public class BattleDeck : MonoBehaviour
 
         if (validIndexes.Count == 0)
         {
-            Debug.Log($"[BattleDeck] ©âµP°ï»P±óµP°ï³£¨S¦³¥i¥H³QÅÜ¤Æ¥d¦À {transformPool.transformId} ÅÜ´«ªºµP");
+            Debug.Log($"[BattleDeck] æŠ½ç‰Œå †èˆ‡æ£„ç‰Œå †éƒ½æ²’æœ‰å¯ä»¥è¢«è®ŠåŒ–å¡æ±  {transformPool.transformId} è®Šæ›çš„ç‰Œ");
             RefreshDebugView();
             return new CardTransformResult(false);
         }
@@ -214,7 +214,7 @@ public class BattleDeck : MonoBehaviour
 
         if (oldCardInstance == null || oldCardInstance.data == null)
         {
-            Debug.LogWarning("[BattleDeck] ¿ï¨ìªºµP¸ê®Æ¬O null");
+            Debug.LogWarning("[BattleDeck] é¸åˆ°çš„ç‰Œè³‡æ–™æ˜¯ null");
             RefreshDebugView();
             return new CardTransformResult(false);
         }
@@ -225,14 +225,14 @@ public class BattleDeck : MonoBehaviour
 
         if (!hasResult || newCardData == null)
         {
-            Debug.LogWarning("[BattleDeck] §ä¨ì­Ô¿ïµP¡A¦ı¨S¦³¨ú±oÅÜ´«µ²ªG");
+            Debug.LogWarning("[BattleDeck] æ‰¾åˆ°å€™é¸ç‰Œï¼Œä½†æ²’æœ‰å–å¾—è®Šæ›çµæœ");
             RefreshDebugView();
             return new CardTransformResult(false);
         }
 
         drawPile[selectedDrawPileIndex] = new CardInstance(newCardData);
 
-        Debug.Log($"[BattleDeck] ÅÜ¤Æ¥d¦À {transformPool.transformId}¡G{oldCardData.cardName} ¡÷ {newCardData.cardName}");
+        Debug.Log($"[BattleDeck] è®ŠåŒ–å¡æ±  {transformPool.transformId}ï¼š{oldCardData.cardName} â†’ {newCardData.cardName}");
 
         RefreshDebugView();
 
@@ -316,13 +316,13 @@ public class BattleDeck : MonoBehaviour
     {
         if (cardData == null)
         {
-            Debug.LogWarning("[BattleDeck] AddCardToHand ¥¢±Ñ¡AcardData ¬O null");
+            Debug.LogWarning("[BattleDeck] AddCardToHand å¤±æ•—ï¼ŒcardData æ˜¯ null");
             return;
         }
 
         hand.Add(new CardInstance(cardData));
 
-        Debug.Log($"[BattleDeck] ¥Í¦¨¥dµP¨ì¤âµP¡G{cardData.cardName}");
+        Debug.Log($"[BattleDeck] ç”Ÿæˆå¡ç‰Œåˆ°æ‰‹ç‰Œï¼š{cardData.cardName}");
     }
 
     private void RegisterTokenPlayed(CardInstance card)
@@ -340,7 +340,7 @@ public class BattleDeck : MonoBehaviour
 
         usedTokenCounts[id]++;
 
-        Debug.Log($"[BattleDeck] ¨Ï¥Î Token¡G{id}¡A¥Ø«e¨Ï¥Î¦¸¼Æ¡G{usedTokenCounts[id]}");
+        Debug.Log($"[BattleDeck] ä½¿ç”¨ Tokenï¼š{id}ï¼Œç›®å‰ä½¿ç”¨æ¬¡æ•¸ï¼š{usedTokenCounts[id]}");
     }
 
     public int GetUsedTokenCount(string tokenId)
@@ -409,7 +409,7 @@ public class BattleDeck : MonoBehaviour
         RefreshDebugView();
 
         Debug.Log(
-            $"[BattleDeck] ¤wÁÙ­ìµP°ï§Ö·Ó¡G" +
+            $"[BattleDeck] å·²é‚„åŸç‰Œå †å¿«ç…§ï¼š" +
             $"Draw {drawPile.Count}, " +
             $"Hand {hand.Count}, " +
             $"Discard {discardPile.Count}, " +
@@ -453,7 +453,7 @@ public class BattleDeck : MonoBehaviour
 
         RefreshDebugView();
 
-        Debug.Log($"[BattleDeck] ¤wÁÙ­ì¾Ô°«¶}©l©âµP°ï¶¶§Ç¡A±i¼Æ = {drawPile.Count}");
+        Debug.Log($"[BattleDeck] å·²é‚„åŸæˆ°é¬¥é–‹å§‹æŠ½ç‰Œå †é †åºï¼Œå¼µæ•¸ = {drawPile.Count}");
     }
     public int GetTokenPlayedCount(string tokenId)
     {

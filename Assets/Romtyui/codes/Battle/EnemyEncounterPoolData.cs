@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,7 +12,7 @@ public class EnemyEncounterPoolEntry
     [Min(0)]
     public int weight = 1;
 
-    [Tooltip("¤Ä¿ï«á¡A³o²Õ©Çª«¥u¦³¦b´¶³q©Çª«²Õ¦X³£¥X²{¹L«á¤~·|¥X²{")]
+    [Tooltip("å‹¾é¸å¾Œï¼Œé€™çµ„æ€ªç‰©åªæœ‰åœ¨æ™®é€šæ€ªç‰©çµ„åˆéƒ½å‡ºç¾éå¾Œæ‰æœƒå‡ºç¾")]
     public bool isBoss;
 }
 
@@ -45,7 +45,7 @@ public class EnemyEncounterPoolData : ScriptableObject
 
             MarkFormationUsed(entry.formation);
 
-            Debug.Log($"[EnemyEncounterPoolData] ©â¨ì´¶³q©Çª«²Õ¦X¡G{entry.formation.formationName}");
+            Debug.Log($"[EnemyEncounterPoolData] æŠ½åˆ°æ™®é€šæ€ªç‰©çµ„åˆï¼š{entry.formation.formationName}");
 
             return entry.formation;
         }
@@ -61,12 +61,12 @@ public class EnemyEncounterPoolData : ScriptableObject
 
             MarkFormationUsed(entry.formation);
 
-            Debug.Log($"[EnemyEncounterPoolData] ´¶³q²Õ¦X¤w¥Î§¹¡A©â¨ì Boss ²Õ¦X¡G{entry.formation.formationName}");
+            Debug.Log($"[EnemyEncounterPoolData] æ™®é€šçµ„åˆå·²ç”¨å®Œï¼ŒæŠ½åˆ° Boss çµ„åˆï¼š{entry.formation.formationName}");
 
             return entry.formation;
         }
 
-        Debug.LogWarning($"[EnemyEncounterPoolData] {name} ¨S¦³¥i¥Îªº©Çª«²Õ¦X");
+        Debug.LogWarning($"[EnemyEncounterPoolData] {name} æ²’æœ‰å¯ç”¨çš„æ€ªç‰©çµ„åˆ");
         return null;
     }
 
@@ -105,7 +105,7 @@ public class EnemyEncounterPoolData : ScriptableObject
         if (totalWeight <= 0)
         {
             int randomIndex = UnityEngine.Random.Range(0, candidates.Count);
-            Debug.LogWarning("[EnemyEncounterPoolData] ­Ô¿ï²Õ¦XÁ`Åv­«¬° 0¡A§ï¥Îµ¥¾÷²vÀH¾÷©â¿ï");
+            Debug.LogWarning("[EnemyEncounterPoolData] å€™é¸çµ„åˆç¸½æ¬Šé‡ç‚º 0ï¼Œæ”¹ç”¨ç­‰æ©Ÿç‡éš¨æ©ŸæŠ½é¸");
             return candidates[randomIndex];
         }
 
@@ -189,7 +189,7 @@ public class EnemyEncounterPoolData : ScriptableObject
         usedFormations.Clear();
         RefreshDebugUsedFormationNames();
 
-        Debug.Log($"[EnemyEncounterPoolData] Runtime ¤w¥X²{©Çª«²Õ¦X¤w²MªÅ¡G{name}");
+        Debug.Log($"[EnemyEncounterPoolData] Runtime å·²å‡ºç¾æ€ªç‰©çµ„åˆå·²æ¸…ç©ºï¼š{name}");
     }
 
     [ContextMenu("Reset Runtime Used Formations")]

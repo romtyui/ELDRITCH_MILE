@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(RectTransform))]
@@ -39,7 +39,7 @@ public class TutorialTarget : MonoBehaviour
         if (registeredTargets.TryGetValue(id, out TutorialTarget oldTarget))
         {
             if (oldTarget != null && oldTarget != this)
-                Debug.LogWarning($"[TutorialTarget] targetId ���ơG{id}", this);
+                Debug.LogWarning($"[TutorialTarget] targetId ­«½Æ¡G{id}", this);
         }
 
         registeredTargets[id] = this;

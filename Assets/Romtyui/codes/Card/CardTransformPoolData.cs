@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Transform/Transform Pool")]
@@ -49,7 +49,7 @@ public class CardTransformEntry
     [Header("Original")]
     public CardData originalCard;
 
-    [Tooltip("¥i¿ï¡C­Y¦³¶ñ¡A·|¥Î cardId ¤ñ¹ï¡C")]
+    [Tooltip("å¯é¸ã€‚è‹¥æœ‰å¡«ï¼Œæœƒç”¨ cardId æ¯”å°ã€‚")]
     public string originalCardId;
 
     [Header("Result")]

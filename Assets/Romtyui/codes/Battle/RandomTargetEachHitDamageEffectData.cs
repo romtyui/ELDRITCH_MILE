@@ -1,14 +1,14 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Effects/Random Target Each Hit Damage")]
 public class RandomTargetEachHitDamageEffectData : CardEffectData, CardDescriptionValueProvider
 {
     [Header("Damage")]
-    [Tooltip("¨C¤@¤U³y¦¨ªº°òÂ¦¶Ë®`")]
+    [Tooltip("æ¯ä¸€ä¸‹é€ æˆçš„åŸºç¤å‚·å®³")]
     public int damagePerHit = 3;
 
     [Header("Hit Count")]
-    [Tooltip("Á`¦@§ğÀ»´X¤U¡C¨C¤@¤U³£·|­«·sÀH¾÷¿ï¤@­Ó¦s¬¡¼Ä¤H")]
+    [Tooltip("ç¸½å…±æ”»æ“Šå¹¾ä¸‹ã€‚æ¯ä¸€ä¸‹éƒ½æœƒé‡æ–°éš¨æ©Ÿé¸ä¸€å€‹å­˜æ´»æ•µäºº")]
     public int hitCount = 3;
 
     public override void Execute(CardResolveContext context)
@@ -21,7 +21,7 @@ public class RandomTargetEachHitDamageEffectData : CardEffectData, CardDescripti
 
         if (context.battleManager == null)
         {
-            Debug.LogWarning("[RandomTargetEachHitDamageEffectData] context.battleManager ¬O null¡AµLªk¨ú±oÀH¾÷¼Ä¤H");
+            Debug.LogWarning("[RandomTargetEachHitDamageEffectData] context.battleManager æ˜¯ nullï¼Œç„¡æ³•å–å¾—éš¨æ©Ÿæ•µäºº");
             return;
         }
 
@@ -33,7 +33,7 @@ public class RandomTargetEachHitDamageEffectData : CardEffectData, CardDescripti
 
             if (randomTarget == null)
             {
-                Debug.Log("[RandomTargetEachHitDamageEffectData] ¨S¦³¥i§ğÀ»ªº¼Ä¤H¡A°±¤î«áÄò§ğÀ»");
+                Debug.Log("[RandomTargetEachHitDamageEffectData] æ²’æœ‰å¯æ”»æ“Šçš„æ•µäººï¼Œåœæ­¢å¾ŒçºŒæ”»æ“Š");
                 return;
             }
 
@@ -43,7 +43,7 @@ public class RandomTargetEachHitDamageEffectData : CardEffectData, CardDescripti
             context.source.DealDamageTo(randomTarget, damagePerHit);
 
             Debug.Log(
-                $"[RandomTargetEachHitDamageEffectData] ²Ä {i + 1} ¤UÀH¾÷©R¤¤ {randomTarget.unitName}¡A°òÂ¦¶Ë®` {damagePerHit}"
+                $"[RandomTargetEachHitDamageEffectData] ç¬¬ {i + 1} ä¸‹éš¨æ©Ÿå‘½ä¸­ {randomTarget.unitName}ï¼ŒåŸºç¤å‚·å®³ {damagePerHit}"
             );
         }
     }

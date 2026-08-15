@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Card Data")]
@@ -29,7 +29,7 @@ public class CardData : ScriptableObject
     [Header("God Card")]
     public bool isGodCard;
 
-    [Tooltip("³o±i¯«µPªº±MÄİ¦Ã¬V°Êµe¡CªÅµÛ«h¨Ï¥Î¹w³]°Êµe¡C")]
+    [Tooltip("é€™å¼µç¥ç‰Œçš„å°ˆå±¬æ±¡æŸ“å‹•ç•«ã€‚ç©ºè‘—å‰‡ä½¿ç”¨é è¨­å‹•ç•«ã€‚")]
     public GodCardAnimationData godCardAnimation;
 
     [Header("Effects")]
@@ -38,8 +38,8 @@ public class CardData : ScriptableObject
     [Header("Hit Effect")]
 
     [Tooltip(
-    "³o±i¥d¦¨¥\¥´¥X«á¨Ï¥Îªº©R¤¤¯S®Ä¡C" +
-    "ªÅµÛ¥Nªí¤£¼½©ñÃB¥~©R¤¤¯S®Ä¡C"
+    "é€™å¼µå¡æˆåŠŸæ‰“å‡ºå¾Œä½¿ç”¨çš„å‘½ä¸­ç‰¹æ•ˆã€‚" +
+    "ç©ºè‘—ä»£è¡¨ä¸æ’­æ”¾é¡å¤–å‘½ä¸­ç‰¹æ•ˆã€‚"
 )]
     public CardHitEffectData hitEffect;
 }

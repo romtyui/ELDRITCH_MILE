@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Effects/Random Enemy Multi Hit Damage")]
 public class RandomEnemyMultiHitDamageEffectData : CardEffectData, CardDescriptionValueProvider
@@ -19,7 +19,7 @@ public class RandomEnemyMultiHitDamageEffectData : CardEffectData, CardDescripti
 
         if (context.target == null)
         {
-            Debug.LogWarning("[RandomEnemyMultiHitDamageEffectData] context.target ¬O null¡AµLªk³y¦¨¦h¬q¶Ë®`");
+            Debug.LogWarning("[RandomEnemyMultiHitDamageEffectData] context.target æ˜¯ nullï¼Œç„¡æ³•é€ æˆå¤šæ®µå‚·å®³");
             return;
         }
 
@@ -27,14 +27,14 @@ public class RandomEnemyMultiHitDamageEffectData : CardEffectData, CardDescripti
         {
             if (context.target.currentHp <= 0)
             {
-                Debug.Log("[RandomEnemyMultiHitDamageEffectData] ¥Ø¼Ğ¤w¦º¤`¡A°±¤î«áÄò¦h¬q¶Ë®`");
+                Debug.Log("[RandomEnemyMultiHitDamageEffectData] ç›®æ¨™å·²æ­»äº¡ï¼Œåœæ­¢å¾ŒçºŒå¤šæ®µå‚·å®³");
                 return;
             }
 
             context.source.DealDamageTo(context.target, damagePerHit);
 
             Debug.Log(
-                $"[Random Multi Hit] ²Ä {i + 1} ¦¸©R¤¤ {context.target.unitName}¡A°òÂ¦¶Ë®` {damagePerHit}"
+                $"[Random Multi Hit] ç¬¬ {i + 1} æ¬¡å‘½ä¸­ {context.target.unitName}ï¼ŒåŸºç¤å‚·å®³ {damagePerHit}"
             );
         }
     }

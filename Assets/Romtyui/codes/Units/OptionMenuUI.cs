@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -9,10 +9,10 @@ public class OptionMenuUI : MonoBehaviour
     public BattleManager battleManager;
 
     [Header("Pages")]
-    [Tooltip("¥D¿ï³æ«ö¶s°Ï¡A¨Ò¦p©ñ Ä~Äò / ­«·s¶}©l / ³]©w / Â÷¶}")]
+    [Tooltip("ä¸»é¸å–®æŒ‰éˆ•å€ï¼Œä¾‹å¦‚æ”¾ ç¹¼çºŒ / é‡æ–°é–‹å§‹ / è¨­å®š / é›¢é–‹")]
     public GameObject mainPageRoot;
 
-    [Tooltip("³]©w­¶¡A¨Ò¦p©ñ­µ¶q Slider")]
+    [Tooltip("è¨­å®šé ï¼Œä¾‹å¦‚æ”¾éŸ³é‡ Slider")]
     public GameObject settingsPageRoot;
 
     [Header("Buttons")]
@@ -36,7 +36,7 @@ public class OptionMenuUI : MonoBehaviour
 
     public Slider masterVolumeSlider;
 
-    [Tooltip("¦pªG¦³«ü©w AudioSource¡A·|¦P¨B½Õ¾ã³o¨Ç AudioSource ªº volume")]
+    [Tooltip("å¦‚æœæœ‰æŒ‡å®š AudioSourceï¼ŒæœƒåŒæ­¥èª¿æ•´é€™äº› AudioSource çš„ volume")]
     public AudioSource[] controlledAudioSources;
 
     [Header("Pause")]
@@ -45,13 +45,13 @@ public class OptionMenuUI : MonoBehaviour
     private bool isDeathMenu;
 
     [Header("Main Menu")]
-    [Tooltip("¦^¨ì¥Dµe­±®É­n¸ü¤Jªº³õ´º¦WºÙ")]
+    [Tooltip("å›åˆ°ä¸»ç•«é¢æ™‚è¦è¼‰å…¥çš„å ´æ™¯åç¨±")]
     public string mainMenuSceneName = "MainMenu";
 
-    [Tooltip("¦^¨ì¥Dµe­±®É¬O§_²M°£¥Ø«e Run ¬ö¿ı¡C¤Ä¿ï = ©ñ±ó¥Ø«e¦sÀÉ¡F¤£¤Ä = «O¯d¥Ø«e¬ö¿ı")]
+    [Tooltip("å›åˆ°ä¸»ç•«é¢æ™‚æ˜¯å¦æ¸…é™¤ç›®å‰ Run ç´€éŒ„ã€‚å‹¾é¸ = æ”¾æ£„ç›®å‰å­˜æª”ï¼›ä¸å‹¾ = ä¿ç•™ç›®å‰ç´€éŒ„")]
     public bool clearRunDataWhenReturnMainMenu = false;
 
-    [Tooltip("¦^¥Dµe­±®É¬O§_«ì´_ Time.timeScale")]
+    [Tooltip("å›ä¸»ç•«é¢æ™‚æ˜¯å¦æ¢å¾© Time.timeScale")]
     public bool resetTimeScaleWhenReturnMainMenu = true;
 
     private void Awake()
@@ -242,25 +242,25 @@ public class OptionMenuUI : MonoBehaviour
             if (RunStateManager.Instance != null)
             {
                 RunStateManager.Instance.ClearAllRunData();
-                Debug.Log("[OptionMenuUI] ¦^¨ì¥Dµe­±¡G¤w²M°£¥Ø«e Run ¬ö¿ı");
+                Debug.Log("[OptionMenuUI] å›åˆ°ä¸»ç•«é¢ï¼šå·²æ¸…é™¤ç›®å‰ Run ç´€éŒ„");
             }
             else
             {
-                Debug.LogWarning("[OptionMenuUI] §ä¤£¨ì RunStateManager¡AµLªk²M°£ Run ¬ö¿ı");
+                Debug.LogWarning("[OptionMenuUI] æ‰¾ä¸åˆ° RunStateManagerï¼Œç„¡æ³•æ¸…é™¤ Run ç´€éŒ„");
             }
         }
         else
         {
-            Debug.Log("[OptionMenuUI] ¦^¨ì¥Dµe­±¡G«O¯d¥Ø«e Run ¬ö¿ı");
+            Debug.Log("[OptionMenuUI] å›åˆ°ä¸»ç•«é¢ï¼šä¿ç•™ç›®å‰ Run ç´€éŒ„");
         }
 
         if (string.IsNullOrWhiteSpace(mainMenuSceneName))
         {
-            Debug.LogWarning("[OptionMenuUI] mainMenuSceneName ¬OªÅªº¡AµLªk¦^¨ì¥Dµe­±");
+            Debug.LogWarning("[OptionMenuUI] mainMenuSceneName æ˜¯ç©ºçš„ï¼Œç„¡æ³•å›åˆ°ä¸»ç•«é¢");
             return;
         }
 
-        Debug.Log($"[OptionMenuUI] ¸ü¤J¥Dµe­±³õ´º¡G{mainMenuSceneName}");
+        Debug.Log($"[OptionMenuUI] è¼‰å…¥ä¸»ç•«é¢å ´æ™¯ï¼š{mainMenuSceneName}");
 
         SceneManager.LoadScene(mainMenuSceneName);
     }

@@ -1,4 +1,4 @@
-public class CardResolveContext
+﻿public class CardResolveContext
 {
     public BattleUnit source;
     public BattleUnit target;

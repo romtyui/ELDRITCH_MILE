@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+Ôªøusing System.Collections.Generic;
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
@@ -165,48 +165,48 @@ public class CardViewUI : MonoBehaviour
                 AddProviderValue(values, provider, "usedTokenCount", context, damageValueColor);
                 AddProviderValue(values, provider, "playedTokenCount", context, damageValueColor);
                 AddProviderValue(values, provider, "eggCount", context, damageValueColor);
-                AddProviderValue(values, provider, "§w®œ•ŒπLßZ™∫¶∏º∆", context, damageValueColor);
+                AddProviderValue(values, provider, "Â∑≤‰ΩøÁî®ÈÅéÂçµÁöÑÊ¨°Êï∏", context, damageValueColor);
 
                 AddProviderValue(values, provider, "extraHitCount", context, damageValueColor);
                 AddProviderValue(values, provider, "extraCount", context, damageValueColor);
-                AddProviderValue(values, provider, "∞l•[¶∏º∆", context, damageValueColor);
+                AddProviderValue(values, provider, "ËøΩÂä†Ê¨°Êï∏", context, damageValueColor);
 
                 AddProviderValue(values, provider, "baseHitCount", context, damageValueColor);
                 AddProviderValue(values, provider, "baseCount", context, damageValueColor);
-                AddProviderValue(values, provider, "´O©≥¶∏º∆", context, damageValueColor);
+                AddProviderValue(values, provider, "‰øùÂ∫ïÊ¨°Êï∏", context, damageValueColor);
 
                 AddProviderValue(values, provider, "bowHitCount", context, damageValueColor);
                 AddProviderValue(values, provider, "totalHitCount", context, damageValueColor);
                 AddProviderValue(values, provider, "repeatCount", context, damageValueColor);
-                AddProviderValue(values, provider, "≠´Ω∆¶∏º∆", context, damageValueColor);
+                AddProviderValue(values, provider, "ÈáçË§áÊ¨°Êï∏", context, damageValueColor);
 
                 AddProviderValue(values, provider, "baseDamage", context, damageValueColor);
                 AddProviderValue(values, provider, "baseSwordDamage", context, damageValueColor);
-                AddProviderValue(values, provider, "∞Ú¬¶∂ÀÆ`", context, damageValueColor);
+                AddProviderValue(values, provider, "Âü∫Á§éÂÇ∑ÂÆ≥", context, damageValueColor);
 
                 AddProviderValue(values, provider, "usedTokenBonusDamage", context, damageValueColor);
                 AddProviderValue(values, provider, "bonusDamage", context, damageValueColor);
                 AddProviderValue(values, provider, "tokenBonusDamage", context, damageValueColor);
-                AddProviderValue(values, provider, "√B•~∂ÀÆ`", context, damageValueColor);
+                AddProviderValue(values, provider, "È°çÂ§ñÂÇ∑ÂÆ≥", context, damageValueColor);
 
                 AddProviderValue(values, provider, "swordDamage", context, damageValueColor);
                 AddProviderValue(values, provider, "totalDamage", context, damageValueColor);
                 AddProviderValue(values, provider, "finalDamage", context, damageValueColor);
-                AddProviderValue(values, provider, "¡`∂ÀÆ`", context, damageValueColor);
+                AddProviderValue(values, provider, "Á∏ΩÂÇ∑ÂÆ≥", context, damageValueColor);
 
                 AddProviderValue(values, provider, "baseBlock", context, blockValueColor);
                 AddProviderValue(values, provider, "baseShieldBlock", context, blockValueColor);
-                AddProviderValue(values, provider, "∞Ú¬¶≈@¨ﬁ", context, blockValueColor);
+                AddProviderValue(values, provider, "Âü∫Á§éË≠∑Áõæ", context, blockValueColor);
 
                 AddProviderValue(values, provider, "usedTokenBonusBlock", context, blockValueColor);
                 AddProviderValue(values, provider, "bonusBlock", context, blockValueColor);
                 AddProviderValue(values, provider, "tokenBonusBlock", context, blockValueColor);
-                AddProviderValue(values, provider, "√B•~≈@¨ﬁ", context, blockValueColor);
+                AddProviderValue(values, provider, "È°çÂ§ñË≠∑Áõæ", context, blockValueColor);
 
                 AddProviderValue(values, provider, "shieldBlock", context, blockValueColor);
                 AddProviderValue(values, provider, "totalBlock", context, blockValueColor);
                 AddProviderValue(values, provider, "finalBlock", context, blockValueColor);
-                AddProviderValue(values, provider, "¡`≈@¨ﬁ", context, blockValueColor);
+                AddProviderValue(values, provider, "Á∏ΩË≠∑Áõæ", context, blockValueColor);
             }
         }
 
@@ -406,7 +406,7 @@ public class CardViewUI : MonoBehaviour
     {
         if (visual == null)
         {
-            Debug.LogWarning($"[{nameof(CardViewUI)}] CardData ®S¶≥ visualData°ACardViewUI §]®S¶≥ defaultVisualData");
+            Debug.LogWarning($"[{nameof(CardViewUI)}] CardData Ê≤íÊúâ visualDataÔºåCardViewUI ‰πüÊ≤íÊúâ defaultVisualData");
             return;
         }
 

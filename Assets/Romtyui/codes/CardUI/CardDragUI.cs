@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -9,7 +9,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
     [Header("Play Rule")]
     public float playThresholdPixels = 140f;
-    // ·Æ¹«±q«ö¤U¦ì¸m©¹¤W©ì¶W¹L³o­Ó¶ZÂ÷¡A¤~ºâ¥´¥X
+    // æ»‘é¼ å¾æŒ‰ä¸‹ä½ç½®å¾€ä¸Šæ‹–è¶…éé€™å€‹è·é›¢ï¼Œæ‰ç®—æ‰“å‡º
 
     private RectTransform rectTransform;
     private HandFanLayout handLayout;
@@ -69,7 +69,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         targetArrow = FindFirstObjectByType<TargetArrowUI>(FindObjectsInactive.Include);
 
         if (targetArrow == null)
-            Debug.LogWarning("[CardDragUI] §ä¤£¨ì TargetArrowUI");
+            Debug.LogWarning("[CardDragUI] æ‰¾ä¸åˆ° TargetArrowUI");
     }
     private TargetType GetCurrentTargetType()
     {
@@ -124,8 +124,8 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         tutorialGrabStarted = true;
 
         /*
-         * ¨C¦¸¶}©l©ìµP®É¡A
-         * ­«·s§PÂ_¥Ø«e³o±iµP­n¨Ï¥Î­ş¤@ºØ¥XµP¤è¦¡¡C
+         * æ¯æ¬¡é–‹å§‹æ‹–ç‰Œæ™‚ï¼Œ
+         * é‡æ–°åˆ¤æ–·ç›®å‰é€™å¼µç‰Œè¦ä½¿ç”¨å“ªä¸€ç¨®å‡ºç‰Œæ–¹å¼ã€‚
          */
         useTargetArrowMode =
             ShouldUseTargetArrowMode();
@@ -142,10 +142,10 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
             rectTransform.anchoredPosition;
 
         /*
-         * ¥u¦³ª½±µ©ìµP¼Ò¦¡¤~»İ­nÅã¥Ü¥XµP½u¡C
+         * åªæœ‰ç›´æ¥æ‹–ç‰Œæ¨¡å¼æ‰éœ€è¦é¡¯ç¤ºå‡ºç‰Œç·šã€‚
          *
-         * SingleEnemy ¨Ï¥Î½bÀY¡A
-         * ¤£»İ­n¥XµP½u¡C
+         * SingleEnemy ä½¿ç”¨ç®­é ­ï¼Œ
+         * ä¸éœ€è¦å‡ºç‰Œç·šã€‚
          */
         if (useDirectDragMode)
         {
@@ -157,7 +157,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         }
 
         /*
-         * ­ì¥» HandFanLayout ¥\¯à«O¯d¡C
+         * åŸæœ¬ HandFanLayout åŠŸèƒ½ä¿ç•™ã€‚
          */
         if (handLayout != null &&
             hoverUI != null)
@@ -177,8 +177,8 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         EnsureTargetArrow();
 
         /*
-         * SingleEnemy¡G
-         * Åã¥Ü½bÀY¡C
+         * SingleEnemyï¼š
+         * é¡¯ç¤ºç®­é ­ã€‚
          */
         if (useTargetArrowMode)
         {
@@ -194,7 +194,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         else
         {
             /*
-             * ¨ä¥LµP¤£»İ­n½bÀY¡C
+             * å…¶ä»–ç‰Œä¸éœ€è¦ç®­é ­ã€‚
              */
             if (targetArrow != null)
             {
@@ -203,7 +203,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         }
 
         /*
-         * ­ì¥» Tutorial ¥\¯à«O¯d¡C
+         * åŸæœ¬ Tutorial åŠŸèƒ½ä¿ç•™ã€‚
          */
         TutorialEventBus.Raise(
             "Battle_CardGrabStarted"
@@ -219,8 +219,8 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
          * =====================================================
          * SingleEnemy
          *
-         * ¥dµP¯d¦b­ì¥»ªº¦ì¸m¡A
-         * TargetArrow ¸òµÛ·Æ¹«¡C
+         * å¡ç‰Œç•™åœ¨åŸæœ¬çš„ä½ç½®ï¼Œ
+         * TargetArrow è·Ÿè‘—æ»‘é¼ ã€‚
          * =====================================================
          */
         if (useTargetArrowMode)
@@ -247,13 +247,13 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
          * AllEnemies
          * AllCharacters
          *
-         * ¥dµP¥»Åé¸òµÛ·Æ¹«¡C
+         * å¡ç‰Œæœ¬é«”è·Ÿè‘—æ»‘é¼ ã€‚
          * =====================================================
          */
         if (useDirectDragMode)
         {
             /*
-             * ­ì¥»ªº·s¤â±Ğ¾Ç Signal «O¯d¡C
+             * åŸæœ¬çš„æ–°æ‰‹æ•™å­¸ Signal ä¿ç•™ã€‚
              */
             if (!dragSignalSent)
             {
@@ -294,8 +294,8 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         bool played = false;
 
         /*
-         * Direct Drag ¤~»İ­n§PÂ_
-         * ¦³¨S¦³©ì¹L¥XµP½u¡C
+         * Direct Drag æ‰éœ€è¦åˆ¤æ–·
+         * æœ‰æ²’æœ‰æ‹–éå‡ºç‰Œç·šã€‚
          */
         bool draggedToPlayArea =
             IsDraggedToPlayArea(
@@ -303,11 +303,11 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
             );
 
         /*
-         * SingleEnemy¡G
-         * ¤£»İ­n¸g¹L¥XµP½u¡C
+         * SingleEnemyï¼š
+         * ä¸éœ€è¦ç¶“éå‡ºç‰Œç·šã€‚
          *
-         * DirectDrag¡G
-         * ¥²¶·¸g¹L¥XµP½u¡C
+         * DirectDragï¼š
+         * å¿…é ˆç¶“éå‡ºç‰Œç·šã€‚
          */
         bool canAttemptPlay =
             useTargetArrowMode ||
@@ -350,7 +350,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
             {
                 /*
                  * =================================================
-                 * ³æÅé¼Ä¤H
+                 * å–®é«”æ•µäºº
                  * =================================================
                  */
                 case TargetType.SingleEnemy:
@@ -367,7 +367,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
                     else
                     {
                         Debug.Log(
-                            "³æÅéµP¥²¶·«ü©w¼Ä¤H¤~·|¥´¥X"
+                            "å–®é«”ç‰Œå¿…é ˆæŒ‡å®šæ•µäººæ‰æœƒæ‰“å‡º"
                         );
 
                         played = false;
@@ -378,7 +378,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
                 /*
                  * =================================================
-                 * ¥şÅé¼Ä¤H
+                 * å…¨é«”æ•µäºº
                  * =================================================
                  */
                 case TargetType.AllEnemies:
@@ -395,7 +395,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
                 /*
                  * =================================================
-                 * ¦Û¤v
+                 * è‡ªå·±
                  * =================================================
                  */
                 case TargetType.Self:
@@ -412,7 +412,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
                 /*
                  * =================================================
-                 * µL«ü©w¥Ø¼Ğ
+                 * ç„¡æŒ‡å®šç›®æ¨™
                  * =================================================
                  */
                 case TargetType.None:
@@ -429,7 +429,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
                 /*
                  * =================================================
-                 * ÀH¾÷¼Ä¤H
+                 * éš¨æ©Ÿæ•µäºº
                  * =================================================
                  */
                 case TargetType.RandomEnemy:
@@ -445,16 +445,16 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
 
                 /*
-                 * AllCharacters ¥Ø«e BattleManager
-                 * ÁÙ¨S¦³¯u¥¿¹ê§@§¹¾ãªº¥ş¨¤¦âµ²ºâ¡C
+                 * AllCharacters ç›®å‰ BattleManager
+                 * é‚„æ²’æœ‰çœŸæ­£å¯¦ä½œå®Œæ•´çš„å…¨è§’è‰²çµç®—ã€‚
                  *
-                 * ©Ò¥H³o¦¸¥ıºû«ù¤£¤ä´©¡A
-                 * ¤£°½°½§ï§Aªº¥dµP®ÄªG¡C
+                 * æ‰€ä»¥é€™æ¬¡å…ˆç¶­æŒä¸æ”¯æ´ï¼Œ
+                 * ä¸å·å·æ”¹ä½ çš„å¡ç‰Œæ•ˆæœã€‚
                  */
                 case TargetType.AllCharacters:
 
                     Debug.LogWarning(
-                        "AllCharacters ¥Ø«e©|¥¼§¹¦¨¥XµPµ²ºâÅŞ¿è"
+                        "AllCharacters ç›®å‰å°šæœªå®Œæˆå‡ºç‰Œçµç®—é‚è¼¯"
                     );
 
                     played = false;
@@ -465,7 +465,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
                 default:
 
                     Debug.LogWarning(
-                        $"©|¥¼¤ä´©ªº TargetType: " +
+                        $"å°šæœªæ”¯æ´çš„ TargetType: " +
                         $"{card.data.targetType}"
                     );
 
@@ -480,19 +480,19 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
                 !draggedToPlayArea)
             {
                 Debug.Log(
-                    "¥dµP¨S¦³©ì¹L¥XµP½u¡A¤£¥XµP"
+                    "å¡ç‰Œæ²’æœ‰æ‹–éå‡ºç‰Œç·šï¼Œä¸å‡ºç‰Œ"
                 );
             }
             else
             {
                 Debug.Log(
-                    "¥Ø«eµLªk¹Á¸Õ¥XµP"
+                    "ç›®å‰ç„¡æ³•å˜—è©¦å‡ºç‰Œ"
                 );
             }
         }
 
         /*
-         * ­ì¥» HandLayout ¥\¯à«O¯d¡C
+         * åŸæœ¬ HandLayout åŠŸèƒ½ä¿ç•™ã€‚
          */
         if (handLayout != null)
         {
@@ -500,8 +500,8 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         }
 
         /*
-         * ¥XµP¥¢±Ñ¡G
-         * «O¯d­ì¥» Tutorial Invalid Signal¡C
+         * å‡ºç‰Œå¤±æ•—ï¼š
+         * ä¿ç•™åŸæœ¬ Tutorial Invalid Signalã€‚
          */
         if (!played)
         {
@@ -518,8 +518,8 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         tutorialGrabStarted = false;
 
         /*
-         * ³o¦¸©ìµPµ²§ô¡A
-         * ²M°£ Runtime ¼Ò¦¡¡C
+         * é€™æ¬¡æ‹–ç‰ŒçµæŸï¼Œ
+         * æ¸…é™¤ Runtime æ¨¡å¼ã€‚
          */
         useTargetArrowMode = false;
         useDirectDragMode = false;

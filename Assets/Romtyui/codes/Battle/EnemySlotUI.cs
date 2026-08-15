@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D.Animation;
@@ -19,10 +19,10 @@ public class EnemySlotUI : MonoBehaviour
     public RectTransform visualRoot;
 
     [Header("Slot Visual Settings")]
-    [Tooltip("³o­Ó¯¸¦ìªºµøÄ±ÁY©ñ­¿²v¡C¤¤¶¡«e´º¥i¥H³]¤j¤@ÂI¡A«á¤è¦ì¸m³]¤p¤@ÂI¡C")]
+    [Tooltip("é€™å€‹ç«™ä½çš„è¦–è¦ºç¸®æ”¾å€çŽ‡ã€‚ä¸­é–“å‰æ™¯å¯ä»¥è¨­å¤§ä¸€é»žï¼Œå¾Œæ–¹ä½ç½®è¨­å°ä¸€é»žã€‚")]
     public float slotVisualScaleMultiplier = 1f;
 
-    [Tooltip("³o­Ó¯¸¦ìÃB¥~ªº¦ì¸m°¾²¾¡C")]
+    [Tooltip("é€™å€‹ç«™ä½é¡å¤–çš„ä½ç½®åç§»ã€‚")]
     public Vector2 slotVisualPositionOffset = Vector2.zero;
 
     [SerializeField] private GameObject currentNormalVisual;
@@ -39,16 +39,16 @@ public class EnemySlotUI : MonoBehaviour
     public TooltipTriggerUI statusTooltipTrigger;
 
     [Header("Enemy Status Icon UI")]
-    [Tooltip("³o­Ó¼Ä¤H Slot ±M¥Îªºª¬ºA Icon Root")]
+    [Tooltip("é€™å€‹æ•µäºº Slot å°ˆç”¨çš„ç‹€æ…‹ Icon Root")]
     public Transform statusIconRoot;
 
-    [Tooltip("ª¬ºA¹Ï¥Ü¸ê®Æ®w¡A©Mª±®a¨Ï¥Î¦P¤@­Ó")]
+    [Tooltip("ç‹€æ…‹åœ–ç¤ºè³‡æ–™åº«ï¼Œå’ŒçŽ©å®¶ä½¿ç”¨åŒä¸€å€‹")]
     public StatusIconDatabase statusIconDatabase;
 
-    [Tooltip("ª¬ºA Icon ¹w¸mª«¡Aª½±µ¨Ï¥Îª±®a StatusIconUI Prefab")]
+    [Tooltip("ç‹€æ…‹ Icon é ç½®ç‰©ï¼Œç›´æŽ¥ä½¿ç”¨çŽ©å®¶ StatusIconUI Prefab")]
     public StatusIconUI statusIconPrefab;
 
-    [Tooltip("¨S¦³ª¬ºA®É¬O§_ÁôÂÃ StatusIconRoot")]
+    [Tooltip("æ²’æœ‰ç‹€æ…‹æ™‚æ˜¯å¦éš±è— StatusIconRoot")]
     public bool hideStatusRootWhenEmpty = true;
 
     private void Awake()
@@ -92,7 +92,7 @@ public class EnemySlotUI : MonoBehaviour
     {
         if (enemyData == null)
         {
-            Debug.LogWarning("[EnemySlotUI] enemyData ¬O null");
+            Debug.LogWarning("[EnemySlotUI] enemyData æ˜¯ null");
             return null;
         }
 
@@ -166,11 +166,11 @@ public class EnemySlotUI : MonoBehaviour
         if (entries.Count == 0)
         {
             string title = string.IsNullOrWhiteSpace(intent.intentName)
-                ? "·N¹Ï"
+                ? "æ„åœ–"
                 : intent.intentName;
 
             string body = string.IsNullOrWhiteSpace(intent.description)
-                ? "³o¦W¼Ä¤H±N­n¦æ°Ê¡C"
+                ? "é€™åæ•µäººå°‡è¦è¡Œå‹•ã€‚"
                 : intent.description;
 
             entries.Add(new TooltipEntry(title, body));
@@ -218,27 +218,27 @@ public class EnemySlotUI : MonoBehaviour
         switch (statusType)
         {
             case StatusType.Strength:
-                return "¤O¶q";
+                return "åŠ›é‡";
 
             case StatusType.TemporaryStrength:
-                return "Á{®É¤O¶q";
+                return "è‡¨æ™‚åŠ›é‡";
 
             case StatusType.Weak:
-                return "µê®z";
+                return "è™›å¼±";
 
             case StatusType.Vulnerable:
-                return "©ö¶Ë";
+                return "æ˜“å‚·";
 
             case StatusType.Frail:
-                return "¯Ü®z";
+                return "è„†å¼±";
 
             case StatusType.Poison:
-                return "¤¤¬r";
+                return "ä¸­æ¯’";
 
             case StatusType.Harden:
-                return "µw¤Æ";
+                return "ç¡¬åŒ–";
             case StatusType.Regeneration:
-                return "¦A¥Í";
+                return "å†ç”Ÿ";
             default:
                 return statusType.ToString();
         }
@@ -249,31 +249,31 @@ public class EnemySlotUI : MonoBehaviour
         switch (statusType)
         {
             case StatusType.Strength:
-                return $"³y¦¨ªº§ðÀ»¶Ë®`¼W¥[ {amount} ÂI¡C";
+                return $"é€ æˆçš„æ”»æ“Šå‚·å®³å¢žåŠ  {amount} é»žã€‚";
 
             case StatusType.TemporaryStrength:
-                return $"¥»¦^¦X³y¦¨ªº§ðÀ»¶Ë®`¼W¥[ {amount} ÂI¡A¦^¦Xµ²§ô«á²¾°£¡C";
+                return $"æœ¬å›žåˆé€ æˆçš„æ”»æ“Šå‚·å®³å¢žåŠ  {amount} é»žï¼Œå›žåˆçµæŸå¾Œç§»é™¤ã€‚";
 
             case StatusType.Weak:
-                return $"³y¦¨ªº¶Ë®`­°§C¡C¥Ø«e³Ñ¾l {amount} ¼h¡C";
+                return $"é€ æˆçš„å‚·å®³é™ä½Žã€‚ç›®å‰å‰©é¤˜ {amount} å±¤ã€‚";
 
             case StatusType.Vulnerable:
-                return $"¨ü¨ìªº¶Ë®`¼W¥[¡C¥Ø«e³Ñ¾l {amount} ¼h¡C";
+                return $"å—åˆ°çš„å‚·å®³å¢žåŠ ã€‚ç›®å‰å‰©é¤˜ {amount} å±¤ã€‚";
 
             case StatusType.Frail:
-                return $"Àò±oªº®æ¾×­°§C¡C¥Ø«e³Ñ¾l {amount} ¼h¡C";
+                return $"ç²å¾—çš„æ ¼æ“‹é™ä½Žã€‚ç›®å‰å‰©é¤˜ {amount} å±¤ã€‚";
 
             case StatusType.Poison:
-                return $"¦^¦X¶}©l®É¨ü¨ì {amount} ÂI¶Ë®`¡A¤§«á¤¤¬r¼h¼Æ´î¤Ö¡C";
+                return $"å›žåˆé–‹å§‹æ™‚å—åˆ° {amount} é»žå‚·å®³ï¼Œä¹‹å¾Œä¸­æ¯’å±¤æ•¸æ¸›å°‘ã€‚";
             case StatusType.Harden:
-                return $"¨C¦^¦X¶}©l®É¡AÀò±o {amount} ÂIÅ@¬Þ¡C";
+                return $"æ¯å›žåˆé–‹å§‹æ™‚ï¼Œç²å¾— {amount} é»žè­·ç›¾ã€‚";
             case StatusType.Regeneration:
                 {
                     int percent = amount * 5;
-                    return $"¨C¦^¦X¶}©l®É¡A«ì´_¦Û¨­³Ì¤j¥Í©R­È {percent}% ªº¥Í©R¡C\n¨ü¨ì¥Í©R¶Ë®`®É¡A¼h¼Æ´î¤Ö 1¡C";
+                    return $"æ¯å›žåˆé–‹å§‹æ™‚ï¼Œæ¢å¾©è‡ªèº«æœ€å¤§ç”Ÿå‘½å€¼ {percent}% çš„ç”Ÿå‘½ã€‚\nå—åˆ°ç”Ÿå‘½å‚·å®³æ™‚ï¼Œå±¤æ•¸æ¸›å°‘ 1ã€‚";
                 }
             default:
-                return $"¥Ø«e¼h¼Æ¡G{amount}";
+                return $"ç›®å‰å±¤æ•¸ï¼š{amount}";
         }
     }
     //private void RefreshTooltip()
@@ -288,7 +288,7 @@ public class EnemySlotUI : MonoBehaviour
     //    {
     //        entries.Add(new TooltipEntry(
     //            intent.intentName,
-    //            $"³o¦W¼Ä¤H±N­n{intent.intentName}\n{intent.GetDamageText()}"
+    //            $"é€™åæ•µäººå°‡è¦{intent.intentName}\n{intent.GetDamageText()}"
     //        ));
 
     //        if (intent.tooltipKeywords != null)
@@ -341,7 +341,7 @@ public class EnemySlotUI : MonoBehaviour
     {
         if (enemyUnit == null)
         {
-            Debug.LogWarning("[EnemySlotUI] enemyUnit ¨S¦³«ü©w");
+            Debug.LogWarning("[EnemySlotUI] enemyUnit æ²’æœ‰æŒ‡å®š");
             return;
         }
 
@@ -485,7 +485,7 @@ public class EnemySlotUI : MonoBehaviour
             visual.transform.localRotation = finalRotation;
         }
 
-        Debug.Log($"[EnemySlotUI] ¥Í¦¨µøÄ±¡G{prefab.name} -> {visual.name}", visual);
+        Debug.Log($"[EnemySlotUI] ç”Ÿæˆè¦–è¦ºï¼š{prefab.name} -> {visual.name}", visual);
         StartCoroutine(RebindSpriteSkinsNextFrame(visual));
         return visual;
     }
@@ -519,7 +519,7 @@ public class EnemySlotUI : MonoBehaviour
             skin.enabled = true;
         }
 
-        Debug.Log($"[EnemySlotUI] Rebind SpriteSkin¡G{root.name}, count = {skins.Length}", root);
+        Debug.Log($"[EnemySlotUI] Rebind SpriteSkinï¼š{root.name}, count = {skins.Length}", root);
     }
     private void ClearVisual()
     {

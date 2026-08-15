@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class TutorialManager : MonoBehaviour
@@ -131,8 +131,8 @@ public class TutorialManager : MonoBehaviour
     {
         TutorialEventBus.OnSignalRaised -= HandleSignal;
         /*
-     * ¨¾¤îª«¥ó¦b¹ï¸Ü´Á¶¡³Q°±¥Î«á¡A
-     * Time.timeScale ¥Ã»·°±¦b 0¡C
+     * é˜²æ­¢ç‰©ä»¶åœ¨å°è©±æœŸé–“è¢«åœç”¨å¾Œï¼Œ
+     * Time.timeScale æ°¸é åœåœ¨ 0ã€‚
      */
         RestoreDialogueGlobalPause();
     }
@@ -145,12 +145,12 @@ public class TutorialManager : MonoBehaviour
         UnbindUIEvents();
 
         /*
-         * ¥ı«ì´_³æ¤@¨BÆJ¹ï¸Ü¼È°±¡C
+         * å…ˆæ¢å¾©å–®ä¸€æ­¥é©Ÿå°è©±æš«åœã€‚
          */
         RestoreDialogueGlobalPause();
 
         /*
-         * ¦A«ì´_ Sequence ¼h¯Åªº pauseGame¡C
+         * å†æ¢å¾© Sequence å±¤ç´šçš„ pauseGameã€‚
          */
         RestoreTimeScale();
     }
@@ -184,7 +184,7 @@ public class TutorialManager : MonoBehaviour
         if (sequence == null)
         {
             Debug.LogWarning(
-                "[TutorialManager] sequence ¬O null"
+                "[TutorialManager] sequence æ˜¯ null"
             );
 
             return false;
@@ -193,7 +193,7 @@ public class TutorialManager : MonoBehaviour
         if (!sequence.IsValid())
         {
             Debug.LogWarning(
-                $"[TutorialManager] ±Ğ¾Ç¸ê®Æ¤£§¹¾ã¡G{sequence.name}",
+                $"[TutorialManager] æ•™å­¸è³‡æ–™ä¸å®Œæ•´ï¼š{sequence.name}",
                 sequence
             );
 
@@ -204,7 +204,7 @@ public class TutorialManager : MonoBehaviour
             TutorialProgress.IsCompleted(sequence.tutorialId))
         {
             Debug.Log(
-                $"[TutorialManager] ±Ğ¾Ç¤w§¹¦¨¡A¤£¼½©ñ¡G" +
+                $"[TutorialManager] æ•™å­¸å·²å®Œæˆï¼Œä¸æ’­æ”¾ï¼š" +
                 $"{sequence.tutorialId}"
             );
 
@@ -296,7 +296,7 @@ public class TutorialManager : MonoBehaviour
             Debug.Log(
                 $"[TutorialManager] Step " +
                 $"{currentStepIndex + 1}/" +
-                $"{currentSequence.steps.Count}¡G" +
+                $"{currentSequence.steps.Count}ï¼š" +
                 $"{step.stepId}"
             );
         }
@@ -320,13 +320,13 @@ public class TutorialManager : MonoBehaviour
         currentDialogueIndex = 0;
 
         /*
-         * °O¦í³o¤@¨B DialoguePanel ­n¸òÀHªº¥Ø¼Ğ¡C
+         * è¨˜ä½é€™ä¸€æ­¥ DialoguePanel è¦è·Ÿéš¨çš„ç›®æ¨™ã€‚
          *
-         * step.dialogueTargetId ¦³¶ñ¡G
-         * ¨Ï¥Î dialogueTargetId¡C
+         * step.dialogueTargetId æœ‰å¡«ï¼š
+         * ä½¿ç”¨ dialogueTargetIdã€‚
          *
-         * dialogueTargetId ¨S¶ñ¡G
-         * ¨Ï¥Î step.targetId¡C
+         * dialogueTargetId æ²’å¡«ï¼š
+         * ä½¿ç”¨ step.targetIdã€‚
          */
         currentDialogueTargetRect =
             GetDialogueTargetRect(
@@ -339,8 +339,8 @@ public class TutorialManager : MonoBehaviour
             tutorialUI.PrepareDialogueVisuals();
 
             /*
-             * ¥ıÅã¥Ü²Ä¤@¥y¹ï¸Ü¡A
-             * Åı TMP »P Layout §ó·s¹ï¸Ü®Ø¤Ø¤o¡C
+             * å…ˆé¡¯ç¤ºç¬¬ä¸€å¥å°è©±ï¼Œ
+             * è®“ TMP èˆ‡ Layout æ›´æ–°å°è©±æ¡†å°ºå¯¸ã€‚
              */
             tutorialUI.ShowDialogueLine(
                 step.dialogueLines[
@@ -349,8 +349,8 @@ public class TutorialManager : MonoBehaviour
             );
 
             /*
-             * ¶}±Ò¹ï¸Ü®Ø©w¦ì®É¡A
-             * ¥ı¦b¶i¤J Step ªº·í¤U©w¦ì¤@¦¸¡C
+             * é–‹å•Ÿå°è©±æ¡†å®šä½æ™‚ï¼Œ
+             * å…ˆåœ¨é€²å…¥ Step çš„ç•¶ä¸‹å®šä½ä¸€æ¬¡ã€‚
              */
             if (step.positionDialoguePanel)
             {
@@ -363,7 +363,7 @@ public class TutorialManager : MonoBehaviour
             }
 
             /*
-             * ¥H¤U«O¯d§A­ì¥»ªº¹ï¸Ü´Á¶¡°ª¥ú¥\¯à¡C
+             * ä»¥ä¸‹ä¿ç•™ä½ åŸæœ¬çš„å°è©±æœŸé–“é«˜å…‰åŠŸèƒ½ã€‚
              */
             if (step.highlightDuringDialogue &&
                 step.highlightTarget &&
@@ -395,8 +395,8 @@ public class TutorialManager : MonoBehaviour
             step.dialogueTargetId;
 
         /*
-         * Dialogue Target Id ¨S¦³¶ñ¼g®É¡A
-         * §ï¥Î­ì¥»°ª¥ú°Ïªº Target Id¡C
+         * Dialogue Target Id æ²’æœ‰å¡«å¯«æ™‚ï¼Œ
+         * æ”¹ç”¨åŸæœ¬é«˜å…‰å€çš„ Target Idã€‚
          */
         if (string.IsNullOrWhiteSpace(
                 finalTargetId))
@@ -406,8 +406,8 @@ public class TutorialManager : MonoBehaviour
         }
 
         /*
-         * ¨â­Ó Target Id ³£¨S¦³³]©w¡A
-         * ³o­Ó¹ï¸Ü´N¨S¦³©w¦ì¥Ø¼Ğ¡C
+         * å…©å€‹ Target Id éƒ½æ²’æœ‰è¨­å®šï¼Œ
+         * é€™å€‹å°è©±å°±æ²’æœ‰å®šä½ç›®æ¨™ã€‚
          */
         if (string.IsNullOrWhiteSpace(
                 finalTargetId))
@@ -425,8 +425,8 @@ public class TutorialManager : MonoBehaviour
                 : step.targetId.Trim();
 
         /*
-         * ¹ï¸Ü®Ø©M°ª¥ú°Ï¨Ï¥Î¬Û¦P¥Ø¼Ğ®É¡A
-         * ª½±µ¨Ï¥Î ShowCurrentStep ¤w§ä¨ìªº targetRect¡C
+         * å°è©±æ¡†å’Œé«˜å…‰å€ä½¿ç”¨ç›¸åŒç›®æ¨™æ™‚ï¼Œ
+         * ç›´æ¥ä½¿ç”¨ ShowCurrentStep å·²æ‰¾åˆ°çš„ targetRectã€‚
          */
         if (string.Equals(
                 finalTargetId,
@@ -438,8 +438,8 @@ public class TutorialManager : MonoBehaviour
         }
 
         /*
-         * Dialogue Target Id »P°ª¥ú Target Id ¤£¦P¡A
-         * ­«·s·j´M¹ï¸Ü±M¥Îªº TutorialTarget¡C
+         * Dialogue Target Id èˆ‡é«˜å…‰ Target Id ä¸åŒï¼Œ
+         * é‡æ–°æœå°‹å°è©±å°ˆç”¨çš„ TutorialTargetã€‚
          */
         TutorialTarget dialogueTarget =
             TutorialTarget.Find(
@@ -450,8 +450,8 @@ public class TutorialManager : MonoBehaviour
         {
             Debug.LogWarning(
                 $"[TutorialManager] " +
-                $"Step¡u{step.stepId}¡v" +
-                $"§ä¤£¨ì Dialogue Target¡G" +
+                $"Stepã€Œ{step.stepId}ã€" +
+                $"æ‰¾ä¸åˆ° Dialogue Targetï¼š" +
                 $"{finalTargetId}",
                 step
             );
@@ -533,9 +533,9 @@ public class TutorialManager : MonoBehaviour
                 step.requiredSignal.Trim();
 
             Debug.Log(
-                $"[TutorialManager] µ¥«İ¾Ş§@¡G" +
-                $"{waitingSignalId}¡A»İ­n " +
-                $"{step.GetRequiredSignalCount()} ¦¸"
+                $"[TutorialManager] ç­‰å¾…æ“ä½œï¼š" +
+                $"{waitingSignalId}ï¼Œéœ€è¦ " +
+                $"{step.GetRequiredSignalCount()} æ¬¡"
             );
         }
 
@@ -590,8 +590,8 @@ public class TutorialManager : MonoBehaviour
             );
 
             /*
-             * ·s¤@¥y¤å¦r¥i¯à§ïÅÜ DialoguePanel ¤Ø¤o¡A
-             * ¦]¦¹­«·s©w¦ì¨Ã­«·s Clamp¡C
+             * æ–°ä¸€å¥æ–‡å­—å¯èƒ½æ”¹è®Š DialoguePanel å°ºå¯¸ï¼Œ
+             * å› æ­¤é‡æ–°å®šä½ä¸¦é‡æ–° Clampã€‚
              */
             if (step.positionDialoguePanel)
             {
@@ -713,7 +713,7 @@ public class TutorialManager : MonoBehaviour
             !conditionCompleted)
         {
             Debug.Log(
-                $"[TutorialManager] ¥²¶·¥ı§¹¦¨¾Ş§@¡G" +
+                $"[TutorialManager] å¿…é ˆå…ˆå®Œæˆæ“ä½œï¼š" +
                 $"{step.requiredSignal}"
             );
 
@@ -808,7 +808,7 @@ public class TutorialManager : MonoBehaviour
         isPlaying = false;
 
         Debug.Log(
-            $"[TutorialManager] ±Ğ¾Çµ²§ô¡G{finishedId}"
+            $"[TutorialManager] æ•™å­¸çµæŸï¼š{finishedId}"
         );
     }
 
@@ -871,7 +871,7 @@ public class TutorialManager : MonoBehaviour
             signalId.Trim();
 
         /*
-         * 1. ª±®a¶}©l¾Ş§@
+         * 1. ç©å®¶é–‹å§‹æ“ä½œ
          */
         if (step.UsesInteractionStartSignal() &&
             string.Equals(
@@ -885,7 +885,7 @@ public class TutorialManager : MonoBehaviour
         }
 
         /*
-         * 2. ª±®a¾Ş§@¥¢±Ñ
+         * 2. ç©å®¶æ“ä½œå¤±æ•—
          */
         if (step.IsIncorrectSignal(received))
         {
@@ -898,7 +898,7 @@ public class TutorialManager : MonoBehaviour
         }
 
         /*
-         * 3. ª±®a¾Ş§@¦¨¥\
+         * 3. ç©å®¶æ“ä½œæˆåŠŸ
          */
         if (string.IsNullOrWhiteSpace(
                 step.requiredSignal))
@@ -924,8 +924,8 @@ public class TutorialManager : MonoBehaviour
             step.GetRequiredSignalCount();
 
         Debug.Log(
-            $"[TutorialManager] ¦¬¨ì¥¿½T¨Æ¥ó¡G" +
-            $"{received}¡A¶i«× " +
+            $"[TutorialManager] æ”¶åˆ°æ­£ç¢ºäº‹ä»¶ï¼š" +
+            $"{received}ï¼Œé€²åº¦ " +
             $"{currentSignalCount}/" +
             $"{requiredCount}"
         );
@@ -980,8 +980,8 @@ public class TutorialManager : MonoBehaviour
         }
 
         Debug.Log(
-            $"[TutorialManager] ª±®a¶}©l¾Ş§@¡A" +
-            $"¼È®ÉÁôÂÃ±Ğ¾Ç UI¡G" +
+            $"[TutorialManager] ç©å®¶é–‹å§‹æ“ä½œï¼Œ" +
+            $"æš«æ™‚éš±è—æ•™å­¸ UIï¼š" +
             $"{step.interactionStartSignal}"
         );
     }
@@ -994,7 +994,7 @@ public class TutorialManager : MonoBehaviour
             return;
 
         Debug.Log(
-            $"[TutorialManager] ¦¬¨ì¿ù»~¾Ş§@¡G" +
+            $"[TutorialManager] æ”¶åˆ°éŒ¯èª¤æ“ä½œï¼š" +
             $"{receivedSignal}"
         );
 
@@ -1066,7 +1066,7 @@ public class TutorialManager : MonoBehaviour
         );
 
         Debug.Log(
-            $"[TutorialManager] ¦^¨ì¥Ø«e¾Ş§@¨BÆJ¡G" +
+            $"[TutorialManager] å›åˆ°ç›®å‰æ“ä½œæ­¥é©Ÿï¼š" +
             $"{step.stepId}"
         );
     }
@@ -1172,7 +1172,7 @@ public class TutorialManager : MonoBehaviour
         Time.timeScale = 0f;
 
         Debug.Log(
-            "[TutorialManager] ¹ï¸Ü®ØÅã¥Ü¡A¥ş§½¼È°±"
+            "[TutorialManager] å°è©±æ¡†é¡¯ç¤ºï¼Œå…¨å±€æš«åœ"
         );
     }
     private void RestoreDialogueGlobalPause()
@@ -1186,7 +1186,7 @@ public class TutorialManager : MonoBehaviour
             timeScaleBeforeDialogue;
 
         Debug.Log(
-            "[TutorialManager] ¹ï¸Ü®Øµ²§ô¡A«ì´_®É¶¡"
+            "[TutorialManager] å°è©±æ¡†çµæŸï¼Œæ¢å¾©æ™‚é–“"
         );
     }
 }

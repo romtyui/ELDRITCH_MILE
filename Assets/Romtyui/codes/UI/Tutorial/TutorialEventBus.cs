@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 public static class TutorialEventBus
@@ -13,7 +13,7 @@ public static class TutorialEventBus
         string normalized = signalId.Trim();
 
         Debug.Log(
-            $"[TutorialEventBus] �o�e�ƥ�G{normalized}"
+            $"[TutorialEventBus] µo°e¨Æ¥ó¡G{normalized}"
         );
 
         OnSignalRaised?.Invoke(normalized);

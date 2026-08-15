@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using UnityEngine;
 
 [Serializable]
@@ -7,17 +7,17 @@ public class TutorialDialogueLine
     [Header("Speaker")]
     public DialogueSpeakerData speaker;
 
-    [Tooltip("¶}±Ò«á¡AÂĞ»\¨¤¦â¸ê®Æ¤¤ªº¹w³]¥ßÃ¸¦ì¸m")]
+    [Tooltip("é–‹å•Ÿå¾Œï¼Œè¦†è“‹è§’è‰²è³‡æ–™ä¸­çš„é è¨­ç«‹ç¹ªä½ç½®")]
     public bool overridePortraitSide;
 
     public DialoguePortraitSide portraitSide =
         DialoguePortraitSide.Left;
 
     [Header("Portrait Style")]
-    [Tooltip("³o¥y¹ï¸Ü¶}©l®É¨Ï¥Îªº¥ßÃ¸¼Ë¦¡")]
+    [Tooltip("é€™å¥å°è©±é–‹å§‹æ™‚ä½¿ç”¨çš„ç«‹ç¹ªæ¨£å¼")]
     public string portraitStyleId = "Default";
 
-    [Tooltip("¤¹³\¦b¤å¦r¤¤¨Ï¥Î {portrait:StyleId}")]
+    [Tooltip("å…è¨±åœ¨æ–‡å­—ä¸­ä½¿ç”¨ {portrait:StyleId}")]
     public bool allowInlinePortraitChange = true;
 
     [Header("Text")]
@@ -30,7 +30,7 @@ public class TutorialDialogueLine
     [Min(0.001f)]
     public float typewriterInterval = 0.03f;
 
-    [Tooltip("³v¦r¼½©ñ³~¤¤ÂIÀ»¡A¬O§_ª½±µÅã¥Ü§¹¾ã¥y¤l")]
+    [Tooltip("é€å­—æ’­æ”¾é€”ä¸­é»æ“Šï¼Œæ˜¯å¦ç›´æ¥é¡¯ç¤ºå®Œæ•´å¥å­")]
     public bool allowClickToCompleteText = true;
 
     public DialoguePortraitSide GetPortraitSide()

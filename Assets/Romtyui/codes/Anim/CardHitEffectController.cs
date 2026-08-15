@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class CardHitEffectController : MonoBehaviour
@@ -6,8 +6,8 @@ public class CardHitEffectController : MonoBehaviour
     [Header("Effect Root")]
 
     [Tooltip(
-        "©Ò¦³¥dµP©R¤¤¯S®Ä¥Í¦¨ªº¦ì¸m¡C" +
-        "«ØÄ³©ñ¦b Battle Canvas ©³¤U¡C"
+        "æ‰€æœ‰å¡ç‰Œå‘½ä¸­ç‰¹æ•ˆç”Ÿæˆçš„ä½ç½®ã€‚" +
+        "å»ºè­°æ”¾åœ¨ Battle Canvas åº•ä¸‹ã€‚"
     )]
     public RectTransform effectRoot;
 
@@ -15,8 +15,8 @@ public class CardHitEffectController : MonoBehaviour
     [Header("Center Position")]
 
     [Tooltip(
-        "TargetType.None ¨S¦³¨¤¦â¥Ø¼Ğ®É¡A" +
-        "¯S®ÄÅã¥Ü¦bµe­±¤¤ªº¦ì¸m¡C"
+        "TargetType.None æ²’æœ‰è§’è‰²ç›®æ¨™æ™‚ï¼Œ" +
+        "ç‰¹æ•ˆé¡¯ç¤ºåœ¨ç•«é¢ä¸­çš„ä½ç½®ã€‚"
     )]
     public Vector2 screenCenterPosition =
         Vector2.zero;
@@ -24,12 +24,12 @@ public class CardHitEffectController : MonoBehaviour
 
     [Header("Audio")]
 
-    [Tooltip("©R¤¤¯S®Ä­µ®Ä¨Ï¥Îªº AudioSource")]
+    [Tooltip("å‘½ä¸­ç‰¹æ•ˆéŸ³æ•ˆä½¿ç”¨çš„ AudioSource")]
     public AudioSource audioSource;
 
 
     // =========================================================
-    // ¹ï¨¤¦â¥Ø¼Ğ¥Í¦¨¯S®Ä
+    // å°è§’è‰²ç›®æ¨™ç”Ÿæˆç‰¹æ•ˆ
     // =========================================================
 
     public GameObject SpawnEffectOnTarget(CardHitEffectData data, BattleUnit target, bool playSound = true)
@@ -46,7 +46,7 @@ public class CardHitEffectController : MonoBehaviour
         if (effectRoot == null)
         {
             Debug.LogWarning(
-                "[CardHitEffectController] effectRoot ¨S¦³«ü©w"
+                "[CardHitEffectController] effectRoot æ²’æœ‰æŒ‡å®š"
             );
 
             return null;
@@ -65,11 +65,11 @@ public class CardHitEffectController : MonoBehaviour
 
 
         /*
-         * ¨ú±o¥Ø¼Ğªº RectTransform¡C
+         * å–å¾—ç›®æ¨™çš„ RectTransformã€‚
          *
-         * ¥Ø«e§Aªº BattleUnit / EnemyUnit
-         * ³£¬O³õ´º¤¤ªº MonoBehaviour¡A
-         * Enemy ¤]±¾¦b UI Slot ¨t²Î¤¤¡C
+         * ç›®å‰ä½ çš„ BattleUnit / EnemyUnit
+         * éƒ½æ˜¯å ´æ™¯ä¸­çš„ MonoBehaviourï¼Œ
+         * Enemy ä¹Ÿæ›åœ¨ UI Slot ç³»çµ±ä¸­ã€‚
          */
         RectTransform targetRect =
             target.transform as RectTransform;
@@ -79,14 +79,14 @@ public class CardHitEffectController : MonoBehaviour
             targetRect != null)
         {
             /*
-             * ¥ı¨ú±o¥Ø¼Ğªº¥@¬É®y¼Ğ¡C
+             * å…ˆå–å¾—ç›®æ¨™çš„ä¸–ç•Œåº§æ¨™ã€‚
              */
             Vector3 targetWorldPosition =
                 targetRect.position;
 
 
             /*
-             * ¦AÂà´«¦¨ EffectRoot ªº¥»¦a®y¼Ğ¡C
+             * å†è½‰æ›æˆ EffectRoot çš„æœ¬åœ°åº§æ¨™ã€‚
              */
             Vector3 localPosition =
                 effectRoot.InverseTransformPoint(
@@ -127,7 +127,7 @@ public class CardHitEffectController : MonoBehaviour
 
 
         /*
-         * ¦Û°Ê§R°£¡C
+         * è‡ªå‹•åˆªé™¤ã€‚
          */
         if (data.lifeTime > 0f)
         {
@@ -141,9 +141,9 @@ public class CardHitEffectController : MonoBehaviour
         return effectObject;
     }
 
-
+     
     // =========================================================
-    // ¨S¦³¨¤¦â¥Ø¼Ğªº¯S®Ä
+    // æ²’æœ‰è§’è‰²ç›®æ¨™çš„ç‰¹æ•ˆå“ˆ 
     // =========================================================
 
     public GameObject SpawnEffectAtCenter(
@@ -159,7 +159,7 @@ public class CardHitEffectController : MonoBehaviour
         if (effectRoot == null)
         {
             Debug.LogWarning(
-                "[CardHitEffectController] effectRoot ¨S¦³«ü©w"
+                "[CardHitEffectController] effectRoot æ²’æœ‰æŒ‡å®š"
             );
 
             return null;
@@ -219,7 +219,7 @@ public class CardHitEffectController : MonoBehaviour
 
 
     // =========================================================
-    // µ¥«İ¯u¥¿©R¤¤®É¶¡
+    // ç­‰å¾…çœŸæ­£å‘½ä¸­æ™‚é–“
     // =========================================================
 
     public IEnumerator WaitForImpact(
@@ -235,8 +235,8 @@ public class CardHitEffectController : MonoBehaviour
 
 
         /*
-         * ¨Ï¥Î Realtime¡A
-         * Á×§K±Ğ¾Ç¼È°±©Î TimeScale ¼vÅT°Êµe©R¤¤®É¶¡¡C
+         * ä½¿ç”¨ Realtimeï¼Œ
+         * é¿å…æ•™å­¸æš«åœæˆ– TimeScale å½±éŸ¿å‹•ç•«å‘½ä¸­æ™‚é–“ã€‚
          */
         yield return new WaitForSecondsRealtime(
             data.impactDelay
@@ -245,7 +245,7 @@ public class CardHitEffectController : MonoBehaviour
 
 
     // =========================================================
-    // ³æ¤@¨¤¦â§¹¾ã¼½©ñ
+    // å–®ä¸€è§’è‰²å®Œæ•´æ’­æ”¾
     // =========================================================
 
     public IEnumerator PlayOnTarget(
@@ -270,7 +270,7 @@ public class CardHitEffectController : MonoBehaviour
 
 
     // =========================================================
-    // µe­±¤¤¥¡§¹¾ã¼½©ñ
+    // ç•«é¢ä¸­å¤®å®Œæ•´æ’­æ”¾
     // =========================================================
 
     public IEnumerator PlayAtCenter(

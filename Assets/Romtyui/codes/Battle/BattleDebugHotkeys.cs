@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -14,21 +14,21 @@ public class BattleDebugHotkeys : MonoBehaviour
     public Key killAllEnemiesKey = Key.K;
     public Key enableBattleManagerKey = Key.B;
 
-    [Tooltip("¶}Ãö Debug UI")]
+    [Tooltip("é–‹é—œ Debug UI")]
     public Key toggleStatusDebugUIKey = Key.F1;
 
-    [Tooltip("«O¦s¥Ø«e¬ö¿ı¨Ã¸ü¤J«ü©w³õ´º")]
+    [Tooltip("ä¿å­˜ç›®å‰ç´€éŒ„ä¸¦è¼‰å…¥æŒ‡å®šå ´æ™¯")]
     public Key loadSceneWithSaveKey = Key.F5;
-    [Tooltip("¤£³qÃö¡A«O¯d¥Ø«e©Çª«²Õ¨Ã­«·s¸ü¤J«ü©w³õ´º")]
+    [Tooltip("ä¸é€šé—œï¼Œä¿ç•™ç›®å‰æ€ªç‰©çµ„ä¸¦é‡æ–°è¼‰å…¥æŒ‡å®šå ´æ™¯")]
     public Key reloadSceneWithoutCommitKey = Key.F6;
 
     [Header("Settings")]
     public int debugDamage = 9999;
     [Header("Scene Load Debug")]
-    [Tooltip("«ö¤U«ü©w«öÁä«á­n¸ü¤Jªº³õ´º¦WºÙ¡C³õ´º¥²¶·¥[¤J Build Settings¡C")]
+    [Tooltip("æŒ‰ä¸‹æŒ‡å®šæŒ‰éµå¾Œè¦è¼‰å…¥çš„å ´æ™¯åç¨±ã€‚å ´æ™¯å¿…é ˆåŠ å…¥ Build Settingsã€‚")]
     public string debugSceneName = "BattleScene";
 
-    [Tooltip("¸ü¤J³õ´º«e¬O§_¥ı«O¦s¥Ø«e HP / SAN / µP²Õ¬ö¿ı")]
+    [Tooltip("è¼‰å…¥å ´æ™¯å‰æ˜¯å¦å…ˆä¿å­˜ç›®å‰ HP / SAN / ç‰Œçµ„ç´€éŒ„")]
     public bool saveRunStateBeforeLoadScene = true;
 
     [Header("Debug")]
@@ -42,12 +42,12 @@ public class BattleDebugHotkeys : MonoBehaviour
     [Header("Card Debug UI")]
     public AllCardDatabase allCardDatabase;
 
-    [Tooltip("¥i¥HÃB¥~¤â°Ê«ü©w CardData")]
+    [Tooltip("å¯ä»¥é¡å¤–æ‰‹å‹•æŒ‡å®š CardData")]
     public List<CardData> debugAddableCards = new();
 
     public int addCardAmount = 1;
 
-    [Tooltip("¬O§_¦Û°Ê§â BattleDeck.startingDeck ¸ÌªºµP¥[¤J Debug ²M³æ")]
+    [Tooltip("æ˜¯å¦è‡ªå‹•æŠŠ BattleDeck.startingDeck è£¡çš„ç‰ŒåŠ å…¥ Debug æ¸…å–®")]
     //public bool includeStartingDeckCards = true;
 
     //public int addCardAmount = 1;
@@ -71,8 +71,8 @@ public class BattleDebugHotkeys : MonoBehaviour
     private int selectedTabIndex;
     private readonly string[] tabNames = new string[]
     {
-        "ª¬ºA",
-        "¥[µP"
+        "ç‹€æ…‹",
+        "åŠ ç‰Œ"
     };
 
     private void Awake()
@@ -145,7 +145,7 @@ public class BattleDebugHotkeys : MonoBehaviour
     {
         GUILayout.Space(6);
 
-        GUILayout.Label($"§Ö±¶Áä¡G{toggleStatusDebugUIKey} ¶} / Ãö");
+        GUILayout.Label($"å¿«æ·éµï¼š{toggleStatusDebugUIKey} é–‹ / é—œ");
 
         GUILayout.Space(8);
 
@@ -173,14 +173,14 @@ public class BattleDebugHotkeys : MonoBehaviour
 
     private void DrawStatusDebugTab()
     {
-        if (GUILayout.Button("­«·s§ì¨ú³õ´º¥Ø¼Ğ"))
+        if (GUILayout.Button("é‡æ–°æŠ“å–å ´æ™¯ç›®æ¨™"))
         {
             RefreshDebugTargets();
         }
 
         includeInactiveEnemies = GUILayout.Toggle(
             includeInactiveEnemies,
-            "¥]§t¥¼±Ò¥Î©Çª«"
+            "åŒ…å«æœªå•Ÿç”¨æ€ªç‰©"
         );
 
         GUILayout.Space(8);
@@ -202,11 +202,11 @@ public class BattleDebugHotkeys : MonoBehaviour
 
     private void DrawTargetSection()
     {
-        GUILayout.Label("¿ï¾Ü¥Ø¼Ğ");
+        GUILayout.Label("é¸æ“‡ç›®æ¨™");
 
         if (debugTargets.Count == 0)
         {
-            GUILayout.Label("¥Ø«e¨S¦³¥i¥Î¥Ø¼Ğ");
+            GUILayout.Label("ç›®å‰æ²’æœ‰å¯ç”¨ç›®æ¨™");
             return;
         }
 
@@ -243,11 +243,11 @@ public class BattleDebugHotkeys : MonoBehaviour
 
     private void DrawStatusSection()
     {
-        GUILayout.Label("¿ï¾Üª¬ºA");
+        GUILayout.Label("é¸æ“‡ç‹€æ…‹");
 
         if (statusTypes == null || statusTypes.Length == 0)
         {
-            GUILayout.Label("StatusType ¨S¦³¸ê®Æ");
+            GUILayout.Label("StatusType æ²’æœ‰è³‡æ–™");
             return;
         }
 
@@ -283,7 +283,7 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         GUILayout.BeginHorizontal();
 
-        GUILayout.Label("¼h¼Æ", GUILayout.Width(50));
+        GUILayout.Label("å±¤æ•¸", GUILayout.Width(50));
 
         string amountText = GUILayout.TextField(
             statusAmount.ToString(),
@@ -308,12 +308,12 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         GUI.enabled = target != null;
 
-        if (GUILayout.Button("®M¥Îª¬ºA¨ì¥Ø¼Ğ"))
+        if (GUILayout.Button("å¥—ç”¨ç‹€æ…‹åˆ°ç›®æ¨™"))
         {
             ApplySelectedStatusToTarget();
         }
 
-        if (GUILayout.Button("²M°£¥Ø¼Ğ©Ò¦³ª¬ºA"))
+        if (GUILayout.Button("æ¸…é™¤ç›®æ¨™æ‰€æœ‰ç‹€æ…‹"))
         {
             ClearSelectedTargetStatuses();
         }
@@ -325,11 +325,11 @@ public class BattleDebugHotkeys : MonoBehaviour
     {
         BattleUnit target = GetSelectedTarget();
 
-        GUILayout.Label("¥Ø¼Ğ¥Ø«eª¬ºA");
+        GUILayout.Label("ç›®æ¨™ç›®å‰ç‹€æ…‹");
 
         if (target == null)
         {
-            GUILayout.Label("¥¼¿ï¾Ü¥Ø¼Ğ");
+            GUILayout.Label("æœªé¸æ“‡ç›®æ¨™");
             return;
         }
 
@@ -337,7 +337,7 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         if (statuses == null || statuses.Count == 0)
         {
-            GUILayout.Label("¨S¦³ª¬ºA");
+            GUILayout.Label("æ²’æœ‰ç‹€æ…‹");
             return;
         }
 
@@ -362,11 +362,11 @@ public class BattleDebugHotkeys : MonoBehaviour
             GUILayout.ExpandHeight(true)
         );
 
-        GUILayout.Label("¥[µP¨ì¤âµP");
+        GUILayout.Label("åŠ ç‰Œåˆ°æ‰‹ç‰Œ");
 
         GUILayout.Space(4);
 
-        if (GUILayout.Button("­«·s¾ã²z¥dµP²M³æ"))
+        if (GUILayout.Button("é‡æ–°æ•´ç†å¡ç‰Œæ¸…å–®"))
         {
             RefreshDebugCardList();
         }
@@ -374,19 +374,19 @@ public class BattleDebugHotkeys : MonoBehaviour
         if (allCardDatabase != null)
         {
             int count = allCardDatabase.cards != null ? allCardDatabase.cards.Count : 0;
-            GUILayout.Label($"AllCardDatabase¡G{count} ±i¥d");
+            GUILayout.Label($"AllCardDatabaseï¼š{count} å¼µå¡");
         }
         else
         {
-            GUILayout.Label("AllCardDatabase¡G¥¼«ü©w");
+            GUILayout.Label("AllCardDatabaseï¼šæœªæŒ‡å®š");
         }
 
         GUILayout.Space(8);
 
         if (runtimeCardList.Count == 0)
         {
-            GUILayout.Label("¥Ø«e¨S¦³¥i¥[¤Jªº¥dµP¡C");
-            GUILayout.Label("½Ğ«ü©w AllCardDatabase¡A©Î§â CardData ©ì¨ì Debug Addable Cards¡C");
+            GUILayout.Label("ç›®å‰æ²’æœ‰å¯åŠ å…¥çš„å¡ç‰Œã€‚");
+            GUILayout.Label("è«‹æŒ‡å®š AllCardDatabaseï¼Œæˆ–æŠŠ CardData æ‹–åˆ° Debug Addable Cardsã€‚");
 
             GUILayout.EndScrollView();
             return;
@@ -398,7 +398,7 @@ public class BattleDebugHotkeys : MonoBehaviour
             runtimeCardList.Count - 1
         );
 
-        GUILayout.Label("¿ï¾Ü¥dµP");
+        GUILayout.Label("é¸æ“‡å¡ç‰Œ");
 
         cardScrollPosition = GUILayout.BeginScrollView(
             cardScrollPosition,
@@ -442,7 +442,7 @@ public class BattleDebugHotkeys : MonoBehaviour
                       battleManager != null &&
                       battleManager.gameObject.activeInHierarchy;
 
-        if (GUILayout.Button("¥[¤J¤âµP", GUILayout.Height(32)))
+        if (GUILayout.Button("åŠ å…¥æ‰‹ç‰Œ", GUILayout.Height(32)))
         {
             AddSelectedCardToHand();
         }
@@ -457,7 +457,7 @@ public class BattleDebugHotkeys : MonoBehaviour
     {
         GUILayout.BeginHorizontal();
 
-        GUILayout.Label("¼Æ¶q", GUILayout.Width(50));
+        GUILayout.Label("æ•¸é‡", GUILayout.Width(50));
 
         string amountText = GUILayout.TextField(
             addCardAmount.ToString(),
@@ -480,11 +480,11 @@ public class BattleDebugHotkeys : MonoBehaviour
     {
         CardData cardData = GetSelectedCardData();
 
-        GUILayout.Label("¿ï¤¤¥dµP");
+        GUILayout.Label("é¸ä¸­å¡ç‰Œ");
 
         if (cardData == null)
         {
-            GUILayout.Label("¥¼¿ï¾Ü¥dµP");
+            GUILayout.Label("æœªé¸æ“‡å¡ç‰Œ");
             return;
         }
 
@@ -494,13 +494,13 @@ public class BattleDebugHotkeys : MonoBehaviour
             ? cardData.name
             : cardData.cardName;
 
-        GUILayout.Label($"¦WºÙ¡G{cardName}");
-        GUILayout.Label($"¶O¥Î¡G{cardData.baseCost}");
-        GUILayout.Label($"Ãş«¬¡G{cardData.cardType}");
-        GUILayout.Label($"¥Ø¼Ğ¡G{cardData.targetType}");
+        GUILayout.Label($"åç¨±ï¼š{cardName}");
+        GUILayout.Label($"è²»ç”¨ï¼š{cardData.baseCost}");
+        GUILayout.Label($"é¡å‹ï¼š{cardData.cardType}");
+        GUILayout.Label($"ç›®æ¨™ï¼š{cardData.targetType}");
 
         if (!string.IsNullOrWhiteSpace(cardData.description))
-            GUILayout.Label($"´y­z¡G{cardData.description}");
+            GUILayout.Label($"æè¿°ï¼š{cardData.description}");
 
         GUILayout.EndVertical();
     }
@@ -533,7 +533,7 @@ public class BattleDebugHotkeys : MonoBehaviour
             Mathf.Max(0, runtimeCardList.Count - 1)
         );
 
-        Debug.Log($"[BattleDebugHotkeys] Card Debug ­«·s¾ã²z¥dµP²M³æ¡A¼Æ¶q = {runtimeCardList.Count}");
+        Debug.Log($"[BattleDebugHotkeys] Card Debug é‡æ–°æ•´ç†å¡ç‰Œæ¸…å–®ï¼Œæ•¸é‡ = {runtimeCardList.Count}");
     }
 
     private void AddCardToRuntimeList(CardData cardData)
@@ -567,7 +567,7 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         if (battleManager == null)
         {
-            Debug.LogWarning("[BattleDebugHotkeys] battleManager ¬O null¡AµLªk¥[µP");
+            Debug.LogWarning("[BattleDebugHotkeys] battleManager æ˜¯ nullï¼Œç„¡æ³•åŠ ç‰Œ");
             return;
         }
 
@@ -575,7 +575,7 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         if (cardData == null)
         {
-            Debug.LogWarning("[BattleDebugHotkeys] ¨S¦³¿ï¾Ü¥dµP¡AµLªk¥[µP");
+            Debug.LogWarning("[BattleDebugHotkeys] æ²’æœ‰é¸æ“‡å¡ç‰Œï¼Œç„¡æ³•åŠ ç‰Œ");
             return;
         }
 
@@ -590,7 +590,7 @@ public class BattleDebugHotkeys : MonoBehaviour
             ? cardData.name
             : cardData.cardName;
 
-        Debug.Log($"[BattleDebugHotkeys] ¥[¤J¤âµP¡G{cardName} x{finalAmount}");
+        Debug.Log($"[BattleDebugHotkeys] åŠ å…¥æ‰‹ç‰Œï¼š{cardName} x{finalAmount}");
     }
 
     // =========================================================
@@ -666,7 +666,7 @@ public class BattleDebugHotkeys : MonoBehaviour
             Mathf.Max(0, debugTargets.Count - 1)
         );
 
-        Debug.Log($"[BattleDebugHotkeys] Status Debug ­«·s§ì¨ú¥Ø¼Ğ¡A¼Æ¶q = {debugTargets.Count}");
+        Debug.Log($"[BattleDebugHotkeys] Status Debug é‡æ–°æŠ“å–ç›®æ¨™ï¼Œæ•¸é‡ = {debugTargets.Count}");
     }
 
     private BattleUnit GetSelectedTarget()
@@ -703,7 +703,7 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         if (target == null)
         {
-            Debug.LogWarning("[BattleDebugHotkeys] ¨S¦³¿ï¾Ü¥Ø¼Ğ¡AµLªk®M¥Îª¬ºA");
+            Debug.LogWarning("[BattleDebugHotkeys] æ²’æœ‰é¸æ“‡ç›®æ¨™ï¼Œç„¡æ³•å¥—ç”¨ç‹€æ…‹");
             return;
         }
 
@@ -711,7 +711,7 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         target.ApplyStatus(statusType, statusAmount);
 
-        Debug.Log($"[BattleDebugHotkeys] ¹ï {target.unitName} ®M¥Îª¬ºA {GetStatusDisplayName(statusType)} x{statusAmount}");
+        Debug.Log($"[BattleDebugHotkeys] å° {target.unitName} å¥—ç”¨ç‹€æ…‹ {GetStatusDisplayName(statusType)} x{statusAmount}");
 
         RefreshBattleUI();
     }
@@ -722,13 +722,13 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         if (target == null)
         {
-            Debug.LogWarning("[BattleDebugHotkeys] ¨S¦³¿ï¾Ü¥Ø¼Ğ¡AµLªk²M°£ª¬ºA");
+            Debug.LogWarning("[BattleDebugHotkeys] æ²’æœ‰é¸æ“‡ç›®æ¨™ï¼Œç„¡æ³•æ¸…é™¤ç‹€æ…‹");
             return;
         }
 
         target.ClearAllStatuses();
 
-        Debug.Log($"[BattleDebugHotkeys] ²M°£ {target.unitName} ©Ò¦³ª¬ºA");
+        Debug.Log($"[BattleDebugHotkeys] æ¸…é™¤ {target.unitName} æ‰€æœ‰ç‹€æ…‹");
 
         RefreshBattleUI();
     }
@@ -757,10 +757,10 @@ public class BattleDebugHotkeys : MonoBehaviour
         if (target == null)
             return "null";
 
-        string typeLabel = target is EnemyUnit ? "¼Ä¤H" : "ª±®a";
+        string typeLabel = target is EnemyUnit ? "æ•µäºº" : "ç©å®¶";
         string activeLabel = target.gameObject.activeInHierarchy ? "" : " / Inactive";
 
-        return $"{typeLabel}¡G{target.unitName} HP {target.currentHp}/{target.maxHp}{activeLabel}";
+        return $"{typeLabel}ï¼š{target.unitName} HP {target.currentHp}/{target.maxHp}{activeLabel}";
     }
 
     private string GetStatusDisplayName(StatusType statusType)
@@ -768,22 +768,22 @@ public class BattleDebugHotkeys : MonoBehaviour
         switch (statusType)
         {
             case StatusType.Strength:
-                return "¤O¶q";
+                return "åŠ›é‡";
 
             case StatusType.TemporaryStrength:
-                return "Á{®É¤O¶q";
+                return "è‡¨æ™‚åŠ›é‡";
 
             case StatusType.Weak:
-                return "µê®z";
+                return "è™›å¼±";
 
             case StatusType.Vulnerable:
-                return "©ö¶Ë";
+                return "æ˜“å‚·";
 
             case StatusType.Frail:
-                return "¯Ü®z";
+                return "è„†å¼±";
 
             case StatusType.Poison:
-                return "¤¤¬r";
+                return "ä¸­æ¯’";
 
             default:
                 return statusType.ToString();
@@ -813,7 +813,7 @@ public class BattleDebugHotkeys : MonoBehaviour
             FindObjectsSortMode.None
         );
 
-        Debug.Log($"[BattleDebugHotkeys] ¹ï³õ´º©Ò¦³©Çª«³y¦¨ {debugDamage} ¶Ë®`¡A¼Æ¶q = {enemies.Length}");
+        Debug.Log($"[BattleDebugHotkeys] å°å ´æ™¯æ‰€æœ‰æ€ªç‰©é€ æˆ {debugDamage} å‚·å®³ï¼Œæ•¸é‡ = {enemies.Length}");
 
         for (int i = 0; i < enemies.Length; i++)
         {
@@ -844,17 +844,17 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         if (battleManagerObject == null)
         {
-            Debug.LogWarning("[BattleDebugHotkeys] battleManagerObject ¨S¦³«ü©w");
+            Debug.LogWarning("[BattleDebugHotkeys] battleManagerObject æ²’æœ‰æŒ‡å®š");
             return;
         }
 
         if (battleManagerObject.activeSelf)
         {
-            Debug.Log("[BattleDebugHotkeys] BattleManager ª«¥ó¤w¸g¬O¶}±Òª¬ºA");
+            Debug.Log("[BattleDebugHotkeys] BattleManager ç‰©ä»¶å·²ç¶“æ˜¯é–‹å•Ÿç‹€æ…‹");
             return;
         }
 
-        Debug.Log("[BattleDebugHotkeys] ¶}±Ò BattleManager ª«¥ó");
+        Debug.Log("[BattleDebugHotkeys] é–‹å•Ÿ BattleManager ç‰©ä»¶");
 
         battleManagerObject.SetActive(true);
     }
@@ -870,38 +870,38 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(debugSceneName))
         {
-            Debug.LogWarning("[BattleDebugHotkeys] debugSceneName ¬OªÅªº¡AµLªk¸ü¤J³õ´º");
+            Debug.LogWarning("[BattleDebugHotkeys] debugSceneName æ˜¯ç©ºçš„ï¼Œç„¡æ³•è¼‰å…¥å ´æ™¯");
             return;
         }
 
         if (battleManager == null)
         {
-            Debug.LogWarning("[BattleDebugHotkeys] battleManager ¬O null¡AµLªk«O¦s¾Ô°«¬ö¿ı");
+            Debug.LogWarning("[BattleDebugHotkeys] battleManager æ˜¯ nullï¼Œç„¡æ³•ä¿å­˜æˆ°é¬¥ç´€éŒ„");
             return;
         }
 
         if (RunStateManager.Instance != null)
         {
-            // F5 = ¼ÒÀÀ³qÃö¡A©Ò¥H­n²M°£«O¯d©Çª«²Õ
+            // F5 = æ¨¡æ“¬é€šé—œï¼Œæ‰€ä»¥è¦æ¸…é™¤ä¿ç•™æ€ªç‰©çµ„
             RunStateManager.Instance.ClearReservedFormation();
 
-            // F5 = «O¦sª±®a¥Ø«eª¬ºA
+            // F5 = ä¿å­˜ç©å®¶ç›®å‰ç‹€æ…‹
             RunStateManager.Instance.SaveFromBattle(
                 battleManager.playerUnit,
                 battleManager.energySystem,
                 battleManager.playerDeck
             );
 
-            Debug.Log("[BattleDebugHotkeys] F5 ¤w«O¦s¥Ø«eª±®aª¬ºA¡A¨Ã²M°£«O¯d©Çª«²Õ");
+            Debug.Log("[BattleDebugHotkeys] F5 å·²ä¿å­˜ç›®å‰ç©å®¶ç‹€æ…‹ï¼Œä¸¦æ¸…é™¤ä¿ç•™æ€ªç‰©çµ„");
         }
         else
         {
-            Debug.LogWarning("[BattleDebugHotkeys] ³õ´º¤¤¨S¦³ RunStateManager¡AµLªk«O¦s¬ö¿ı");
+            Debug.LogWarning("[BattleDebugHotkeys] å ´æ™¯ä¸­æ²’æœ‰ RunStateManagerï¼Œç„¡æ³•ä¿å­˜ç´€éŒ„");
         }
 
         Time.timeScale = 1f;
 
-        Debug.Log($"[BattleDebugHotkeys] F5 ¼ÒÀÀ³qÃö¡A¸ü¤J³õ´º¡G{debugSceneName}");
+        Debug.Log($"[BattleDebugHotkeys] F5 æ¨¡æ“¬é€šé—œï¼Œè¼‰å…¥å ´æ™¯ï¼š{debugSceneName}");
 
         SceneManager.LoadScene(debugSceneName);
     }
@@ -912,13 +912,13 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         if (RunStateManager.Instance == null)
         {
-            Debug.LogWarning("[BattleDebugHotkeys] ³õ´º¤¤¨S¦³ RunStateManager¡AµLªk«O¦s¬ö¿ı¡C½Ğ½T»{¤w«Ø¥ß RunStateManager ª«¥ó¡C");
+            Debug.LogWarning("[BattleDebugHotkeys] å ´æ™¯ä¸­æ²’æœ‰ RunStateManagerï¼Œç„¡æ³•ä¿å­˜ç´€éŒ„ã€‚è«‹ç¢ºèªå·²å»ºç«‹ RunStateManager ç‰©ä»¶ã€‚");
             return;
         }
 
         if (battleManager == null)
         {
-            Debug.LogWarning("[BattleDebugHotkeys] battleManager ¬O null¡AµLªk«O¦s¬ö¿ı");
+            Debug.LogWarning("[BattleDebugHotkeys] battleManager æ˜¯ nullï¼Œç„¡æ³•ä¿å­˜ç´€éŒ„");
             return;
         }
 
@@ -928,7 +928,7 @@ public class BattleDebugHotkeys : MonoBehaviour
             battleManager.playerDeck
         );
 
-        Debug.Log("[BattleDebugHotkeys] ¤w¦b¸ü¤J³õ´º«e«O¦s RunState");
+        Debug.Log("[BattleDebugHotkeys] å·²åœ¨è¼‰å…¥å ´æ™¯å‰ä¿å­˜ RunState");
     }
     [ContextMenu("Debug Reload Scene From Battle Start Deck Snapshot")]
     public void DebugReloadSceneFromBattleStartDeckSnapshot()
@@ -937,20 +937,20 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(debugSceneName))
         {
-            Debug.LogWarning("[BattleDebugHotkeys] debugSceneName ¬OªÅªº¡AµLªk¸ü¤J³õ´º");
+            Debug.LogWarning("[BattleDebugHotkeys] debugSceneName æ˜¯ç©ºçš„ï¼Œç„¡æ³•è¼‰å…¥å ´æ™¯");
             return;
         }
 
         if (RunStateManager.Instance == null)
         {
-            Debug.LogWarning("[BattleDebugHotkeys] ¨S¦³ RunStateManager¡AµLªk¨Ï¥Î¾Ô°«¶}©lµP²Õ§Ö·Ó");
+            Debug.LogWarning("[BattleDebugHotkeys] æ²’æœ‰ RunStateManagerï¼Œç„¡æ³•ä½¿ç”¨æˆ°é¬¥é–‹å§‹ç‰Œçµ„å¿«ç…§");
             return;
         }
 
         if (RunStateManager.Instance.battleStartDeckSnapshot == null ||
             !RunStateManager.Instance.battleStartDeckSnapshot.hasSnapshot)
         {
-            Debug.LogWarning("[BattleDebugHotkeys] ÁÙ¨S¦³¾Ô°«¶}©lµP²Õ§Ö·Ó¡A½Ğ¥ı¶i¤J¾Ô°«");
+            Debug.LogWarning("[BattleDebugHotkeys] é‚„æ²’æœ‰æˆ°é¬¥é–‹å§‹ç‰Œçµ„å¿«ç…§ï¼Œè«‹å…ˆé€²å…¥æˆ°é¬¥");
             return;
         }
 
@@ -958,7 +958,7 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         Time.timeScale = 1f;
 
-        Debug.Log($"[BattleDebugHotkeys] F6 ¨Ï¥Î¾Ô°«¶}©lµP²Õ§Ö·Ó­«·s¸ü¤J³õ´º¡G{debugSceneName}");
+        Debug.Log($"[BattleDebugHotkeys] F6 ä½¿ç”¨æˆ°é¬¥é–‹å§‹ç‰Œçµ„å¿«ç…§é‡æ–°è¼‰å…¥å ´æ™¯ï¼š{debugSceneName}");
 
         SceneManager.LoadScene(debugSceneName);
     }

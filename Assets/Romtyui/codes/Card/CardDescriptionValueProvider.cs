@@ -1,4 +1,4 @@
-public interface CardDescriptionValueProvider
+﻿public interface CardDescriptionValueProvider
 {
     bool TryGetDescriptionValue(
         string key,

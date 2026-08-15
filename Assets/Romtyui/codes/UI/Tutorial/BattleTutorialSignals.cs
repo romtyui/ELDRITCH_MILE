@@ -1,4 +1,4 @@
-public static class BattleTutorialSignals
+﻿public static class BattleTutorialSignals
 {
     public const string BattleStarted =
         "BattleStarted";

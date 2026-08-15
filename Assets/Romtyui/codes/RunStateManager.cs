@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -66,7 +66,7 @@ public class RunStateManager : MonoBehaviour
     [Header("Battle Start Deck Snapshot")]
     public BattleStartDeckSnapshot battleStartDeckSnapshot = new BattleStartDeckSnapshot();
 
-    [Tooltip("F6 ¨Ï¥Î¡C­«·s¸ü¤J³õ´º«á¡A¬O§_­n®M¥Î¾Ô°«¶}©l«eªºµP²Õ¶¶§Ç")]
+    [Tooltip("F6 ä½¿ç”¨ã€‚é‡æ–°è¼‰å…¥å ´æ™¯å¾Œï¼Œæ˜¯å¦è¦å¥—ç”¨æˆ°é¬¥é–‹å§‹å‰çš„ç‰Œçµ„é †åº")]
     public bool pendingRestoreBattleStartDeckSnapshot;
 
     private void Awake()
@@ -86,9 +86,9 @@ public class RunStateManager : MonoBehaviour
         hasReservedFormation = formation != null;
 
         if (formation != null)
-            Debug.Log($"[RunStateManager] «O¯d©Çª«²Õ¡G{formation.name}");
+            Debug.Log($"[RunStateManager] ä¿ç•™æ€ªç‰©çµ„ï¼š{formation.name}");
         else
-            Debug.LogWarning("[RunStateManager] ReserveFormation ¶Ç¤J null");
+            Debug.LogWarning("[RunStateManager] ReserveFormation å‚³å…¥ null");
     }
 
     public bool TryGetReservedFormation(out EnemyFormationData formation)
@@ -113,7 +113,7 @@ public class RunStateManager : MonoBehaviour
         reservedFormation = null;
         hasReservedFormation = false;
 
-        Debug.Log("[RunStateManager] ²M°£«O¯d©Çª«²Õ");
+        Debug.Log("[RunStateManager] æ¸…é™¤ä¿ç•™æ€ªç‰©çµ„");
     }
     public void SaveFromBattle(
         BattleUnit playerUnit,
@@ -138,7 +138,7 @@ public class RunStateManager : MonoBehaviour
         hasSavedRunState = true;
 
         Debug.Log(
-            $"[RunStateManager] ¤w«O¦sª¬ºA¡GHP {savedPlayerCurrentHp}/{savedPlayerMaxHp}, " +
+            $"[RunStateManager] å·²ä¿å­˜ç‹€æ…‹ï¼šHP {savedPlayerCurrentHp}/{savedPlayerMaxHp}, " +
             $"SAN {savedCurrentEnergy}/{savedMaxEnergy}, Deck {savedDeck.Count}"
         );
     }
@@ -151,7 +151,7 @@ public class RunStateManager : MonoBehaviour
     {
         if (!hasSavedRunState)
         {
-            Debug.Log("[RunStateManager] ¨S¦³¤w«O¦sª¬ºA¡A¤£®M¥Î");
+            Debug.Log("[RunStateManager] æ²’æœ‰å·²ä¿å­˜ç‹€æ…‹ï¼Œä¸å¥—ç”¨");
             return;
         }
 
@@ -170,7 +170,7 @@ public class RunStateManager : MonoBehaviour
         ApplyDeck(battleDeck);
 
         Debug.Log(
-            $"[RunStateManager] ¤w®M¥Îª¬ºA¡GHP {savedPlayerCurrentHp}/{savedPlayerMaxHp}, " +
+            $"[RunStateManager] å·²å¥—ç”¨ç‹€æ…‹ï¼šHP {savedPlayerCurrentHp}/{savedPlayerMaxHp}, " +
             $"SAN {savedCurrentEnergy}/{savedMaxEnergy}, Deck {savedDeck.Count}"
         );
     }
@@ -234,7 +234,7 @@ public class RunStateManager : MonoBehaviour
 
         hasSavedRunState = false;
 
-        Debug.Log("[RunStateManager] ¤w²M°£«O¦sª¬ºA");
+        Debug.Log("[RunStateManager] å·²æ¸…é™¤ä¿å­˜ç‹€æ…‹");
     }
     public void ReserveEncounterByEnemyData(List<EnemyData> enemies)
     {
@@ -251,7 +251,7 @@ public class RunStateManager : MonoBehaviour
 
                 if (string.IsNullOrWhiteSpace(enemy.enemyId))
                 {
-                    Debug.LogWarning($"[RunStateManager] EnemyData {enemy.name} ¨S¦³ enemyId¡AµLªk«O¦s");
+                    Debug.LogWarning($"[RunStateManager] EnemyData {enemy.name} æ²’æœ‰ enemyIdï¼Œç„¡æ³•ä¿å­˜");
                     continue;
                 }
 
@@ -263,7 +263,7 @@ public class RunStateManager : MonoBehaviour
 
         SaveReservedEncounterToDisk();
 
-        Debug.Log($"[RunStateManager] «O¯d©Çª«²Õ¡G{string.Join(",", reservedEnemyIds)}");
+        Debug.Log($"[RunStateManager] ä¿ç•™æ€ªç‰©çµ„ï¼š{string.Join(",", reservedEnemyIds)}");
     }
     public bool TryGetReservedEncounter(out List<EnemyData> enemies)
     {
@@ -279,7 +279,7 @@ public class RunStateManager : MonoBehaviour
 
         if (enemyDatabase == null)
         {
-            Debug.LogWarning("[RunStateManager] enemyDatabase ¨S¦³«ü©w¡AµLªkÁÙ­ì©Çª«²Õ");
+            Debug.LogWarning("[RunStateManager] enemyDatabase æ²’æœ‰æŒ‡å®šï¼Œç„¡æ³•é‚„åŸæ€ªç‰©çµ„");
             return false;
         }
 
@@ -291,7 +291,7 @@ public class RunStateManager : MonoBehaviour
 
             if (enemy == null)
             {
-                Debug.LogWarning($"[RunStateManager] §ä¤£¨ì enemyId = {id} ªº EnemyData");
+                Debug.LogWarning($"[RunStateManager] æ‰¾ä¸åˆ° enemyId = {id} çš„ EnemyData");
                 continue;
             }
 
@@ -309,7 +309,7 @@ public class RunStateManager : MonoBehaviour
         PlayerPrefs.DeleteKey(SaveKeyReservedEnemyIds);
         PlayerPrefs.Save();
 
-        Debug.Log("[RunStateManager] ¤w²M°£«O¯d©Çª«²Õ");
+        Debug.Log("[RunStateManager] å·²æ¸…é™¤ä¿ç•™æ€ªç‰©çµ„");
     }
     private void SaveReservedEncounterToDisk()
     {
@@ -350,7 +350,7 @@ public class RunStateManager : MonoBehaviour
 
         hasReservedEncounter = reservedEnemyIds.Count > 0;
 
-        Debug.Log($"[RunStateManager] ±qµwºĞÅª¨ú«O¯d©Çª«²Õ¡G{string.Join(",", reservedEnemyIds)}");
+        Debug.Log($"[RunStateManager] å¾ç¡¬ç¢Ÿè®€å–ä¿ç•™æ€ªç‰©çµ„ï¼š{string.Join(",", reservedEnemyIds)}");
     }
     public void SaveBattleStartDeckSnapshot(
         BattleUnit playerUnit,
@@ -400,7 +400,7 @@ public class RunStateManager : MonoBehaviour
         }
 
         Debug.Log(
-            $"[RunStateManager] ¤w«O¦s¾Ô°«¶}©lµP²Õ§Ö·Ó¡G" +
+            $"[RunStateManager] å·²ä¿å­˜æˆ°é¬¥é–‹å§‹ç‰Œçµ„å¿«ç…§ï¼š" +
             $"HP {battleStartDeckSnapshot.playerCurrentHp}/{battleStartDeckSnapshot.playerMaxHp}, " +
             $"Energy {battleStartDeckSnapshot.currentEnergy}/{battleStartDeckSnapshot.maxEnergy}, " +
             $"DrawPileOrder {battleStartDeckSnapshot.drawPileOrder.Count}"
@@ -448,7 +448,7 @@ public class RunStateManager : MonoBehaviour
     {
         if (battleStartDeckSnapshot == null || !battleStartDeckSnapshot.hasSnapshot)
         {
-            Debug.LogWarning("[RunStateManager] ¨S¦³¾Ô°«¶}©lµP²Õ§Ö·Ó¡AµLªkÁÙ­ì");
+            Debug.LogWarning("[RunStateManager] æ²’æœ‰æˆ°é¬¥é–‹å§‹ç‰Œçµ„å¿«ç…§ï¼Œç„¡æ³•é‚„åŸ");
             return;
         }
 
@@ -485,7 +485,7 @@ public class RunStateManager : MonoBehaviour
         pendingRestoreBattleStartDeckSnapshot = false;
 
         Debug.Log(
-            $"[RunStateManager] ¤wÁÙ­ì¾Ô°«¶}©lµP²Õ§Ö·Ó¡G" +
+            $"[RunStateManager] å·²é‚„åŸæˆ°é¬¥é–‹å§‹ç‰Œçµ„å¿«ç…§ï¼š" +
             $"HP {battleStartDeckSnapshot.playerCurrentHp}/{battleStartDeckSnapshot.playerMaxHp}, " +
             $"Energy {battleStartDeckSnapshot.currentEnergy}/{battleStartDeckSnapshot.maxEnergy}, " +
             $"DrawPileOrder {battleStartDeckSnapshot.drawPileOrder.Count}"
@@ -493,7 +493,7 @@ public class RunStateManager : MonoBehaviour
     }
     public void ClearAllRunData()
     {
-        // ª±®a¶i«×
+        // ç©å®¶é€²åº¦
         savedPlayerMaxHp = 0;
         savedPlayerCurrentHp = 0;
 
@@ -505,10 +505,10 @@ public class RunStateManager : MonoBehaviour
 
         hasSavedRunState = false;
 
-        // «O¯d©Çª«²Õ
+        // ä¿ç•™æ€ªç‰©çµ„
         ClearReservedFormation();
 
-        // ¾Ô°«¶}©l§Ö·Ó
+        // æˆ°é¬¥é–‹å§‹å¿«ç…§
         if (battleStartDeckSnapshot != null)
         {
             battleStartDeckSnapshot.hasSnapshot = false;
@@ -526,6 +526,6 @@ public class RunStateManager : MonoBehaviour
 
         pendingRestoreBattleStartDeckSnapshot = false;
 
-        Debug.Log("[RunStateManager] ¤w²M°£©Ò¦³ Run ¬ö¿ı¡A¤U¤@¦¸·|¥H·s¹CÀ¸¶}©l");
+        Debug.Log("[RunStateManager] å·²æ¸…é™¤æ‰€æœ‰ Run ç´€éŒ„ï¼Œä¸‹ä¸€æ¬¡æœƒä»¥æ–°éŠæˆ²é–‹å§‹");
     }
 }

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Enemy Actions/Apply Status To Other Enemies")]
 public class EnemyApplyStatusToOtherEnemiesActionData : EnemyActionData
@@ -40,7 +40,7 @@ public class EnemyApplyStatusToOtherEnemiesActionData : EnemyActionData
             enemy.ApplyStatus(statusType, amount);
             enemy.RefreshAllUI();
 
-            Debug.Log($"[EnemyAction] {context.enemy.unitName} �ᤩ {enemy.unitName} {statusType} {amount} �h");
+            Debug.Log($"[EnemyAction] {context.enemy.unitName} ½á¤© {enemy.unitName} {statusType} {amount} ¼h");
         }
     }
 }

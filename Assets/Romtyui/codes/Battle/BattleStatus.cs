@@ -1,13 +1,13 @@
-public enum StatusType
+ï»¿public enum StatusType
 {
-    Strength,       // ¤O¶q¡G³y¦¨¶Ë®`¼W¥[
-    TemporaryStrength,// Á{®É¤O¶q¡G³y¦¨¶Ë®`¼W¥[
-    Weak,           // µê®z¡G³y¦¨¶Ë®`­°§C
-    Vulnerable,     // ©ö¶Ë¡G¨ü¨ì¶Ë®`¼W¥[
-    Frail,          // ¯Ü®z¡GÀò±o®æ¾×­°§C
-    Poison,         // ¤¤¬r¡G¦^¦X¶}©l¨ü¨ì¶Ë®`
+    Strength,       // åŠ›é‡ï¼šé€ æˆå‚·å®³å¢åŠ 
+    TemporaryStrength,// è‡¨æ™‚åŠ›é‡ï¼šé€ æˆå‚·å®³å¢åŠ 
+    Weak,           // è™›å¼±ï¼šé€ æˆå‚·å®³é™ä½
+    Vulnerable,     // æ˜“å‚·ï¼šå—åˆ°å‚·å®³å¢åŠ 
+    Frail,          // è„†å¼±ï¼šç²å¾—æ ¼æ“‹é™ä½
+    Poison,         // ä¸­æ¯’ï¼šå›åˆé–‹å§‹å—åˆ°å‚·å®³
 
 
-    Harden,         // µw¤Æ¡G¦^¦X¶}©lÀò±oÅ@¬Ş
-    Regeneration,   // ¦ÛÂ¡¡G¦^¦X¶}©l«ì´_¥Í©R
+    Harden,         // ç¡¬åŒ–ï¼šå›åˆé–‹å§‹ç²å¾—è­·ç›¾
+    Regeneration,   // è‡ªç™’ï¼šå›åˆé–‹å§‹æ¢å¾©ç”Ÿå‘½
 }

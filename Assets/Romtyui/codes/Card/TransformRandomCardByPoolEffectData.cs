@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Effects/Special/Transform Random Card By Pool")]
 public class TransformRandomCardByPoolEffectData : CardEffectData
@@ -8,7 +8,7 @@ public class TransformRandomCardByPoolEffectData : CardEffectData
 
     public override void Execute(CardResolveContext context)
     {
-        // «O¯d¤@¯ë°õ¦æ¤è¦¡¡AÁ×§K¨S¦³°Êµe¨t²Î®É¥¢®Ä
+        // ä¿ç•™ä¸€èˆ¬åŸ·è¡Œæ–¹å¼ï¼Œé¿å…æ²’æœ‰å‹•ç•«ç³»çµ±æ™‚å¤±æ•ˆ
         ExecuteTransform(context);
     }
 
@@ -16,25 +16,25 @@ public class TransformRandomCardByPoolEffectData : CardEffectData
     {
         if (context == null)
         {
-            Debug.LogWarning("[TransformRandomCardByPoolEffectData] context ¬O null");
+            Debug.LogWarning("[TransformRandomCardByPoolEffectData] context æ˜¯ null");
             return new CardTransformResult(false);
         }
 
         if (context.battleManager == null)
         {
-            Debug.LogWarning("[TransformRandomCardByPoolEffectData] battleManager ¬O null");
+            Debug.LogWarning("[TransformRandomCardByPoolEffectData] battleManager æ˜¯ null");
             return new CardTransformResult(false);
         }
 
         if (context.battleManager.playerDeck == null)
         {
-            Debug.LogWarning("[TransformRandomCardByPoolEffectData] playerDeck ¬O null");
+            Debug.LogWarning("[TransformRandomCardByPoolEffectData] playerDeck æ˜¯ null");
             return new CardTransformResult(false);
         }
 
         if (transformPool == null)
         {
-            Debug.LogWarning("[TransformRandomCardByPoolEffectData] transformPool ¨S¦³«ü©w");
+            Debug.LogWarning("[TransformRandomCardByPoolEffectData] transformPool æ²’æœ‰æŒ‡å®š");
             return new CardTransformResult(false);
         }
 
@@ -42,7 +42,7 @@ public class TransformRandomCardByPoolEffectData : CardEffectData
 
         if (result.success)
         {
-            Debug.Log($"[ÅÜ¤ÆµP] ¨Ï¥ÎÅÜ¤Æ¥d¦À¡G{transformPool.transformId}");
+            Debug.Log($"[è®ŠåŒ–ç‰Œ] ä½¿ç”¨è®ŠåŒ–å¡æ± ï¼š{transformPool.transformId}");
         }
 
         return result;
