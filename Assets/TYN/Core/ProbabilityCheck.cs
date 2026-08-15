@@ -84,7 +84,15 @@ namespace EldritchMile.Core
             {
                 if (verboseLog)
                 {
-                    Debug.Log($"[判定] {card?.cardName} → {target?.DisplayName}：屬性無效，直接失敗");
+                    // 三種原因要分開講。以前一律印「屬性無效」，但機率 0 的卡與
+                    // 衰減歸零的目標都會走到這裡 —— 查問題時會往完全錯誤的方向找。
+                    string reason =
+                        eff == Effectiveness.None ? "屬性無效"
+                        : card == null || card.successProbability <= 0f ? "卡片基礎機率為 0"
+                        : target != null && target.CurrentDecayMultiplier <= 0f ? "目標衰減已歸零"
+                        : "最終機率為 0";
+
+                    Debug.Log($"[判定] {card?.cardName} → {target?.DisplayName}：{reason}，直接失敗");
                 }
                 return false;
             }

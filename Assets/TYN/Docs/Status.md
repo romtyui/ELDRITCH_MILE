@@ -1,5 +1,14 @@
 # ELDRITCH_MILE — 整合進度總覽
 
+> ## ⚠️ 本文件已過時（停在 2026-08-08），僅供歷史參考
+>
+> 之後至少有 8 個 commit 與一整批 Phase 4c 的工作，本文完全沒涵蓋。
+> 尤其「Phase 4c 完全未做」「174 個 rename 未提交」這兩項**已經不成立**。
+>
+> **要看現況與待辦請讀 [RoadmapNext.md](RoadmapNext.md)；接手請先讀 [HANDOFF.md](HANDOFF.md)。**
+
+---
+
 > 更新：2026-08-08 · 範圍限於 `Assets/TYN/`
 >
 > 設計依據：[SceneConsolidationPlan.md](SceneConsolidationPlan.md)（v4）

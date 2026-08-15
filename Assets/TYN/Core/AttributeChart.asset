@@ -11,9 +11,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d4caab8bc50a03e45895da4a7b3f2ee4, type: 3}
   m_Name: AttributeChart
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   matchMultiplier: 1
   partialMultiplier: 0.5
   noneMultiplier: 0
-  rules: []
+  rules:
+  - cardAttribute: 1
+    targetAttribute: 3
+    effectiveness: 2
   defaultEffectiveness: 1

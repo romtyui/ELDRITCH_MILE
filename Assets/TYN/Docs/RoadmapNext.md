@@ -13,25 +13,94 @@
 |---|---|---|
 | Phase 4c 打牌 UI | 🔴 完全未做 | 🔶 **第一批已完成**（拖曳出牌、hover 全選項預覽、即時判定、逐次衰減、`EncounterTargetView` 對話框特寫圖）。詳見 [Phase4c_CardPlay.md](Phase4c_CardPlay.md) |
 | 卡牌屬性資料 | `AttrA~AttrD` 佔位、單一機率階梯 | 已重構為 **A/B/C 三屬性 × 0/20/40/60/80/100 六階梯**，各自配 `_vis` 視覺資產（`Card_data/v3/explore_{A,B,C}_{0..100}.asset`） |
-| `TwoStageConfirm.cs` | 保留，服務 C8/C14 | **已刪除** —— 出牌的兩段式確認改在 `ExploreCardDrag`/`EncounterTargetView` 上另外實作（形狀不同，見 Phase4c_CardPlay.md「為什麼不直接用 TwoStageConfirm」）。ExitTag(C14) 目前如何補位需要**現場確認**，見下方待辦 |
+| `TwoStageConfirm.cs` | 保留，服務 C8/C14 | **已封存**（非刪除，`.meta` 一起搬到 `_Archive/Scripts/`，符合封存慣例）。**已靜態確認安全**：全專案 `.unity`/`.prefab` 沒有任何物件掛它（`git grep` GUID 零命中）。C14 實際靠 `BookmarkHover`（滑下）+ 普通 `Button`（`ExitTag.onClick → ShowContinueAsk()`）+ `ContinueAskPanel` 構成兩段式，C8 抓取靠 `InteractableBase` 直接呼叫 `CursorManager` 的 `HoverChest`/`HoldChest`。兩者都不依賴 `TwoStageConfirm`，封存不影響功能 |
 | `ExplorationHandUIController.cs` | 待改寫的 8 個之一 | 已封存到 `_Archive/Scripts/`，由新的 `ExploreHandUI` 取代 |
-| 未提交改動規模 | 174 rename + 108 delete | **更大**（新增 Phase 4c 一批 + 屬性卡資料重構 + 上述封存）|
+| 未提交改動規模 | 174 rename + 108 delete | ~~更大~~ **已於 2026-08-14 19:41 commit `f8bf980「Phase4」`**，工作區目前乾淨。原本的風險項目已解除 |
 
-> 目前**進行中**的工作對應 `Phase4c_CardPlay.md` 文末「下一批（4c 剩餘）」四項：主要目標選定 UI、「在試一次？」確認、`EncounterUIController`、角色對話框連動（C18③）。修改集中在 `DialogueBoxUI` / `PopupService` / `ExploreStageController` / `ChestInteractable` / `InteractableBase` / `DialogueEncounterController` / `ProbabilityCheck`。
+> `f8bf980` 涵蓋了 `Phase4c_CardPlay.md` 文末「下一批（4c 剩餘）」四項的部分工作：`DialogueBoxUI` / `PopupService` / `ExploreStageController` / `ChestInteractable` / `InteractableBase` / `DialogueEncounterController` / `ProbabilityCheck` 都有改動，加上 `EncounterTargetView` 新檔與屬性卡資料重構。**尚未確認這批改動是否已經讓「主要目標選定 UI」「在試一次？確認」「角色對話框連動」三項功能完整可玩，還是只是墊基礎**——需要走一次 Play Mode 驗收才能確定，見下方「立即優先」。
 
 ---
 
 ## 1. 立即優先（本輪收尾）
 
-延續目前進行中的 Phase 4c 剩餘項目，建議順序：
+### 1.1 `f8bf980` 的實際涵蓋範圍（2026-08-14 逐檔查證）
 
-1. **確認現有改動能跑**——先在 Editor 內把目前的改動走一次 [Phase4c_CardPlay.md](Phase4c_CardPlay.md) §8 驗收清單，確認沒有半成品破壞既有功能（尤其 `TwoStageConfirm` 刪除後，C14 兩段式離開是否還完整）。
-2. **C18① 主要目標選定 UI**：選定後 hover 不再廣播全選項，畫面聚焦單一目標；未選定時維持現有全選項預覽。
-3. **C12「在試一次？」確認**：判定失敗後跳出詢問，取代目前「玩家自己決定要不要再拖一張」的隱性設計，讓失敗有明確的重試/離開分岔。
-4. **C18③ 角色對話框連動**：判定結果目前只寫 Console 與彈窗，需要同時反映在**選項內文**——`Phase4c_CardPlay.md` 註明這需要選項本身有文字元件，屬於 Phase 6 多選項對話會一起處理的範圍，若要在本輪提前做，需先決定「選項文字」現階段掛在哪個物件上。
-5. **`EncounterUIController`**：把上述兩個 UI（目標選定、重試確認）與既有結束按鈕收攏成一個控制器，避免邏輯散落在 `ExploreStageController` 各處。
+上一節說「不確定是墊基礎還是做完」，查完程式碼的結論是**墊基礎**。逐項：
 
-**驗收基準**：沿用 `Phase4c_CardPlay.md` §8 清單 + 新增「選定主要目標後 hover 其他選項無反應」「失敗後彈出重試詢問，YES 可再出牌、NO 直接走離開流程」兩項。
+| 項目 | 實際狀態 |
+|---|---|
+| `EncounterTargetView`（對話框特寫圖／拖曳目標／機率標籤） | ✅ **真的做完了** |
+| C18① 主要目標選定 | 🔶 Core 層 API 全部備妥（`SelectPrimaryTarget` / `OnPrimaryTargetChanged` / `ShouldBroadcastPreview`），但**全專案零呼叫端** —— `PrimaryTarget` 永遠是 `null`，UI 完全沒做 |
+| C12「在試一次？」 | ✅ **本輪已完成**（見 1.2） |
+| C18③ 判定結果反映 | 🔶 **上一節那句已過時**。`ChestInteractable.OnCheckResult` 早就走 `PopupService.ShowInstant(successText/failText)` 即時替換對話框正文，不是「只寫 Console 與彈窗」。真正缺的只有**選項內文**那半，那確實要等 Phase 6 |
+| `EncounterUIController` | 🔶 **本輪已建立**，但只裝了 C12（見 1.3） |
+
+### 1.2 C12 回合感 — 本輪完成（**做法已改，不是確認視窗**）
+
+程式已完成、編譯 0 error 0 warning。操作與驗收見 [Phase4c2_RetryAsk.md](Phase4c2_RetryAsk.md)（2 分鐘）。
+
+**確認視窗的做法已否決。** 先做了一版「失敗跳詢問」，檢討後認為每次失敗都跳是錯的：
+
+- 它傳達的資訊（「你還可以再試」）**只有第一次是新的**，之後純摩擦
+- 原本的前提「失敗沒有出口」**不成立** —— 「結束」按鈕整個環節都在畫面上
+- 「再試要付什麼代價」**hover 的預覽數字早就答了**（看得到機率下降）
+- 打斷 C18 的核心：連續嘗試。5 張手牌失敗 4 次 = 點掉 4 個彈窗
+
+**改成**：回合感寫進判定結果文字，零打斷。第二次起附加「這是你嘗試的第 {x} 次。」，
+搭配下降中的預覽數字構成回合感。`DialogueEncounterController.attemptSuffixFormat` 可在 Inspector 調文案。
+
+新增檔案：
+
+| 檔案 | 狀態 |
+|---|---|
+| `Core/PanelToggle.cs` | 面板顯示的三段 fallback，共用型別 |
+| `Core/EncounterUIController.cs` | 確認視窗實作。`Ask Mode` **預設 `Never`（不啟用）**，留著是為了能在 Play Mode 直接比較兩種手感 |
+
+既有檔案的改動只有兩處：`DialogueEncounterController` 加 `attemptSuffixFormat` / `WithAttemptLine()`，
+`ChestInteractable.OnCheckResult` 呼叫它（一行）。
+
+### 1.2b 手牌用盡時的「逆轉」— 卡在兩個設計決定
+
+構想是手牌用盡時給特殊狀態，問玩家要不要逆轉。**現在寫出來會是假選擇**：
+
+`DecayStep = 1 / 手牌數`（建議設定），出完 N 張後衰減倍率正好是 **0**；
+`ProbabilityCheck` 算 `base × 相剋 × 衰減` 且對 `finalRate <= 0` 直接短路成失敗。
+所以玩家點「逆轉」得到的是保證 0% 的嘗試 —— 比不問更糟。
+
+| 待決 | 為什麼卡住 |
+|---|---|
+| 逆轉如何處理衰減 | 重置回 1.0？某個比例？還是逆轉牌無視衰減？不解決這條功能等於沒有 |
+| 逆轉要付什麼代價 | 免費的額外嘗試會廢掉 C18⑤（手牌數 ＝ 嘗試次數上限）。候選：消耗道具／HP 或理智／一次遭遇限一次／Phase 7 神牌 |
+
+決定後：`AskMode` 加 `OnHandExhausted`，並在 `PlayCard` 的「手牌用盡自動結束」加攔截點（約 5 行）。
+
+### 1.2c 一般物件 vs 特殊物件（新方向，待展開）
+
+企劃方向：**普通箱子打開就是打開**（`OpenMode.Direct`，已存在）；
+**只有帶特殊效果的物件**（陷阱、逆轉等）才進打牌環節留手牌給玩家嘗試。
+
+這會讓打牌環節變稀有而更有份量，也讓上面的「逆轉」有正當的落點。
+但「特殊效果」目前**不存在於資料模型**裡 —— `ChestInteractable` 只有
+`openMode` / `attribute` / `lootItems` / `grantedItemIds`，沒有承載陷阱或逆轉的欄位。
+要做需要先定義效果的表達方式，屬於獨立一批。
+
+### 1.3 C18① 主要目標選定 — 建議延到 Phase 6
+
+本輪**刻意沒做**，兩個理由：
+
+1. **現階段是空轉的**。`ExploreStageController` 的 `BeginEncounter` 永遠只傳一個目標
+   （`new List<IProbabilityTarget> { encounterTarget }`）。單一目標時「選定」與「未選定」
+   行為完全一樣 —— 廣播全選項就是廣播那一個。要到 Phase 6 多選項對話才看得出差別。
+2. **它跟現有操作搶點擊**。點對話框裡的大圖，目前語意是「兩段式出牌的第二段」
+   （`EncounterTargetView.OnClicked` → `TryPlaySelectedCardOn`）。C18① 若做成
+   「點大圖＝選定主要目標」，兩者會撞在同一個點擊上，得先決定怎麼分
+   （右鍵？長按？還是只在目標數 > 1 時才啟用選定？）—— 這是個**待決的設計問題**。
+
+### 1.4 接下來
+
+1. **走一次 [Phase4c2_RetryAsk.md](Phase4c2_RetryAsk.md) 的編輯器步驟 + 驗收**（20–30 分鐘）
+2. 順便補跑 [Phase4c_CardPlay.md](Phase4c_CardPlay.md) §8 第一批的驗收清單 —— 那批至今仍未在 Play Mode 確認過
+3. 之後接 Phase 4d 收尾或 Phase 5 戰鬥接入（見 §2），C18① 併入 Phase 6
 
 ---
 

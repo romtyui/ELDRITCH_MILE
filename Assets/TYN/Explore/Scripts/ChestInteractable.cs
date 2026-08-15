@@ -80,8 +80,16 @@ namespace EldritchMile.Explore
 
         public void OnCheckResult(bool success, float usedRate)
         {
+            string body = success ? successText : failText;
+
+            // C12：回合感寫進結果文字（「這是你嘗試的第 3 次。」），第二次起才出現。
+            // 成功也附加 —— 這是回合計數不是失敗計數，而且成功後環節不會自動結束（C18⑦），
+            // 玩家可能還會繼續打。
+            DialogueEncounterController encounter = DialogueEncounterController.Instance;
+            if (encounter != null) body = encounter.WithAttemptLine(body);
+
             // C18③：即時替換對話框正文，不排隊、不需點擊 —— 玩家可以馬上出下一張
-            PopupService.Instance?.ShowInstant(success ? successText : failText);
+            PopupService.Instance?.ShowInstant(body);
 
             if (success) Open();
         }

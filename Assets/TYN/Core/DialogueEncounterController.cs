@@ -34,6 +34,15 @@ namespace EldritchMile.Core
         [Tooltip("decayScaledToHandSize 取消勾選時，每次出牌扣掉的倍率")]
         [Range(0f, 1f)] public float fixedDecayStep = 0.2f;
 
+        [Header("嘗試次數提示 (C12)")]
+        [Tooltip("第二次嘗試起，附加在判定結果後面的一行。{0} = 這是第幾次。\n" +
+                 "留空則不附加。\n\n" +
+                 "這是「在試一次？」確認視窗的替代做法：回合感寫進結果文字，不打斷連續嘗試。\n" +
+                 "確認視窗每次失敗都跳的話，它傳達的資訊只有第一次是新的，之後就是純摩擦 ——\n" +
+                 "而且「再試要付什麼代價」hover 的預覽數字早就答了（會看到機率下降）。")]
+        [TextArea(2, 3)]
+        public string attemptSuffixFormat = "\n這是你嘗試的第 {0} 次。";
+
         [Header("狀態 (唯讀)")]
         [SerializeField] private int cardsPlayed;
         [SerializeField] private bool isActive;
@@ -153,6 +162,29 @@ namespace EldritchMile.Core
         /// 呼叫 HoverPreviewBroadcaster.Begin() 前必須先問這個。
         /// </summary>
         public bool ShouldBroadcastPreview => isActive && PrimaryTarget == null;
+
+        // ==========================================
+        // 嘗試次數提示（C12）
+        // ==========================================
+        /// <summary>
+        /// 把「這是第幾次嘗試」附加到判定結果文字後面。**第一次不附加** ——
+        /// 第一次沒有「又」的語氣，寫「第 1 次」反而像系統在報數。
+        ///
+        /// 由各個 IProbabilityTarget 在 OnCheckResult 裡呼叫。
+        /// 呼叫時 cardsPlayed 已經加過了（PlayCard 的順序：消耗手牌 → 衰減 → OnCheckResult），
+        /// 所以這裡拿到的就是「這一次是第幾次」。
+        /// </summary>
+        public string WithAttemptLine(string body)
+        {
+            if (string.IsNullOrEmpty(attemptSuffixFormat)) return body;
+            if (cardsPlayed <= 1) return body;
+
+            // 格式字串是企劃在 Inspector 裡填的。少打了 {0} 就直接接在後面，
+            // 而不是讓 string.Format 靜靜地把整句結果文字換成例外。
+            return attemptSuffixFormat.Contains("{0}")
+                ? body + string.Format(attemptSuffixFormat, cardsPlayed)
+                : body + attemptSuffixFormat;
+        }
 
         // ==========================================
         // 出牌
