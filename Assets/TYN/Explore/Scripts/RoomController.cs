@@ -34,6 +34,7 @@ namespace EldritchMile.Explore
         public event System.Action OnRoomCleared;
 
         private readonly List<IInteractable> tracked = new List<IInteractable>();
+        private readonly HashSet<IInteractable> reported = new HashSet<IInteractable>();
         private int interactedCount;
         private bool isCleared;
 
@@ -129,6 +130,12 @@ namespace EldritchMile.Explore
         public void ReportInteracted(IInteractable interactable)
         {
             if (isCleared) return;
+
+            // ⚠️ 同一個物件回報兩次只能算一次。
+            // 以前是無條件 interactedCount++，參數收了卻沒用 —— 只要有物件回報兩次
+            // （singleUse 關掉的物件、或成功後又走到失敗結案路徑），計數就會超前，
+            // 房間會在還有東西沒互動時就宣告清空。
+            if (interactable != null && !reported.Add(interactable)) return;
 
             interactedCount++;
 

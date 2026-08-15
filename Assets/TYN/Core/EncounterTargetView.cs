@@ -174,5 +174,10 @@ namespace EldritchMile.Core
         {
             if (previewLabel != null) previewLabel.gameObject.SetActive(false);
         }
+
+        public void OnAttemptsExhausted()
+        {
+            Source?.OnAttemptsExhausted();
+        }
     }
 }

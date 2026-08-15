@@ -29,8 +29,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
-  m_Children:
-  - {fileID: 1421786892614253674}
+  m_Children: []
   m_Father: {fileID: 8366067743803848734}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -106,12 +105,14 @@ RectTransform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2729621732117952037}
+  - {fileID: 1421786892614253674}
+  - {fileID: 3650989503658837646}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2935104796966573886
 MonoBehaviour:
@@ -127,7 +128,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.EncounterTargetView
   image: {fileID: 8399079719674492075}
   previewLabel: {fileID: 2170492209188233681}
-  maxSize: {x: 1200, y: 1200}
+  maxSize: {x: 750, y: 1200}
   neverUpscale: 0
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   immuneColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
@@ -161,9 +162,8 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.20459999, y: 0.20459999, z: 0.20459999}
   m_ConstrainProportionsScale: 1
-  m_Children:
-  - {fileID: 3650989503658837646}
-  m_Father: {fileID: 2729621732117952037}
+  m_Children: []
+  m_Father: {fileID: 8366067743803848734}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -235,14 +235,14 @@ RectTransform:
   m_GameObject: {fileID: 8961569806630902224}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 4.8875856, y: 4.8875856, z: 4.8875856}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1421786892614253674}
+  m_Father: {fileID: 8366067743803848734}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -0.00010681152}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 192, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1130208551387320780

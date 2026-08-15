@@ -148,6 +148,14 @@ namespace EldritchMile.Explore
 
             if (room != null) room.OnRoomCleared -= HandleRoomCleared;
 
+            // 環節還開著就換環節（例如中途被流程強制切走）時，
+            // HandleEncounterEnded 不會跑到，這裡補上同樣的清理
+            if (Encounter != null)
+            {
+                Encounter.OnEncounterEnded -= HandleEncounterEnded;
+                Encounter.HandExhaustedInterceptor = null;
+            }
+
             PopupService.Instance?.CloseAll();
 
             if (currentRoom != null)
@@ -367,6 +375,9 @@ namespace EldritchMile.Explore
             Encounter.OnEncounterEnded -= HandleEncounterEnded;
             Encounter.OnEncounterEnded += HandleEncounterEnded;
 
+            // 手牌用盡時先問「要不要付代價重來」，而不是直接結束
+            Encounter.HandExhaustedInterceptor = TryOfferRetry;
+
             // 目前一次只針對一個目標。Phase 6 的多選項對話會傳入整組選項。
             Encounter.Begin(hand, new List<IProbabilityTarget> { encounterTarget });
         }
@@ -391,6 +402,77 @@ namespace EldritchMile.Explore
             TryPlaySelectedCardOn(view);
         }
 
+        // ==========================================
+        // 手牌用盡 → 付出代價重來
+        // ==========================================
+        /// <summary>
+        /// 由 `DialogueEncounterController` 在手牌用盡、即將自動結束前呼叫。
+        ///
+        /// 回傳 true = 我接手了，環節先別結束（詢問面板已經跳出來，等玩家決定）。
+        /// 回傳 false = 沒有重試機會，照原本流程結束環節。
+        ///
+        /// ⚠️ 回傳 true 之後**一定**要有人收尾 —— 兩個回呼各自負責
+        /// RefillHand() 或 EndEncounter()，漏掉環節會永遠卡著。
+        /// </summary>
+        private bool TryOfferRetry()
+        {
+            if (currentEncounterTarget is not IRetryableTarget retryable) return false;
+            if (!retryable.CanOfferRetry) return false;
+
+            EncounterUIController ui = EncounterUIController.Instance;
+            if (ui == null) return false;
+
+            // 沒有詢問面板可用時 ShowRetryOffer 會回 false —— 那就當作不能重試，
+            // 照原流程結案，不要卡在一個問不出來的詢問上
+            return ui.ShowRetryOffer(
+                retryable.BuildRetryPrompt(),
+                () => ConfirmRetry(retryable),
+                DeclineRetry
+            );
+        }
+
+        /// 玩家答應付代價重來。
+        private void ConfirmRetry(IRetryableTarget retryable)
+        {
+            if (Encounter == null || !Encounter.IsActive) return;
+
+            // 付款可能失敗（道具在詢問期間被別的流程用掉了之類）。
+            // 失敗就當作玩家選了「不要」，環節照常結束 —— 不能白白放行。
+            if (!retryable.TryPayForRetry())
+            {
+                DeclineRetry();
+                return;
+            }
+
+            retryable.ResetForRetry();
+
+            // 重抽一手。走 DrawCards 而不是沿用舊手牌 —— 舊的已經出完了。
+            var hand = new List<CardInstanceExplore>();
+            if (explorationDeck != null)
+            {
+                explorationDeck.DiscardHand();
+                explorationDeck.DrawCards(cardsPerEncounter);
+                hand.AddRange(explorationDeck.Hand);
+            }
+
+            if (hand.Count == 0)
+            {
+                Debug.LogWarning("[探索] 重試時抽不到任何卡，環節結束");
+                DeclineRetry();
+                return;
+            }
+
+            // ⚠️ 用 RefillHand 而不是 Begin() —— Begin 會把 cardsPlayed 歸零，
+            //    次數提示就會從「第 1 次」重來，但玩家其實已經被收了第 N 次的錢。
+            Encounter.RefillHand(hand);
+        }
+
+        /// 玩家拒絕，或付不起。結束環節，讓目標走結案流程。
+        private void DeclineRetry()
+        {
+            if (Encounter != null && Encounter.IsActive) Encounter.EndEncounter();
+        }
+
         public bool TryPlaySelectedCardOn(IProbabilityTarget target)
         {
             if (HandUI == null || Encounter == null || !Encounter.IsActive) return false;
@@ -413,6 +495,11 @@ namespace EldritchMile.Explore
 
             Encounter.OnEncounterEnded -= HandleEncounterEnded;
 
+            // ⚠️ 一定要清掉。DialogueEncounterController 常駐場景，而本控制器住在
+            //    Stage prefab 裡、換環節就被銷毀 —— 留著的話下一個環節觸發手牌用盡時，
+            //    會呼叫到已銷毀物件上的方法。
+            Encounter.HandExhaustedInterceptor = null;
+
             // 還有手牌沒出完 = 玩家按了結束中途離開 → 把剩下的存起來。
             // 同一個目標再進來時接續使用，避免用「結束再點一次」重抽一手更好的牌。
             // 手牌用盡才離開的話不留 —— 那次遭遇已經用完了。
@@ -427,6 +514,14 @@ namespace EldritchMile.Explore
             {
                 suspendedTarget = null;
                 suspendedHand.Clear();
+
+                // 手牌用盡 = 這次遭遇的機會用完了，通知目標結案。
+                // ⚠️ 只有這一條路要通知 —— 中途按結束（上面那個分支）是暫停不是用盡，
+                //    那時手牌被保留著，玩家回來還能接著打。
+                //
+                // 不通知的話：衰減已歸零（保證 0%）但物件還可以點、還會重抽手牌，
+                // 而且永遠不回報房間 → C13 的房間清空永遠不觸發。
+                currentEncounterTarget?.OnAttemptsExhausted();
             }
 
             currentEncounterTarget = null;
@@ -458,7 +553,12 @@ namespace EldritchMile.Explore
             // 沒有這一下的話，玩家按完結束還要再手動點一次才有反應，很像卡住。
             // 用 AdvanceImmediate：文字還在打的時候按結束，也要一次做完，
             // 不能只是「把字補完」然後又停在那裡等下一次點擊。
-            box?.AdvanceImmediate();
+            //
+            // ⚠️ 但**只有玩家主動結束**才成立。手牌用盡是自動結束，玩家什麼都沒按 ——
+            //    這時候推進會把「最後一張牌的判定結果」在同一個呼叫堆疊裡直接跳掉
+            //    （SkipTyping → Hide → Drain 到下一則），玩家根本看不到成功或失敗，
+            //    畫面直接變成物品結算。那一則要留著等玩家自己點。
+            if (Encounter.EndedByPlayer) box?.AdvanceImmediate();
 
             // Q13 暫行做法：環節結束就把剩下的手牌棄掉，下次重抽
             if (explorationDeck != null) explorationDeck.DiscardHand();

@@ -1000,7 +1000,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &334669001
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5270,6 +5270,7 @@ MonoBehaviour:
   encounter: {fileID: 0}
   askMode: 0
   retryAskPanel: {fileID: 334669000}
+  retryAskLabel: {fileID: 1937968048}
   handInteractionGroup: {fileID: 212650081}
   askDelay: 0.35
 --- !u!1 &1785196182

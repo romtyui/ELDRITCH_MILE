@@ -59,7 +59,87 @@
 既有檔案的改動只有兩處：`DialogueEncounterController` 加 `attemptSuffixFormat` / `WithAttemptLine()`，
 `ChestInteractable.OnCheckResult` 呼叫它（一行）。
 
-### 1.2b 手牌用盡時的「逆轉」— 卡在兩個設計決定
+### 1.2a 徹底失敗的結案路徑 — 本輪完成（修掉一個會卡住房間的 bug）
+
+**症狀**：手牌 5 張全部失敗後，寶箱仍可再次互動、再抽一手牌。
+
+**根因**：`MarkDone()` 只在 `Open()`（成功）裡呼叫。判定失敗**沒有任何結案路徑**，
+所以 `hasInteracted` 永遠 `false`、`CanInteract` 永遠 `true`。
+
+連帶兩個後果（比表面症狀嚴重）：
+
+| 後果 | 說明 |
+|---|---|
+| **房間永遠清不掉** | `RoomController.ReportInteracted` 只有 `MarkDone()` 會呼叫 → `interactedCount` 到不了 `tracked.Count` → **C13「要探索其他的東西嗎？」永遠不會自動跳**，玩家只剩 ExitTag 一條路 |
+| **保證 0% 的假迴圈** | 重進去時目標衰減已歸零，新抽的每張牌都必定失敗；而棄牌堆會 `ReshuffleDiscardIntoDraw` 循環，所以牌不會耗盡 —— 永遠跑不完 |
+
+**改法**：`IProbabilityTarget` 新增 `OnAttemptsExhausted()`，由 `ExploreStageController`
+在環節結束且 `!HasCardsLeft` 時呼叫（中途按結束**不呼叫** —— 那是暫停不是用盡）。
+`InteractableBase` 新增 `MarkFailed()`：換 `failedSprite`、**絕不消失**、回報房間、
+設 `FailedPermanently` 讓再次點擊能給出提示而不是沉默。
+
+> 失敗**不能**共用 `interactedSprite`（那是「打開的寶箱」）—— 沒撬開的箱子長成打開的樣子
+> 會直接誤導玩家以為成功了。所以另開 `Failed Sprite` 欄位。
+
+**順手修的潛在 bug**：`RoomController.ReportInteracted` 收了 `interactable` 參數卻沒用，
+無條件 `interactedCount++`。只要有物件回報兩次，房間就會在還有東西沒互動時宣告清空。
+已改為用 `HashSet` 去重。
+
+### 1.2b 重試／逆轉 — 段 A 已完成並驗收，段 B 待跨隊
+
+**已決定的設計**（2026-08-15）：
+
+```
+物件
+├── 一般物件 → 直接開，不進打牌環節（OpenMode.Direct，已存在）
+└── 特殊物件 → 進打牌環節
+    ├── 不可重複嘗試 → 手牌用盡即結案（§1.2a 已完成）
+    └── 可重複嘗試 → 付出全域代價後重來
+        ├── 消耗特殊道具
+        └── 消耗 HP／SAN（代價 = 大類型固有倍率 × 遞增倍率）
+```
+
+**重試語意**：付出代價後**衰減重置回初始**、**手牌重抽**，之後機率照樣逐次衰減；
+只要還付得起就能一直重來。
+
+**嘗試次數不重置** —— 重來後顯示「第 6 次」而不是回到「第 1 次」。衰減既然重置了，
+「總共在這東西上耗掉多少」就成了唯一還看得見的代價紀錄，而且它正好是遞增倍率的依據。
+
+**HP／SAN 歸零**：預設**直接死亡**（`ReportComplete(StageResult.PlayerDied)`，流程已存在）。
+另做一個「保底留 1、探索不會死」的**可啟用狀態** —— 既方便測試，日後也能當成特殊道具的效果。
+
+#### HP／SAN 的現況（查證結果，與先前推測不同）
+
+**不需要自己做，而且大部分已經存在：**
+
+| 需要的 | 現況 |
+|---|---|
+| HP／SAN 數值 | ✅ `RunStateManager`（Romtyui）已有 `savedPlayerMaxHp/CurrentHp`、`savedMaxEnergy/CurrentEnergy`，跨戰鬥保存、`DontDestroyOnLoad`。**Romtyui 已經把 Energy 就叫 SAN**（見其 log 字串） |
+| 歸屬 | ✅ 設計文件 §8 早已定案：HP／能量以 `RunStateManager` 為準，`RunContext` 不重複儲存 |
+| 「探索中死亡」結局 | ✅ `StageResult.PlayerDied` + `GameFlowManager.cs:186` + `ContributeToMeta` 都在 |
+| TYN 讀寫的橋 | ❌ **唯一缺的**。TYN 至今從未在程式裡引用 `RunStateManager`，只有註解提到 |
+
+#### ⚠️ 跨隊待辦（要跟 Romtyui 談，不要自己動手）
+
+**HP／SAN 的初始化時機。** `savedPlayerCurrentHp` 只有在 `SaveFromBattle()` 之後才有值 ——
+也就是**第一場戰鬥打完才存在**。玩家若在任何戰鬥之前先進探索房間，HP 是 `0`。
+探索要扣值就必須要求「**run 開始時就初始化 HP／SAN**」。
+
+與 §7.2 的 `OnBattleEnded` 是同一類需求，現在提比事後補便宜。
+
+> 另：`RunStateManager.cs` 的中文註解疑似不是存成 UTF-8（讀出來是亂碼）。不影響執行，可順帶提醒。
+
+#### 實作分兩段
+
+| 段 | 內容 | 阻塞 |
+|---|---|---|
+| **A（可立刻做）** | 消耗**特殊道具**的重試。`RunContext.HasItem/ConsumeItem` 已存在，純 TYN，零跨隊依賴 —— 整套重試手感（詢問 UI、衰減重置、手牌重抽、次數累加）都能先端到端跑起來 | 無 |
+| **B（等談定）** | HP／SAN 成本。段 A 做完後，這只是把「檢查／扣除」換一個來源的薄轉接層 | 初始化時機 |
+
+**仍待補的資料**：大類型的清單與各自的固有倍率、代價基礎值與遞增規則。
+建議比照 `AttributeChartData` 做成 ScriptableObject，讓數值在 Inspector 調，程式不寫死。
+
+### ~~1.2b~~ 1.2d 舊記錄：逆轉曾卡在兩個設計決定（已解）
 
 構想是手牌用盡時給特殊狀態，問玩家要不要逆轉。**現在寫出來會是假選擇**：
 
@@ -96,11 +176,50 @@
    「點大圖＝選定主要目標」，兩者會撞在同一個點擊上，得先決定怎麼分
    （右鍵？長按？還是只在目標數 > 1 時才啟用選定？）—— 這是個**待決的設計問題**。
 
-### 1.4 接下來
+### 1.4 Phase 4c 現況：✅ 已全部驗收（2026-08-15）
 
-1. **走一次 [Phase4c2_RetryAsk.md](Phase4c2_RetryAsk.md) 的編輯器步驟 + 驗收**（20–30 分鐘）
-2. 順便補跑 [Phase4c_CardPlay.md](Phase4c_CardPlay.md) §8 第一批的驗收清單 —— 那批至今仍未在 Play Mode 確認過
-3. 之後接 Phase 4d 收尾或 Phase 5 戰鬥接入（見 §2），C18① 併入 Phase 6
+三批都已在 Play Mode 跑過：
+
+| 批次 | 內容 | 狀態 |
+|---|---|---|
+| 第一批 | 拖曳出牌、hover 全選項預覽、即時判定、逐次衰減、對象大圖 | ✅ |
+| 第二批 | C12 回合感（次數提示，取代確認視窗） | ✅ |
+| 第三批 | 徹底失敗結案、房間清空修復、付代價重試（段 A 道具） | ✅ |
+
+**收尾時修掉的三個訊息被吃掉的來源**（改這一帶時務必先讀
+[Phase4c3_RetryCost.md](Phase4c3_RetryCost.md) 的「訊息被吃掉的三個來源」）：
+`ShowInstant` 蓋掉正文、`AdvanceImmediate` 無條件執行、詢問面板蓋住還在打的字。
+
+### 1.5 接下來
+
+**先 commit** —— 這是一個驗收過的乾淨斷點，§4 早就提醒過不要讓未提交的東西越堆越高。
+
+之後建議順序：
+
+1. **Q7a 屬性正式命名**（見 §3）—— **這一項現在到期了**。§3 原本就寫「Phase 4c 收尾前定案」，
+   而 4c 已經收尾。再拖下去 Phase 6 的對話選項也要跟著用佔位名，而且美術端已經在照 A/B/C 準備素材
+2. **Phase 4d 收尾驗證**（見 §2）—— 便宜。但注意 `chest_RequiresKey` 的權重目前是 0（測試腳手架），
+   要驗鑰匙寶箱得先補回來
+3. **跟 Romtyui 談一次，兩件事一起提**（見下）
+4. Phase 5 戰鬥接入 / Phase 6 對話與商店
+
+#### 🔴 跨隊：兩個需求合併成一次對話
+
+兩件事都卡在 Romtyui，分兩次提是浪費：
+
+| 需求 | 為了什麼 | 出處 |
+|---|---|---|
+| `BattleManager.OnBattleEnded(BattleOutcome)` 事件 | Phase 5 戰鬥接入 | §7.2 |
+| **run 開始時就初始化 HP／SAN**（不要等第一場戰鬥打完） | 段 B：探索扣 HP／SAN | §1.2b |
+
+順帶可提：`RunStateManager.cs` 的中文註解疑似不是存成 UTF-8（讀出來是亂碼）。
+
+#### 測試腳手架：正式配內容前要還原
+
+| 項目 | 現況 | 還原成 |
+|---|---|---|
+| `RoomContent_Village` 的 `chest_RequiresKey` / `document` | `weight: 0`（刻意，讓測試寶箱必定出現） | 補回 1，否則這兩者永遠不生成 |
+| `AttributeChart` 的 `AttrA → AttrC = None` | 測試用，為了驗得到 `✕` | C19 說 `None` 應少用；Q7a 定名時一起重看 |
 
 ---
 

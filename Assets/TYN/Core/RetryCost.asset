@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91270cdc6847ccc43b7ada35f4a2eeca, type: 3}
+  m_Name: RetryCost
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.RetryCostData
+  tier1Multiplier: 1
+  tier2Multiplier: 2
+  tier3Multiplier: 3
+  tier4Multiplier: 5
+  tacticalDeathMultiplier: 20
+  baseCost: 5
+  incrementMode: 0
+  incrementAmount: 5

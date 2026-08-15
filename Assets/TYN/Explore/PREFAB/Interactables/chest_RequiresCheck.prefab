@@ -210,8 +210,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2867226350995461519}
   m_Father: {fileID: 0}
@@ -265,7 +265,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 2806ba5a8156d7e4ca48a6814a767e43, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5d39ee4eda07dfd4581c76a4ca1ae83c, type: 3}
   m_Color: {r: 0.39607844, g: 0.654902, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -309,17 +309,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.07, y: -0.1}
+  m_Offset: {x: 0, y: -0.21}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 6.4, y: 4.8}
+    oldSize: {x: 40.931713, y: 28.94}
     newSize: {x: 6.4, y: 4.8}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.16, y: 1.52}
+  m_Size: {x: 12, y: 7}
   m_EdgeRadius: 0
 --- !u!114 &7198545691069275394
 MonoBehaviour:
@@ -337,9 +337,16 @@ MonoBehaviour:
   singleUse: 1
   afterInteract: 0
   targetRenderer: {fileID: 0}
-  interactedSprite: {fileID: 21300000, guid: 406fc770f99e270498b50b59a3988cd0, type: 3}
-  visualVariants: []
-  closeUpSprite: {fileID: 21300000, guid: 2806ba5a8156d7e4ca48a6814a767e43, type: 3}
+  interactedSprite: {fileID: 0}
+  failedSprite: {fileID: 0}
+  visualVariants:
+  - normal: {fileID: 21300000, guid: 5d39ee4eda07dfd4581c76a4ca1ae83c, type: 3}
+    interacted: {fileID: 0}
+  - normal: {fileID: 21300000, guid: 3dab73beb31ab4642a6a4f75e05aead2, type: 3}
+    interacted: {fileID: 0}
+  - normal: {fileID: 21300000, guid: 9639822202a68d44d9838223b552fb5f, type: 3}
+    interacted: {fileID: 0}
+  closeUpSprite: {fileID: 21300000, guid: 939a940e7f35eab44970e64c5a8c0fef, type: 3}
   showGrabCursor: 1
   openMode: 2
   requiredKeyId: 
@@ -349,4 +356,15 @@ MonoBehaviour:
   lootItems: []
   grantedItemIds: []
   attribute: 3
+  retryPolicy: 0
+  tier: 0
+  retryCost: {fileID: 0}
+  retryItemId: lockpick
+  retryPromptFormat: "\u9084\u80FD\u518D\u64AC\u4E00\u6B21\uFF0C\u4F46\u8981\u7528\u6389\u4E00\u500B\u300C{0}\u300D\u3002\u8981\u8A66\u55CE\uFF1F\uFF08\u7B2C
+    {1} \u6B21\u91CD\u8A66\uFF09"
+  cannotAffordText: "\u624B\u4E0A\u6C92\u6709\u80FD\u7528\u7684\u5DE5\u5177\u4E86\u3002"
   previewLabel: {fileID: 0}
+  successText: "\u9396\u300C\u5580\u300D\u5730\u4E00\u8072\u9B06\u958B\u4E86\u3002"
+  failText: "\u6C92\u80FD\u64AC\u958B\u3002\u9396\u7D0B\u98A8\u4E0D\u52D5\u3002"
+  exhaustedText: "\u9396\u82AF\u5DF2\u7D93\u88AB\u64AC\u721B\u4E86\u3002\u9019\u7BB1\u5B50\u958B\u4E0D\u4E86\u4E86\u3002"
+  alreadyFailedText: "\u5DF2\u7D93\u6C92\u6551\u4E86\uFF0C\u5225\u518D\u8CBB\u5DE5\u592B\u3002"

@@ -43,5 +43,23 @@ namespace EldritchMile.Core
         void ShowPreview(float rate, Effectiveness eff);
 
         void HidePreview();
+
+        /// <summary>
+        /// 手牌出完了仍未成功 —— 這次遭遇的嘗試機會用盡。
+        ///
+        /// 【為什麼一定要有這支】在此之前，判定失敗完全沒有「結案」的路徑：
+        /// 只有成功會走 MarkDone()，所以徹底失敗的物件永遠 CanInteract == true。
+        /// 造成兩件事：
+        ///   · 玩家可以無限重點、重抽手牌 —— 但衰減已歸零，每次都是保證 0%（假迴圈）
+        ///   · 物件永遠不回報房間，interactedCount 到不了總數，
+        ///     **C13 的「要探索其他的東西嗎？」永遠不會自動跳出來**
+        ///
+        /// 【呼叫時機】由 ExploreStageController 在環節結束且 !HasCardsLeft 時呼叫。
+        /// 中途按結束（還有手牌）**不會**呼叫 —— 那是暫停，不是用盡。
+        ///
+        /// 【實作責任】目標自行決定要結案、還是提供「付出代價重來」的機會
+        /// （衰減重置、手牌重抽）。成功過的目標要自己判斷並忽略這次呼叫。
+        /// </summary>
+        void OnAttemptsExhausted();
     }
 }

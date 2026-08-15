@@ -74,6 +74,20 @@ namespace EldritchMile.Core
             Instance = this;
         }
 
+        /// <summary>
+        /// 手牌用盡、即將自動結束**之前**詢問一次。
+        /// 回傳 true 代表有人接手（例如要提供付出代價重來的機會），環節就先不結束。
+        ///
+        /// 【為什麼要攔在這裡】重試若等到環節結束後才處理，就得把已經拆掉的
+        /// 手牌區、對象大圖、對話框狀態整套重建一次，畫面會閃。攔在結束前，
+        /// 補一手牌就能無縫接下去。
+        ///
+        /// 【接手方的責任】回報 true 之後，環節會停在「還在進行中但手牌是空的」狀態，
+        /// **必須**由接手方負責收尾 —— 玩家答應就 RefillHand()，拒絕或付不起就 EndEncounter()。
+        /// 忘記收尾的話環節會永遠卡著。
+        /// </summary>
+        public Func<bool> HandExhaustedInterceptor;
+
         // ── 事件，供 UI 掛載 ──
         public event Action<CardInstanceExplore, IProbabilityTarget, bool, float> OnCardResolved;
         public event Action<IProbabilityTarget> OnPrimaryTargetChanged;
@@ -120,10 +134,20 @@ namespace EldritchMile.Core
         /// 只有兩種情況會走到這裡 —— 玩家按結束鈕，或手牌耗盡。
         /// **不可**因為判定成功就自動呼叫（C18⑦）。
         /// </summary>
-        public void EndEncounter()
+        /// <summary>
+        /// 上一次結束是**玩家主動**的（按結束鈕、拒絕重試），而不是手牌用盡自動結束。
+        ///
+        /// 【為什麼要分】收尾時會「代替玩家在對話框上點一下」，讓按完結束不必再手動點。
+        /// 但那個推進只有在玩家真的按了什麼的時候才成立 —— 手牌用盡是自動結束，
+        /// 玩家什麼都沒按，這時候推進會把**剛剛才顯示的判定結果**直接跳掉。
+        /// </summary>
+        public bool EndedByPlayer { get; private set; } = true;
+
+        public void EndEncounter(bool playerInitiated = true)
         {
             if (!isActive) return;
 
+            EndedByPlayer = playerInitiated;
             isActive = false;
             HoverPreviewBroadcaster.Instance?.End();
 
@@ -245,11 +269,50 @@ namespace EldritchMile.Core
             //    只有手牌耗盡才自動收尾，其餘一律等玩家按結束鈕。
             if (hand.Count == 0)
             {
+                // 先問有沒有人要接手（付出代價重來）。有的話環節先不結束，
+                // 由接手方負責 RefillHand() 或 EndEncounter()。
+                if (HandExhaustedInterceptor != null && HandExhaustedInterceptor())
+                {
+                    Debug.Log("[打牌] 手牌用盡，等玩家決定要不要付代價重來");
+                    return success;
+                }
+
                 Debug.Log("[打牌] 手牌用盡，自動結束");
-                EndEncounter();
+
+                // ⚠️ playerInitiated: false —— 玩家沒有按任何東西。
+                //    傳 true 的話收尾會「代替玩家點一下」，把上面剛顯示的判定結果直接跳掉。
+                EndEncounter(false);
             }
 
             return success;
+        }
+
+        /// <summary>
+        /// 付出代價後補一手新牌，**繼續同一次遭遇**（不是開新的一次）。
+        ///
+        /// ⚠️ cardsPlayed 刻意**不重置**。衰減已經被目標重置回初始了，
+        /// 「總共在這個目標上耗掉幾張」就成了唯一還看得見的代價紀錄 ——
+        /// 而且它正是遞增代價的依據。重置的話玩家會看到「第 1 次」但被收第三次的錢。
+        /// </summary>
+        public void RefillHand(IReadOnlyList<CardInstanceExplore> newHand)
+        {
+            if (!isActive)
+            {
+                Debug.LogWarning("[打牌] 環節已結束，無法補牌");
+                return;
+            }
+
+            hand.Clear();
+            if (newHand != null) hand.AddRange(newHand);
+
+            // 衰減級距要跟著新的手牌數重算，否則補 3 張卻還照 5 張的級距扣
+            DecayStep = decayScaledToHandSize && hand.Count > 0
+                ? 1f / hand.Count
+                : fixedDecayStep;
+
+            OnHandChanged?.Invoke();
+
+            Debug.Log($"[打牌] 補牌 {hand.Count} 張，每次衰減 {DecayStep:F2}（累計已出 {cardsPlayed} 張）");
         }
 
         public IReadOnlyList<CardInstanceExplore> Hand => hand;

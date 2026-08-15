@@ -48,6 +48,11 @@ namespace EldritchMile.Explore
         [Tooltip("互動後替換的圖（例如打開的寶箱）。留空則不換")]
         public Sprite interactedSprite;
 
+        [Tooltip("判定**徹底失敗**後替換的圖（例如撬壞的鎖）。留空則維持原本的圖。\n\n" +
+                 "⚠️ 不要跟上面的 Interacted Sprite 共用 —— 那張是「打開的寶箱」，" +
+                 "沒撬開的箱子長成打開的樣子會直接誤導玩家以為自己成功了")]
+        public Sprite failedSprite;
+
         [System.Serializable]
         public class VisualVariant
         {
@@ -75,6 +80,9 @@ namespace EldritchMile.Explore
 
         protected bool hasInteracted;
         protected RoomController room;
+
+        /// 已結案，而且是**失敗**收場（不是成功處理完）。供子類別給出不同的提示文字。
+        public bool FailedPermanently { get; protected set; }
 
         /// 所屬的探索 Stage。房間生成在 Stage 底下，所以往上找得到。
         protected ExploreStageController stage;
@@ -106,9 +114,22 @@ namespace EldritchMile.Explore
                 return;
             }
 
-            if (!CanInteract) return;
+            if (!CanInteract)
+            {
+                OnInteractBlocked();
+                return;
+            }
+
             Interact();
         }
+
+        /// <summary>
+        /// 已經處理完的物件又被點了一次。預設沉默 —— 撿走的道具不需要再說什麼。
+        ///
+        /// 但**徹底失敗**的物件沉默會很糟：玩家看到箱子還在、游標卻沒反應，
+        /// 分不出「這已經結束了」與「遊戲卡住了」。子類別覆寫成一句話即可。
+        /// </summary>
+        protected virtual void OnInteractBlocked() { }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
@@ -171,6 +192,35 @@ namespace EldritchMile.Explore
             if (hasSwapSprite && targetRenderer != null)
             {
                 targetRenderer.sprite = interactedSprite;
+            }
+
+            if (room != null) room.ReportInteracted(this);
+        }
+
+        /// <summary>
+        /// 標記為**失敗結案**：嘗試機會用盡但沒成功。
+        ///
+        /// 與 MarkDone() 的三個差別：
+        ///   1. 換的是 failedSprite（撬壞的鎖），不是 interactedSprite（打開的箱子）
+        ///   2. **絕不消失** —— 沒撬開的箱子憑空不見會讓玩家以為自己成功了。
+        ///      所以這裡完全不看 afterInteract
+        ///   3. 設 FailedPermanently，讓再次點擊時能給出「已經弄壞了」而不是沉默
+        ///
+        /// 一樣要回報房間 —— 失敗也是一種「處理完了」，
+        /// 不回報的話 C13 的房間清空永遠不會觸發。
+        /// </summary>
+        protected void MarkFailed()
+        {
+            if (hasInteracted) return;   // 已經成功開過了，這次呼叫不算數
+
+            hasInteracted = true;
+            FailedPermanently = true;
+            SetCursor(CursorType.Idle);
+
+            if (failedSprite != null)
+            {
+                if (targetRenderer == null) targetRenderer = GetComponent<SpriteRenderer>();
+                if (targetRenderer != null) targetRenderer.sprite = failedSprite;
             }
 
             if (room != null) room.ReportInteracted(this);

@@ -70,6 +70,10 @@ namespace EldritchMile.Core
                  "留空 = 不啟用 C12，維持舊行為（玩家自己決定要不要再出牌）")]
         public GameObject retryAskPanel;
 
+        [Tooltip("詢問面板上的文字。重試詢問會把代價寫進去（「花費 5 點…」），所以需要能改內容。\n" +
+                 "留空則面板文字維持你在 Inspector 打好的固定內容")]
+        public TMPro.TextMeshProUGUI retryAskLabel;
+
         [Tooltip("詢問期間要停掉互動的 CanvasGroup —— 拖這個場景裡的 EncounterUI（手牌區的根）。\n\n" +
                  "⚠️ 這不是裝飾。詢問跳出來時手牌若還能拖，玩家可以一邊被問「要再試嗎」" +
                  "一邊把牌打出去，那張牌等於繞過了整個詢問。\n\n" +
@@ -197,10 +201,91 @@ namespace EldritchMile.Core
             retryToggle.Set(retryAskPanel, true);
         }
 
-        /// <summary>「在試一次？」→ YES。留在環節裡，玩家繼續出牌。</summary>
+        // ==========================================
+        // 手牌用盡 → 付出代價重來（C12 / 全域資源制）
+        // ==========================================
+        private System.Action pendingYes;
+        private System.Action pendingNo;
+
+        /// <summary>
+        /// 顯示「付出代價重來」的詢問。由 Stage 在手牌用盡且目標可重試時呼叫。
+        ///
+        /// 【為什麼用回呼參數而不是事件】付款與重抽的邏輯住在 Explore，
+        /// 本類別住在 Core —— Core 不該反過來認識 Explore。由呼叫端把要做的事傳進來，
+        /// 依賴方向就只有一個方向。
+        ///
+        /// 回傳 false 代表沒有面板可用，呼叫端要自己收尾（結束環節）。
+        /// </summary>
+        public bool ShowRetryOffer(string prompt, System.Action onYes, System.Action onNo)
+        {
+            if (retryAskPanel == null)
+            {
+                if (!warnedNoPanel)
+                {
+                    warnedNoPanel = true;
+                    Debug.LogWarning(
+                        "[打牌] EncounterUIController 沒有指定 Retry Ask Panel —— " +
+                        "手牌用盡時無法詢問要不要付代價重來，一律直接結案。",
+                        this
+                    );
+                }
+                return false;
+            }
+
+            pendingYes = onYes;
+            pendingNo = onNo;
+
+            if (retryAskLabel != null && !string.IsNullOrEmpty(prompt))
+            {
+                retryAskLabel.text = prompt;
+            }
+
+            SetHandInteractable(false);
+            IsAsking = true;
+
+            // ⚠️ 不可以立刻彈出。這一刻對話框正在打「沒能撬開…這是你嘗試的第 5 次。」，
+            //    面板蓋上去玩家就沒讀到自己為什麼失敗 —— 然後要他決定付不付錢重來，
+            //    那是個沒有依據的決定。等字打完再問。
+            if (askRoutine != null) StopCoroutine(askRoutine);
+            askRoutine = StartCoroutine(ShowRetryOfferAfterText());
+
+            return true;   // 已接手 —— 環節不會結束，等玩家從面板上做決定
+        }
+
+        private IEnumerator ShowRetryOfferAfterText()
+        {
+            DialogueBoxUI box = PopupService.Instance != null ? PopupService.Instance.dialogueBox : null;
+
+            while (box != null && box.IsTyping) yield return null;
+
+            if (askDelay > 0f) yield return new WaitForSecondsRealtime(askDelay);
+
+            askRoutine = null;
+
+            // 等待期間環節可能已經被別的路徑收掉了。此時彈出詢問會問一個
+            // 已經結束的環節要不要重試 —— 而且 pendingYes 會對著失效的狀態執行。
+            if (encounter == null || !encounter.IsActive)
+            {
+                HideAskImmediate();
+                yield break;
+            }
+
+            retryToggle.Set(retryAskPanel, true);
+        }
+
+        /// <summary>「在試一次？」→ YES。</summary>
         public void OnRetryYes()
         {
+            // 先取出再 HideAsk —— HideAsk 會清掉 pending，順序反了就叫不到
+            System.Action yes = pendingYes;
+            pendingYes = null;
+            pendingNo = null;
+
             HideAsk();
+
+            // 有回呼 = 這是「付代價重來」的詢問，交給 Stage 處理付款與重抽。
+            // 沒有回呼 = 這是 OnFailure 模式的詢問，關掉面板就是繼續出牌，不必做別的。
+            yes?.Invoke();
         }
 
         /// <summary>
@@ -213,7 +298,18 @@ namespace EldritchMile.Core
         /// </summary>
         public void OnRetryNo()
         {
+            System.Action no = pendingNo;
+            pendingYes = null;
+            pendingNo = null;
+
             HideAsk();
+
+            if (no != null)
+            {
+                // 「付代價重來」的詢問：由 Stage 決定怎麼收尾（結案 + 結束環節）
+                no.Invoke();
+                return;
+            }
 
             if (encounter == null) encounter = DialogueEncounterController.Instance;
             if (encounter != null && encounter.IsActive) encounter.EndEncounter();
@@ -225,6 +321,8 @@ namespace EldritchMile.Core
         private void HideAsk()
         {
             IsAsking = false;
+            pendingYes = null;
+            pendingNo = null;
 
             if (askRoutine != null)
             {
@@ -243,6 +341,8 @@ namespace EldritchMile.Core
         private void HideAskImmediate()
         {
             IsAsking = false;
+            pendingYes = null;
+            pendingNo = null;
 
             if (askRoutine != null)
             {

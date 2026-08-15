@@ -13,8 +13,24 @@ namespace EldritchMile.Explore
     ///
     /// 三者共用同一個元件，靠 openMode 切換。
     /// </summary>
-    public class ChestInteractable : InteractableBase, IProbabilityTarget
+    public class ChestInteractable : InteractableBase, IProbabilityTarget, IRetryableTarget
     {
+        /// <summary>手牌用盡後，用什麼付「再來一輪」的代價。</summary>
+        public enum RetryPolicy
+        {
+            /// 不可重複嘗試。手牌用盡即結案
+            None = 0,
+
+            /// 消耗特定道具（每次一個）
+            RequiresItem = 1,
+
+            /// 扣 HP。**尚未接上** —— 見下方說明
+            CostsHealth = 2,
+
+            /// 扣 SAN。**尚未接上** —— 見下方說明
+            CostsSanity = 3,
+        }
+
         public enum OpenMode
         {
             /// 直接開，不需判定（流程圖的「不須賭博判定」分支）
@@ -53,6 +69,34 @@ namespace EldritchMile.Explore
         [Header("屬性判定 (C17/C18，僅 RequiresCheck 時使用)")]
         public ExploreAttribute attribute = ExploreAttribute.None;
 
+        [Header("重試 (手牌用盡後付全域代價再來一輪)")]
+        [Tooltip("None ＝ 不可重複嘗試，手牌用盡即結案。\n" +
+                 "RequiresItem ＝ 消耗道具，**可以用**。\n" +
+                 "CostsHealth / CostsSanity ＝ 扣 HP／SAN，**尚未接上** —— " +
+                 "HP／SAN 歸 Romtyui 的 RunStateManager 管，而它的值只有在第一場戰鬥打完才存在。" +
+                 "要等「run 開始就初始化」談定後才能接。選了會在 Console 說明並直接結案")]
+        public RetryPolicy retryPolicy = RetryPolicy.None;
+
+        [Tooltip("大類型，決定代價的固有倍率。測試用的普通寶箱是 Tier1（×1）")]
+        public ObjectTier tier = ObjectTier.Tier1;
+
+        [Tooltip("代價計算規則。留空則不可重試（會在 Console 提醒）")]
+        public RetryCostData retryCost;
+
+        [Tooltip("RequiresItem 時需要的道具 id。每次重試消耗一個")]
+        public string retryItemId = "";
+
+        [Tooltip("詢問文字。{0} = 代價數值或道具 id、{1} = 這是第幾次重試")]
+        [TextArea(2, 3)]
+        public string retryPromptFormat = "還能再撬一次，但要用掉一個「{0}」。要試嗎？（第 {1} 次重試）";
+
+        [Tooltip("付不起時顯示的一句話")]
+        [TextArea(2, 3)]
+        public string cannotAffordText = "手上沒有能用的工具了。";
+
+        /// 這個物件已經重試過幾次。決定遞增代價，且**不會**因為重試而歸零。
+        private int retryCount;
+
         [Header("預覽 UI (C17)")]
         [Tooltip("hover 手牌時顯示成功率的文字。可留空")]
         public TMPro.TextMeshPro previewLabel;
@@ -77,6 +121,15 @@ namespace EldritchMile.Explore
         [Tooltip("判定失敗時即時顯示的一句話")]
         [TextArea(2, 3)]
         public string failText = "沒能撬開。鎖紋風不動。";
+
+        [Tooltip("手牌用盡仍未成功、這個箱子徹底結案時顯示的一句話。\n" +
+                 "與 Fail Text 的差別：那句是「這次沒中，還可以再試」，這句是「結束了」")]
+        [TextArea(2, 3)]
+        public string exhaustedText = "鎖芯已經被撬爛了。這箱子開不了了。";
+
+        [Tooltip("結案之後又被點擊時顯示的一句話。留空則沉默")]
+        [TextArea(2, 3)]
+        public string alreadyFailedText = "已經沒救了，別再費工夫。";
 
         public void OnCheckResult(bool success, float usedRate)
         {
@@ -111,6 +164,130 @@ namespace EldritchMile.Explore
         public void HidePreview()
         {
             if (previewLabel != null) previewLabel.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// 手牌用盡仍未撬開 → 這個箱子結案。
+        ///
+        /// 【為什麼一定要結案】不結案的話：衰減已歸零（保證 0%），但箱子還可以點、
+        /// 還會重抽一手牌 —— 玩家會陷入一個永遠跑不完、而且必定失敗的迴圈。
+        /// 而且它永遠不回報房間，C13 的「要探索其他的東西嗎？」就永遠不會跳。
+        ///
+        /// 【重試機制的插入點】日後「付出代價重來」（消耗道具／HP／SAN）要接在這裡：
+        /// 先問玩家付不付得起、願不願意，願意就重置衰減並重抽手牌，
+        /// 不願意或付不起才走到 MarkFailed()。
+        /// </summary>
+        public void OnAttemptsExhausted()
+        {
+            if (hasInteracted) return;   // 最後一張剛好成功，已經 Open() 過了
+
+            if (!string.IsNullOrEmpty(exhaustedText))
+            {
+                // ⚠️ 用 ShowText（排隊）而不是 ShowInstant（即時替換）。
+                //    這一刻對話框上正顯示著最後一張牌的「沒能撬開」，
+                //    ShowInstant 會 pending.Clear() 並直接蓋掉它 —— 玩家連自己為什麼
+                //    失敗都沒看到就變成「鎖芯已經被撬爛了」。排隊才讀得完兩句。
+                PopupService.Instance?.ShowText(exhaustedText);
+            }
+
+            MarkFailed();
+        }
+
+        // ==========================================
+        // IRetryableTarget：付出全域代價再來一輪
+        // ==========================================
+        public bool CanOfferRetry
+        {
+            get
+            {
+                if (hasInteracted) return false;          // 已經開過或已結案
+                if (retryPolicy == RetryPolicy.None) return false;
+
+                if (retryCost == null)
+                {
+                    Debug.LogWarning(
+                        $"[打牌] 「{displayName}」設定了重試（{retryPolicy}）但沒有指定 Retry Cost 資產，" +
+                        "無法算出代價，這次不提供重試。", this);
+                    return false;
+                }
+
+                // HP／SAN 還沒接上。這裡明講原因，不要讓它靜靜地當成「不可重試」
+                if (retryPolicy == RetryPolicy.CostsHealth || retryPolicy == RetryPolicy.CostsSanity)
+                {
+                    Debug.LogWarning(
+                        $"[打牌] 「{displayName}」的重試代價是 {retryPolicy}，但 HP／SAN 尚未接上 ——\n" +
+                        "它們歸 Romtyui 的 RunStateManager 管，而目前的值只有在第一場戰鬥打完才存在。\n" +
+                        "要等「run 開始就初始化」跟對方談定後才能接。本次直接結案。\n" +
+                        "想先測重試手感的話，把 Retry Policy 改成 RequiresItem。", this);
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        /// 這一次重試要付多少（retryCount 從 0 起算，所以第一次重試是 index 0）
+        public int NextRetryCost =>
+            retryCost != null ? retryCost.Calculate(tier, retryCount) : 0;
+
+        public string BuildRetryPrompt()
+        {
+            // 道具是「有或沒有」，講數量沒有意義，所以顯示道具 id；
+            // 數值型資源才顯示金額。兩者共用同一個 format，{0} 各自代入該講的東西。
+            string costLabel = retryPolicy == RetryPolicy.RequiresItem
+                ? retryItemId
+                : NextRetryCost.ToString();
+
+            return string.Format(retryPromptFormat, costLabel, retryCount + 1);
+        }
+
+        public bool TryPayForRetry()
+        {
+            RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+
+            if (retryPolicy == RetryPolicy.RequiresItem)
+            {
+                if (run == null || !run.ConsumeItem(retryItemId))
+                {
+                    if (!string.IsNullOrEmpty(cannotAffordText))
+                    {
+                        PopupService.Instance?.ShowInstant(cannotAffordText);
+                    }
+                    Debug.Log($"[打牌] 「{displayName}」重試付不起：缺少道具 {retryItemId}");
+                    return false;
+                }
+
+                // 道具是「有或沒有」，用不到數值代價。但還是把算出來的金額印出來，
+                // 這樣光用道具測就能看到 tier × 遞增的曲線對不對，不必等 HP／SAN 接上
+                int wouldCost = NextRetryCost;
+                retryCount++;
+
+                Debug.Log(
+                    $"[打牌] 「{displayName}」第 {retryCount} 次重試：消耗道具 {retryItemId}" +
+                    $"（{tier} 若改用數值資源，本次代價為 {wouldCost}）"
+                );
+                return true;
+            }
+
+            // CostsHealth / CostsSanity 會在 CanOfferRetry 就被擋掉，走不到這裡
+            return false;
+        }
+
+        public void ResetForRetry()
+        {
+            // 衰減回到初始。若不重置，重來也是保證 0% —— 那是假選擇。
+            CurrentDecayMultiplier = 1f;
+            Debug.Log($"[打牌] 「{displayName}」衰減已重置回 1.00");
+        }
+
+        protected override void OnInteractBlocked()
+        {
+            // 徹底失敗的箱子還立在那裡，點下去毫無反應的話，
+            // 玩家分不出「這結束了」與「遊戲卡住了」
+            if (FailedPermanently && !string.IsNullOrEmpty(alreadyFailedText))
+            {
+                PopupService.Instance?.ShowText(alreadyFailedText);
+            }
         }
 
         // ── 互動 ──

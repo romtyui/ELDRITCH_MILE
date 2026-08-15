@@ -156,6 +156,7 @@ MonoBehaviour:
   afterInteract: 0
   targetRenderer: {fileID: 0}
   interactedSprite: {fileID: 0}
+  failedSprite: {fileID: 0}
   visualVariants:
   - normal: {fileID: 21300000, guid: 5d39ee4eda07dfd4581c76a4ca1ae83c, type: 3}
     interacted: {fileID: 0}
@@ -163,14 +164,29 @@ MonoBehaviour:
     interacted: {fileID: 0}
   - normal: {fileID: 21300000, guid: 3dab73beb31ab4642a6a4f75e05aead2, type: 3}
     interacted: {fileID: 0}
+  closeUpSprite: {fileID: 0}
   showGrabCursor: 1
   openMode: 0
-  requiredKeyId: key_warehouse
+  requiredKeyId: 
   lockedText: "\u9396\u4F4F\u4E86\u3002\u5F97\u5148\u627E\u5230\u9470\u5319\u3002"
   consumeKey: 0
+  checkPromptText: "\u4E0A\u4E86\u9396\u3002\u4E5F\u8A31\u80FD\u7528\u9EDE\u624B\u6BB5\u64AC\u958B\u3002"
   lootItems:
   - "\u9470\u5319B"
+  - "\u64AC\u68CD"
   grantedItemIds:
   - key_warehouse
+  - lockpick
   attribute: 0
+  retryPolicy: 0
+  tier: 0
+  retryCost: {fileID: 0}
+  retryItemId: 
+  retryPromptFormat: "\u9084\u80FD\u518D\u64AC\u4E00\u6B21\uFF0C\u4F46\u8981\u7528\u6389\u4E00\u500B\u300C{0}\u300D\u3002\u8981\u8A66\u55CE\uFF1F\uFF08\u7B2C
+    {1} \u6B21\u91CD\u8A66\uFF09"
+  cannotAffordText: "\u624B\u4E0A\u6C92\u6709\u80FD\u7528\u7684\u5DE5\u5177\u4E86\u3002"
   previewLabel: {fileID: 0}
+  successText: "\u9396\u300C\u5580\u300D\u5730\u4E00\u8072\u9B06\u958B\u4E86\u3002"
+  failText: "\u6C92\u80FD\u64AC\u958B\u3002\u9396\u7D0B\u98A8\u4E0D\u52D5\u3002"
+  exhaustedText: "\u9396\u82AF\u5DF2\u7D93\u88AB\u64AC\u721B\u4E86\u3002\u9019\u7BB1\u5B50\u958B\u4E0D\u4E86\u4E86\u3002"
+  alreadyFailedText: "\u5DF2\u7D93\u6C92\u6551\u4E86\uFF0C\u5225\u518D\u8CBB\u5DE5\u592B\u3002"
