@@ -60,7 +60,7 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
     [Header("Optional Visual Light")]
     public Light2D visualLight;
-    
+
     [Header("Blend Threshold")]
     [Range(0f, 1f)] public float darkToNormalStart = 0.45f;
     [Range(0f, 1f)] public float darkToNormalEnd = 0.55f;

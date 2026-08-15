@@ -1,0 +1,7 @@
+root = true
+
+# 針對所有 C# 檔案設定
+[* .cs]
+charset = utf-8-bom
+end_of_line = crlf
+insert_final_newline = true

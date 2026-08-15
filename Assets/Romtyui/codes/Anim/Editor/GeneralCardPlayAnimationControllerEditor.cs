@@ -1,5 +1,4 @@
 using UnityEditor;
-using UnityEngine;
 
 [CustomEditor(typeof(GeneralCardPlayAnimationController))]
 public class GeneralCardPlayAnimationControllerEditor : Editor

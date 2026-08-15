@@ -25,7 +25,7 @@ public class EnemySlotUI : MonoBehaviour
     [Tooltip("這個站位額外的位置偏移。")]
     public Vector2 slotVisualPositionOffset = Vector2.zero;
 
-    [SerializeField]private GameObject currentNormalVisual;
+    [SerializeField] private GameObject currentNormalVisual;
     [SerializeField] private GameObject currentDarkVisual;
 
     [Header("World Visual Root Test")]
@@ -265,7 +265,7 @@ public class EnemySlotUI : MonoBehaviour
 
             case StatusType.Poison:
                 return $"回合開始時受到 {amount} 點傷害，之後中毒層數減少。";
-            case StatusType.Harden: 
+            case StatusType.Harden:
                 return $"每回合開始時，獲得 {amount} 點護盾。";
             case StatusType.Regeneration:
                 {
@@ -456,7 +456,7 @@ public class EnemySlotUI : MonoBehaviour
             return null;
 
         GameObject visual = Instantiate(prefab);
-        
+
 
         visual.transform.SetParent(parent, false);
         visual.name = prefab.name + "_Runtime";

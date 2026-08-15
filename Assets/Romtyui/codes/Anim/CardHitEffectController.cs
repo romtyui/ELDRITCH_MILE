@@ -32,7 +32,7 @@ public class CardHitEffectController : MonoBehaviour
     // 對角色目標生成特效
     // =========================================================
 
-    public GameObject SpawnEffectOnTarget(  CardHitEffectData data,  BattleUnit target,   bool playSound = true  )
+    public GameObject SpawnEffectOnTarget(CardHitEffectData data, BattleUnit target, bool playSound = true)
     {
         if (data == null)
             return null;

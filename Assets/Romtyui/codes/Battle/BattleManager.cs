@@ -1,8 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System;
 using Random = UnityEngine.Random;
 
 public class BattleManager : MonoBehaviour
@@ -71,7 +71,7 @@ public class BattleManager : MonoBehaviour
 
     [Header("General Card Play Animation")]
     public GeneralCardPlayAnimationController generalCardPlayAnimationController;
-    
+
     [Header("Card Hit Effect")]
     public CardHitEffectController cardHitEffectController;
 
@@ -903,7 +903,7 @@ public class BattleManager : MonoBehaviour
              * =========================================================
              */
 
-            if (card.data.hitEffect != null &&  cardHitEffectController != null)
+            if (card.data.hitEffect != null && cardHitEffectController != null)
             {
                 bool hitSoundPlayed = false;
                 for (int effectTargetIndex = 0; effectTargetIndex < aliveEnemies.Count; effectTargetIndex++)

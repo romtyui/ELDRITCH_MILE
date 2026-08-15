@@ -27,7 +27,7 @@ public class BattleUnit : MonoBehaviour
     }
     public virtual void OnTurnStart()
     {
-        
+
         ResolveRegenerationAtTurnStart();
         ResolveHardenAtTurnStart();
     }

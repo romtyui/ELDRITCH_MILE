@@ -404,7 +404,7 @@ public class TutorialUI :
 
 
 
-   
+
 
 
 
@@ -804,7 +804,7 @@ public class TutorialUI :
         return Camera.main;
     }
 
-    public void PositionInstructionPanel(RectTransform target,TutorialDialogPosition position,float spacing)
+    public void PositionInstructionPanel(RectTransform target, TutorialDialogPosition position, float spacing)
     {
         if (instructionPanelRect == null)
             return;

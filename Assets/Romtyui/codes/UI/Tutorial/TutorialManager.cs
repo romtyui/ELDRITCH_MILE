@@ -164,7 +164,7 @@ public class TutorialManager : MonoBehaviour
         tutorialUI.BackClicked += PreviousStep;
         tutorialUI.SkipClicked += SkipTutorial;
         tutorialUI.ScreenClicked += HandleScreenClicked;
-        tutorialUI.DialogueClicked +=ContinueDialogue;
+        tutorialUI.DialogueClicked += ContinueDialogue;
     }
 
     private void UnbindUIEvents()
@@ -301,7 +301,7 @@ public class TutorialManager : MonoBehaviour
             );
         }
     }
-    private void StartDialoguePhase(TutorialStepData step,RectTransform targetRect)
+    private void StartDialoguePhase(TutorialStepData step, RectTransform targetRect)
     {
         if (step == null)
             return;
@@ -494,7 +494,7 @@ public class TutorialManager : MonoBehaviour
                 isLastStep
             );
 
-            if (step.highlightTarget &&targetRect != null)
+            if (step.highlightTarget && targetRect != null)
             {
                 tutorialUI.MoveLocatorToTarget(
                     targetRect,
@@ -580,31 +580,31 @@ public class TutorialManager : MonoBehaviour
 
         currentDialogueIndex++;
 
-if (currentDialogueIndex <
-    step.dialogueLines.Count)
-{
-    tutorialUI.ShowDialogueLine(
-        step.dialogueLines[
-            currentDialogueIndex
-        ]
-    );
+        if (currentDialogueIndex <
+            step.dialogueLines.Count)
+        {
+            tutorialUI.ShowDialogueLine(
+                step.dialogueLines[
+                    currentDialogueIndex
+                ]
+            );
 
-    /*
-     * 新一句文字可能改變 DialoguePanel 尺寸，
-     * 因此重新定位並重新 Clamp。
-     */
-    if (step.positionDialoguePanel)
-    {
-        tutorialUI.PositionDialoguePanel(
-            currentDialogueTargetRect,
-            step.dialoguePosition,
-            step.dialogueSpacing,
-            step.dialogueScreenPadding
-        );
-    }
+            /*
+             * 新一句文字可能改變 DialoguePanel 尺寸，
+             * 因此重新定位並重新 Clamp。
+             */
+            if (step.positionDialoguePanel)
+            {
+                tutorialUI.PositionDialoguePanel(
+                    currentDialogueTargetRect,
+                    step.dialoguePosition,
+                    step.dialogueSpacing,
+                    step.dialogueScreenPadding
+                );
+            }
 
-    return;
-}
+            return;
+        }
 
         TutorialTarget target =
             TutorialTarget.Find(step.targetId);
@@ -1036,7 +1036,7 @@ if (currentDialogueIndex <
     }
     private void RestartCurrentInstructionStep()
     {
-        
+
 
         TutorialStepData step =
             GetCurrentStep();
