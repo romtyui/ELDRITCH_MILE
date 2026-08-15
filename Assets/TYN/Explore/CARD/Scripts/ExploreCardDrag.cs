@@ -57,6 +57,27 @@ namespace EldritchMile.Explore
         }
 
         /// <summary>
+        /// C17：這張牌對當前目標屬性完全無效（`Effectiveness.None`）時變暗。
+        ///
+        /// 【只調 alpha，絕不動 blocksRaycasts / interactable】兩個理由：
+        ///   1. **死牌必須仍然打得出去** —— 蓄意失敗是合法策略（C18⑦）。
+        ///      打一張死牌會消耗手牌並讓目標衰減，那是有意義的操作。
+        ///      所以變暗是「資訊」，不是「鎖定」。
+        ///   2. 拖曳流程本來就在借用 blocksRaycasts（OnBeginDrag 會關掉它讓 raycast
+        ///      穿透自己），這裡再去改它兩邊會打架。
+        ///
+        /// 也不要改用 image.enabled —— 停用的 Graphic 收不到任何 raycast 且不報錯，
+        /// 卡片會變成看得到卻拖不動。
+        /// </summary>
+        public void SetDimmed(bool dimmed, float dimmedAlpha)
+        {
+            if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup == null) return;
+
+            canvasGroup.alpha = dimmed ? Mathf.Clamp01(dimmedAlpha) : 1f;
+        }
+
+        /// <summary>
         /// 點選 = 兩段式出牌的第一段。第二段是點目標。
         ///
         /// 【為什麼不用 TwoStageConfirm】那個元件的 arm 與 confirm 都發生在同一個物件上；

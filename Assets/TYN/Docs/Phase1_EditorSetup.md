@@ -235,7 +235,7 @@ EventScene
 | `Target Attribute` | `ExploreAttribute` | 目標屬性 |
 | `Effectiveness` | `Effectiveness` | `Match` / `Partial` / `None` |
 
-**Phase 1 不需要填任何 Rule。** 屬性名稱尚未定案（Q7a），目前列舉是 `AttrA`～`AttrD` 佔位值。查表邏輯的預設行為：
+**Phase 1 不需要填任何 Rule。** 屬性已定案（Q7a，2026-08-15）：`None`(無/黑白)、`Intuition`(直覺/紅)、`Logic`(邏輯/藍)、`Insight`(批判與創造/綠)。查表邏輯的預設行為：
 
 - 目標屬性為 `None` → 一律 `Match`（不吃相剋）
 - 卡與目標同屬性 → `Match`

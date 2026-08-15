@@ -54,9 +54,9 @@ DialogueEncounterController.PlayCard()
 | 欄位 | 說明 |
 |---|---|
 | `Success Probability` | 已有。這是**機率上限** —— 相剋只會往下扣，不會加成（C19） |
-| **`Attribute`** | 新增。目前是 `AttrA`～`AttrD` 佔位值（Q7a 待命名） |
+| **`Attribute`** | `Intuition`(直覺/紅)、`Logic`(邏輯/藍)、`Insight`(批判與創造/綠)。Q7a 已於 2026-08-15 定案 |
 
-> 現有卡是 `explore_forward_0/20/40/60/80/100` 的機率階梯。
+> 現有卡是 `explore_{Intuition,Logic,Insight}_{0..100}` 的機率階梯。
 > 測試階段建議先讓它們用**不同屬性**，才看得出相剋差異；等屬性定名後再統一調整。
 
 ---

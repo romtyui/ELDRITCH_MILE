@@ -17,6 +17,9 @@ MonoBehaviour:
   noneMultiplier: 0
   rules:
   - cardAttribute: 1
-    targetAttribute: 3
+    targetAttribute: 2
+    effectiveness: 2
+  - cardAttribute: 2
+    targetAttribute: 1
     effectiveness: 2
   defaultEffectiveness: 1

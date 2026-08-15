@@ -45,6 +45,14 @@ namespace EldritchMile.Explore
                  "要明顯大於 Hover Lift，否則玩家分不出「滑過」與「已選取待命」")]
         public float selectedLift = 70f;
 
+        [Header("屬性無效的視覺 (C17)")]
+        [Tooltip("對當前目標屬性完全無效（顯示 ✕）的手牌要壓多暗。\n\n" +
+                 "這不是裝飾 —— 有了真正的 0% 之後，玩家必須不 hover 每一張就看得出哪些是死牌，" +
+                 "否則相剋表根本沒法玩。\n\n" +
+                 "⚠️ 變暗的牌**仍然打得出去**（蓄意失敗是合法策略，C18⑦）。" +
+                 "這是資訊，不是鎖定")]
+        [Range(0.1f, 1f)] public float ineffectiveAlpha = 0.35f;
+
         /// <summary>
         /// 目前選取的卡（兩段式出牌的第一段）。
         ///
@@ -95,9 +103,13 @@ namespace EldritchMile.Explore
 
             encounter.OnHandChanged -= Rebuild;
             encounter.OnEncounterEnded -= HandleEncounterEnded;
+            encounter.OnPrimaryTargetChanged -= HandlePrimaryTargetChanged;
 
             encounter.OnHandChanged += Rebuild;
             encounter.OnEncounterEnded += HandleEncounterEnded;
+
+            // 換了主要目標，「哪些牌是死的」就換了一套答案（C17）
+            encounter.OnPrimaryTargetChanged += HandlePrimaryTargetChanged;
         }
 
         private void Unsubscribe()
@@ -105,6 +117,12 @@ namespace EldritchMile.Explore
             if (encounter == null) return;
             encounter.OnHandChanged -= Rebuild;
             encounter.OnEncounterEnded -= HandleEncounterEnded;
+            encounter.OnPrimaryTargetChanged -= HandlePrimaryTargetChanged;
+        }
+
+        private void HandlePrimaryTargetChanged(IProbabilityTarget target)
+        {
+            RefreshDimming();
         }
 
         // ==========================================
@@ -161,6 +179,47 @@ namespace EldritchMile.Explore
             }
 
             Layout();
+            RefreshDimming();
+        }
+
+        /// <summary>
+        /// C17：把對當前目標完全無效的手牌壓暗。
+        ///
+        /// 【對哪個目標？】相剋只看屬性，跟衰減無關，所以只有「目標換了」才需要重算 ——
+        /// 但重建手牌時順手做掉最省事。
+        ///
+        /// 已選定主要目標就對它算；沒選定但**場上只有一個目標**時也對那一個算
+        /// （目前探索的寶箱就是這個情況）。有多個目標又沒選定時**不變暗** ——
+        /// 那時候「無效」沒有唯一答案，硬壓暗會騙人。
+        /// 這正是 C18① 主要目標選定在 Phase 6 的實際用途。
+        /// </summary>
+        public void RefreshDimming()
+        {
+            if (encounter == null || ProbabilityCheck.Instance == null) return;
+
+            IProbabilityTarget target = encounter.PrimaryTarget;
+
+            if (target == null)
+            {
+                IReadOnlyList<IProbabilityTarget> targets = encounter.Targets;
+                if (targets != null && targets.Count == 1) target = targets[0];
+            }
+
+            for (int i = 0; i < spawned.Count; i++)
+            {
+                ExploreCardDrag card = spawned[i];
+                if (card == null || card.Card == null) continue;
+
+                bool ineffective = false;
+
+                if (target != null)
+                {
+                    ProbabilityCheck.Instance.CalculateRate(card.Card.data, target, out Effectiveness eff);
+                    ineffective = eff == Effectiveness.None;
+                }
+
+                card.SetDimmed(ineffective, ineffectiveAlpha);
+            }
         }
 
         private void Clear()

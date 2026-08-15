@@ -12,7 +12,7 @@
 | 項目 | Status.md 記錄 | 實際現況 |
 |---|---|---|
 | Phase 4c 打牌 UI | 🔴 完全未做 | 🔶 **第一批已完成**（拖曳出牌、hover 全選項預覽、即時判定、逐次衰減、`EncounterTargetView` 對話框特寫圖）。詳見 [Phase4c_CardPlay.md](Phase4c_CardPlay.md) |
-| 卡牌屬性資料 | `AttrA~AttrD` 佔位、單一機率階梯 | 已重構為 **A/B/C 三屬性 × 0/20/40/60/80/100 六階梯**，各自配 `_vis` 視覺資產（`Card_data/v3/explore_{A,B,C}_{0..100}.asset`） |
+| 卡牌屬性資料 | `AttrA~AttrD` 佔位、單一機率階梯 | 已重構為 **三屬性 × 0/20/40/60/80/100 六階梯**，各自配 `_vis` 視覺資產。**Q7a 已定案**：`Card_data/v3/explore_{Intuition,Logic,Insight}_{0..100}.asset` |
 | `TwoStageConfirm.cs` | 保留，服務 C8/C14 | **已封存**（非刪除，`.meta` 一起搬到 `_Archive/Scripts/`，符合封存慣例）。**已靜態確認安全**：全專案 `.unity`/`.prefab` 沒有任何物件掛它（`git grep` GUID 零命中）。C14 實際靠 `BookmarkHover`（滑下）+ 普通 `Button`（`ExitTag.onClick → ShowContinueAsk()`）+ `ContinueAskPanel` 構成兩段式，C8 抓取靠 `InteractableBase` 直接呼叫 `CursorManager` 的 `HoverChest`/`HoldChest`。兩者都不依賴 `TwoStageConfirm`，封存不影響功能 |
 | `ExplorationHandUIController.cs` | 待改寫的 8 個之一 | 已封存到 `_Archive/Scripts/`，由新的 `ExploreHandUI` 取代 |
 | 未提交改動規模 | 174 rename + 108 delete | ~~更大~~ **已於 2026-08-14 19:41 commit `f8bf980「Phase4」`**，工作區目前乾淨。原本的風險項目已解除 |
@@ -196,7 +196,7 @@
 
 之後建議順序：
 
-1. **Q7a 屬性正式命名**（見 §3）—— **這一項現在到期了**。§3 原本就寫「Phase 4c 收尾前定案」，
+1. ~~**Q7a 屬性正式命名**~~ —— ✅ **已完成 2026-08-15**（見 [Phase4c4_Attributes.md](Phase4c4_Attributes.md)）。原本的理由：§3 寫「Phase 4c 收尾前定案」，
    而 4c 已經收尾。再拖下去 Phase 6 的對話選項也要跟著用佔位名，而且美術端已經在照 A/B/C 準備素材
 2. **Phase 4d 收尾驗證**（見 §2）—— 便宜。但注意 `chest_RequiresKey` 的權重目前是 0（測試腳手架），
    要驗鑰匙寶箱得先補回來
@@ -219,7 +219,7 @@
 | 項目 | 現況 | 還原成 |
 |---|---|---|
 | `RoomContent_Village` 的 `chest_RequiresKey` / `document` | `weight: 0`（刻意，讓測試寶箱必定出現） | 補回 1，否則這兩者永遠不生成 |
-| `AttributeChart` 的 `AttrA → AttrC = None` | 測試用，為了驗得到 `✕` | C19 說 `None` 應少用；Q7a 定名時一起重看 |
+| ~~`AttributeChart` 的測試規則~~ | ✅ 已於 Q7a 定案時換成正式的兩條（直覺↔邏輯互斥） | — |
 
 ---
 
@@ -249,7 +249,7 @@
 
 | # | 問題 | 現況 | 最晚需要 |
 |---|---|---|---|
-| Q7a | 屬性正式名稱 | 已從「單一階梯」進展到「A/B/C 三屬性完整矩陣」，但名稱仍是佔位符 | Phase 4c 收尾前定案，否則 Phase 6 對話選項也要跟著用佔位名 |
+| ~~Q7a~~ | 屬性正式名稱 | ✅ **已定案 2026-08-15**：無(黑白)/直覺(紅)/邏輯(藍)/批判與創造(綠)，相剋表見 [Phase4c4_Attributes.md](Phase4c4_Attributes.md) | — |
 | Q11 | 衰減級距：線性或比例 | `DialogueEncounterController` 有 `Decay Scaled To Hand Size` 開關，暫行線性 | 若本輪測試手感不對，這是第一個要調的參數 |
 | Q12 | 主要目標可否更換 | 暫行可自由更換，各自獨立衰減 | 第 1 節做「主要目標選定 UI」時會直接遇到，順手定案 |
 | Q13 | 未用手牌怎麼處理 | 暫行棄掉、下個事件重抽 | 同上 |
@@ -261,4 +261,4 @@
 - **未提交規模持續增長**：目前工作區改動比 Status.md 記錄的 174 rename + 108 delete 更大。這不阻擋技術規劃，但建議在完成第 1 節「立即優先」四項、確認可跑之後，找一個自然斷點 commit，避免半成品堆得更高難以拆分。
 - `_Archive/` 內 13 個被保留腳本間接依賴的舊檔仍在編譯範圍，Phase 4c/6 重寫完該區塊後可以再收斂。
 - 卡牌資料新舊並存：`explore_forward_*` 已刪、`explore_{A,B,C}_*` 已補齊，若還有場景/prefab 引用舊資產名稱會在 Editor 出現 missing reference，建議收尾時全域搜尋一次 `explore_forward` 確認沒有殘留引用。
-- 屬性名稱未定案（Q7a）：程式面不受影響（SO 承載），但美術與文案端可能已經照 A/B/C 在準備素材（新增的「機率牌框紅/藍」美術即是徵兆），越晚定案置換成本越高。
+- ~~屬性名稱未定案（Q7a）~~：已於 2026-08-15 定案並完成改名（enum、18 張卡 + 18 個 `_vis`、牌框、相剋表、寶箱屬性）。**新的技術債**：綠屬性期望值高於紅藍，需用資料補平（見 [Phase4c4_Attributes.md](Phase4c4_Attributes.md)）。
