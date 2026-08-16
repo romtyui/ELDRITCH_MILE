@@ -64,18 +64,47 @@ namespace EldritchMile.UI
         public float boundsPadding = 12f;
 
         [Header("行為")]
-        [Tooltip("顯示幾秒後自動收起。**0 = 常駐不收** —— 商店店主用 0")]
-        [Min(0f)] public float autoHideSeconds = 0f;
+        [Tooltip("講完幾秒後自動消失。**0 = 常駐不收**")]
+        [Min(0f)] public float autoHideSeconds = 4f;
 
-        [Tooltip("淡入淡出秒數")]
-        [Min(0f)] public float fadeSeconds = 0.15f;
+        [Header("動效")]
+        [Tooltip("冒出來的時間")]
+        [Min(0.01f)] public float popInSeconds = 0.22f;
+
+        [Tooltip("縮回去的時間。比冒出來短 —— 消失拖太久會擋住下一句")]
+        [Min(0.01f)] public float popOutSeconds = 0.12f;
+
+        [Tooltip("冒出來時衝過頭多少（0 = 沒有彈性，0.12 ≈ 衝過 12% 再回來）。\n" +
+                 "這是「氣泡感」的來源 —— 純線性放大看起來像面板展開，不像氣泡")]
+        [Range(0f, 0.4f)] public float popOvershoot = 0.12f;
+
+        [Tooltip("起始縮放。太小會像從一個點長出來，0.8 左右最自然")]
+        [Range(0.1f, 1f)] public float popFromScale = 0.8f;
+
+        /// <summary>
+        /// 氣泡的四個狀態。
+        ///
+        /// 【為什麼要有 Out 這個狀態】組員要的是「換句話時**先消失再冒出來**」，
+        /// 不是直接把文字換掉。直接換字的話玩家常常沒發現內容變了 ——
+        /// 一顆一直掛在那裡的氣泡，字換了跟沒換看起來一樣。
+        /// 縮回去再彈出來，眼睛才會被拉回去。
+        /// </summary>
+        private enum Phase { Hidden, In, Hold, Out }
 
         private CanvasGroup group;
         private Canvas ownCanvas;
-        private float hideAt;
-        private float targetAlpha;
 
-        public bool IsShowing { get; private set; }
+        private Phase phase = Phase.Hidden;
+        private float phaseT;        // In / Out 的進度 0→1
+        private float holdUntil;
+
+        // 「縮回去之後要接著講的下一句」。Out 播完才會套用
+        private bool hasPending;
+        private string pendingMessage;
+        private string pendingSpeaker;
+        private Transform pendingAnchor;
+
+        public bool IsShowing => phase != Phase.Hidden;
 
         private void Awake()
         {
@@ -96,8 +125,8 @@ namespace EldritchMile.UI
                 group.blocksRaycasts = false;
             }
 
-            targetAlpha = 0f;
-            IsShowing = false;
+            phase = Phase.Hidden;
+            if (bubbleRoot != null) bubbleRoot.localScale = Vector3.one * popFromScale;
         }
 
         private void OnDestroy()
@@ -119,46 +148,151 @@ namespace EldritchMile.UI
         {
             if (string.IsNullOrEmpty(message)) { Hide(); return; }
 
-            if (followTarget != null) anchor = followTarget;
+            pendingMessage = message;
+            pendingSpeaker = speaker;
+            pendingAnchor = followTarget;
+            hasPending = true;
 
-            if (text != null) text.text = message;
-
-            if (speakerText != null && speaker != null)
+            // 已經有一顆在畫面上 → 先縮回去，Out 播完才換內容再彈出來。
+            // 已經在縮了就不要打斷它，讓它把這一段播完自然接上新的內容。
+            if (phase == Phase.In || phase == Phase.Hold)
             {
-                speakerText.text = speaker;
-                speakerText.gameObject.SetActive(!string.IsNullOrEmpty(speaker));
+                BeginOut();
+                return;
             }
 
-            targetAlpha = 1f;
-            IsShowing = true;
+            if (phase == Phase.Out) return;   // 正在縮，pending 已經更新，等它播完
 
-            hideAt = autoHideSeconds > 0f ? Time.unscaledTime + autoHideSeconds : 0f;
+            ApplyPending();
+            BeginIn();
+        }
 
-            // 立刻定位一次，不要等 LateUpdate —— 否則淡入的第一幀在上一個角色頭上
+        /// <summary>收起氣泡。會播縮回去的動作，不是瞬間消失。</summary>
+        public void Hide()
+        {
+            hasPending = false;
+
+            if (phase == Phase.Hidden || phase == Phase.Out) return;
+
+            BeginOut();
+        }
+
+        /// <summary>不播動作、直接消失。轉場（Stage 離開）時用，免得殘影留到下一個畫面。</summary>
+        public void HideImmediate()
+        {
+            hasPending = false;
+            phase = Phase.Hidden;
+
+            if (group != null) group.alpha = 0f;
+            if (bubbleRoot != null) bubbleRoot.localScale = Vector3.one * popFromScale;
+        }
+
+        // ==========================================
+        private void ApplyPending()
+        {
+            if (pendingAnchor != null) anchor = pendingAnchor;
+
+            if (text != null) text.text = pendingMessage;
+
+            if (speakerText != null && pendingSpeaker != null)
+            {
+                speakerText.text = pendingSpeaker;
+                speakerText.gameObject.SetActive(!string.IsNullOrEmpty(pendingSpeaker));
+            }
+
+            hasPending = false;
+
+            // 立刻定位一次，不要等 LateUpdate ——
+            // 否則彈出來的第一幀會出現在上一個角色頭上
             UpdatePosition();
         }
 
-        public void Hide()
+        private void BeginIn()
         {
-            targetAlpha = 0f;
-            IsShowing = false;
-            hideAt = 0f;
+            phase = Phase.In;
+            phaseT = 0f;
+        }
+
+        private void BeginOut()
+        {
+            phase = Phase.Out;
+            phaseT = 0f;
         }
 
         // ==========================================
         private void LateUpdate()
         {
-            if (hideAt > 0f && Time.unscaledTime >= hideAt) Hide();
+            float dt = Time.unscaledDeltaTime;
 
-            if (group != null && !Mathf.Approximately(group.alpha, targetAlpha))
+            switch (phase)
             {
-                group.alpha = fadeSeconds <= 0f
-                    ? targetAlpha
-                    : Mathf.MoveTowards(group.alpha, targetAlpha, Time.unscaledDeltaTime / fadeSeconds);
+                case Phase.In:
+                    phaseT += dt / popInSeconds;
+
+                    // 透明度收得比縮放快 —— 讓它「已經在那裡了，只是還在彈」，
+                    // 而不是半透明地慢慢浮現
+                    SetVisual(Mathf.Clamp01(phaseT * 2f), PopScale(Mathf.Clamp01(phaseT)));
+
+                    if (phaseT >= 1f)
+                    {
+                        phase = Phase.Hold;
+                        holdUntil = autoHideSeconds > 0f ? Time.unscaledTime + autoHideSeconds : 0f;
+                    }
+                    break;
+
+                case Phase.Hold:
+                    SetVisual(1f, 1f);
+                    if (holdUntil > 0f && Time.unscaledTime >= holdUntil) Hide();
+                    break;
+
+                case Phase.Out:
+                    phaseT += dt / popOutSeconds;
+                {
+                    float t = Mathf.Clamp01(phaseT);
+                    SetVisual(1f - t, Mathf.Lerp(1f, popFromScale, t));
+                }
+
+                    if (phaseT >= 1f)
+                    {
+                        if (hasPending)
+                        {
+                            // 縮完了、而且有下一句在等 → 換內容再彈一次
+                            ApplyPending();
+                            BeginIn();
+                        }
+                        else
+                        {
+                            HideImmediate();
+                        }
+                    }
+                    break;
             }
 
-            // 淡出中也要繼續跟著，否則氣泡會邊消失邊留在原地
-            if (IsShowing || (group != null && group.alpha > 0f)) UpdatePosition();
+            // 縮回去的過程也要繼續跟著錨點，否則氣泡會邊消失邊留在原地
+            if (phase != Phase.Hidden) UpdatePosition();
+        }
+
+        private void SetVisual(float alpha, float scale)
+        {
+            if (group != null) group.alpha = Mathf.Clamp01(alpha);
+            if (bubbleRoot != null) bubbleRoot.localScale = Vector3.one * scale;
+        }
+
+        /// <summary>
+        /// 冒出來的縮放曲線：從 <see cref="popFromScale"/> 衝過 1、再回到 1。
+        ///
+        /// 這是 ease-out-back。**衝過頭那一下就是「氣泡感」** ——
+        /// 線性放大看起來像面板展開，不像有東西彈出來。
+        /// </summary>
+        private float PopScale(float t)
+        {
+            float c1 = popOvershoot * 10f * 0.17f;   // 0.12 → ≈0.2 的回彈量
+            float c3 = c1 + 1f;
+
+            float u = t - 1f;
+            float eased = 1f + c3 * u * u * u + c1 * u * u;
+
+            return Mathf.LerpUnclamped(popFromScale, 1f, eased);
         }
 
         private void UpdatePosition()

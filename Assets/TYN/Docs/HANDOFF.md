@@ -160,6 +160,8 @@ C# 名稱解析在同一層「宣告永遠贏過 using 匯入」，而檔案最�
 | **prefab ↔ 場景的引用是單向禁止的** | prefab 不能在 Inspector 引用場景物件，**場景物件也不能引用 prefab 內部的東西**。跨界一律用單例（專案慣例：`PopupService.Instance` 這種） |
 | **拖曳結束時 Unity 也會送 `OnPointerClick`** | 沒濾掉 `eventData.dragging` 的話，放開卡牌會順便把它選起來 |
 | **URP 沒有 `Clear Flags`** | 對應欄位是 Camera 的 **Environment → Background Type** |
+| **改欄位的預設值不會動到已存在的 prefab** | `public float x = 4f;` 只影響**之後**才建立的實例。已經存進 prefab 的還是舊值（而且舊值可能是零填充的 0）。改預設值時要順手把既有的 prefab 也設一遍 |
+| **`LoadPrefabContents` → `SaveAsPrefabAsset` 會弄丟「指向自己」的引用** | `SpeechBubbleUI.bubbleRoot` 指著自己那顆 GameObject 的 RectTransform，第一次建立時是好的，經過一次載入／存回的來回之後變成 null，**沒有任何警告**。改 prefab 之後要把自我引用的欄位驗一遍（用 `SerializedObject` 讀，不要直接讀屬性 —— 直接讀會丟 `UnassignedReferenceException`） |
 | **`OnValidate` 不會因為「程式改了清單」而觸發** | 只有 Inspector 編輯、Undo、匯入才會。用編輯器腳本 `items.Add(...)` 之後，靠 `OnValidate` 清掉的**查表快取還停在舊內容**，剛加進去的東西查不到而且**不報錯**。`ItemDatabase` / `CharacterDatabase` 現在會比對筆數自動重建，並提供 `Invalidate()`；**數量沒變的元素調換仍要自己呼叫** |
 
 ---

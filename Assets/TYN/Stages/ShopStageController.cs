@@ -130,7 +130,9 @@ public class ShopStageController : StageController
         if (shelf != null) shelf.OnSlotClicked -= HandleSlotClicked;
         if (exitButton != null) exitButton.onClick.RemoveListener(BeginLeave);
 
-        SpeechBubbleUI.Instance?.Hide();
+        // 轉場要用 Immediate —— Hide() 會播縮回去的動作，但 Stage 這一刻就要卸載了，
+        // 動作播不完，殘影會被帶到下一個畫面
+        SpeechBubbleUI.Instance?.HideImmediate();
 
         yield break;
     }

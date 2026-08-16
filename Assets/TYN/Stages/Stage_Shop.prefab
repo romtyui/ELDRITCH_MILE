@@ -114,7 +114,7 @@ MonoBehaviour:
   unaffordableAlpha: 0.45
   unaffordableColor: {r: 0.85, g: 0.35, b: 0.35, a: 1}
   affordableColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverLift: 6
+  hoverTint: {r: 0.78, g: 0.78, b: 0.78, a: 1}
 --- !u!1 &455190915118869406
 GameObject:
   m_ObjectHideFlags: 0
@@ -503,7 +503,7 @@ MonoBehaviour:
   unaffordableAlpha: 0.45
   unaffordableColor: {r: 0.85, g: 0.35, b: 0.35, a: 1}
   affordableColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverLift: 6
+  hoverTint: {r: 0.78, g: 0.78, b: 0.78, a: 1}
 --- !u!1 &1051989873841840965
 GameObject:
   m_ObjectHideFlags: 0
@@ -618,7 +618,7 @@ MonoBehaviour:
   unaffordableAlpha: 0.45
   unaffordableColor: {r: 0.85, g: 0.35, b: 0.35, a: 1}
   affordableColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverLift: 6
+  hoverTint: {r: 0.78, g: 0.78, b: 0.78, a: 1}
 --- !u!1 &1292830541734521066
 GameObject:
   m_ObjectHideFlags: 0
@@ -2117,7 +2117,7 @@ MonoBehaviour:
   unaffordableAlpha: 0.45
   unaffordableColor: {r: 0.85, g: 0.35, b: 0.35, a: 1}
   affordableColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverLift: 6
+  hoverTint: {r: 0.78, g: 0.78, b: 0.78, a: 1}
 --- !u!1 &2567320483167792446
 GameObject:
   m_ObjectHideFlags: 0
@@ -3695,7 +3695,7 @@ MonoBehaviour:
   unaffordableAlpha: 0.45
   unaffordableColor: {r: 0.85, g: 0.35, b: 0.35, a: 1}
   affordableColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverLift: 6
+  hoverTint: {r: 0.78, g: 0.78, b: 0.78, a: 1}
 --- !u!1 &4925202861933179533
 GameObject:
   m_ObjectHideFlags: 0
@@ -4647,7 +4647,7 @@ MonoBehaviour:
   unaffordableAlpha: 0.45
   unaffordableColor: {r: 0.85, g: 0.35, b: 0.35, a: 1}
   affordableColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverLift: 6
+  hoverTint: {r: 0.78, g: 0.78, b: 0.78, a: 1}
 --- !u!1 &6738543842783618247
 GameObject:
   m_ObjectHideFlags: 0
@@ -4948,7 +4948,7 @@ MonoBehaviour:
   unaffordableAlpha: 0.45
   unaffordableColor: {r: 0.85, g: 0.35, b: 0.35, a: 1}
   affordableColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverLift: 6
+  hoverTint: {r: 0.78, g: 0.78, b: 0.78, a: 1}
 --- !u!1 &7018248814324317312
 GameObject:
   m_ObjectHideFlags: 0
@@ -5200,7 +5200,7 @@ MonoBehaviour:
   unaffordableAlpha: 0.45
   unaffordableColor: {r: 0.85, g: 0.35, b: 0.35, a: 1}
   affordableColor: {r: 1, g: 1, b: 1, a: 1}
-  hoverLift: 6
+  hoverTint: {r: 0.78, g: 0.78, b: 0.78, a: 1}
 --- !u!1 &7313191148857599513
 GameObject:
   m_ObjectHideFlags: 0
@@ -5431,7 +5431,7 @@ MonoBehaviour:
   bubbleAnchor: {fileID: 6066247003049076686}
   greetOnEnter: 0
   chatterOnClick: 1
-  idleChatterSeconds: 14
+  idleChatterSeconds: 0
   activeConditions:
   - campbell_absent
   hoverHighlight: {fileID: 0}
@@ -7499,15 +7499,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cceed1a8135eb22498085ddbd107a77d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.SpeechBubbleUI
-  bubbleRoot: {fileID: 0}
+  bubbleRoot: {fileID: 2023831989933456751}
   text: {fileID: 5972517459047116673}
   speakerText: {fileID: 3271273641452519255}
   anchor: {fileID: 6066247003049076686}
   offset: {x: 220, y: 0}
   bounds: {fileID: 6484574882723390028}
   boundsPadding: 12
-  autoHideSeconds: 0
-  fadeSeconds: 0.15
+  autoHideSeconds: 4
+  popInSeconds: 0.22
+  popOutSeconds: 0.12
+  popOvershoot: 0.12
+  popFromScale: 0.8
 --- !u!225 &908832627473347532
 CanvasGroup:
   m_ObjectHideFlags: 0
