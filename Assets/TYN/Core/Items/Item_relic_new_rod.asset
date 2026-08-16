@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_relic_new_rod
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: relic_new_rod
+  displayName: "\u5D84\u65B0\u91E3\u7AFF"
+  icon: {fileID: 0}
+  description: "\u7121\u8AD6\u600E\u9EBC\u958B\u90FD\u96E2\u4E0D\u958B\u9019\u7247\u5947\u602A\u7684\u9727\u6C23\uFF0C\u5E36\u4F86\u7684\u7CE7\u98DF\u4E5F\u8017\u76E1\u4E86\uFF0C\u53EA\u80FD\u81EA\u5DF1\u60F3\u8FA6\u6CD5\u4E86\u55CE...\uFF1F\n\n\u3010\u6548\u679C\u3011\u56DE\u5408\u958B\u59CB\u6642\uFF0C\u62BD\u53D6\u4E00\u5F35\u3010\u6DF1\u6DF5\u3011\u5361\u724C\u3002"
+  price: 90
+  tags:
+  - Curio
+  - Rare

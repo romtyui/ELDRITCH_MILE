@@ -34,6 +34,19 @@ namespace EldritchMile.Core
         /// 探索牌組。C18 的打牌環節從這裡抽手牌。
         public List<CardDataExplore> exploreDeck = new List<CardDataExplore>();
 
+        [Header("貨幣")]
+        /// <summary>
+        /// 商店用的錢。
+        ///
+        /// ⚠️ **「錢」這個設定還沒定案** —— 名稱、來源、初始值都是佔位。
+        /// 現在只保證一件事：商店有東西可以扣。等企劃決定了要改的是
+        /// 顯示字串與初始值，不是這個欄位的形狀。
+        ///
+        /// 放在 RunContext 而不是 MetaProgressData，因為它是**單場**資源；
+        /// 要跨輪迴保留的錢是另一種東西（遺產），到時候另開欄位。
+        /// </summary>
+        public int money = 0;
+
         [Header("轉場暫存")]
         /// 進入節點前寫入，供 Stage 在 OnStageEnter 讀取。
         public RunNodeData pendingNode;
@@ -113,6 +126,31 @@ namespace EldritchMile.Core
             }
 
             Debug.Log($"[Run] 消耗道具：{id} ×{count}（剩 {CountOf(id)}）");
+            return true;
+        }
+
+        // ==========================================
+        // 貨幣
+        // ==========================================
+        public void AddMoney(int amount)
+        {
+            if (amount <= 0) return;
+
+            money += amount;
+            Debug.Log($"[Run] 獲得 {amount}（共 {money}）");
+        }
+
+        /// <summary>
+        /// 付錢。**付不起就完全不動**，跟 <see cref="ConsumeItem"/> 同一個規矩 ——
+        /// 先確認付得起才扣，否則會出現「錢少了但東西沒拿到」而且重試也修不回來。
+        /// </summary>
+        public bool SpendMoney(int amount)
+        {
+            if (amount <= 0) return true;
+            if (money < amount) return false;
+
+            money -= amount;
+            Debug.Log($"[Run] 花掉 {amount}（剩 {money}）");
             return true;
         }
 

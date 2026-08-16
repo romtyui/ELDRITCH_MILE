@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace EldritchMile.Core
@@ -35,7 +36,32 @@ namespace EldritchMile.Core
         [Tooltip("道具說明。同樣是給日後的背包／商店用")]
         public string description = "";
 
+        [Header("商店")]
+        [Tooltip("基礎售價。實際售價由商店決定（可能有折扣／加價），這裡是定價")]
+        [Min(0)] public int price = 0;
+
+        [Header("分類")]
+        [Tooltip(
+            "標籤。**這是「這個東西是什麼」，不是「它會在哪裡出現」** ——\n" +
+            "出現在哪裡由 LootTable 決定（見 LootTable 的說明）。\n\n" +
+            "建議的寫法：類別 + 題材，例如一條魚是 [Consumable, SeaFood]。\n" +
+            "不建議把 Tier 寫進來 —— 同一件東西在第一層是大獎、在第四層是雜物，\n" +
+            "階級屬於「哪張表抽的」而不屬於物品本身。")]
+        public List<string> tags = new List<string>();
+
         /// <summary>顯示名沒填就退回 id —— 至少畫面上不會是一片空白。</summary>
         public string Label => string.IsNullOrEmpty(displayName) ? id : displayName;
+
+        /// <summary>標籤比對。大小寫不敏感 —— 手打標籤很容易大小寫不一致。</summary>
+        public bool HasTag(string tag)
+        {
+            if (string.IsNullOrEmpty(tag) || tags == null) return false;
+
+            for (int i = 0; i < tags.Count; i++)
+            {
+                if (string.Equals(tags[i], tag, System.StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            return false;
+        }
     }
 }

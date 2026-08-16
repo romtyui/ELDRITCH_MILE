@@ -126,7 +126,7 @@ C# 名稱解析在同一層「宣告永遠贏過 using 匯入」，而檔案最�
 
 「看不見」和「點不到」同時發生時先查這個。要保有可點區域但不顯示，用 **alpha 0** 而不是停用元件。
 
-### 4.6 UI 疊放與事件傳遞（2026-08-16 一天內踩了十個）
+### 4.6 UI 疊放與事件傳遞（2026-08-16 一天內踩了十二個）
 
 做對話選項與手牌動效那天連續撞到的，成因各不相同但都**不會報錯**：
 
@@ -142,8 +142,10 @@ C# 名稱解析在同一層「宣告永遠贏過 using 匯入」，而檔案最�
 | **覆蓋層是「滑出畫面」不是停用** | 靠 `OnDisable` 做的收尾一律失效 | `MapOverlayController` 改 `anchoredPosition`，子物件從頭到尾都是啟用的。用 `OnClosing()` hook |
 | **遲到的 `OnPointerExit` 會復活剛關掉的東西** | 地圖收起後 tooltip 又冒出來 | 滑走時節點離開游標 → exit → `Hide()` → 「閒置時保留框」又把它開起來。需要**總開關**讓關閉後的顯示要求一律失效 |
 | **用「自己的旗標」判斷「整區的狀態」** | 拖曳中經過別張卡，目標上的機率就消失 | 拖曳中的卡 `blocksRaycasts = false`，游標穿透到底下的卡，那些卡的 `IsDragging` 都是 false，於是它們去改了預覽。守衛要問「**整個手牌區**有沒有人在拖」 |
+| **`alpha = 0` 收得到點擊，`enabled = false` 收不到** | 隱形觸發區點了完全沒反應 | 一字之差。透明的 `Image` 只要 `raycastTarget = true` 就是正常的觸發區；停用的 `Graphic` 收不到任何 raycast **而且不報錯**。所以 `CharacterHitbox.Awake()` 自己設好這兩個值，不靠人記得 |
+| **Overlay 的 Canvas 換算要傳 `null` 相機** | 氣泡位置整個偏掉 | `RectTransformUtility` 那組 API，Screen Space Overlay 時要傳 `null` 而不是 `Camera.main`。傳錯不會有任何錯誤訊息，只是位置錯 |
 
-> **共同教訓**：這十個沒有一個會噴錯誤訊息。查 UI 問題時先問三件事 ——
+> **共同教訓**：這十二個沒有一個會噴錯誤訊息。查 UI 問題時先問三件事 ——
 > 「事件到得了嗎」「順序是誰決定的」「這個收尾真的會被呼叫嗎」。
 >
 > 最後一個還多一條：**`blocksRaycasts = false` 會把事件送到不該處理它的物件上**，
@@ -158,6 +160,7 @@ C# 名稱解析在同一層「宣告永遠贏過 using 匯入」，而檔案最�
 | **prefab ↔ 場景的引用是單向禁止的** | prefab 不能在 Inspector 引用場景物件，**場景物件也不能引用 prefab 內部的東西**。跨界一律用單例（專案慣例：`PopupService.Instance` 這種） |
 | **拖曳結束時 Unity 也會送 `OnPointerClick`** | 沒濾掉 `eventData.dragging` 的話，放開卡牌會順便把它選起來 |
 | **URP 沒有 `Clear Flags`** | 對應欄位是 Camera 的 **Environment → Background Type** |
+| **`OnValidate` 不會因為「程式改了清單」而觸發** | 只有 Inspector 編輯、Undo、匯入才會。用編輯器腳本 `items.Add(...)` 之後，靠 `OnValidate` 清掉的**查表快取還停在舊內容**，剛加進去的東西查不到而且**不報錯**。`ItemDatabase` / `CharacterDatabase` 現在會比對筆數自動重建，並提供 `Invalidate()`；**數量沒變的元素調換仍要自己呼叫** |
 
 ---
 
@@ -165,9 +168,15 @@ C# 名稱解析在同一層「宣告永遠贏過 using 匯入」，而檔案最�
 
 已設定好，可直接讀 Hierarchy、Inspector 欄位、Console，比 parse `.unity` 的 YAML 快得多。
 
-**兩個已知問題**：
+**三個已知問題**：
 
 - 專案路徑含中文「文件」，必須設 `PYTHONUTF8=1`，否則永遠偵測到 0 個 instance
+- **專案在 OneDrive 底下，每個檔案都是雲端佔位（ReparsePoint）**。Unity 會把它誤判成
+  symbolic link，然後在 Console 洗一整排警告，最後說
+  「Disabling directory monitoring for current editor session」——
+  **從此這個 session 不會自動偵測外部檔案變動**，只能靠明確的 `refresh_unity`。
+  這不是誰弄壞的，是 OneDrive 隨選檔案的預設行為，新增檔案時就會冒出來。
+  想根治：在檔案總管對專案資料夾按右鍵 →「**一律保留在此裝置上**」
 - **`manage_asset` 的 `move` 會回報 `failed` 但其實成功了** —— 不要看回傳值，自己驗證檔案位置
 
 `git mv` 對**未 commit 的新檔**會失敗（`bad source`），那種情況用一般 `mv`。

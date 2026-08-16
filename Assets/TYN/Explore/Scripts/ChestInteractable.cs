@@ -63,8 +63,14 @@ namespace EldritchMile.Explore
         [Header("內容物")]
         public List<string> lootItems = new List<string>();
 
-        [Tooltip("開啟後加入背包的道具 id（例如鑰匙）")]
+        [Tooltip("開啟後加入背包的道具 id（例如鑰匙）。**這是「一定會給」的部分**")]
         public List<string> grantedItemIds = new List<string>();
+
+        [Tooltip("隨機戰利品表。與商店共用同一套抽取邏輯。\n\n" +
+                 "**難度與區域的差別做在這裡，不是做在寶箱上** ——\n" +
+                 "漁村的普通寶箱指 Loot_Village_Chest_T1、精英的指 T2，\n" +
+                 "寶箱這支程式一個字都不用改。留空則只給上面那排固定道具")]
+        public LootTable lootTable;
 
         [Header("屬性判定 (C17/C18，僅 RequiresCheck 時使用)")]
         public ExploreAttribute attribute = ExploreAttribute.None;
@@ -372,14 +378,44 @@ namespace EldritchMile.Explore
             }
         }
 
+        /// <summary>
+        /// 抽戰利品表，直接入袋，回傳給玩家看的清單（「撬棍 ×2」這種）。
+        ///
+        /// 【種子】綁 run 的種子加上這個寶箱的物件 id —— 同一場 run 裡兩個寶箱不會開出一模一樣的東西。
+        /// 不做跨存檔的重現，因為寶箱開過就結案（`MarkDone`），不會有第二次。
+        /// </summary>
+        private List<string> RollLoot(RunContext run)
+        {
+            var lines = new List<string>();
+            if (lootTable == null) return lines;
+
+            var rng = new System.Random(run.runSeed ^ GetInstanceID());
+
+            foreach (ItemStack stack in LootService.Roll(lootTable, rng))
+            {
+                if (stack == null || string.IsNullOrEmpty(stack.id)) continue;
+
+                run.AddItem(stack.id, stack.count);
+
+                string name = GameFlowManager.ItemName(stack.id);
+                lines.Add(stack.count > 1 ? $"{name} ×{stack.count}" : name);
+            }
+
+            return lines;
+        }
+
         private void Open()
         {
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
 
             // 道具立刻入袋（狀態不能延後，否則中途離開會遺失）
+            var reported = new List<string>(lootItems);
+
             if (run != null)
             {
                 foreach (string id in grantedItemIds) run.AddItem(id);
+
+                foreach (string line in RollLoot(run)) reported.Add(line);
             }
 
             // 但「獲得了什麼」的**播報**要等打牌環節結束。
@@ -390,11 +426,11 @@ namespace EldritchMile.Explore
 
             if (duringEncounter && stage != null)
             {
-                stage.DeferLootReport(displayName, lootItems);
+                stage.DeferLootReport(displayName, reported);
             }
             else
             {
-                PopupService.Instance?.ShowLoot(displayName, lootItems);
+                PopupService.Instance?.ShowLoot(displayName, reported);
             }
 
             MarkDone();

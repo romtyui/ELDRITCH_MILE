@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 561859799a7153440bfd8ba4f08c9da2, type: 3}
+  m_Name: Loot_MerchantShop
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.LootTable
+  pools:
+  - note: "\u5361\u7247 x3"
+    chance: 1
+    rollsMin: 3
+    rollsMax: 3
+    distinct: 1
+    entries:
+    - kind: 2
+      itemId: 
+      requireTags: []
+      excludeTags: []
+      table: {fileID: 11400000, guid: dddbf38c09fe28c4190fa2474558c70e, type: 2}
+      weight: 1
+      countMin: 1
+      countMax: 1
+  - note: "\u98DF\u7269 x2"
+    chance: 1
+    rollsMin: 2
+    rollsMax: 2
+    distinct: 1
+    entries:
+    - kind: 2
+      itemId: 
+      requireTags: []
+      excludeTags: []
+      table: {fileID: 11400000, guid: e238c6ccd542fbc4387f983efc4e20d6, type: 2}
+      weight: 1
+      countMin: 1
+      countMax: 1
+  - note: "\u907A\u7269 x3"
+    chance: 1
+    rollsMin: 3
+    rollsMax: 3
+    distinct: 1
+    entries:
+    - kind: 2
+      itemId: 
+      requireTags: []
+      excludeTags: []
+      table: {fileID: 11400000, guid: f64c5454b867d6146b8816ebf59bb163, type: 2}
+      weight: 1
+      countMin: 1
+      countMax: 1

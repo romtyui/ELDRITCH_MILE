@@ -38,9 +38,18 @@ namespace EldritchMile.Core
                  "留空不會壞，只是玩家會看到 id（例如「lockpick」）而不是「撬棍」")]
         public ItemDatabase itemDatabase;
 
+        [Header("角色")]
+        [Tooltip("角色資料庫（id → 名字／立繪／寒暄）。\n" +
+                 "留空不會壞，只是氣泡與對話框會顯示 id 而不是「時藏」")]
+        public CharacterDatabase characterDatabase;
+
         [Header("啟動")]
         [Tooltip("遊戲啟動後要進入的第一個 Stage")]
         public StageType bootStage = StageType.Menu;
+
+        [Tooltip("開局身上的錢。**佔位值** —— 經濟還沒設計，這只是為了讓商店能測。\n" +
+                 "定案後這個值多半會改由遺產或難度決定，不會留在這裡")]
+        [Min(0)] public int startingMoney = 0;
 
         [Header("狀態 (唯讀)")]
         [SerializeField] private StageType currentStage = StageType.None;
@@ -70,6 +79,20 @@ namespace EldritchMile.Core
 
             ItemDatabase db = Instance != null ? Instance.itemDatabase : null;
             return db != null ? db.DisplayNameOf(id) : id;
+        }
+
+        /// <summary>道具 id → 資料本體。查不到回 null。商店要圖示與價格時用這支。</summary>
+        public static ItemData Item(string id)
+        {
+            ItemDatabase db = Instance != null ? Instance.itemDatabase : null;
+            return db != null ? db.GetById(id) : null;
+        }
+
+        /// <summary>角色 id → 資料本體。查不到回 null。</summary>
+        public static CharacterData Character(string id)
+        {
+            CharacterDatabase db = Instance != null ? Instance.characterDatabase : null;
+            return db != null ? db.GetById(id) : null;
         }
 
         public event Action<StageType, StageType> OnStageChanged;
@@ -154,6 +177,7 @@ namespace EldritchMile.Core
             IsTransitioning = true;
 
             Run = RunContext.CreateNew(Meta);
+            Run.AddMoney(startingMoney);
 
             // 地圖在此一次生成，之後整場 run 都用同一份 —— 地圖 UI 反覆下拉收起不會重生成
             Run.mapData = MapGenerator.Generate(mapSettings, Run.runSeed);

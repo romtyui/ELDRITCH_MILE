@@ -21,20 +21,40 @@ namespace EldritchMile.Core
 
         private Dictionary<string, ItemData> lookup;
 
+        /// <summary>
+        /// 建快取時清單有幾筆。用來偵測「有人在程式裡改了清單」。
+        ///
+        /// 【為什麼需要】`OnValidate` 只有在 Inspector 編輯、Undo、匯入時才會觸發。
+        /// 用程式 `items.Add(...)` 是**不會**觸發的 —— 快取還停在舊的內容，
+        /// 剛加進去的道具查不到，而且完全沒有錯誤訊息。
+        /// </summary>
+        private int cachedCount = -1;
+
         private void OnEnable()
         {
             // SO 在編輯器裡會隨 domain reload 重新載入，快取要跟著失效
-            lookup = null;
+            Invalidate();
         }
 
         private void OnValidate()
         {
+            Invalidate();
+        }
+
+        /// <summary>
+        /// 讓快取失效。**在程式裡調換既有元素（數量沒變）之後一定要自己呼叫** ——
+        /// 只有數量變化偵測得到。
+        /// </summary>
+        public void Invalidate()
+        {
             lookup = null;
+            cachedCount = -1;
         }
 
         private void Rebuild()
         {
             lookup = new Dictionary<string, ItemData>();
+            cachedCount = items.Count;
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -66,7 +86,7 @@ namespace EldritchMile.Core
         public ItemData GetById(string id)
         {
             if (string.IsNullOrEmpty(id)) return null;
-            if (lookup == null) Rebuild();
+            if (lookup == null || cachedCount != items.Count) Rebuild();
 
             return lookup.TryGetValue(id, out ItemData item) ? item : null;
         }

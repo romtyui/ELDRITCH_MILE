@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 561859799a7153440bfd8ba4f08c9da2, type: 3}
+  m_Name: Loot_Sub_Relics
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.LootTable
+  pools:
+  - note: "\u6536\u85CF\u54C1\uFF1A\u666E\u901A 50 / \u7F55\u898B 33 / \u7A00\u6709
+      17"
+    chance: 1
+    rollsMin: 1
+    rollsMax: 1
+    distinct: 1
+    entries:
+    - kind: 1
+      itemId: 
+      requireTags:
+      - Curio
+      - Common
+      excludeTags: []
+      table: {fileID: 0}
+      weight: 50
+      countMin: 1
+      countMax: 1
+    - kind: 1
+      itemId: 
+      requireTags:
+      - Curio
+      - Uncommon
+      excludeTags: []
+      table: {fileID: 0}
+      weight: 33
+      countMin: 1
+      countMax: 1
+    - kind: 1
+      itemId: 
+      requireTags:
+      - Curio
+      - Rare
+      excludeTags: []
+      table: {fileID: 0}
+      weight: 17
+      countMin: 1
+      countMax: 1

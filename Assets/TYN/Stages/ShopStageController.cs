@@ -1,105 +1,298 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using EldritchMile.Core;
+using EldritchMile.Shop;
+using EldritchMile.UI;
 
 /// <summary>
-/// 商店 Stage（C15 的最小可玩版）。
+/// 商店 Stage。
 ///
-/// 開場白 → 列出商品 → 玩家挑一件 → 拿到手 → 收尾 → 回地圖。
+/// ────────────────────────────────────────────────────────
+/// 【它不再是「三個選項」了】
 ///
-/// 【還沒有的】**貨幣**。`RunContext` 目前沒有任何貨幣欄位，那是還沒定案的設計 ——
-/// 所以現在是「挑一件帶走」而不是「買」。等貨幣定了，在 `HandleChosen` 裡加扣款即可，
-/// 選項 UI 與流程都不用動。
+/// 舊版商店借用對話框的三個選項槽當商品列，挑一件就走。那是 Phase 6 的最小可玩版。
+/// 現在改成貨架：八格商品、有價格、可以買到不想買為止，店主在旁邊用氣泡講話。
 ///
-/// 【C15 的「買完留在商店繼續買」也還沒有】現在挑一件就離開。
-/// 要做的話把 `BeginOutro()` 換成「重新 ShowOptions，並把買過的移除」。
+/// 連帶不再繼承 `ChoiceStageController` —— 那個基底的形狀是
+/// 「開場白 → 選項 → 收尾」，而且會強制把對話框撐開。
+/// 對話框會蓋住貨架，而商店的開場白現在是氣泡（bark），不是排隊播放的對白。
+///
+/// ────────────────────────────────────────────────────────
+/// 【賣什麼不是寫死的】商品由 <see cref="LootTable"/> 抽出來，跟寶箱共用同一套。
+/// 想讓漁村多出漁獲，改的是那張表的權重，不是這支程式。
+///
+/// 【亂數綁節點】同一個節點重進商店要看到同一批貨 ——
+/// 否則玩家離開再進來就能重骰，等於商店沒有隨機性。
 /// </summary>
-public class ShopStageController : ChoiceStageController
+public class ShopStageController : StageController
 {
     public override StageType Stage => StageType.Shop;
 
+    [Header("店主")]
+    [Tooltip("店主的隱形點擊區。進場的寒暄由這裡發出")]
+    public CharacterHitbox shopkeeper;
+
+    [Header("貨架")]
+    public ShopPanelUI shelf;
+
+    [Tooltip("這間店預設賣什麼。**沒指定的話貨架會是空的** —— 商品不寫在這支程式裡")]
+    public LootTable stockTable;
+
     [System.Serializable]
-    public class Stock
+    public class RegionalStock
     {
-        [Tooltip("商品的道具 id。要在 ItemDatabase 裡登記過，否則玩家會看到 id")]
-        public string itemId = "";
+        [Tooltip("區域 id。目前比對的是節點的 Content Id（漁村 = village）")]
+        public string regionId = "";
 
-        [Tooltip("選項上顯示的文字。留空則自動用道具的顯示名")]
-        public string label = "";
-
-        [Tooltip("選了之後說的話。留空則用預設格式")]
-        [TextArea(2, 3)] public string takenText = "";
+        [Tooltip("這個區域改用哪張表。整張替換，不是疊加")]
+        public LootTable table;
     }
 
-    [Header("商品")]
-    [Tooltip("最多三件 —— 對話框只有三個選項槽")]
-    public List<Stock> stock = new List<Stock>();
+    [Tooltip(
+        "依區域替換整張貨表。商人是**移動商店**，但他在漁村補的貨自然會是漁獲多一點。\n\n" +
+        "【為什麼是整張替換，不是「只換食物那一格」】各區域的表可以用 Table 條目\n" +
+        "指回共用的卡片池與遺物池，所以「只有食物不同」寫起來一樣短，\n" +
+        "但需要時又能整組改配比（例如礦山金幣多、遺物也多）。\n\n" +
+        "⚠️ 區域目前是從節點的 Content Id 讀的。**真正的區域系統還不存在** ——\n" +
+        "等它做好，改的是 ResolveStockTable() 那一支，資料不用動")]
+    public List<RegionalStock> regionalStock = new List<RegionalStock>();
 
-    [Tooltip("拿走商品後的預設台詞。{0} = 道具名")]
-    [TextArea(2, 3)]
-    public string defaultTakenFormat = "你拿走了「{0}」。";
+    [Tooltip("要擺幾件。0 = 填滿整個貨架")]
+    [Min(0)] public int stockCount = 0;
+
+    [Header("離開")]
+    [Tooltip("離開商店的按鈕。**留空的話玩家會被困在店裡** —— 沒有別的出口")]
+    public Button exitButton;
+
+    [Header("台詞")]
+    [Tooltip("成交時的備援台詞。{0} = 商品名。\n\n" +
+             "**角色本身有 Purchase Lines 的話會優先用角色的** ——\n" +
+             "台詞屬於角色，不屬於這個節點，同一個商人在哪開店都講一樣的話")]
+    public string boughtFormat = "「{0}」啊，好眼光。";
+
+    [Tooltip("錢不夠時說的話")]
+    public string tooPoorLine = "……你這點錢不夠。";
+
+    [Tooltip("賣光時說的話。留空則不說")]
+    public string soldOutLine = "架上就這些了。";
+
+    [Tooltip("離開時說的話。留空則直接走")]
+    public string farewellLine = "";
+
+    [Tooltip("說完道別等幾秒才回地圖")]
+    [Min(0f)] public float farewellSeconds = 0.8f;
 
     private RunContext run;
+    private bool leaving;
 
-    protected override void OnPrepare(RunContext context)
+    // ==========================================
+    public override void OnStageEnter(RunContext context)
     {
         run = context;
-    }
+        leaving = false;
 
-    protected override void ShowOptions(RunContext context)
-    {
-        if (context != null) run = context;
-        if (Options == null) { BeginOutro(); return; }
-
-        var texts = new List<string>();
-
-        for (int i = 0; i < stock.Count && i < Options.SlotCount; i++)
+        if (shelf == null)
         {
-            Stock s = stock[i];
-            if (s == null || string.IsNullOrEmpty(s.itemId)) continue;
-
-            texts.Add(!string.IsNullOrEmpty(s.label)
-                ? s.label
-                : GameFlowManager.ItemName(s.itemId));
-        }
-
-        if (texts.Count == 0)
-        {
-            Debug.LogWarning("[商店] 沒有設定任何商品，直接離開");
-            BeginOutro();
+            Debug.LogWarning("[商店] 沒有指定 ShopPanelUI，沒有貨架可以看，直接離開");
+            ReportComplete();
             return;
         }
 
-        Options.OnOptionClicked -= HandleChosen;
-        Options.OnOptionClicked += HandleChosen;
+        shelf.OnSlotClicked -= HandleSlotClicked;
+        shelf.OnSlotClicked += HandleSlotClicked;
 
-        // 商品不需要判定，所以是 PlainChoice —— 顯示機率只會誤導玩家
-        Options.Show(texts, null, DialogueOptionUI.Mode.PlainChoice);
+        if (exitButton != null)
+        {
+            exitButton.onClick.RemoveListener(BeginLeave);
+            exitButton.onClick.AddListener(BeginLeave);
+        }
+        else
+        {
+            Debug.LogWarning("[商店] 沒有指定離開按鈕 —— 玩家進得來但出不去");
+        }
+
+        StockShelf();
     }
 
-    protected override void Unsubscribe()
+    public override IEnumerator OnStageReady()
     {
-        if (Options != null) Options.OnOptionClicked -= HandleChosen;
+        // 寒暄放在這裡而不是 OnStageEnter：進場時畫面還是全黑的，
+        // 氣泡冒出來玩家看不到，等淡入完成才說才有意義
+        if (shopkeeper != null) shopkeeper.Greet();
+
+        yield break;
     }
 
-    private void HandleChosen(DialogueOptionUI option)
+    public override IEnumerator OnStageExit()
     {
-        if (option == null || option.Index < 0 || option.Index >= stock.Count) return;
+        if (shelf != null) shelf.OnSlotClicked -= HandleSlotClicked;
+        if (exitButton != null) exitButton.onClick.RemoveListener(BeginLeave);
 
-        Stock s = stock[option.Index];
-        if (s == null || string.IsNullOrEmpty(s.itemId)) return;
+        SpeechBubbleUI.Instance?.Hide();
 
-        // 這裡就是日後扣錢的位置。現在沒有貨幣，所以直接給。
-        run?.AddItem(s.itemId);
+        yield break;
+    }
 
-        string name = GameFlowManager.ItemName(s.itemId);
-        string text = !string.IsNullOrEmpty(s.takenText)
-            ? s.takenText
-            : string.Format(defaultTakenFormat, name);
+    // ==========================================
+    // 進貨
+    // ==========================================
+    private void StockShelf()
+    {
+        int want = stockCount > 0 ? stockCount : shelf.SlotCount;
 
-        PopupService.Instance?.ShowInstant(text);
-        Debug.Log($"[商店] 玩家取得：{name}");
+        LootTable table = ResolveStockTable();
 
-        BeginOutro();
+        if (table == null)
+        {
+            Debug.LogWarning("[商店] 沒有指定 Stock Table，貨架會是空的。\n" +
+                             "商品由 LootTable 決定 —— 請建一張表並指定給這間店。");
+            shelf.HideAll();
+            return;
+        }
+
+        var rng = new System.Random(ShopSeed());
+        List<ItemStack> goods = LootService.RollExactly(table, rng, want);
+
+        shelf.Bind(goods);
+
+        Debug.Log($"[商店] 進貨 {goods.Count} 件（{table.name}，種子 {ShopSeed()}）");
+    }
+
+    /// <summary>
+    /// 這一站要用哪張貨表。找不到對應區域就用預設的。
+    ///
+    /// ⚠️ 區域現在是借用節點的 `contentId` —— **資料模型裡還沒有「區域」這個欄位**。
+    /// 這是刻意留的接縫：等區域系統做好，只要改這一支去讀真正的區域欄位，
+    /// 表本身與 Inspector 上的設定都不用動。
+    /// </summary>
+    private LootTable ResolveStockTable()
+    {
+        EldritchMile.Core.RunNodeData node = run != null ? run.CurrentNode : null;
+        string region = node != null ? node.contentId : null;
+
+        if (!string.IsNullOrEmpty(region))
+        {
+            for (int i = 0; i < regionalStock.Count; i++)
+            {
+                RegionalStock r = regionalStock[i];
+                if (r == null || r.table == null) continue;
+
+                if (string.Equals(r.regionId, region, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return r.table;
+                }
+            }
+        }
+
+        return stockTable;
+    }
+
+    /// <summary>
+    /// 這間店的亂數種子。**綁在節點上** —— 同一個節點重進要是同一批貨。
+    /// 用 run 的種子混節點 id，這樣不同 run 的同一個位置也不會賣一樣的東西。
+    /// </summary>
+    private int ShopSeed()
+    {
+        int seed = run != null ? run.runSeed : 0;
+
+        // 完整寫出命名空間：全域命名空間裡另有一個同名的 RunNodeData（舊碼），不寫會撞
+        EldritchMile.Core.RunNodeData node = run != null ? run.CurrentNode : null;
+        if (node != null && !string.IsNullOrEmpty(node.nodeId))
+        {
+            seed ^= node.nodeId.GetHashCode();
+        }
+
+        return seed;
+    }
+
+    // ==========================================
+    // 買
+    // ==========================================
+    private void HandleSlotClicked(ShopSlotUI slot)
+    {
+        if (slot == null || slot.IsEmpty || slot.SoldOut || leaving) return;
+
+        string name = GameFlowManager.ItemName(slot.ItemId);
+
+        if (run == null)
+        {
+            Debug.LogWarning("[商店] 沒有 RunContext，買不了東西");
+            return;
+        }
+
+        // ⚠️ 先確認付得起再扣。SpendMoney 本身也是全有或全無，
+        //    這裡再判一次是為了「付不起」時要說話而不是靜靜地什麼都沒發生
+        if (!run.SpendMoney(slot.Price))
+        {
+            Say(tooPoorLine);
+            return;
+        }
+
+        run.AddItem(slot.ItemId, slot.Count);
+
+        slot.MarkSoldOut();
+        shelf.RefreshAffordability();
+
+        Say(PurchaseLine(name));
+        Debug.Log($"[商店] 買下 {name} ×{slot.Count}，花費 {slot.Price}");
+
+        if (!shelf.HasStock() && !string.IsNullOrEmpty(soldOutLine)) Say(soldOutLine);
+    }
+
+    /// <summary>
+    /// 成交要說什麼。角色自己有台詞就用他的，沒有才退回本節點的格式字串。
+    ///
+    /// 【亂數不能綁 run 種子】商店的「賣什麼」要能重現，但「成交講哪一句」不行 ——
+    /// 綁了種子的話同一間店買三次會聽到同一句話。
+    /// </summary>
+    private string PurchaseLine(string itemName)
+    {
+        CharacterData c = shopkeeper != null ? shopkeeper.Character : null;
+
+        if (c != null)
+        {
+            string line = c.PickPurchaseLine(purchaseRng);
+            if (!string.IsNullOrEmpty(line)) return line;
+        }
+
+        return string.Format(boughtFormat, itemName);
+    }
+
+    private readonly System.Random purchaseRng = new System.Random();
+
+    private void Say(string line)
+    {
+        if (string.IsNullOrEmpty(line)) return;
+
+        if (shopkeeper != null) shopkeeper.Say(line);
+        else SpeechBubbleUI.Instance?.Show(line);
+    }
+
+    // ==========================================
+    // 離開
+    // ==========================================
+    private void BeginLeave()
+    {
+        if (leaving) return;
+        leaving = true;
+
+        if (exitButton != null) exitButton.interactable = false;
+
+        if (string.IsNullOrEmpty(farewellLine))
+        {
+            ReportComplete();
+            return;
+        }
+
+        Say(farewellLine);
+        StartCoroutine(LeaveAfterFarewell());
+    }
+
+    private IEnumerator LeaveAfterFarewell()
+    {
+        yield return new WaitForSecondsRealtime(farewellSeconds);
+        ReportComplete();
     }
 }
