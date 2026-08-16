@@ -115,6 +115,23 @@ _TEMP_DialogueUI
 這樣測試迴圈是：**開普通木箱拿到撬棍 → 撬鎖失敗 5 次 → 被問要不要用撬棍再來一輪**。
 `chest_Direct` 的權重是 1，會生成。
 
+### ⚠️ 新道具一定要登記進 `ItemDatabase`
+
+背包存的是**字串 id**（`RunContext.inventory` 是 `List<string>`），玩家看到的名字要靠
+`Assets/TYN/Core/ItemDatabase.asset` 翻譯。沒登記的話詢問文字會直接印出 id ——
+玩家會看到「要用掉一個 **lockpick**」而不是「一個**撬棍**」。
+
+新增道具的三步：
+
+1. `Assets/TYN/Core/Items/` 建 `ItemData`（右鍵 → Create → Eldritch → Item）
+2. 填 `Id`（程式認的，**定了不要改**）與 `Display Name`（玩家看的，隨時可改）
+3. 把它加進 `ItemDatabase.asset` 的 `Items` 清單
+
+> `GameFlowManager` 的 `Item Database` 欄位要指到那個資產（已設好）。
+> 留空不會壞，只是所有道具名都會退回顯示 id。
+
+目前已登記：`lockpick`（撬棍）、`key_warehouse`（倉庫鑰匙）。
+
 ---
 
 ## 步驟 4 — 驗收

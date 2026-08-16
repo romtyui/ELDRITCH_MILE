@@ -188,6 +188,33 @@ namespace EldritchMile.Core
         public bool ShouldBroadcastPreview => isActive && PrimaryTarget == null;
 
         // ==========================================
+        // 瞄準回饋
+        // ==========================================
+
+        /// <summary>手上有一張待命的卡（拖曳中，或兩段式出牌選取中）。由手牌區設定。</summary>
+        public bool HasArmedCard { get; set; }
+
+        /// <summary>目前被瞄準的目標。用來讓它變暗，告訴玩家「放開會打在這」。</summary>
+        public IProbabilityTarget AimedTarget { get; private set; }
+
+        /// <summary>
+        /// 設定瞄準目標。舊的會自動解除，所以呼叫端不必自己記上一個是誰。
+        ///
+        /// 【為什麼放在 Core】拖曳（手牌區驅動）與 hover（目標自己驅動）兩條路
+        /// 都要改同一份狀態。分開記的話會出現「兩個目標同時是暗的」。
+        /// </summary>
+        public void SetAimed(IProbabilityTarget target)
+        {
+            if (ReferenceEquals(AimedTarget, target)) return;
+
+            AimedTarget?.SetTargeted(false);
+            AimedTarget = target;
+            AimedTarget?.SetTargeted(true);
+        }
+
+        public void ClearAimed() => SetAimed(null);
+
+        // ==========================================
         // 嘗試次數提示（C12）
         // ==========================================
         /// <summary>

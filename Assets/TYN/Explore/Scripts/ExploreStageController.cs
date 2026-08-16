@@ -33,9 +33,18 @@ namespace EldritchMile.Explore
                  "所以標籤本身只需要單擊，不必再做二次點擊")]
         public Button exitTag;
 
-        [Tooltip("房間清空後詢問是否繼續探索的面板。\n" +
+        [Tooltip("離開前的確認面板。\n" +
                  "若上面掛了 FadePanel 就會用淡入（與 MapBanner 外觀一致），否則直接 SetActive")]
         public GameObject continueAskPanel;
+
+        [Tooltip("房間清空時自動跳出確認面板。\n\n" +
+                 "C13 原本的設計是「房間清空 → 自動問要不要繼續探索」。\n" +
+                 "**2026-08-16 預設關閉** —— 團隊希望離開一律由玩家主動點 ExitTag 觸發，\n" +
+                 "面板文字也因此改成「確定要離開嗎？」。\n\n" +
+                 "⚠️ 若改回勾選，面板文字要跟著改回「要探索其他的東西嗎？」，\n" +
+                 "而且**兩顆按鈕的 YES/NO 語意是相反的** —— 見 OnContinueExploring / OnChooseLeave")]
+        public bool askOnRoomCleared = false;
+
 
         [Header("打牌環節 (C18)")]
         [Tooltip("手牌來源。牌組內容從 RunContext.exploreDeck 同步過來")]
@@ -230,6 +239,10 @@ namespace EldritchMile.Explore
         // ==========================================
         private void HandleRoomCleared()
         {
+            // 預設不自動跳 —— 離開由玩家點 ExitTag 主動觸發（見 askOnRoomCleared 的說明）。
+            // 房間清空本身仍會由 RoomController 播 clearText，玩家知道東西都處理完了。
+            if (!askOnRoomCleared) return;
+
             // 等待邏輯統一在 ShowContinueAsk 裡，這裡直接呼叫即可
             ShowContinueAsk();
         }
@@ -275,14 +288,27 @@ namespace EldritchMile.Explore
             SetContinueAskVisible(true);
         }
 
-        /// 「要探索其他的東西嗎？」→ YES。留在房間，玩家自己找還沒點過的東西。
+        /// <summary>
+        /// **留在房間。** 玩家自己找還沒點過的東西。
+        ///
+        /// ⚠️ 這支要接哪顆按鈕，取決於面板上的問句：
+        ///   ·「確定要離開嗎？」（現行）→ 接 **NO**
+        ///   ·「要探索其他的東西嗎？」（askOnRoomCleared 勾選時的舊文案）→ 接 **YES**
+        /// 接反了玩家按「是」會留在原地，而且不會有任何錯誤訊息。
+        /// </summary>
         public void OnContinueExploring()
         {
             continueAskShown = false;
             SetContinueAskVisible(false);
         }
 
-        /// 「要探索其他的東西嗎？」→ NO。真正離開。
+        /// <summary>
+        /// **真正離開房間。**
+        ///
+        /// ⚠️ 同上，接哪顆按鈕取決於問句：
+        ///   ·「確定要離開嗎？」（現行）→ 接 **YES**
+        ///   ·「要探索其他的東西嗎？」→ 接 **NO**
+        /// </summary>
         public void OnChooseLeave()
         {
             continueAskShown = false;

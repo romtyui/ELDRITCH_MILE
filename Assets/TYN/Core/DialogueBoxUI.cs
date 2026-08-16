@@ -56,6 +56,17 @@ namespace EldritchMile.Core
         /// </summary>
         public bool HoldOpen { get; set; }
 
+        /// <summary>
+        /// 選項正在顯示中 —— `Open()` 不可以把選項框關掉。
+        ///
+        /// 【為什麼需要】`Open()` 預設每次都關閉選項框，好讓純文字訊息不會殘留上一則的選項。
+        /// 但**打牌時每出一張牌都會即時替換正文**（C18③），那也會走 `Open()` ——
+        /// 結果選項在玩家出第一張牌的瞬間就整排消失，但環節還在等他選。
+        ///
+        /// 由 `DialogueOptionsPanel` 在顯示／收起選項時設定。
+        /// </summary>
+        public bool HoldOptions { get; set; }
+
         [Header("打字機")]
         [Tooltip("每秒顯示幾個字。設 0 = 不用打字機，直接全部顯示")]
         public float charsPerSecond = 40f;
@@ -329,7 +340,10 @@ namespace EldritchMile.Core
             IsShowing = true;
             if (root != null) root.SetActive(true);
             if (dimmer != null) dimmer.SetActive(true);
-            if (optionBox != null) optionBox.SetActive(false);
+
+            // 選項顯示中就不能關 —— 打牌時每出一張牌都會即時替換正文並走到這裡，
+            // 無條件關閉的話選項會在玩家出第一張牌的瞬間整排消失
+            if (optionBox != null && !HoldOptions) optionBox.SetActive(false);
         }
 
         /// <summary>Phase 4c：要顯示選項時由打牌 UI 呼叫。</summary>

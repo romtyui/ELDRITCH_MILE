@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8142978956677154984
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 733265870170160070}
+  - component: {fileID: 8751795109881623686}
+  m_Layer: 0
+  m_Name: Stage_Shop
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &733265870170160070
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8142978956677154984}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8751795109881623686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8142978956677154984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bb5e1fcdfcbc1c49b8f040648a1b31b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ShopStageController
+  introLines:
+  - speaker: 
+    text: "\u4E00\u76DE\u6CB9\u71C8\u61F8\u5728\u9580\u6963\u4E0B\u3002\u5E97\u88E1\u6C92\u6709\u4EBA\u3002"
+    portrait: {fileID: 0}
+  - speaker: 
+    text: "\u6AC3\u6AAF\u4E0A\u58D3\u8457\u4E00\u5F35\u7D19\u689D\uFF1A\u300C\u8981\u4EC0\u9EBC\u81EA\u5DF1\u62FF\u3002\u50F9\u9322\uFF0C\u8A18\u5728\u5FC3\u4E0A\u3002\u300D"
+    portrait: {fileID: 0}
+  outroLines:
+  - speaker: 
+    text: "\uFF08\u5546\u5E97\u4ECB\u9762\u8207\u8CA8\u5E63\u5C1A\u672A\u5BE6\u4F5C\u3002\u4E4B\u5F8C\u9019\u88E1\u53EF\u4EE5\u4ED8\u6B3E\uFF0C\u800C\u4E14\u8CB7\u5B8C\u6703\u7559\u5728\u5E97\u88E1\u7E7C\u7E8C\u8CB7\u3002\uFF09"
+    portrait: {fileID: 0}
+  - speaker: 
+    text: "\u4F60\u96E2\u958B\u4E86\u5E97\u8216\u3002\u6CB9\u71C8\u5728\u8EAB\u5F8C\u6643\u4E86\u6643\u3002"
+    portrait: {fileID: 0}
+  stock:
+  - itemId: lockpick
+    label: "\u78E8\u5F97\u767C\u4EAE\u7684\u64AC\u68CD"
+    takenText: "\u4F60\u6382\u4E86\u6382\u90A3\u6839\u64AC\u68CD\uFF0C\u6536\u9032\u61F7\u88E1\u3002"
+  - itemId: key_warehouse
+    label: "\u523B\u8457\u7DE8\u865F\u7684\u820A\u9470\u5319"
+    takenText: "\u9470\u5319\u4E0A\u7684\u7DE8\u865F\u5DF2\u7D93\u78E8\u5E73\u4E86\u3002\u4F60\u9084\u662F\u6536\u4E0B\u4E86\u3002"
+  defaultTakenFormat: "\u4F60\u62FF\u8D70\u4E86\u300C{0}\u300D\u3002"

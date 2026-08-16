@@ -174,6 +174,7 @@ namespace EldritchMile.Explore
                 var drag = view.GetComponent<ExploreCardDrag>();
                 if (drag == null) drag = view.gameObject.AddComponent<ExploreCardDrag>();
                 drag.Bind(hand[i], this);
+                drag.SetVisualRoot(BuildVisualRoot(view.transform as RectTransform));
 
                 spawned.Add(drag);
             }
@@ -222,6 +223,55 @@ namespace EldritchMile.Explore
             }
         }
 
+        /// <summary>
+        /// 在卡片根底下插一層「視覺層」，把原本的子物件全部搬進去。
+        ///
+        /// 【為什麼在執行期做而不是改 prefab】卡片 prefab 是美術在維護的，
+        /// 硬插一層會讓他們每次調版面都要多繞一層。這一層純粹是**動效需要**，
+        /// 讓它只存在於執行期最乾淨 —— prefab 維持「一張卡就是一張卡」。
+        ///
+        /// 【搬完之後】根物件保留 Image（可點區域）與 CanvasGroup，位置永遠固定；
+        /// 上浮只動這一層，游標就不會被抽走。
+        /// </summary>
+        private RectTransform BuildVisualRoot(RectTransform cardRoot)
+        {
+            if (cardRoot == null) return null;
+
+            // 重建卡片時是全新的實例，理論上不會有；但保險起見不重複插層
+            Transform existing = cardRoot.Find("__Visual");
+            if (existing != null) return existing as RectTransform;
+
+            var go = new GameObject("__Visual", typeof(RectTransform));
+            var visual = go.GetComponent<RectTransform>();
+
+            visual.SetParent(cardRoot, false);
+            visual.anchorMin = Vector2.zero;
+            visual.anchorMax = Vector2.one;
+            visual.offsetMin = Vector2.zero;
+            visual.offsetMax = Vector2.zero;
+            visual.localScale = Vector3.one;
+
+            // ⚠️ 順序必須保住。UI 的疊放靠 sibling 順序，而 `SetParent` 是**附加到最後** ——
+            //    倒著迭代（避開 childCount 變動的反射動作）會把整疊圖層翻過來，
+            //    結果卡框從最底跑到最上，把圖面整個蓋掉。
+            //    所以先收集、再依原順序搬。
+            var children = new List<Transform>();
+            for (int i = 0; i < cardRoot.childCount; i++)
+            {
+                Transform child = cardRoot.GetChild(i);
+                if (child != visual) children.Add(child);
+            }
+
+            for (int i = 0; i < children.Count; i++)
+            {
+                // worldPositionStays: false —— 保留相對於卡片的排版，不是保留世界座標
+                children[i].SetParent(visual, false);
+            }
+
+            visual.SetAsFirstSibling();
+            return visual;
+        }
+
         private void Clear()
         {
             foreach (ExploreCardDrag c in spawned)
@@ -256,18 +306,98 @@ namespace EldritchMile.Explore
                 if (spawned[i] == SelectedCard) lift = selectedLift;
                 else if (spawned[i] == hovered) lift = hoverLift;
 
-                rt.anchoredPosition = new Vector2(startX + spacing * i, lift);
+                // ⚠️ 根物件（可點區域）永遠在 y=0，上浮只動視覺層。
+                //    把根物件往上移的話，游標會被從卡片底下抽走 → exit → 落下 → enter，
+                //    在卡片下緣會瘋狂閃爍。
+                rt.anchoredPosition = new Vector2(startX + spacing * i, 0f);
+                spawned[i].SetLift(lift);
+
+                // 疊放順序**永遠**是左→右（右側在上），不隨 hover／選取改變
                 rt.SetSiblingIndex(i);
             }
 
-            // 提到最上層才不會被旁邊的卡蓋住。選取的優先權高於 hover。
-            if (hovered != null) hovered.transform.SetAsLastSibling();
-            if (SelectedCard != null) SelectedCard.transform.SetAsLastSibling();
+            // ⚠️ 這裡刻意**不**把 hover／選取的卡提到最上層。
+            //
+            // 提到最上層會讓左邊的牌突然蓋住右邊的牌 —— 整排手牌的前後關係在滑鼠
+            // 掃過去的時候會一直重排，看起來像在跳。固定成「右側永遠在上」之後，
+            // 那一排的結構是穩定的，狀態變化只由**高度**表達。
+            //
+            // 代價是被 hover 的牌右半邊仍會被鄰居壓著，只露出上緣。
+            // 那正好是實體手牌攤開來的樣子，而且上浮距離（hoverLift/selectedLift）
+            // 就是在調「露出多少」—— 覺得看不清楚就把那兩個值調大。
         }
 
         // ==========================================
         // 給 ExploreCardDrag 回呼
         // ==========================================
+        /// <summary>
+        /// 拖曳開始／結束。拖曳期間鎖住圖層，手牌區不會沉到對話框後面。
+        ///
+        /// 【為什麼要特別處理】拖曳時游標必然離開手牌區 —— 那正是「拖出去」的意思 ——
+        /// 於是 HoverRaiseLayer 會照常放下，玩家正在拖的整排卡瞬間被對話框與立繪蓋住。
+        /// </summary>
+        /// <summary>
+        /// 拖曳中的卡片專用圖層。**永遠在整個 Canvas 的最上層。**
+        ///
+        /// 【為什麼需要一個專用層】原本的做法是把卡片丟到 Canvas 底下再 `SetAsLastSibling()`。
+        /// 問題是同一時間 `HoverRaiseLayer` 也在對手牌區做 `SetAsLastSibling()` ——
+        /// 兩個「我要當最後一個」互搶，誰贏取決於執行順序，於是卡片有機會被壓到對話框後面。
+        ///
+        /// 專用層只有拖曳用得到，沒有人跟它搶；而且每次取用都重新提到最上層，
+        /// 就算中間有別的東西插隊也會被推回去。
+        ///
+        /// 【不接 raycast】拖曳中的卡片要讓 raycast 穿透自己才打得到底下的目標，
+        /// 這一層自然也不能擋。
+        /// </summary>
+        public RectTransform DragLayer
+        {
+            get
+            {
+                Canvas canvas = GetComponentInParent<Canvas>();
+                if (canvas == null) return null;
+
+                Transform canvasRoot = canvas.rootCanvas != null
+                    ? canvas.rootCanvas.transform
+                    : canvas.transform;
+
+                if (dragLayer == null)
+                {
+                    Transform existing = canvasRoot.Find("__DragLayer");
+
+                    if (existing != null)
+                    {
+                        dragLayer = existing as RectTransform;
+                    }
+                    else
+                    {
+                        var go = new GameObject("__DragLayer", typeof(RectTransform));
+                        dragLayer = go.GetComponent<RectTransform>();
+                        dragLayer.SetParent(canvasRoot, false);
+
+                        dragLayer.anchorMin = Vector2.zero;
+                        dragLayer.anchorMax = Vector2.one;
+                        dragLayer.offsetMin = Vector2.zero;
+                        dragLayer.offsetMax = Vector2.zero;
+                        dragLayer.localScale = Vector3.one;
+                    }
+                }
+
+                // 每次取用都推回最上層，不論中間誰插過隊
+                dragLayer.SetAsLastSibling();
+                return dragLayer;
+            }
+        }
+
+        private RectTransform dragLayer;
+
+        public void SetLayerLocked(bool locked)
+        {
+            if (layerRaiser == null) layerRaiser = GetComponent<HoverRaiseLayer>();
+            if (layerRaiser != null) layerRaiser.SetLocked(locked);
+        }
+
+        private HoverRaiseLayer layerRaiser;
+
         public void NotifyCardHovered(ExploreCardDrag card)
         {
             hovered = card;
@@ -288,8 +418,33 @@ namespace EldritchMile.Explore
         public void ToggleSelect(ExploreCardDrag card)
         {
             SelectedCard = (SelectedCard == card) ? null : card;
+
+            // TODO 暫時診斷（確認點擊路徑後移除）
+            Debug.Log($"[手牌] 選取切換 → {(SelectedCard == null ? "取消選取" : SelectedCard.Card?.data?.cardName)}");
+
             RefreshPreviewForSelection();
             Layout();
+
+            // 讓目標知道「手上有沒有待命的卡」—— 它們據此決定滑過來時要不要變暗
+            SyncArmedState();
+        }
+
+        /// <summary>
+        /// 同步「手上有沒有待命的卡」。目標（選項／特寫圖）靠這個決定
+        /// 滑鼠移過來時要不要顯示瞄準回饋。
+        ///
+        /// 放在 Core 的 `DialogueEncounterController` 上，是因為目標住在 Core，
+        /// 不該反過來認識手牌區。
+        /// </summary>
+        private void SyncArmedState()
+        {
+            if (encounter == null) encounter = DialogueEncounterController.Instance;
+            if (encounter == null) return;
+
+            encounter.HasArmedCard = SelectedCard != null;
+
+            // 取消選取時順便把殘留的瞄準清掉，否則目標會一直暗著
+            if (SelectedCard == null) encounter.ClearAimed();
         }
 
         /// <summary>
@@ -300,14 +455,33 @@ namespace EldritchMile.Explore
         /// </summary>
         public void RefreshPreviewForSelection()
         {
-            if (SelectedCard != null && SelectedCard.Card != null && ShouldBroadcastPreview)
+            if (SelectedCard != null && SelectedCard.Card != null)
             {
-                HoverPreviewBroadcaster.Instance?.Begin(SelectedCard.Card.data);
+                ShowPreviewFor(SelectedCard.Card.data);
             }
             else
             {
                 HoverPreviewBroadcaster.Instance?.End();
             }
+        }
+
+        /// <summary>
+        /// 顯示某張牌的機率預覽。**這裡是「要給誰看」的唯一決策點。**
+        ///
+        ///   · 已選定主要目標 → 只顯示它一個（C18①「聚焦」）
+        ///   · 未選定         → 全部選項一起顯示（C17，企劃草圖的「A 50 / B 50 / C 50」）
+        ///
+        /// 【為什麼集中在這裡】卡片（`ExploreCardDrag`）不該知道「現在有沒有主要目標」，
+        /// 它只負責回報「滑鼠在我身上」。決策散到卡片上的話，hover 與拖曳兩條路徑
+        /// 會各自實作一次，遲早不一致。
+        /// </summary>
+        public void ShowPreviewFor(CardDataExplore card)
+        {
+            if (card == null) return;
+            if (encounter == null) encounter = DialogueEncounterController.Instance;
+            if (encounter == null || !encounter.IsActive) return;
+
+            HoverPreviewBroadcaster.Instance?.Begin(card, encounter.PrimaryTarget);
         }
 
         public void ClearSelection()

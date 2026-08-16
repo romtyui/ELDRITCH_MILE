@@ -86,9 +86,10 @@ namespace EldritchMile.Explore
         [Tooltip("RequiresItem 時需要的道具 id。每次重試消耗一個")]
         public string retryItemId = "";
 
-        [Tooltip("詢問文字。{0} = 代價數值或道具 id、{1} = 這是第幾次重試")]
+        [Tooltip("詢問文字。\n" +
+                 "{0} = 道具名或代價數值、{1} = 這是第幾次重試、{2} = 身上還剩幾個（數值型資源時是空字串）")]
         [TextArea(2, 3)]
-        public string retryPromptFormat = "還能再撬一次，但要用掉一個「{0}」。要試嗎？（第 {1} 次重試）";
+        public string retryPromptFormat = "還能再撬一次，但要用掉一個「{0}」{2}。要試嗎？（第 {1} 次重試）";
 
         [Tooltip("付不起時顯示的一句話")]
         [TextArea(2, 3)]
@@ -153,7 +154,7 @@ namespace EldritchMile.Explore
 
             previewLabel.gameObject.SetActive(true);
             previewLabel.text = eff == Effectiveness.None
-                ? "✕"
+                ? "X"
                 : $"{Mathf.RoundToInt(rate * 100f)}";
 
             previewLabel.color = eff == Effectiveness.None
@@ -164,6 +165,35 @@ namespace EldritchMile.Explore
         public void HidePreview()
         {
             if (previewLabel != null) previewLabel.gameObject.SetActive(false);
+        }
+
+        [Header("被瞄準時")]
+        [Tooltip("卡片瞄準這個物件時，世界立繪乘上的顏色。預設稍微變暗")]
+        public Color targetedTint = new Color(0.72f, 0.72f, 0.72f, 1f);
+
+        private bool baseTintCached;
+        private Color baseTint = Color.white;
+
+        /// <summary>
+        /// 【多數情況用不到】打牌環節開始後，判定目標會換成對話框裡的
+        /// `EncounterTargetView`，世界裡的箱子被壓黑層擋著、也不再是投放對象。
+        /// 只有化身生成失敗、目標退回世界物件本身時才會走到這裡。
+        /// </summary>
+        public void SetTargeted(bool targeted)
+        {
+            if (targetRenderer == null) targetRenderer = GetComponent<SpriteRenderer>();
+            if (targetRenderer == null) return;
+
+            if (!baseTintCached)
+            {
+                baseTintCached = true;
+                baseTint = targetRenderer.color;
+            }
+
+            targetRenderer.color = targeted
+                ? new Color(baseTint.r * targetedTint.r, baseTint.g * targetedTint.g,
+                            baseTint.b * targetedTint.b, baseTint.a)
+                : baseTint;
         }
 
         /// <summary>
@@ -232,13 +262,26 @@ namespace EldritchMile.Explore
 
         public string BuildRetryPrompt()
         {
-            // 道具是「有或沒有」，講數量沒有意義，所以顯示道具 id；
+            // 道具是「有或沒有」，講數量沒有意義，所以顯示道具名；
             // 數值型資源才顯示金額。兩者共用同一個 format，{0} 各自代入該講的東西。
+            //
+            // ⚠️ 一定要走 ItemName() 翻譯。直接用 retryItemId 的話玩家會看到
+            //    「要用掉一個 lockpick」—— id 是給程式認的，不是給玩家看的。
             string costLabel = retryPolicy == RetryPolicy.RequiresItem
-                ? retryItemId
+                ? GameFlowManager.ItemName(retryItemId)
                 : NextRetryCost.ToString();
 
-            return string.Format(retryPromptFormat, costLabel, retryCount + 1);
+            // 玩家要決定划不划算，「還剩幾個」跟「要付多少」一樣重要 ——
+            // 最後一根撬棍該不該用掉，跟手上還有五根時是完全不同的決定
+            string remainLabel = "";
+
+            if (retryPolicy == RetryPolicy.RequiresItem)
+            {
+                RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+                if (run != null) remainLabel = $"（還剩 {run.CountOf(retryItemId)} 個）";
+            }
+
+            return string.Format(retryPromptFormat, costLabel, retryCount + 1, remainLabel);
         }
 
         public bool TryPayForRetry()

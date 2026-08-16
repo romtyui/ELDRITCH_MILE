@@ -48,6 +48,8 @@ namespace EldritchMile.Core
 
         public void SetOpenImmediate(bool open)
         {
+            if (!open) OnClosing();
+
             IsOpen = open;
 
             if (panel != null)
@@ -59,6 +61,18 @@ namespace EldritchMile.Core
 
             ApplyInteractable(open);
         }
+
+        /// <summary>
+        /// 覆蓋層即將收起。子類別在這裡清掉「不該留在別的畫面上」的東西。
+        ///
+        /// 【為什麼需要這個 hook】覆蓋層是**滑出畫面**的，從頭到尾沒有 `SetActive(false)` ——
+        /// 所以子物件的 `OnDisable` 永遠不會觸發。任何靠 `OnDisable` 做收尾的東西
+        /// 在這裡都會失效，而且不會有錯誤訊息，只會看到殘留物浮在下一個畫面上。
+        ///
+        /// 【特別注意】若某個 UI 為了「不跟著地圖上下移動」而被放在覆蓋層**外面**，
+        /// 那它更不可能被自動收掉 —— 一定要在這裡處理。
+        /// </summary>
+        protected virtual void OnClosing() { }
 
         /// C1：「地圖下拉」
         public IEnumerator SlideDown()
@@ -78,6 +92,7 @@ namespace EldritchMile.Core
 
             // 先關互動再收，避免收到一半玩家又點到節點
             ApplyInteractable(false);
+            OnClosing();
 
             yield return Slide(shownY, hiddenY);
 

@@ -22,8 +22,14 @@ namespace EldritchMile.Core
         public MapData mapData = new MapData();
 
         [Header("探索狀態")]
+        /// <summary>
         /// C7：鑰匙與道具。「有可能會出現需要先獲得鑰匙才能開啟的狀況」
-        public List<string> inventory = new List<string>();
+        ///
+        /// **允許同一個 id 出現在多疊裡** —— 這是刻意的，日後 per-instance 狀態
+        /// （例如每條魚不同的 +HP／−SAN）就靠這個表達。所以查詢與消耗都要跨疊處理，
+        /// 不可以假設「一個 id 只有一疊」。見 <see cref="ItemStack"/>。
+        /// </summary>
+        public List<ItemStack> inventory = new List<ItemStack>();
 
         /// 探索牌組。C18 的打牌環節從這裡抽手牌。
         public List<CardDataExplore> exploreDeck = new List<CardDataExplore>();
@@ -40,25 +46,73 @@ namespace EldritchMile.Core
         // ==========================================
         // 道具 / 鑰匙
         // ==========================================
-        public bool HasItem(string id)
+        public bool HasItem(string id) => CountOf(id) > 0;
+
+        /// <summary>
+        /// 身上有幾個。**跨疊加總** —— 同一個 id 可能分在多疊裡（見欄位說明）。
+        /// </summary>
+        public int CountOf(string id)
         {
-            return !string.IsNullOrEmpty(id) && inventory.Contains(id);
+            if (string.IsNullOrEmpty(id)) return 0;
+
+            int total = 0;
+            for (int i = 0; i < inventory.Count; i++)
+            {
+                ItemStack s = inventory[i];
+                if (s != null && s.id == id) total += s.count;
+            }
+            return total;
         }
 
-        public void AddItem(string id)
+        public void AddItem(string id, int count = 1)
         {
-            if (string.IsNullOrEmpty(id)) return;
+            if (string.IsNullOrEmpty(id) || count <= 0) return;
 
-            inventory.Add(id);
-            Debug.Log($"[Run] 獲得道具：{id}");
+            // ⚠️ 目前的合併規則是「同 id 就併進第一疊」。道具還都是可互換的，所以正確。
+            //    等 ItemStack 加上 per-instance 狀態（例如每條魚不同的數值）之後，
+            //    這裡必須改成「同 id **且狀態相同**才併」，否則兩條不同的魚會被併成一疊。
+            for (int i = 0; i < inventory.Count; i++)
+            {
+                ItemStack s = inventory[i];
+                if (s != null && s.id == id)
+                {
+                    s.count += count;
+                    Debug.Log($"[Run] 獲得道具：{id} ×{count}（共 {CountOf(id)}）");
+                    return;
+                }
+            }
+
+            inventory.Add(new ItemStack(id, count));
+            Debug.Log($"[Run] 獲得道具：{id} ×{count}（共 {count}）");
         }
 
-        public bool ConsumeItem(string id)
+        /// <summary>
+        /// 消耗道具。**全有或全無** —— 需要 3 個但只有 2 個時不會扣掉那 2 個。
+        ///
+        /// 【為什麼強調】這是這類 API 最典型的 bug：先扣再檢查，結果玩家付了錢卻沒買到東西，
+        /// 而且因為資源真的少了，重試也修不回來。
+        /// </summary>
+        public bool ConsumeItem(string id, int count = 1)
         {
-            if (!HasItem(id)) return false;
+            if (count <= 0) return true;
+            if (CountOf(id) < count) return false;   // 先確認付得起，才動手扣
 
-            inventory.Remove(id);
-            Debug.Log($"[Run] 消耗道具：{id}");
+            int remaining = count;
+
+            for (int i = inventory.Count - 1; i >= 0 && remaining > 0; i--)
+            {
+                ItemStack s = inventory[i];
+                if (s == null || s.id != id) continue;
+
+                int take = Math.Min(s.count, remaining);
+                s.count -= take;
+                remaining -= take;
+
+                // 空掉的疊要移除，否則 inventory 會慢慢長滿 count 為 0 的殘骸
+                if (s.count <= 0) inventory.RemoveAt(i);
+            }
+
+            Debug.Log($"[Run] 消耗道具：{id} ×{count}（剩 {CountOf(id)}）");
             return true;
         }
 
@@ -83,7 +137,7 @@ namespace EldritchMile.Core
                 // 待設計：目前先原樣帶入遺產道具。
                 for (int i = 0; i < meta.legacyItemIds.Count; i++)
                 {
-                    run.inventory.Add(meta.legacyItemIds[i]);
+                    run.AddItem(meta.legacyItemIds[i]);
                 }
 
                 if (meta.legacyItemIds.Count > 0)

@@ -33,6 +33,30 @@ namespace EldritchMile.Explore
         public CardInstanceExplore Card { get; private set; }
         public bool IsDragging { get; private set; }
 
+        /// <summary>
+        /// 視覺子層。上浮只動這一層，**卡片根物件（＝可點區域）永遠不動**。
+        ///
+        /// 【為什麼一定要分開】上浮 55px、卡片高 263px —— 游標停在卡片下緣時，
+        /// 上浮會把卡片從游標底下抽走 → Unity 送出 exit → 卡片落下 → 游標又進來 → enter，
+        /// 一秒鐘閃好幾次。**這是「hover 改變了被 hover 的東西」的典型死結。**
+        ///
+        /// 拖曳仍然移動根物件（那時整張卡本來就該跟著滑鼠走）。
+        /// </summary>
+        private RectTransform visualRoot;
+
+        /// <summary>由 ExploreHandUI 在生成卡片時建立視覺層並指定。</summary>
+        public void SetVisualRoot(RectTransform root)
+        {
+            visualRoot = root;
+        }
+
+        /// <summary>設定上浮距離。只動視覺層，可點區域維持原位。</summary>
+        public void SetLift(float lift)
+        {
+            if (visualRoot == null) return;
+            visualRoot.anchoredPosition = new Vector2(0f, lift);
+        }
+
         private ExploreHandUI hand;
         private RectTransform rect;
         private CanvasGroup canvasGroup;
@@ -101,11 +125,8 @@ namespace EldritchMile.Explore
 
             hand?.NotifyCardHovered(this);
 
-            // C18①：已選定主要目標時不廣播
-            if (hand != null && hand.ShouldBroadcastPreview)
-            {
-                HoverPreviewBroadcaster.Instance?.Begin(Card.data);
-            }
+            // 「要給誰看」的決策集中在 ExploreHandUI —— 卡片不該知道有沒有主要目標
+            hand?.ShowPreviewFor(Card.data);
         }
 
         public void OnPointerExit(PointerEventData eventData)
@@ -128,28 +149,42 @@ namespace EldritchMile.Explore
             if (Card == null) return;
 
             IsDragging = true;
+            hand?.SetLayerLocked(true);   // 拖曳期間手牌區維持在最上層
             pointerDownPos = eventData.position;
             startAnchoredPos = rect.anchoredPosition;
             startParent = transform.parent;
             startSiblingIndex = transform.GetSiblingIndex();
 
-            // 拖曳時提到最上層，並讓 raycast 穿透自己才打得到底下的目標
-            if (rootCanvas != null) transform.SetParent(rootCanvas.transform, true);
+            // 移到專用的拖曳層（永遠在 Canvas 最上層），並讓 raycast 穿透自己才打得到底下的目標。
+            //
+            // ⚠️ 不要用「丟到 Canvas 底下 + SetAsLastSibling」—— 手牌區的 HoverRaiseLayer
+            //    同一時間也在搶「最後一個」的位置，誰贏看執行順序，卡片會有機會被壓到對話框後面。
+            RectTransform layer = hand != null ? hand.DragLayer : null;
+
+            if (layer != null) transform.SetParent(layer, true);
+            else if (rootCanvas != null) transform.SetParent(rootCanvas.transform, true);
+
             transform.SetAsLastSibling();
             canvasGroup.blocksRaycasts = false;
             transform.localScale = Vector3.one * dragScale;
 
+            // TODO 暫時診斷（拖曳圖層確認後移除）
+            Debug.Log($"[拖曳] 開始：父層={transform.parent.name}  siblingIndex={transform.GetSiblingIndex()}" +
+                      $"  父層在 Canvas 的 index={transform.parent.GetSiblingIndex()}");
+
             // 拖曳中持續顯示預覽，讓玩家看得到自己正拖向哪個目標
-            if (hand != null && hand.ShouldBroadcastPreview)
-            {
-                HoverPreviewBroadcaster.Instance?.Begin(Card.data);
-            }
+            hand?.ShowPreviewFor(Card.data);
         }
 
         public void OnDrag(PointerEventData eventData)
         {
             if (!IsDragging) return;
             rect.position = eventData.position;
+
+            // 每幀更新「放開會打到誰」。這是拖曳時唯一能讓玩家知道自己瞄到哪的線索 ——
+            // 卡片跟著游標走，目標又可能被對話框壓住一半，光看位置判斷不出來。
+            DialogueEncounterController e = DialogueEncounterController.Instance;
+            if (e != null) e.SetAimed(FindTargetUnder(eventData));
         }
 
         public void OnEndDrag(PointerEventData eventData)
@@ -157,11 +192,31 @@ namespace EldritchMile.Explore
             if (!IsDragging) return;
 
             IsDragging = false;
+            hand?.SetLayerLocked(false);
             canvasGroup.blocksRaycasts = true;
             HoverPreviewBroadcaster.Instance?.End();
+            DialogueEncounterController.Instance?.ClearAimed();
 
             bool draggedFarEnough =
                 Vector2.Distance(eventData.position, pointerDownPos) >= playThresholdPixels;
+
+            // TODO 暫時診斷（拖放判定確認後移除）。
+            //     ⚠️ 一定要放在這裡而不是 FindTargetUnder 裡面 ——
+            //        那支現在每幀都會被呼叫（瞄準回饋），寫在裡面 Console 會被洗爆。
+            {
+                var dbg = new System.Collections.Generic.List<RaycastResult>();
+                EventSystem.current.RaycastAll(eventData, dbg);
+
+                var lines = new System.Text.StringBuilder();
+                lines.Append($"[拖放] 放開於 {eventData.position}，命中 {dbg.Count} 個：");
+                for (int i = 0; i < dbg.Count && i < 4; i++)
+                {
+                    var go = dbg[i].gameObject;
+                    var tgt = go.GetComponentInParent<IProbabilityTarget>();
+                    lines.Append($"\n   [{i}] {go.name} 判定目標={(tgt != null ? tgt.GetType().Name : "無")}");
+                }
+                Debug.Log(lines.ToString());
+            }
 
             IProbabilityTarget target = draggedFarEnough ? FindTargetUnder(eventData) : null;
 
@@ -176,17 +231,37 @@ namespace EldritchMile.Explore
             // 已選定主要目標時，出牌一律作用在它身上（C18①），不必看放在哪
             if (hand != null && hand.PrimaryTarget != null) return hand.PrimaryTarget;
 
-            // UI 目標
+            // UI 目標。
+            //
+            // ⚠️ **只認最上層那一個**，不可以掃過整份清單。
+            //
+            // RaycastAll 會回傳游標底下**所有**命中物，包含被別的東西完全遮住的。
+            // 掃全部的話，只要判定目標在畫面上的某個位置藏著（例如特寫圖被對話框壓在後面），
+            // 玩家把卡放在對話框中間也會被判定成「打在那個目標上」——
+            // 明明畫面上根本看不到目標，牌卻出去了。
+            //
+            // 只認最上層＝「放在你看得到的東西上」，跟玩家的直覺一致。
             var results = new System.Collections.Generic.List<RaycastResult>();
             EventSystem.current.RaycastAll(eventData, results);
 
-            foreach (RaycastResult r in results)
+            if (results.Count > 0)
             {
-                var t = r.gameObject.GetComponentInParent<IProbabilityTarget>();
-                if (t != null) return t;
+                // ⚠️ 命中了 UI 就到此為止，**不可以再往世界找**。
+                //
+                // 世界裡的寶箱本身就是 IProbabilityTarget，而它躺在對話框後面。
+                // 繼續往下找的話，把卡放在對話框正中間（UI 最上層是 text_box，不是目標）
+                // 也會穿透過去打中寶箱 —— 玩家看到的是文字框，牌卻出去了。
+                //
+                // 語意：**點在 UI 上就由 UI 決定**；只有放在空白處才輪到世界物件。
+                var t = results[0].gameObject.GetComponentInParent<IProbabilityTarget>();
+                return t;   // 找不到就是 null ＝ 這一放不算出牌
             }
 
-            // 世界空間目標（2D Collider）
+            // 世界空間目標（2D Collider）。
+            // 只有「UI 完全沒命中」才會走到這裡 —— 也就是放在畫面的空白處。
+            //
+            // 【還留著的理由】對象化身（EncounterTargetView）生成失敗時，
+            // 判定目標會退回世界裡的物件本身。那條路已經會噴警告，但不該連拖放都失效。
             Camera cam = Camera.main;
             if (cam != null)
             {

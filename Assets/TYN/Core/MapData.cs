@@ -7,13 +7,22 @@ namespace EldritchMile.Core
     /// 節點類型。取代舊 MapNodeExplore 的 targetSceneName 字串驅動 ——
     /// 現在只有一個場景，改由類型決定要載入哪個 Stage prefab。
     /// </summary>
+    /// <summary>
+    /// 地圖節點的類型。
+    ///
+    /// ⚠️ **只能往後追加，不能插入或重排。** 序列化存的是整數，
+    /// 動了順序等於把地圖上所有既有節點改成別的類型，而且不會有任何錯誤訊息。
+    /// </summary>
     public enum MapNodeKind
     {
-        Event,
-        Combat,
-        Boss,
-        Shop,
-        SpecialEvent,
+        Event = 0,
+        Combat = 1,
+        Boss = 2,
+        Shop = 3,
+        SpecialEvent = 4,
+
+        /// <summary>C18/Phase 6：與角色對話。2026-08-16 追加</summary>
+        Dialogue = 5,
     }
 
     /// <summary>

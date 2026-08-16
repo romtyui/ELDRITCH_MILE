@@ -58,7 +58,13 @@ namespace EldritchMile.Core
         /// ⚠️ 呼叫端須先確認「尚未選定主要目標」(C18①)。本類別不自己判斷，
         ///    因為主要目標的狀態屬於 DialogueEncounterController。
         /// </summary>
-        public void Begin(CardDataExplore hoveredCard)
+        /// <param name="focusTarget">
+        /// 不為 null 時**只顯示這一個目標**的機率，其餘全部收起來。
+        ///
+        /// 這是 C18① 的正確樣子：「選定後畫面聚焦單一目標」指的是**只剩它有數字**，
+        /// 不是「什麼數字都沒有」—— 玩家正要瞄準它，那一刻最需要看到成功率。
+        /// </param>
+        public void Begin(CardDataExplore hoveredCard, IProbabilityTarget focusTarget = null)
         {
             if (hoveredCard == null) return;
             if (ProbabilityCheck.Instance == null)
@@ -73,6 +79,12 @@ namespace EldritchMile.Core
             {
                 IProbabilityTarget t = targets[i];
                 if (t == null) continue;
+
+                if (focusTarget != null && !ReferenceEquals(t, focusTarget))
+                {
+                    t.HidePreview();
+                    continue;
+                }
 
                 Effectiveness eff;
                 float rate = ProbabilityCheck.Instance.CalculateRate(hoveredCard, t, out eff);

@@ -22,11 +22,18 @@
 | 順序 | 文件 | 讀它做什麼 |
 |---|---|---|
 | 1 | **本文** | 慣例、工具、踩坑清單 |
-| 2 | [RoadmapNext.md](RoadmapNext.md) | **接下來要做什麼**（最新，2026-08-14） |
-| 3 | [EngineeringGuide.md](EngineeringGuide.md) | 命名空間、資料夾、架構原則 |
-| 4 | [SceneConsolidationPlan.md](SceneConsolidationPlan.md) | 架構為什麼長這樣、19 條企劃約束（C1–C19） |
-| 5 | `Phase*_*.md` | 各階段的**編輯器操作**步驟與驗收清單。最新一份是 [Phase4c2_RetryAsk.md](Phase4c2_RetryAsk.md)（C12，程式已完成、**編輯器操作待做**） |
-| ⚠️ | [Status.md](Status.md) | **已過時**（停在 2026-08-08），只當歷史快照看 |
+| 2 | [SystemsStatus.md](SystemsStatus.md) | **全景**：哪些系統做完了、待做的卡在什麼、**以及劇情大綱裡的內容需要哪些系統**（2026-08-15） |
+| 3 | [RoadmapNext.md](RoadmapNext.md) | 接下來要做什麼的**細節**與各項決策的來龍去脈 |
+| 4 | [EngineeringGuide.md](EngineeringGuide.md) | 命名空間、資料夾、架構原則 |
+| 5 | [SceneConsolidationPlan.md](SceneConsolidationPlan.md) | 架構為什麼長這樣、19 條企劃約束（C1–C19） |
+| 6 | `Phase*_*.md` | 各階段的**編輯器操作**步驟與驗收清單 |
+| 📺 | [DemoRoute.md](DemoRoute.md) | **要跑一次完整流程給人看**就讀這份（含目前哪些節點類型會斷） |
+| 7 | [Phase6_Dialogue.md](Phase6_Dialogue.md) | 對話／商店／特殊事件三個 Stage（2026-08-16，**尚未完整驗收**） |
+| ⚠️ | [Status.md](Status.md) | **已過時**（停在 2026-08-08），只當歷史快照看。全景改看 `SystemsStatus.md` |
+
+> **劇情／角色設定**在 `克蘇魯劇情大綱.docx`（不在 repo 內，向開發者索取）。
+> 它與工程的對照整理在 `SystemsStatus.md` §3 —— 那是唯一記錄
+> 「劇情裡寫的東西需要哪些系統」的地方。
 
 > 提到「C7」「C18③」這種代號時，指的是 `SceneConsolidationPlan.md` §4.0 的企劃約束編號。那是所有設計決策的依據。
 
@@ -119,6 +126,25 @@ C# 名稱解析在同一層「宣告永遠贏過 using 匯入」，而檔案最�
 
 「看不見」和「點不到」同時發生時先查這個。要保有可點區域但不顯示，用 **alpha 0** 而不是停用元件。
 
+### 4.6 UI 疊放與事件傳遞（2026-08-16 一天內踩了九個）
+
+做對話選項與手牌動效那天連續撞到的，成因各不相同但都**不會報錯**：
+
+| 坑 | 症狀 | 為什麼 |
+|---|---|---|
+| **指標事件只往祖先傳，不傳兄弟** | hover 元件掛在感應區上，滑到卡片完全沒反應 | `IPointerEnter/Exit` 沿 hierarchy **往上**送。要掛在「感應區與內容的共同祖先」 |
+| **`SetParent` 是附加到最後** | 卡面只剩卡框，圖不見了 | 為了避開 `childCount` 變動而倒著迭代 → 整疊圖層翻過來。要先收集再依原序搬 |
+| **`RaycastAll` 會回傳被遮住的東西** | 卡片放在對話框中間也會打中後面的目標 | 掃全部命中物＝穿透。投放判定**只能認 `results[0]`** |
+| **兩個東西搶 `SetAsLastSibling`** | 拖曳中的卡片偶爾沉到對話框後 | 誰贏看執行順序。拖曳要用**專用圖層**，且每次取用都推回最上層 |
+| **hover 改變了被 hover 的東西** | 卡片在下緣瘋狂閃爍 | 上浮把卡片從游標底下抽走 → exit → 落下 → enter。**位移只動視覺子層，可點區域不動** |
+| **透明的全幅 Button 會吃掉所有點擊** | 選項點不到 | `Advance Button`（alpha 0、1760×344）壓在選項上。`Button` 會**消化**點擊不讓它冒泡 |
+| **子物件是空殼 Button** | 同上 | 拉預設 Button 留下的殘骸，alpha 0、零監聽，唯一作用是擋點擊 |
+| **覆蓋層是「滑出畫面」不是停用** | 靠 `OnDisable` 做的收尾一律失效 | `MapOverlayController` 改 `anchoredPosition`，子物件從頭到尾都是啟用的。用 `OnClosing()` hook |
+| **遲到的 `OnPointerExit` 會復活剛關掉的東西** | 地圖收起後 tooltip 又冒出來 | 滑走時節點離開游標 → exit → `Hide()` → 「閒置時保留框」又把它開起來。需要**總開關**讓關閉後的顯示要求一律失效 |
+
+> **共同教訓**：這九個沒有一個會噴錯誤訊息。查 UI 問題時先問三件事 ——
+> 「事件到得了嗎」「順序是誰決定的」「這個收尾真的會被呼叫嗎」。
+
 ### 4.5 其他
 
 | 坑 | 說明 |
@@ -161,14 +187,20 @@ Get-Process Unity -ErrorAction SilentlyContinue | Select-Object MainWindowTitle
 
 | 項目 | 現況 |
 |---|---|
-| 分支 | `recovery-progress`，最新 commit `f8bf980「Phase4」` |
-| 工作區 | 有未提交改動：C12「在試一次？」的程式（2 個新檔）與文件 |
+| 分支 | `recovery-progress` |
 | Build Settings | **1 個場景**（`EventScene`） |
-| 程式碼 | Core 26 + Map 3 + Stages 1 + Explore 14 個檔案 |
+| 程式碼 | 54 個檔（Core 30 + Explore 14 + Map 3 + Menu 3 + UI 3 + Stages 1） |
+| Phase 4c | **✅ 四批全部驗收完成** —— 打牌判定、回合感、失敗結案與重試、屬性與相剋 |
+| Phase 6 | 🔶 **對話／商店／特殊事件已實作**，對話測到可出牌，其餘待驗收 |
+| ⚠️ 未提交 | **24 個修改 + 38 個新檔**，最新 commit 是 `28421c6 Phase4c4` |
 | 封存 | `_Archive/Scripts/` 25 個腳本、`_Archive/Scenes/` 4 個場景 |
 | 編譯 | 0 error 0 warning |
 
-**下一步請直接看 [RoadmapNext.md](RoadmapNext.md) §1「立即優先」。**
+**下一步請看 [SystemsStatus.md](SystemsStatus.md) §6「建議順序」**（全景與理由），
+細節再往 [RoadmapNext.md](RoadmapNext.md) §1 追。
+
+> ⚠️ 有三件事卡在 Romtyui，建議**一次談完**（見 `SystemsStatus.md` §2.1）：
+> 戰鬥結束事件、run 開始就初始化 HP／SAN、世界污染進度歸誰管。
 
 ---
 

@@ -32,6 +32,12 @@ namespace EldritchMile.Core
         [Tooltip("地圖生成參數。留空會產生一張最小地圖並警告")]
         public MapGenerationSettings mapSettings;
 
+        [Header("道具")]
+        [Tooltip("道具資料庫（id → 顯示名／圖示）。\n" +
+                 "掛在這裡是因為背包本身（RunContext.inventory）就由本類別持有。\n" +
+                 "留空不會壞，只是玩家會看到 id（例如「lockpick」）而不是「撬棍」")]
+        public ItemDatabase itemDatabase;
+
         [Header("啟動")]
         [Tooltip("遊戲啟動後要進入的第一個 Stage")]
         public StageType bootStage = StageType.Menu;
@@ -48,6 +54,23 @@ namespace EldritchMile.Core
 
         /// 跨輪迴保存。遺產機制的載體，死亡不會清空。
         public MetaProgressData Meta { get; private set; }
+
+        /// <summary>
+        /// 道具 id → 玩家看得懂的名字。
+        ///
+        /// 【為什麼放這裡】背包（`Run.inventory`）由本類別持有，翻譯表放在旁邊最好找。
+        /// 做成 static 是因為呼叫端多半只想要一個字串，不想每次都寫三層 null 檢查。
+        ///
+        /// 查不到（沒有資料庫、或資料庫裡沒這筆）就回傳 id 本身 ——
+        /// 醜，但比空白好查。
+        /// </summary>
+        public static string ItemName(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return "";
+
+            ItemDatabase db = Instance != null ? Instance.itemDatabase : null;
+            return db != null ? db.DisplayNameOf(id) : id;
+        }
 
         public event Action<StageType, StageType> OnStageChanged;
 
@@ -312,6 +335,9 @@ namespace EldritchMile.Core
 
                 case MapNodeKind.SpecialEvent:
                     return StageType.SpecialEvent;
+
+                case MapNodeKind.Dialogue:
+                    return StageType.Dialogue;
 
                 case MapNodeKind.Event:
                 default:

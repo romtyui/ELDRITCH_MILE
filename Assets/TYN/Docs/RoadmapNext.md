@@ -190,6 +190,67 @@
 [Phase4c3_RetryCost.md](Phase4c3_RetryCost.md) 的「訊息被吃掉的三個來源」）：
 `ShowInstant` 蓋掉正文、`AdvanceImmediate` 無條件執行、詢問面板蓋住還在打的字。
 
+### 1.6 道具資料層（`ItemData` / `ItemDatabase`）— 2026-08-15 完成
+
+**起因**：重試詢問顯示的是「要用掉一個 `lockpick`」—— id 外洩到玩家面前。
+但那不是顯示的 bug，是**底下沒有東西可以顯示**。
+
+**在這之前，道具只是字串**：`RunContext.inventory` 是 `List<string>`，
+沒有任何資料型別、沒有顯示名／圖示／說明，也沒有背包 UI ——
+玩家看不到自己身上有什麼。設計文件的 C7 只要求「鑰匙要跨節點延續」，
+所以道具的定位一直是**開關**（你有沒有鑰匙），不是玩家會去看去用的東西。
+
+**三件事同時推翻了這個前提**：
+
+1. 重試詢問把 id 印出來了
+2. **Phase 6 商店（C15）** —— 賣東西需要名字、圖示、價格，不可能賣一個字串
+3. **劇情設定裡漁夫的能力**：「隨機獲取漁獲（使用後 +HP −SAN，**只能在戰鬥外使用**）」
+   —— 那是**可主動使用的消耗品**，需要顯示、需要「使用」動作、需要能點它的介面。那就是背包
+
+第 3 點是讀了 `克蘇魯劇情大綱.docx` 才知道的，它把背包從「Phase 6 才需要」
+變成「設計上已經存在，只是還沒做」。
+
+**本輪只做資料層，不做 UI**：
+
+| 檔案 | 職責 |
+|---|---|
+| `Core/ItemData.cs` | 單一道具：`id` / `displayName` / `icon` / `description` |
+| `Core/ItemDatabase.cs` | id → ItemData 查表，含 id 重複與空白的警告 |
+| `Core/ItemDatabase.asset` | 目前登記 `lockpick`、`key_warehouse` |
+| `GameFlowManager.ItemName(id)` | 靜態便利方法，查不到就回傳 id 本身 |
+
+**`RunContext.inventory` 維持 `List<string>` 不動** —— id 仍然是真相。
+字串序列化乾淨、跨版本穩定；把資產引用寫進存檔很脆（資產搬移／GUID 變動會讓舊存檔壞掉），
+而且 `MetaProgressData.legacyItemIds` 早就是字串，兩邊要一致。
+
+#### 尚未處理（記著）
+
+- **背包 UI 還沒有** —— 玩家仍然看不到自己身上有什麼。Phase 6 跟商店一起做
+- **`lootItems` 與 `grantedItemIds` 是兩份要手動同步的清單**
+  （前者是顯示文字、後者是 id）。有了 `ItemData` 之後可以合併成一份，
+  但會需要重新配置現有寶箱的資料，本輪沒動
+- **數量是「意外可用」**：`inventory` 允許重複，`AddItem` 兩次就是兩筆、
+  `ConsumeItem` 移除一筆 —— 所以「三根撬棍」現在就表達得出來。
+  但 `MetaProgressData.AddLegacyItem` 會去重，兩邊行為不一致
+  （語意上說得通：遺產是解鎖、背包是物資，但值得記著）
+
+### 1.7 待辦：repo 根目錄加 `.editorconfig`（已評估，刻意延後）
+
+TYN 的 `.cs` 全部是 UTF-8、`Romtyui/RunStateManager.cs` 是 cp950（所以中文是亂碼），
+而**兩邊都沒有 BOM** —— 沒有任何東西在保護編碼。
+
+只要有人用「預設系統碼頁」的編輯器存過 TYN 的檔，那個檔的中文註解就會對所有人變成亂碼，
+而且 git diff 會顯示整檔改動。
+
+```ini
+[*.cs]
+charset = utf-8
+```
+
+**延後的理由**：風險要「有人用設錯編碼的編輯器存 TYN 的檔」才會發生，
+目前動 TYN 的只有一個人且編輯器正常。**等 Romtyui 開始碰 TYN 的檔、
+或多一個工具進來時務必補上。**（它在 repo 根目錄，會影響隊友的工作流，所以不逕行加入。）
+
 ### 1.5 接下來
 
 **先 commit** —— 這是一個驗收過的乾淨斷點，§4 早就提醒過不要讓未提交的東西越堆越高。

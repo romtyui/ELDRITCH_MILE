@@ -22,7 +22,8 @@ namespace EldritchMile.Core
     /// 屬性、衰減進度、判定結果全部轉發給真正的目標（世界裡的寶箱／NPC）。
     /// 它只負責「長什麼樣」與「接收點擊」。
     /// </summary>
-    public class EncounterTargetView : MonoBehaviour, IProbabilityTarget, IPointerClickHandler
+    public class EncounterTargetView : MonoBehaviour, IProbabilityTarget,
+        IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         /// <summary>
         /// 玩家點了這個大圖。兩段式出牌的第二段接這裡。
@@ -58,7 +59,7 @@ namespace EldritchMile.Core
         public Color immuneColor = new Color(0.5f, 0.5f, 0.5f);
 
         [Tooltip("屬性完全不合時顯示什麼。不要用「0%」—— 要讓玩家看得出是屬性問題而非運氣差")]
-        public string immuneText = "✕";
+        public string immuneText = "X";
 
         /// 真正的判定對象。狀態的唯一真相在它身上。
         public IProbabilityTarget Source { get; private set; }
@@ -178,6 +179,48 @@ namespace EldritchMile.Core
         public void OnAttemptsExhausted()
         {
             Source?.OnAttemptsExhausted();
+        }
+
+        [Header("被瞄準時")]
+        [Tooltip("卡片瞄準這個目標時整張圖乘上的顏色。預設是稍微變暗。\n" +
+                 "不要太搶眼 —— 圖上方還有機率數字要看")]
+        public Color targetedTint = new Color(0.72f, 0.72f, 0.72f, 1f);
+
+        private bool baseColorCached;
+        private Color baseColor = Color.white;
+
+        public void SetTargeted(bool targeted)
+        {
+            if (image == null) return;
+
+            // 第一次才記底色。Bind() 會依有沒有圖調 alpha，所以要在那之後才抓
+            if (!baseColorCached)
+            {
+                baseColorCached = true;
+                baseColor = image.color;
+            }
+
+            image.color = targeted
+                ? new Color(baseColor.r * targetedTint.r,
+                            baseColor.g * targetedTint.g,
+                            baseColor.b * targetedTint.b,
+                            baseColor.a)
+                : baseColor;
+        }
+
+        // ==========================================
+        // 兩段式出牌：手上有卡時滑過來也要有回饋
+        // ==========================================
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            DialogueEncounterController e = DialogueEncounterController.Instance;
+            if (e != null && e.IsActive && e.HasArmedCard) e.SetAimed(this);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            DialogueEncounterController e = DialogueEncounterController.Instance;
+            if (e != null && ReferenceEquals(e.AimedTarget, this)) e.ClearAimed();
         }
     }
 }
