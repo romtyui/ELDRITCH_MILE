@@ -121,7 +121,13 @@ namespace EldritchMile.Explore
         // ==========================================
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (IsDragging || Card == null) return;
+            if (Card == null) return;
+
+            // ⚠️ 守衛必須是「**整個手牌區**有沒有人在拖」，不是「我自己在不在拖」。
+            //    拖曳中的卡 blocksRaycasts = false，游標會穿透到底下的其他卡，
+            //    那些卡的 IsDragging 都是 false —— 於是它們會把目標上的機率
+            //    換成自己的、接著在 exit 時關掉。拖曳途中經過別張牌預覽就消失了。
+            if (IsDragging || (hand != null && hand.IsAnyCardDragging)) return;
 
             hand?.NotifyCardHovered(this);
 
@@ -131,7 +137,8 @@ namespace EldritchMile.Explore
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if (IsDragging) return;
+            // 同上：拖曳期間其他卡的 exit 一律忽略，否則會把預覽關掉
+            if (IsDragging || (hand != null && hand.IsAnyCardDragging)) return;
 
             hand?.NotifyCardUnhovered(this);
 
@@ -149,7 +156,7 @@ namespace EldritchMile.Explore
             if (Card == null) return;
 
             IsDragging = true;
-            hand?.SetLayerLocked(true);   // 拖曳期間手牌區維持在最上層
+            hand?.NotifyDragBegin(this);   // 記錄「誰在拖」＋ 手牌區維持在最上層
             pointerDownPos = eventData.position;
             startAnchoredPos = rect.anchoredPosition;
             startParent = transform.parent;
@@ -167,10 +174,6 @@ namespace EldritchMile.Explore
             transform.SetAsLastSibling();
             canvasGroup.blocksRaycasts = false;
             transform.localScale = Vector3.one * dragScale;
-
-            // TODO 暫時診斷（拖曳圖層確認後移除）
-            Debug.Log($"[拖曳] 開始：父層={transform.parent.name}  siblingIndex={transform.GetSiblingIndex()}" +
-                      $"  父層在 Canvas 的 index={transform.parent.GetSiblingIndex()}");
 
             // 拖曳中持續顯示預覽，讓玩家看得到自己正拖向哪個目標
             hand?.ShowPreviewFor(Card.data);
@@ -192,31 +195,13 @@ namespace EldritchMile.Explore
             if (!IsDragging) return;
 
             IsDragging = false;
-            hand?.SetLayerLocked(false);
+            hand?.NotifyDragEnd(this);
             canvasGroup.blocksRaycasts = true;
             HoverPreviewBroadcaster.Instance?.End();
             DialogueEncounterController.Instance?.ClearAimed();
 
             bool draggedFarEnough =
                 Vector2.Distance(eventData.position, pointerDownPos) >= playThresholdPixels;
-
-            // TODO 暫時診斷（拖放判定確認後移除）。
-            //     ⚠️ 一定要放在這裡而不是 FindTargetUnder 裡面 ——
-            //        那支現在每幀都會被呼叫（瞄準回饋），寫在裡面 Console 會被洗爆。
-            {
-                var dbg = new System.Collections.Generic.List<RaycastResult>();
-                EventSystem.current.RaycastAll(eventData, dbg);
-
-                var lines = new System.Text.StringBuilder();
-                lines.Append($"[拖放] 放開於 {eventData.position}，命中 {dbg.Count} 個：");
-                for (int i = 0; i < dbg.Count && i < 4; i++)
-                {
-                    var go = dbg[i].gameObject;
-                    var tgt = go.GetComponentInParent<IProbabilityTarget>();
-                    lines.Append($"\n   [{i}] {go.name} 判定目標={(tgt != null ? tgt.GetType().Name : "無")}");
-                }
-                Debug.Log(lines.ToString());
-            }
 
             IProbabilityTarget target = draggedFarEnough ? FindTargetUnder(eventData) : null;
 

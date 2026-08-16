@@ -126,9 +126,6 @@ namespace EldritchMile.Core
         {
             if (eventData.dragging) return;   // 拖曳放開時 Unity 也會送 click
 
-            // TODO 暫時診斷（確認點擊路徑後移除）
-            Debug.Log($"[選項] 收到點擊：{name}  訂閱者={(OnClicked != null ? OnClicked.GetInvocationList().Length : 0)}");
-
             OnClicked?.Invoke(this);
         }
 

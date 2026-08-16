@@ -396,6 +396,33 @@ namespace EldritchMile.Explore
             if (layerRaiser != null) layerRaiser.SetLocked(locked);
         }
 
+        /// <summary>
+        /// 正在被拖曳的那張卡。沒有人在拖就是 null。
+        ///
+        /// 【為什麼要記在手牌區而不是各張卡上】拖曳中的卡片 `blocksRaycasts = false`，
+        /// 所以游標會**穿透到底下的其他卡**，那些卡照常收到 enter/exit。
+        /// 它們各自的 `IsDragging` 都是 false，於是會去改預覽與上浮 ——
+        /// 結果拖曳途中經過別張牌，目標上的機率就被換掉、接著被關掉。
+        ///
+        /// 判斷「現在有沒有人在拖」必須是**整個手牌區的狀態**，不是單張卡的。
+        /// </summary>
+        public ExploreCardDrag DraggingCard { get; private set; }
+
+        public bool IsAnyCardDragging => DraggingCard != null;
+
+        /// <summary>拖曳開始／結束。同時處理圖層鎖定與「誰在拖」的狀態。</summary>
+        public void NotifyDragBegin(ExploreCardDrag card)
+        {
+            DraggingCard = card;
+            SetLayerLocked(true);
+        }
+
+        public void NotifyDragEnd(ExploreCardDrag card)
+        {
+            if (DraggingCard == card) DraggingCard = null;
+            SetLayerLocked(false);
+        }
+
         private HoverRaiseLayer layerRaiser;
 
         public void NotifyCardHovered(ExploreCardDrag card)
@@ -418,9 +445,6 @@ namespace EldritchMile.Explore
         public void ToggleSelect(ExploreCardDrag card)
         {
             SelectedCard = (SelectedCard == card) ? null : card;
-
-            // TODO 暫時診斷（確認點擊路徑後移除）
-            Debug.Log($"[手牌] 選取切換 → {(SelectedCard == null ? "取消選取" : SelectedCard.Card?.data?.cardName)}");
 
             RefreshPreviewForSelection();
             Layout();

@@ -62,19 +62,12 @@
 
 ---
 
-## ⚠️ 還沒清掉的暫時診斷
+## 診斷日誌已全部清除（2026-08-16）
 
-Console 會印四種訊息，確認流程穩定後要一起移除（都標了 `TODO 暫時診斷`）：
+開發期用的四行暫時日誌（`[手牌]` `[選項]` `[拖曳]` `[拖放]`）在拖曳流程確認穩定後已移除。
 
-| 訊息 | 位置 |
-|---|---|
-| `[手牌] 選取切換` | `ExploreHandUI.ToggleSelect` |
-| `[選項] 收到點擊` | `DialogueOptionUI.OnPointerClick` |
-| `[拖曳] 開始` | `ExploreCardDrag.OnBeginDrag` |
-| `[拖放] 放開於…命中 N 個` | `ExploreCardDrag.OnEndDrag` |
-
-> ⚠️ `[拖放]` 那個**必須留在 `OnEndDrag`**，不可以搬回 `FindTargetUnder` ——
-> 那支現在每幀都會被呼叫（瞄準回饋），寫在裡面 Console 會被洗爆。
+> ⚠️ **日後若要再加拖放的診斷，不可以寫在 `FindTargetUnder` 裡面** ——
+> 那支為了瞄準回饋**每幀都會被呼叫**，寫在裡面 Console 會被洗爆。放在 `OnEndDrag`。
 
 ---
 
@@ -102,3 +95,4 @@ Console 會印四種訊息，確認流程穩定後要一起移除（都標了 `T
 7. `RaycastAll` 會回傳被遮住的東西 → 投放判定只能認最上層
 8. 兩個東西都在搶 `SetAsLastSibling` → 拖曳要用專用圖層
 9. `Advance Button` 蓋在選項上 → 透明的全幅按鈕會吃掉所有點擊
+10. 用「自己的旗標」判斷「整區的狀態」 → 拖曳中經過別張卡，目標上的機率就消失
