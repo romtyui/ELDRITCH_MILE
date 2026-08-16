@@ -51,6 +51,15 @@ namespace EldritchMile.Core
                  "定案後這個值多半會改由遺產或難度決定，不會留在這裡")]
         [Min(0)] public int startingMoney = 0;
 
+        [Tooltip("開局的 HP 上限。**0 = 不初始化**（維持舊行為：等第一場戰鬥打完才有值）。\n\n" +
+                 "⚠️ 填了非 0 之後，戰鬥開始也會套用這條血條而不是戰鬥自己的預設值 ——\n" +
+                 "那正是「run 開始就初始化」的用意，但要跟戰鬥組確認數值對得上")]
+        [Min(0)] public int startingMaxHp = 0;
+
+        [Tooltip("開局的 SAN 上限。**在戰鬥那邊叫 Energy**（見 PlayerVitals 的說明）。\n" +
+                 "0 = 沿用戰鬥端原本的值")]
+        [Min(0)] public int startingMaxSan = 0;
+
         [Header("狀態 (唯讀)")]
         [SerializeField] private StageType currentStage = StageType.None;
 
@@ -178,6 +187,10 @@ namespace EldritchMile.Core
 
             Run = RunContext.CreateNew(Meta);
             Run.AddMoney(startingMoney);
+
+            // HP／SAN 不存在 RunContext 裡 —— 它們歸 RunStateManager（戰鬥端）持有，
+            // 我方只負責「run 開始時把它設好」。見 PlayerVitals 的說明。
+            if (startingMaxHp > 0) PlayerVitals.EnsureInitialized(startingMaxHp, startingMaxSan);
 
             // 地圖在此一次生成，之後整場 run 都用同一份 —— 地圖 UI 反覆下拉收起不會重生成
             Run.mapData = MapGenerator.Generate(mapSettings, Run.runSeed);

@@ -63,8 +63,27 @@ public class ShopStageController : StageController
     [Min(0)] public int stockCount = 0;
 
     [Header("離開")]
-    [Tooltip("離開商店的按鈕。**留空的話玩家會被困在店裡** —— 沒有別的出口")]
+    [Tooltip("EXIT 標籤上的 Button。**留空的話玩家會被困在店裡** —— 沒有別的出口。\n" +
+             "兩段式：hover 讓標籤滑出來（SlideOutTab）→ 點擊跳出確認面板")]
     public Button exitButton;
+
+    [Tooltip("EXIT 標籤的滑出元件。確認面板跳出來時會強制收回去 ——\n" +
+             "面板蓋住標籤之後收不到 OnPointerExit，不收的話它會一直卡在伸出來的狀態")]
+    public SlideOutTab exitTab;
+
+    [Tooltip("「確定要離開嗎？」的確認面板。與探索的 ContinueAskPanel 是同一個形狀。\n" +
+             "留空則點 EXIT 直接離開（不建議 —— 誤觸就出去了）")]
+    public GameObject leaveAskPanel;
+
+    [Tooltip("面板上的「是」。接 → 真的離開")]
+    public Button confirmLeaveButton;
+
+    [Tooltip("面板上的「否」。接 → 留在店裡。\n" +
+             "⚠️ 問句是「確定要離開嗎？」，所以 YES = 離開。\n" +
+             "接反了玩家按「是」會留在原地，而且不會有任何錯誤訊息")]
+    public Button cancelLeaveButton;
+
+    private readonly PanelToggle askToggle = new PanelToggle();
 
     [Header("台詞")]
     [Tooltip("成交時的備援台詞。{0} = 商品名。\n\n" +
@@ -105,13 +124,27 @@ public class ShopStageController : StageController
 
         if (exitButton != null)
         {
-            exitButton.onClick.RemoveListener(BeginLeave);
-            exitButton.onClick.AddListener(BeginLeave);
+            exitButton.onClick.RemoveListener(AskLeave);
+            exitButton.onClick.AddListener(AskLeave);
         }
         else
         {
             Debug.LogWarning("[商店] 沒有指定離開按鈕 —— 玩家進得來但出不去");
         }
+
+        if (confirmLeaveButton != null)
+        {
+            confirmLeaveButton.onClick.RemoveListener(ConfirmLeave);
+            confirmLeaveButton.onClick.AddListener(ConfirmLeave);
+        }
+
+        if (cancelLeaveButton != null)
+        {
+            cancelLeaveButton.onClick.RemoveListener(CancelLeave);
+            cancelLeaveButton.onClick.AddListener(CancelLeave);
+        }
+
+        askToggle.Set(leaveAskPanel, false);
 
         StockShelf();
     }
@@ -128,7 +161,11 @@ public class ShopStageController : StageController
     public override IEnumerator OnStageExit()
     {
         if (shelf != null) shelf.OnSlotClicked -= HandleSlotClicked;
-        if (exitButton != null) exitButton.onClick.RemoveListener(BeginLeave);
+        if (exitButton != null) exitButton.onClick.RemoveListener(AskLeave);
+        if (confirmLeaveButton != null) confirmLeaveButton.onClick.RemoveListener(ConfirmLeave);
+        if (cancelLeaveButton != null) cancelLeaveButton.onClick.RemoveListener(CancelLeave);
+
+        askToggle.Set(leaveAskPanel, false);
 
         // 轉場要用 Immediate —— Hide() 會播縮回去的動作，但 Stage 這一刻就要卸載了，
         // 動作播不完，殘影會被帶到下一個畫面
@@ -275,6 +312,36 @@ public class ShopStageController : StageController
     // ==========================================
     // 離開
     // ==========================================
+    /// <summary>
+    /// 點了 EXIT。**不是直接離開**，先問一次（C14 的兩段式確認）。
+    ///
+    /// 沒有指定面板時就直接走 —— 少一個必填欄位比讓玩家卡在店裡好，
+    /// 但 Inspector 上已經寫明不建議這樣配。
+    /// </summary>
+    private void AskLeave()
+    {
+        if (leaving) return;
+
+        if (leaveAskPanel == null) { BeginLeave(); return; }
+
+        // ⚠️ 面板會蓋在標籤上，蓋住之後標籤收不到 OnPointerExit，
+        //    不主動收的話它會一直卡在伸出來的狀態
+        exitTab?.SetShown(false);
+
+        askToggle.Set(leaveAskPanel, true);
+    }
+
+    private void CancelLeave()
+    {
+        askToggle.Set(leaveAskPanel, false);
+    }
+
+    private void ConfirmLeave()
+    {
+        askToggle.Set(leaveAskPanel, false);
+        BeginLeave();
+    }
+
     private void BeginLeave()
     {
         if (leaving) return;

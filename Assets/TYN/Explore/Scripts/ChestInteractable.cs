@@ -248,13 +248,13 @@ namespace EldritchMile.Explore
                 }
 
                 // HP／SAN 還沒接上。這裡明講原因，不要讓它靜靜地當成「不可重試」
-                if (retryPolicy == RetryPolicy.CostsHealth || retryPolicy == RetryPolicy.CostsSanity)
+                if ((retryPolicy == RetryPolicy.CostsHealth || retryPolicy == RetryPolicy.CostsSanity)
+                    && !PlayerVitals.IsReady)
                 {
                     Debug.LogWarning(
-                        $"[打牌] 「{displayName}」的重試代價是 {retryPolicy}，但 HP／SAN 尚未接上 ——\n" +
-                        "它們歸 Romtyui 的 RunStateManager 管，而目前的值只有在第一場戰鬥打完才存在。\n" +
-                        "要等「run 開始就初始化」跟對方談定後才能接。本次直接結案。\n" +
-                        "想先測重試手感的話，把 Retry Policy 改成 RequiresItem。", this);
+                        $"[打牌] 「{displayName}」的重試代價是 {retryPolicy}，但 HP／SAN 還沒初始化。\n" +
+                        "請在 GameFlowManager 上把 Starting Max Hp 設成大於 0 的值 ——\n" +
+                        "沒設的話它們只有在第一場戰鬥打完之後才有值（見 PlayerVitals）。本次直接結案。", this);
                     return false;
                 }
 
@@ -285,6 +285,14 @@ namespace EldritchMile.Explore
             {
                 RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
                 if (run != null) remainLabel = $"（還剩 {run.CountOf(retryItemId)} 個）";
+            }
+            else if (retryPolicy == RetryPolicy.CostsHealth)
+            {
+                remainLabel = $"（HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}）";
+            }
+            else if (retryPolicy == RetryPolicy.CostsSanity)
+            {
+                remainLabel = $"（SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}）";
             }
 
             return string.Format(retryPromptFormat, costLabel, retryCount + 1, remainLabel);
@@ -318,7 +326,42 @@ namespace EldritchMile.Explore
                 return true;
             }
 
-            // CostsHealth / CostsSanity 會在 CanOfferRetry 就被擋掉，走不到這裡
+            // ── 數值代價：HP / SAN ──
+            //
+            // ⚠️ 這兩支**不會把玩家扣死**（見 PlayerVitals.SpendHp）。
+            //    「賭上性命」那種設計要另外做，不要放寬那一支的判斷 ——
+            //    探索途中被一個寶箱扣死，玩家只會覺得是 bug。
+            if (retryPolicy == RetryPolicy.CostsHealth || retryPolicy == RetryPolicy.CostsSanity)
+            {
+                int cost = NextRetryCost;
+
+                bool paid = retryPolicy == RetryPolicy.CostsHealth
+                    ? PlayerVitals.SpendHp(cost)
+                    : PlayerVitals.SpendSan(cost);
+
+                if (!paid)
+                {
+                    if (!string.IsNullOrEmpty(cannotAffordText))
+                    {
+                        PopupService.Instance?.ShowInstant(cannotAffordText);
+                    }
+
+                    Debug.Log(
+                        $"[打牌] 「{displayName}」重試付不起：需要 {cost}，" +
+                        (retryPolicy == RetryPolicy.CostsHealth
+                            ? $"目前 HP {PlayerVitals.Hp}"
+                            : $"目前 SAN {PlayerVitals.San}"));
+                    return false;
+                }
+
+                retryCount++;
+
+                Debug.Log(
+                    $"[打牌] 「{displayName}」第 {retryCount} 次重試：" +
+                    $"{(retryPolicy == RetryPolicy.CostsHealth ? "扣 HP" : "扣 SAN")} {cost}（{tier}）");
+                return true;
+            }
+
             return false;
         }
 

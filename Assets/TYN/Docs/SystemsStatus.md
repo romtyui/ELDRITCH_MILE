@@ -28,7 +28,7 @@
 | 商店 | 🔶 **已重寫，待驗收**（八格貨架、有價格、依區域換貨） | TYN | 商人（冷原人） |
 | 事件效果（陷阱／逆轉／複製卡牌） | ❌ 未做 | TYN | **畫家/卡羅麗** |
 | 神牌 | 🔶 事件端已實作（挑一張牌）；真正的神牌仍待戰鬥端 | TYN + Romtyui | **小說家/克拉夫特** |
-| HP／SAN 的探索端讀寫 | 🔶 **我方接手**（2026-08-16 談定） | TYN | **漁夫、貴婦** |
+| HP／SAN 的探索端讀寫 | ✅ **已接**（`PlayerVitals` 轉接頭，零修改隊友檔案） | TYN | **漁夫、貴婦** |
 | 侵蝕度（原記為「世界污染進度」） | 🔶 **歸我方**（2026-08-16 談定），尚未實作 | TYN | 角色倒戈條件、**深淵線事件的觸發門檻** |
 | 戰鬥 | 由 Romtyui 負責 | Romtyui | 全部 |
 | 戰鬥接入探索流程 | 🔶 **下週三／四對接** | TYN + Romtyui | — |
@@ -163,20 +163,40 @@ C13 的迴圈：房間清空**不會**自動離開，而是問「要探索其他
 | # | 需求 | 結論 |
 |---|---|---|
 | A | 戰鬥結束事件 / 戰鬥接入流程 | **下週三或四對接**。隊友會盡量把戰鬥包成 prefab |
-| B | run 開始就初始化 HP／SAN | **我方接手** —— 隊友同意搬過來。動手前先確認他現有的程式怎麼寫 |
+| B | run 開始就初始化 HP／SAN | ✅ **已實作**（`PlayerVitals`）。零修改隊友的檔案，只呼叫 |
 | C | 侵蝕度歸誰管 | **歸我方** |
 
-> **B 的細節（搬過來之前要先確認的）**：`RunStateManager.savedPlayerCurrentHp`
-> 只有在 `SaveFromBattle()` 之後才有值。玩家若在任何戰鬥之前先進探索房間，HP 是 `0`。
-> 搬過來時要決定的是「誰是 HP／SAN 的唯一真相」——
-> 兩邊各存一份會很快就對不起來。
->
-> 順帶可提：`RunStateManager.cs` 的中文註解疑似不是存成 UTF-8（讀出來是亂碼）。
+#### B 怎麼做的：轉接頭，不是搬家
 
-**接下來能解鎖什麼**：
+`Core/PlayerVitals.cs` 是探索端存取 HP／SAN 的唯一入口。
 
-- B 一做完，`RetryPolicy.CostsHealth` / `CostsSanity` 就能接上 ——
-  程式早就寫好了，只差 HP／SAN 讀得到（見 [Phase4c3_RetryCost.md](Phase4c3_RetryCost.md)）
+**資料沒有搬過來** —— 它還是存在隊友的 `RunStateManager`。我方只呼叫，
+**沒有改到 `Assets/Romtyui/` 的任何一個字**。搬過來的是「誰負責在 run 開始時初始化」這個責任。
+
+> 為什麼不各存一份：只要有一條路徑忘了同步，玩家就會看到
+> 「探索扣了血，進戰鬥又滿血」—— 而且不會報錯，只會慢慢對不起來。
+
+**⚠️ SAN 在隊友的程式裡叫 `Energy`。**
+`RunStateManager` 沒有任何 sanity 欄位，它的 `savedCurrentEnergy` / `savedMaxEnergy` 就是 SAN ——
+證據是他自己的 log 印 `SAN {savedCurrentEnergy}/{savedMaxEnergy}`，
+而 `BattleManager` 有一行註解寫「因為你要求 SAN 值不重製」（一般 energy 每回合會重置，SAN 不會）。
+**這個對應只寫在 `PlayerVitals` 一個地方**，其他程式一律用 `San`。
+
+**⚠️ 初始化會讓 `hasSavedRunState` 變 true**，那是隊友 `ApplyToBattle()` 的開關 ——
+往後戰鬥開始會套用我們設的血條，而不是戰鬥自己的預設值。
+**那正是「run 開始就初始化」的用意**，但數值要跟戰鬥組對一次。
+`maxHp <= 0` 會被擋下並警告（寫下去的話玩家一進戰鬥就是 0 血）。
+
+**要設定的**：`GameFlowManager.Starting Max Hp` / `Starting Max San`。
+**預設是 0 ＝ 不初始化**，維持舊行為，所以不會無聲改變現況。
+
+順帶可提：`RunStateManager.cs` 的中文註解疑似不是存成 UTF-8（讀出來是亂碼）。
+
+**已經解鎖的**：
+
+- `RetryPolicy.CostsHealth` / `CostsSanity` **接上了** ——
+  扣不動就會說「付不起」並結案，而且**扣不死人**（扣到 0 以下一律視為付不起）。
+  提示文字也會顯示現在的 HP／SAN，讓玩家判斷划不划算。
 - C 一定案，深淵線事件的觸發條件（「侵蝕度 50% 以上」）才有東西可以判斷。
   **它是每尊神各一條，不是單一全域值**
 

@@ -315,6 +315,47 @@ image.raycastTarget = true;             // 但點得到
 
 ---
 
+## 4.5 離開商店：滑出來的 EXIT 標籤
+
+美術給了 `UI/exitbutton_mat/ExitButton_Shop.png`。行為與探索的 ExitTag 一樣是兩段式，
+差別只在**移動的是 X 座標**（縮在右下角、往右藏）。
+
+```
+ExitTab_Zone   ← 固定不動的感應區（Image alpha 0、raycastTarget）
+└─ Visual      ← 會滑的圖（Image + Button）
+```
+
+### 為什麼要拆成兩層
+
+直覺的寫法是「滑鼠進來 → 把自己移出來」。**那會抖。**
+標籤滑出去之後，游標底下那一點在標籤上的相對位置變了，很容易變成
+「已經不在標籤上」→ exit → 縮回去 → 又碰到 → enter，一秒閃好幾次。
+這是 [HANDOFF.md](HANDOFF.md) §4.6 第五條那個坑，手牌上浮踩過一次。
+
+所以 `SlideOutTab` 掛在**固定不動的感應區**上，移動的是子物件。
+感應區涵蓋「縮著」與「伸出來」兩個位置，游標在裡面怎麼走都不會抖 ——
+順帶還讓玩家不必精準戳到那個小凸角。
+
+### 順手修掉的一個手感問題
+
+`BookmarkHover`（探索的舊版）用的是 `Mathf.Lerp(current, target, deltaTime * speed)` ——
+**這個寫法跟幀率有關**，30fps 與 144fps 的手感不一樣，而且永遠到不了終點。
+`SlideOutTab` 改成指數平滑，任何幀率下軌跡都一樣，靠近終點會吸附。
+
+> 探索的 ExitTag 還在用舊的那支。要換過來的話欄位是一對一的：
+> `hiddenY` → `hiddenOffset.y`、`shownY` → `shownOffset.y`。**這次沒有動它**，
+> 因為它現在運作正常，而改它要重接場景引用。
+
+### 確認流程
+
+點 EXIT **不會直接離開**，跳 `LeaveAskPanel`（「確定要離開嗎？」→ 是／否），
+與探索的 `ContinueAskPanel` 同一個形狀，走 `UIKind.Dialog` 堆疊。
+
+> ⚠️ 面板跳出來時會**強制把標籤收回去** —— 面板蓋住標籤之後它收不到
+> `OnPointerExit`，不主動收的話會一直卡在伸出來的狀態。
+
+---
+
 ## 5. 這批新增／改動的檔案
 
 ### 新增
