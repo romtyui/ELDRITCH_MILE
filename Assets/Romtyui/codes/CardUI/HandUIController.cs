@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -47,7 +47,7 @@ public class HandUIController : MonoBehaviour
 
         if (battleDeck == null)
         {
-            Debug.LogWarning("[HandUIController] battleDeck ¨S¦³«ü©w");
+            Debug.LogWarning("[HandUIController] battleDeck æ²’æœ‰æŒ‡å®š");
             return;
         }
 
@@ -76,25 +76,25 @@ public class HandUIController : MonoBehaviour
     {
         if (deck == null)
         {
-            Debug.LogWarning("[HandUIController] DrawCardsAnimated deck ¬O null");
+            Debug.LogWarning("[HandUIController] DrawCardsAnimated deck æ˜¯ null");
             yield break;
         }
 
         if (cardPrefab == null)
         {
-            Debug.LogWarning("[HandUIController] cardPrefab ¨S¦³«ü©w");
+            Debug.LogWarning("[HandUIController] cardPrefab æ²’æœ‰æŒ‡å®š");
             yield break;
         }
 
         if (handRoot == null)
         {
-            Debug.LogWarning("[HandUIController] handRoot ¨S¦³«ü©w");
+            Debug.LogWarning("[HandUIController] handRoot æ²’æœ‰æŒ‡å®š");
             yield break;
         }
 
         if (handFanLayout == null)
         {
-            Debug.LogWarning("[HandUIController] handFanLayout ¨S¦³«ü©w");
+            Debug.LogWarning("[HandUIController] handFanLayout æ²’æœ‰æŒ‡å®š");
             yield break;
         }
 
@@ -291,7 +291,7 @@ public class HandUIController : MonoBehaviour
 
     //            if (timer >= drawEventTimeout)
     //            {
-    //                Debug.LogWarning("[HandUIController] µ¥«Ý©âµP°Êµe¨Æ¥ó¹O®É¡Aª½±µ¶}©l©âµP");
+    //                Debug.LogWarning("[HandUIController] ç­‰å¾…æŠ½ç‰Œå‹•ç•«äº‹ä»¶é€¾æ™‚ï¼Œç›´æŽ¥é–‹å§‹æŠ½ç‰Œ");
     //                break;
     //            }
 
@@ -300,7 +300,7 @@ public class HandUIController : MonoBehaviour
     //    }
     //    else
     //    {
-    //        Debug.LogWarning("[HandUIController] drawAnimator ¨S¦³«ü©w¡Aª½±µ¶}©l©âµP");
+    //        Debug.LogWarning("[HandUIController] drawAnimator æ²’æœ‰æŒ‡å®šï¼Œç›´æŽ¥é–‹å§‹æŠ½ç‰Œ");
     //    }
 
     //    yield return DrawCardsAnimated(deck, amount);

@@ -1,22 +1,22 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class BattleLeaveButtonUI : MonoBehaviour
 {
     [Header("Refs")]
-    [Tooltip("Â÷¶}¾Ô°««ö¶s")]
+    [Tooltip("é›¢é–‹æˆ°é¬¥æŒ‰éˆ•")]
     public Button leaveButton;
 
     [Header("Scene")]
-    [Tooltip("Â÷¶}¾Ô°««á­n¦^¨ìªº³õ´º¦WºÙ¡A¨Ò¦p³õ´ºA")]
+    [Tooltip("é›¢é–‹æˆ°é¬¥å¾Œè¦å›åˆ°çš„å ´æ™¯åç¨±ï¼Œä¾‹å¦‚å ´æ™¯A")]
     public string returnSceneName = "SceneA";
 
     [Header("Behavior")]
-    [Tooltip("¬O§_§â³o¦¸Â÷¶}µø¬°¤¤³~Â÷¶}¡C¤Ä¿ï«á¡A¤U¦¸¶i¾Ô°«·|ÁÙ­ì¨ì³o³õ¾Ô°«¶}©lª¬ºA")]
+    [Tooltip("æ˜¯å¦æŠŠé€™æ¬¡é›¢é–‹è¦–ç‚ºä¸­é€”é›¢é–‹ã€‚å‹¾é¸å¾Œï¼Œä¸‹æ¬¡é€²æˆ°é¬¥æœƒé‚„åŸåˆ°é€™å ´æˆ°é¬¥é–‹å§‹ç‹€æ…‹")]
     public bool restoreBattleStartNextTime = true;
 
-    [Tooltip("Â÷¶}®É¬O§_¸Ñ°£¼È°±")]
+    [Tooltip("é›¢é–‹æ™‚æ˜¯å¦è§£é™¤æš«åœ")]
     public bool resetTimeScale = true;
 
     private void Awake()
@@ -27,7 +27,7 @@ public class BattleLeaveButtonUI : MonoBehaviour
         if (leaveButton != null)
             leaveButton.onClick.AddListener(OnClickLeaveBattle);
         else
-            Debug.LogWarning("[BattleLeaveButtonUI] §ä¤£¨ì Button¡A½Ğ«ü©w leaveButton ©Î§â¸}¥»±¾¦b Button ¤W", gameObject);
+            Debug.LogWarning("[BattleLeaveButtonUI] æ‰¾ä¸åˆ° Buttonï¼Œè«‹æŒ‡å®š leaveButton æˆ–æŠŠè…³æœ¬æ›åœ¨ Button ä¸Š", gameObject);
     }
 
     private void OnDestroy()
@@ -44,11 +44,11 @@ public class BattleLeaveButtonUI : MonoBehaviour
             {
                 RunStateManager.Instance.pendingRestoreBattleStartDeckSnapshot = true;
 
-                Debug.Log("[BattleLeaveButtonUI] ¤¤³~Â÷¶}¾Ô°«¡G¤U¦¸¶i¤J¾Ô°«®É·|ÁÙ­ì¾Ô°«¶}©lª¬ºA");
+                Debug.Log("[BattleLeaveButtonUI] ä¸­é€”é›¢é–‹æˆ°é¬¥ï¼šä¸‹æ¬¡é€²å…¥æˆ°é¬¥æ™‚æœƒé‚„åŸæˆ°é¬¥é–‹å§‹ç‹€æ…‹");
             }
             else
             {
-                Debug.LogWarning("[BattleLeaveButtonUI] §ä¤£¨ì RunStateManager¡AµLªk³]©w¤U¦¸ÁÙ­ì¾Ô°«¶}©lª¬ºA");
+                Debug.LogWarning("[BattleLeaveButtonUI] æ‰¾ä¸åˆ° RunStateManagerï¼Œç„¡æ³•è¨­å®šä¸‹æ¬¡é‚„åŸæˆ°é¬¥é–‹å§‹ç‹€æ…‹");
             }
         }
 
@@ -57,11 +57,11 @@ public class BattleLeaveButtonUI : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(returnSceneName))
         {
-            Debug.LogWarning("[BattleLeaveButtonUI] returnSceneName ¬OªÅªº¡AµLªk¤Á´«³õ´º");
+            Debug.LogWarning("[BattleLeaveButtonUI] returnSceneName æ˜¯ç©ºçš„ï¼Œç„¡æ³•åˆ‡æ›å ´æ™¯");
             return;
         }
 
-        Debug.Log($"[BattleLeaveButtonUI] Â÷¶}¾Ô°«¡A¸ü¤J³õ´º¡G{returnSceneName}");
+        Debug.Log($"[BattleLeaveButtonUI] é›¢é–‹æˆ°é¬¥ï¼Œè¼‰å…¥å ´æ™¯ï¼š{returnSceneName}");
 
         SceneManager.LoadScene(returnSceneName);
     }

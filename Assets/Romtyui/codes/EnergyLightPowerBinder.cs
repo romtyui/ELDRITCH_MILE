@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class EnergyLightPowerBinder : MonoBehaviour
@@ -8,16 +8,16 @@ public class EnergyLightPowerBinder : MonoBehaviour
     public PSBMonsterLightReveal lightReveal;
 
     [Header("Light Power Mapping")]
-    [Tooltip("¯à¶q¬° 0 ®Éªº³Ì§C«G«×¡C¤£­n³]¦¨ 0¡A§_«h·|¤Ó¶Â¡C")]
+    [Tooltip("èƒ½é‡ç‚º 0 æ™‚çš„æœ€ä½äº®åº¦ã€‚ä¸è¦è¨­æˆ 0ï¼Œå¦å‰‡æœƒå¤ªé»‘ã€‚")]
     [Range(0f, 1f)]
     public float minLightPower = 0.25f;
 
-    [Tooltip("¯à¶qº¡®Éªº³Ì°ª«G«×¡C")]
+    [Tooltip("èƒ½é‡æ»¿æ™‚çš„æœ€é«˜äº®åº¦ã€‚")]
     [Range(0f, 1f)]
     public float maxLightPower = 1f;
 
     [Header("Response Curve")]
-    [Tooltip("¼Æ­È¶V¤j¡A¯à¶q¤U­°®Éµe­±¶V§ÖÅÜ·t¡C«ØÄ³ 1.5 ~ 3¡C")]
+    [Tooltip("æ•¸å€¼è¶Šå¤§ï¼Œèƒ½é‡ä¸‹é™æ™‚ç•«é¢è¶Šå¿«è®Šæš—ã€‚å»ºè­° 1.5 ~ 3ã€‚")]
     public float lightResponsePower = 2f;
 
     [Header("Smooth")]

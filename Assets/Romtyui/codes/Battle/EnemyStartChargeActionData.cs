@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Enemy Actions/Start Charge")]
 public class EnemyStartChargeActionData : EnemyActionData
@@ -17,6 +17,6 @@ public class EnemyStartChargeActionData : EnemyActionData
 
         context.enemy.StartCharge(chargeValue, countdownTurns);
 
-        Debug.Log($"[EnemyAction] {context.enemy.unitName} ¶}©l»W¤O¡G{chargeValue}¡A­Ë¼Æ {countdownTurns} ¦^¦X");
+        Debug.Log($"[EnemyAction] {context.enemy.unitName} é–‹å§‹è“„åŠ›ï¼š{chargeValue}ï¼Œå€’æ•¸ {countdownTurns} å›åˆ");
     }
 }

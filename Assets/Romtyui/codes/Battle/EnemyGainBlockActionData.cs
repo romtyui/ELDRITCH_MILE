@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Enemy Actions/Gain Block")]
 public class EnemyGainBlockActionData : EnemyActionData
@@ -12,13 +12,13 @@ public class EnemyGainBlockActionData : EnemyActionData
 
         context.enemy.GainBlock(amount);
 
-        Debug.Log($"{context.enemy.unitName} Àò±o {amount} ®æ¾×");
+        Debug.Log($"{context.enemy.unitName} ç²å¾— {amount} æ ¼æ“‹");
     }
     //public override TooltipEntry GetTooltipEntry()
     //{
     //    return new TooltipEntry(
-    //        "¨¾¿m",
-    //        $"Àò±o {amount} ÂI®æ¾×"
+    //        "é˜²ç¦¦",
+    //        $"ç²å¾— {amount} é»æ ¼æ“‹"
     //    );
     //}
 }

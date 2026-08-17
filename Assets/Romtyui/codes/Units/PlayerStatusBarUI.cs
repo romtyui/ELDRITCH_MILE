@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerStatusBarUI : MonoBehaviour
@@ -29,19 +29,19 @@ public class PlayerStatusBarUI : MonoBehaviour
 
         if (playerUnit == null)
         {
-            Debug.LogWarning("[PlayerStatusBarUI] playerUnit ¨S¦³«ü©w");
+            Debug.LogWarning("[PlayerStatusBarUI] playerUnit æ²’æœ‰æŒ‡å®š");
             return;
         }
 
         if (iconDatabase == null)
         {
-            Debug.LogWarning("[PlayerStatusBarUI] iconDatabase ¨S¦³«ü©w");
+            Debug.LogWarning("[PlayerStatusBarUI] iconDatabase æ²’æœ‰æŒ‡å®š");
             return;
         }
 
         if (statusIconPrefab == null)
         {
-            Debug.LogWarning("[PlayerStatusBarUI] statusIconPrefab ¨S¦³«ü©w");
+            Debug.LogWarning("[PlayerStatusBarUI] statusIconPrefab æ²’æœ‰æŒ‡å®š");
             return;
         }
 

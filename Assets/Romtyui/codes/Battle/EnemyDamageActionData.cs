@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Enemy Actions/Damage Player")]
 public class EnemyDamageActionData : EnemyActionData
@@ -13,13 +13,13 @@ public class EnemyDamageActionData : EnemyActionData
 
         context.enemy.DealDamageTo(context.player, amount);
 
-        Debug.Log($"{context.enemy.unitName} §ðÀ»ª±®a¡A°òÂ¦¶Ë®` {amount}");
+        Debug.Log($"{context.enemy.unitName} Â§Ã°Ã€Â»ÂªÂ±Â®aÂ¡AÂ°Ã²Ã‚Â¦Â¶Ã‹Â®` {amount}");
     }
     //public override TooltipEntry GetTooltipEntry()
     //{
     //    return new TooltipEntry(
-    //        "§ðÀ»",
-    //        $"§ðÀ»³y¦¨ {amount} ÂI¶Ë®`"
+    //        "Â§Ã°Ã€Â»",
+    //        $"Â§Ã°Ã€Â»Â³yÂ¦Â¨ {amount} Ã‚IÂ¶Ã‹Â®`"
     //    );
     //}
 }

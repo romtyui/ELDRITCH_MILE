@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Enemy Actions/Apply Regeneration To Self")]
 public class EnemyApplyRegenerationToSelfActionData : EnemyActionData
@@ -36,18 +36,18 @@ public class EnemyApplyRegenerationToSelfActionData : EnemyActionData
         {
             case ApplyMode.AlwaysAdd:
                 self.ApplyStatus(StatusType.Regeneration, amount);
-                Debug.Log($"[EnemyAction] {self.unitName} Àò±o¦A¥Í {amount} ¼h¡A¥Ø«e {self.GetStatus(StatusType.Regeneration)} ¼h");
+                Debug.Log($"[EnemyAction] {self.unitName} ï¿½ï¿½oï¿½Aï¿½ï¿½ {amount} ï¿½hï¿½Aï¿½Ø«e {self.GetStatus(StatusType.Regeneration)} ï¿½h");
                 break;
 
             case ApplyMode.OnlyIfMissing:
                 if (currentRegeneration <= 0)
                 {
                     self.ApplyStatus(StatusType.Regeneration, amount);
-                    Debug.Log($"[EnemyAction] {self.unitName} ¨S¦³¦A¥Í¡AÀò±o¦A¥Í {amount} ¼h");
+                    Debug.Log($"[EnemyAction] {self.unitName} ï¿½Sï¿½ï¿½ï¿½Aï¿½Í¡Aï¿½ï¿½oï¿½Aï¿½ï¿½ {amount} ï¿½h");
                 }
                 else
                 {
-                    Debug.Log($"[EnemyAction] {self.unitName} ¤w¦³¦A¥Í {currentRegeneration} ¼h¡A¤£Ä²µo");
+                    Debug.Log($"[EnemyAction] {self.unitName} ï¿½wï¿½ï¿½ï¿½Aï¿½ï¿½ {currentRegeneration} ï¿½hï¿½Aï¿½ï¿½Ä²ï¿½o");
                 }
                 break;
 
@@ -55,17 +55,17 @@ public class EnemyApplyRegenerationToSelfActionData : EnemyActionData
                 if (currentRegeneration > 0)
                 {
                     self.ApplyStatus(StatusType.Regeneration, amount);
-                    Debug.Log($"[EnemyAction] {self.unitName} ¤w¦³¦A¥Í¡AÃB¥~Àò±o {amount} ¼h¡A¥Ø«e {self.GetStatus(StatusType.Regeneration)} ¼h");
+                    Debug.Log($"[EnemyAction] {self.unitName} ï¿½wï¿½ï¿½ï¿½Aï¿½Í¡Aï¿½Bï¿½~ï¿½ï¿½o {amount} ï¿½hï¿½Aï¿½Ø«e {self.GetStatus(StatusType.Regeneration)} ï¿½h");
                 }
                 else
                 {
-                    Debug.Log($"[EnemyAction] {self.unitName} ¨S¦³¦A¥Í¡A¤£Ä²µo");
+                    Debug.Log($"[EnemyAction] {self.unitName} ï¿½Sï¿½ï¿½ï¿½Aï¿½Í¡Aï¿½ï¿½Ä²ï¿½o");
                 }
                 break;
 
             case ApplyMode.SetToValue:
                 self.SetStatus(StatusType.Regeneration, amount);
-                Debug.Log($"[EnemyAction] {self.unitName} ªº¦A¥Í³Q³]©w¬° {amount} ¼h");
+                Debug.Log($"[EnemyAction] {self.unitName} ï¿½ï¿½ï¿½Aï¿½Í³Qï¿½]ï¿½wï¿½ï¿½ {amount} ï¿½h");
                 break;
         }
 

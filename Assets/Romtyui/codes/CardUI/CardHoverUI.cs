@@ -1,8 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 
-public class CardHoverUI : MonoBehaviour,IPointerEnterHandler, IPointerExitHandler //, IPointerClickHandler
+public class CardHoverUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler //, IPointerClickHandler
 {
     private HandFanLayout handLayout;
     private CardDragUI cardDrag;

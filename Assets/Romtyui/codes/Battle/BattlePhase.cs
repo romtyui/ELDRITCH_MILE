@@ -1,4 +1,4 @@
-public enum BattlePhase
+﻿public enum BattlePhase
 {
     None,
     PlayerTurn,

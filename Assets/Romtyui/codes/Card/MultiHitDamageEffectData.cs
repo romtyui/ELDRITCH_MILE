@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Effects/Multi Hit Damage")]
 public class MultiHitDamageEffectData : CardEffectData
@@ -21,10 +21,10 @@ public class MultiHitDamageEffectData : CardEffectData
 
             int finalDamage = damagePerHit;
 
-            // ¤§«á¥i¥[¡G¤O¶q¡Bµê®z¡B©ö¶Ëµ¥­×¥¿
+            // ä¹‹å¾Œå¯åŠ ï¼šåŠ›é‡ã€è™›å¼±ã€æ˜“å‚·ç­‰ä¿®æ­£
             context.target.TakeDamage(finalDamage);
 
-            Debug.Log($"¦h¬q¶Ë®`²Ä {i + 1} ¤U¡G³y¦¨ {finalDamage} ¶Ë®`");
+            Debug.Log($"å¤šæ®µå‚·å®³ç¬¬ {i + 1} ä¸‹ï¼šé€ æˆ {finalDamage} å‚·å®³");
         }
     }
 }

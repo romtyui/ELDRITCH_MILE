@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyFormationSpawner : MonoBehaviour
@@ -7,13 +7,13 @@ public class EnemyFormationSpawner : MonoBehaviour
     public EnemyEncounterPoolData encounterPool;
 
     [Header("Stage Spawn Rule")]
-    [Tooltip("false¡G¼Ò¦¡¤@¡A¨Ï¥Î EncounterPool ­ì¥»³W«h¡Ctrue¡G¼Ò¦¡¤G¡A¨Ï¥Î¥Ø«eÃö¥dÅv­«­­¨î¡C")]
+    [Tooltip("falseï¼šæ¨¡å¼ä¸€ï¼Œä½¿ç”¨ EncounterPool åŸæœ¬è¦å‰‡ã€‚trueï¼šæ¨¡å¼äºŒï¼Œä½¿ç”¨ç›®å‰é—œå¡æ¬Šé‡é™åˆ¶ã€‚")]
     public bool useStageWeightRule = false;
 
-    [Tooltip("¼Ò¦¡¤G¨Ï¥Î¡C³o¤@Ãö¥u¯à¥X²{ weight ¤p©óµ¥©ó³o­Ó¼Æ­Èªº©Çª«²Õ¦X¡C")]
+    [Tooltip("æ¨¡å¼äºŒä½¿ç”¨ã€‚é€™ä¸€é—œåªèƒ½å‡ºç¾ weight å°æ–¼ç­‰æ–¼é€™å€‹æ•¸å€¼çš„æ€ªç‰©çµ„åˆã€‚")]
     public int currentStageMaxWeight = 1;
 
-    [Tooltip("¼Ò¦¡¤G¨Ï¥Î¡Cfalse¡G¥u©â´¶³q©Ç¡Ctrue¡G¥u©â Boss¡C")]
+    [Tooltip("æ¨¡å¼äºŒä½¿ç”¨ã€‚falseï¼šåªæŠ½æ™®é€šæ€ªã€‚trueï¼šåªæŠ½ Bossã€‚")]
     public bool currentStageIsBoss = false;
 
     [Header("Enemy Slots")]
@@ -37,45 +37,45 @@ public class EnemyFormationSpawner : MonoBehaviour
 
         if (encounterPool == null)
         {
-            Debug.LogWarning("[EnemyFormationSpawner] encounterPool ¨S¦³«ü©w");
+            Debug.LogWarning("[EnemyFormationSpawner] encounterPool æ²’æœ‰æŒ‡å®š");
             return;
         }
 
-        // 1. ¦pªG¦³«O¯dªº©Çª«²Õ¡AÀu¥ı¨Ï¥Î«O¯d²Õ
-        // ³o³q±`¥Nªí¡Gª±®a¤¤³~Â÷¶}¹CÀ¸«á­«·s¶i¤J¾Ô°«
+        // 1. å¦‚æœæœ‰ä¿ç•™çš„æ€ªç‰©çµ„ï¼Œå„ªå…ˆä½¿ç”¨ä¿ç•™çµ„
+        // é€™é€šå¸¸ä»£è¡¨ï¼šç©å®¶ä¸­é€”é›¢é–‹éŠæˆ²å¾Œé‡æ–°é€²å…¥æˆ°é¬¥
         if (RunStateManager.Instance != null &&
             RunStateManager.Instance.TryGetReservedFormation(out formation))
         {
             if (formation != null)
             {
-                debugSpawnMode = "«O¯d¾Ô°«¡G¨Ï¥Î¤W¦¸«O¯dªº©Çª«²Õ";
+                debugSpawnMode = "ä¿ç•™æˆ°é¬¥ï¼šä½¿ç”¨ä¸Šæ¬¡ä¿ç•™çš„æ€ªç‰©çµ„";
 
-                Debug.Log($"[EnemyFormationSpawner] ¨Ï¥Î«O¯d©Çª«²Õ¡G{formation.name}");
+                Debug.Log($"[EnemyFormationSpawner] ä½¿ç”¨ä¿ç•™æ€ªç‰©çµ„ï¼š{formation.name}");
 
                 SpawnFormation(formation);
                 return;
             }
         }
 
-        // 2. ¨S¦³«O¯d©Çª«²Õ¡A¤~¨«§A­ì¥»ªº©â©Ç³W«h
+        // 2. æ²’æœ‰ä¿ç•™æ€ªç‰©çµ„ï¼Œæ‰èµ°ä½ åŸæœ¬çš„æŠ½æ€ªè¦å‰‡
         if (useStageWeightRule)
         {
             formation = GetFormationByStageRule();
         }
         else
         {
-            debugSpawnMode = "¼Ò¦¡¤@¡GEncounterPool ­ì¥»³W«h";
+            debugSpawnMode = "æ¨¡å¼ä¸€ï¼šEncounterPool åŸæœ¬è¦å‰‡";
             formation = encounterPool.GetRandomFormation();
         }
 
         if (formation == null)
         {
-            Debug.LogWarning("[EnemyFormationSpawner] ¨S¦³¥i¥Îªº©Çª«²Õ¦X");
+            Debug.LogWarning("[EnemyFormationSpawner] æ²’æœ‰å¯ç”¨çš„æ€ªç‰©çµ„åˆ");
             return;
         }
 
-        // 3. ·s©â¨ìªº©Çª«²Õ¥ı«O¯d°_¨Ó
-        // ª`·N¡G³o¸Ì¥u¬O«O¯d¡A¤£¥Nªí®ø¯Ó©Çª«¦À
+        // 3. æ–°æŠ½åˆ°çš„æ€ªç‰©çµ„å…ˆä¿ç•™èµ·ä¾†
+        // æ³¨æ„ï¼šé€™è£¡åªæ˜¯ä¿ç•™ï¼Œä¸ä»£è¡¨æ¶ˆè€—æ€ªç‰©æ± 
         if (RunStateManager.Instance != null)
         {
             RunStateManager.Instance.ReserveFormation(formation);
@@ -87,8 +87,8 @@ public class EnemyFormationSpawner : MonoBehaviour
     private EnemyFormationData GetFormationByStageRule()
     {
         debugSpawnMode = currentStageIsBoss
-            ? $"¼Ò¦¡¤G¡GBoss Ãö¡AMaxWeight = {currentStageMaxWeight}"
-            : $"¼Ò¦¡¤G¡G´¶³q/µ×­^Ãö¡AMaxWeight = {currentStageMaxWeight}";
+            ? $"æ¨¡å¼äºŒï¼šBoss é—œï¼ŒMaxWeight = {currentStageMaxWeight}"
+            : $"æ¨¡å¼äºŒï¼šæ™®é€š/èè‹±é—œï¼ŒMaxWeight = {currentStageMaxWeight}";
 
         debugCandidateNames.Clear();
 
@@ -130,7 +130,7 @@ public class EnemyFormationSpawner : MonoBehaviour
         if (candidates.Count == 0)
         {
             Debug.LogWarning(
-                $"[EnemyFormationSpawner] ¼Ò¦¡¤G¨S¦³¥i¥Î²Õ¦X¡CBossOnly = {currentStageIsBoss}, MaxWeight = {currentStageMaxWeight}"
+                $"[EnemyFormationSpawner] æ¨¡å¼äºŒæ²’æœ‰å¯ç”¨çµ„åˆã€‚BossOnly = {currentStageIsBoss}, MaxWeight = {currentStageMaxWeight}"
             );
 
             return null;
@@ -144,7 +144,7 @@ public class EnemyFormationSpawner : MonoBehaviour
         encounterPool.MarkFormationUsed(selectedEntry.formation);
 
         Debug.Log(
-            $"[EnemyFormationSpawner] ¼Ò¦¡¤G©â¨ì²Õ¦X¡G{selectedEntry.formation.formationName}, Weight = {selectedEntry.weight}, Boss = {selectedEntry.isBoss}"
+            $"[EnemyFormationSpawner] æ¨¡å¼äºŒæŠ½åˆ°çµ„åˆï¼š{selectedEntry.formation.formationName}, Weight = {selectedEntry.weight}, Boss = {selectedEntry.isBoss}"
         );
 
         return selectedEntry.formation;
@@ -171,13 +171,13 @@ public class EnemyFormationSpawner : MonoBehaviour
 
             if (entry.enemyData == null)
             {
-                Debug.LogWarning($"[EnemyFormationSpawner] {formation.formationName} ¦³ªÅªº enemyData");
+                Debug.LogWarning($"[EnemyFormationSpawner] {formation.formationName} æœ‰ç©ºçš„ enemyData");
                 continue;
             }
 
             if (entry.spawnIndex < 0 || entry.spawnIndex >= enemySlots.Count)
             {
-                Debug.LogWarning($"[EnemyFormationSpawner] spawnIndex ¶W¥X½d³ò¡G{entry.spawnIndex}");
+                Debug.LogWarning($"[EnemyFormationSpawner] spawnIndex è¶…å‡ºç¯„åœï¼š{entry.spawnIndex}");
                 continue;
             }
 
@@ -197,7 +197,7 @@ public class EnemyFormationSpawner : MonoBehaviour
 
         RegisterEnemiesToBattleManager();
 
-        Debug.Log($"[EnemyFormationSpawner] ¥Í¦¨©Çª«²Õ¦X¡G{formation.formationName}");
+        Debug.Log($"[EnemyFormationSpawner] ç”Ÿæˆæ€ªç‰©çµ„åˆï¼š{formation.formationName}");
     }
 
     private void ClearSlots()
@@ -221,7 +221,7 @@ public class EnemyFormationSpawner : MonoBehaviour
     {
         if (battleManager == null)
         {
-            Debug.LogWarning("[EnemyFormationSpawner] battleManager ¨S¦³«ü©w");
+            Debug.LogWarning("[EnemyFormationSpawner] battleManager æ²’æœ‰æŒ‡å®š");
             return;
         }
 
@@ -242,7 +242,7 @@ public class EnemyFormationSpawner : MonoBehaviour
             ? battleManager.enemies[0]
             : null;
 
-        Debug.Log($"[EnemyFormationSpawner] ¤wµn°O {battleManager.enemies.Count} °¦©Çª«");
+        Debug.Log($"[EnemyFormationSpawner] å·²ç™»è¨˜ {battleManager.enemies.Count} éš»æ€ªç‰©");
     }
 
     [ContextMenu("Reset Encounter Pool Used Formations")]
@@ -259,7 +259,7 @@ public class EnemyFormationSpawner : MonoBehaviour
         currentStageIsBoss = isBossStage;
 
         Debug.Log(
-            $"[EnemyFormationSpawner] ³]©wÃö¥d©Çª«³W«h¡GuseStageWeightRule = {useStageWeightRule}, MaxWeight = {currentStageMaxWeight}, IsBoss = {currentStageIsBoss}"
+            $"[EnemyFormationSpawner] è¨­å®šé—œå¡æ€ªç‰©è¦å‰‡ï¼šuseStageWeightRule = {useStageWeightRule}, MaxWeight = {currentStageMaxWeight}, IsBoss = {currentStageIsBoss}"
         );
     }
 }

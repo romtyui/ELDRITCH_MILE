@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
+  m_Name: goat_dagger
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardId: goat_dagger
+  cardName: goat_dagger
+  description: "\u5C0D\u96A8\u6A5F\u6575\u4EBA\u9020\u6210 {damage} \u9EDE\u50B7\u5BB3\uFF0C\u91CD\u8907{bowHitCount}
+    \u6B21\u3002"
+  visualData: {fileID: 11400000, guid: f0d899786546e32498542be106a7835a, type: 2}
+  cardType: 1
+  rarity: 0
+  targetType: 3
+  baseCost: 1
+  exhaust: 0
+  ethereal: 0
+  retain: 0
+  isToken: 1
+  tokenId: goat_token
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
+  effects:
+  - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
+  - {fileID: 11400000, guid: b11532d897f1d754a8613e4104ed1ee2, type: 2}

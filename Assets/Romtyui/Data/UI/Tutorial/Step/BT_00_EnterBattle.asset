@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 915cab61ed86c724d8f03d93c90cdea6, type: 3}
+  m_Name: BT_00_EnterBattle
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
+  stepId: 
+  dialogueLines:
+  - speaker: {fileID: 11400000, guid: 072085e8c94647149a700adcd64b275d, type: 2}
+    overridePortraitSide: 0
+    portraitSide: 0
+    portraitStyleId: Style_1
+    allowInlinePortraitChange: 1
+    text: "\u5C0F\u5FC3\uFF0C\u90A3\u6771\u897F\u5DF2\u7D93\u6CE8\u610F\u5230\u6211\u5011\u4E86\u3002{portrait:Style_2}\n\u63A5\u4E0B\u4F86\u53EF\u4E0D\u80FD\u5927\u610F\u3002"
+    useTypewriter: 1
+    typewriterInterval: 0.05
+    allowClickToCompleteText: 0
+  pauseGameDuringDialogue: 1
+  message: 
+  dialogueOnly: 1
+  exampleSprite: {fileID: 0}
+  hideExampleWhenEmpty: 1
+  advanceMode: 0
+  requiredSignal: 
+  signalAdvanceDelay: 0.15
+  requiredSignalCount: 1
+  requireConditionToAdvance: 1
+  hideVisualsAfterInteractionStart: 0
+  interactionStartSignal: 
+  incorrectSignals: []
+  correctionDialogueLines: []
+  showNextButton: 1
+  showBackButton: 1
+  showSkipButton: 0
+  allowBack: 1
+  targetId: 
+  highlightTarget: 0
+  highlightPadding: {x: 20, y: 20}
+  highlightDuringDialogue: 1
+  dialogPosition: 1
+  dialogSpacing: 24
+  positionDialoguePanel: 1
+  dialogueTargetId: 
+  dialoguePosition: 1
+  dialogueSpacing: 10
+  dialogueScreenPadding: {x: 24, y: 24}
+  followDialogueTarget: 1
+  autoAdvanceAfterSeconds: 0
+  logStep: 1

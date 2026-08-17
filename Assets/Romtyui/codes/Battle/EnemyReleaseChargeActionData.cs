@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Enemy Actions/Release Charge")]
 public class EnemyReleaseChargeActionData : EnemyActionData
@@ -24,7 +24,7 @@ public class EnemyReleaseChargeActionData : EnemyActionData
         {
             context.enemy.RequestStayOnCurrentIntent();
 
-            Debug.Log($"[EnemyAction] {context.enemy.unitName} Ä~Äò»W¤O¡A³Ñ¾l¦^¦X {turnsLeft}¡A»W¤O­È {context.enemy.chargeValue}");
+            Debug.Log($"[EnemyAction] {context.enemy.unitName} ç¹¼çºŒè“„åŠ›ï¼Œå‰©é¤˜å›åˆ {turnsLeft}ï¼Œè“„åŠ›å€¼ {context.enemy.chargeValue}");
             return;
         }
 
@@ -36,12 +36,12 @@ public class EnemyReleaseChargeActionData : EnemyActionData
 
         if (damage <= 0)
         {
-            Debug.Log($"[EnemyAction] {context.enemy.unitName} »W¤O­È¬° 0¡A¤£³y¦¨¶Ë®`");
+            Debug.Log($"[EnemyAction] {context.enemy.unitName} è“„åŠ›å€¼ç‚º 0ï¼Œä¸é€ æˆå‚·å®³");
             return;
         }
 
         context.enemy.DealDamageTo(context.player, damage);
 
-        Debug.Log($"[EnemyAction] {context.enemy.unitName} ÄÀ©ñ»W¤O¡A³y¦¨ {damage} ¶Ë®`");
+        Debug.Log($"[EnemyAction] {context.enemy.unitName} é‡‹æ”¾è“„åŠ›ï¼Œé€ æˆ {damage} å‚·å®³");
     }
 }

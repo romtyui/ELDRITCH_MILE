@@ -1,13 +1,13 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Card Visual Data")]
 public class CardVisualData : ScriptableObject
 {
     [Header("Card Images")]
-    public Sprite artworkSprite;     // ªZ¾¹¼h
-    public Sprite cardFaceSprite;    // ¥d­±¼h
-    public Sprite cardFrameSprite;   // ¥d®Ø¼h
-    public Sprite maskSprite;        // »Xª©
+    public Sprite artworkSprite;     // ÂªZÂ¾Â¹Â¼h
+    public Sprite cardFaceSprite;    // Â¥dÂ­Â±Â¼h
+    public Sprite cardFrameSprite;   // Â¥dÂ®Ã˜Â¼h
+    public Sprite maskSprite;        // Â»XÂªÂ©
 
     [Header("Text Colors")]
     public Color nameTextColor = Color.white;

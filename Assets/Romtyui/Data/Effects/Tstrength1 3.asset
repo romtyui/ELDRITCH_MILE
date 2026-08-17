@@ -9,7 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b11ace66755ed040a04958b3a57466b, type: 3}
-  m_Name: TStrength3
-  m_EditorClassIdentifier: Assembly-CSharp::GainTemporaryStrengthEffectData
+  m_Script: {fileID: 11500000, guid: 911186bb40bce4e4f9367126cace4295, type: 3}
+  m_Name: Tstrength1 3
+  m_EditorClassIdentifier: Assembly-CSharp::ApplyStatusEffectData
+  statusType: 1
   amount: 3
+  applyTarget: 0

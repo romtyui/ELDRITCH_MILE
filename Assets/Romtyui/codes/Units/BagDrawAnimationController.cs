@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class BagDrawAnimationController : MonoBehaviour
@@ -29,7 +29,7 @@ public class BagDrawAnimationController : MonoBehaviour
     {
         if (animator == null)
         {
-            Debug.LogWarning("[BagDrawAnimationController] animator ¨S¦³«ü©w");
+            Debug.LogWarning("[BagDrawAnimationController] animator æ²’æœ‰æŒ‡å®š");
 
             if (drawRoutine != null)
                 yield return drawRoutine();
@@ -39,11 +39,11 @@ public class BagDrawAnimationController : MonoBehaviour
 
         if (pauseTime >= animationLength)
         {
-            Debug.LogWarning($"[BagDrawAnimationController] pauseTime ¥²¶·¤p©ó animationLength¡CpauseTime={pauseTime}, animationLength={animationLength}");
+            Debug.LogWarning($"[BagDrawAnimationController] pauseTime å¿…é ˆå°æ–¼ animationLengthã€‚pauseTime={pauseTime}, animationLength={animationLength}");
         }
 
         if (debugLog)
-            Debug.Log($"[BagDraw] ¶}©l¼½©ñ¡ATrigger={drawTriggerName}, DrawState={drawStateName}");
+            Debug.Log($"[BagDraw] é–‹å§‹æ’­æ”¾ï¼ŒTrigger={drawTriggerName}, DrawState={drawStateName}");
 
         animator.speed = 1f;
         animator.ResetTrigger(drawTriggerName);
@@ -54,7 +54,7 @@ public class BagDrawAnimationController : MonoBehaviour
 
         if (!enteredState)
         {
-            Debug.LogWarning($"[BagDraw] ¨S¦³¶i¤Jª¬ºA {drawStateName}¡A½ĞÀË¬d Animator State ¦WºÙ / Trigger / Transition");
+            Debug.LogWarning($"[BagDraw] æ²’æœ‰é€²å…¥ç‹€æ…‹ {drawStateName}ï¼Œè«‹æª¢æŸ¥ Animator State åç¨± / Trigger / Transition");
 
             if (drawRoutine != null)
                 yield return drawRoutine();
@@ -63,12 +63,12 @@ public class BagDrawAnimationController : MonoBehaviour
         }
 
         if (debugLog)
-            Debug.Log($"[BagDraw] ¤w¶i¤J {drawStateName}¡Aµ¥«İ¨ì {pauseTime} ¬í");
+            Debug.Log($"[BagDraw] å·²é€²å…¥ {drawStateName}ï¼Œç­‰å¾…åˆ° {pauseTime} ç§’");
 
         yield return WaitUntilAnimationTime(pauseTime);
 
         if (debugLog)
-            Debug.Log("[BagDraw] ¨ì¹F¼È°±ÂI¡A¼È°±¨Ã¶}©l©âµP");
+            Debug.Log("[BagDraw] åˆ°é”æš«åœé»ï¼Œæš«åœä¸¦é–‹å§‹æŠ½ç‰Œ");
 
         animator.speed = 0f;
 
@@ -76,14 +76,14 @@ public class BagDrawAnimationController : MonoBehaviour
             yield return drawRoutine();
 
         if (debugLog)
-            Debug.Log("[BagDraw] ©âµP§¹¦¨¡AÄ~Äò¼½©ñ­I¥]°Êµe");
+            Debug.Log("[BagDraw] æŠ½ç‰Œå®Œæˆï¼Œç¹¼çºŒæ’­æ”¾èƒŒåŒ…å‹•ç•«");
 
         animator.speed = 1f;
 
         yield return WaitUntilAnimationTime(animationLength);
 
         if (debugLog)
-            Debug.Log($"[BagDraw] ¼½©ñ§¹¦¨¡A¤Á¦^ {idleStateName}");
+            Debug.Log($"[BagDraw] æ’­æ”¾å®Œæˆï¼Œåˆ‡å› {idleStateName}");
 
         animator.Play(idleStateName, 0, 0f);
         animator.speed = 1f;

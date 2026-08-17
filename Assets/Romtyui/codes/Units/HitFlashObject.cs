@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class HitFlashObject : MonoBehaviour
@@ -21,7 +21,7 @@ public class HitFlashObject : MonoBehaviour
     {
         if (hitObject == null)
         {
-            Debug.LogWarning("[HitFlashObject] hitObject ¨S¦³«ü©w");
+            Debug.LogWarning("[HitFlashObject] hitObject æ²’æœ‰æŒ‡å®š");
             return;
         }
 

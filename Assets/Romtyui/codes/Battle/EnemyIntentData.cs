@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Enemy Intent")]
@@ -13,7 +13,7 @@ public class EnemyIntentData : ScriptableObject
     [Header("Intent UI")]
     public Sprite intentIcon;
 
-    [Tooltip("¦pªG¤£·Q¦Û°Ê­pºâ¶Ë®`¡A¥i¥H¤â°Ê¶ñÅã¥Ü¤å¦r¡C¨Ò¦p¡G6¡B6x2¡B?")]
+    [Tooltip("å¦‚æœä¸æƒ³è‡ªå‹•è¨ˆç®—å‚·å®³ï¼Œå¯ä»¥æ‰‹å‹•å¡«é¡¯ç¤ºæ–‡å­—ã€‚ä¾‹å¦‚ï¼š6ã€6x2ã€?")]
     public string damageTextOverride;
 
     [Header("Actions")]

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -8,10 +8,10 @@ public class UIRaycastDebug : MonoBehaviour
     [Header("Debug")]
     public bool enableDebug = true;
 
-    [Tooltip("¬O§_¦b·Æ¹«¥ªÁäÂIÀ»®É¿é¥X¥Ø«e·Æ¹«©³¤Uªº UI Raycast µ²ªG")]
+    [Tooltip("æ˜¯å¦åœ¨æ»‘é¼ å·¦éµé»æ“Šæ™‚è¼¸å‡ºç›®å‰æ»‘é¼ åº•ä¸‹çš„ UI Raycast çµæœ")]
     public bool printOnLeftClick = true;
 
-    [Tooltip("³Ì¦h¦C¥X´X­Ó Raycast ª«¥ó")]
+    [Tooltip("æœ€å¤šåˆ—å‡ºå¹¾å€‹ Raycast ç‰©ä»¶")]
     public int maxPrintCount = 20;
 
     private void Update()
@@ -33,7 +33,7 @@ public class UIRaycastDebug : MonoBehaviour
     {
         if (EventSystem.current == null)
         {
-            Debug.LogWarning("[UIRaycastDebug] EventSystem.current ¬O null");
+            Debug.LogWarning("[UIRaycastDebug] EventSystem.current æ˜¯ null");
             return;
         }
 

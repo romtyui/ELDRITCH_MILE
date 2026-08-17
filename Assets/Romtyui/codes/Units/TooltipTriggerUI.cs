@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -35,7 +35,7 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
         preferredSide = side;
     }
 
-    // «O¯dÂÂª© SetTooltip¡AÁ×§K EnemyUnit / CardViewUI / StatusIconUI ÂÂ©I¥s³ø¿ù
+    // Â«OÂ¯dÃ‚Ã‚ÂªÂ© SetTooltipÂ¡AÃÃ—Â§K EnemyUnit / CardViewUI / StatusIconUI Ã‚Ã‚Â©IÂ¥sÂ³Ã¸Â¿Ã¹
     public void SetTooltip(string title, string body, string keyword = "")
     {
         List<TooltipEntry> newEntries = new List<TooltipEntry>();
@@ -45,7 +45,7 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
             newEntries.Add(new TooltipEntry(title, body));
 
             if (!string.IsNullOrWhiteSpace(keyword))
-                newEntries.Add(new TooltipEntry("»¡©ú", keyword));
+                newEntries.Add(new TooltipEntry("Â»Â¡Â©Ãº", keyword));
         }
 
         SetEntries(newEntries, preferredSide);

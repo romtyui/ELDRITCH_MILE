@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 915cab61ed86c724d8f03d93c90cdea6, type: 3}
+  m_Name: BT_04_PlayerHPExplain
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
+  stepId: 
+  dialogueLines: []
+  pauseGameDuringDialogue: 1
+  message: "\u9019\u662F\u4F60\u7684\u751F\u547D\u503C\u3002\u53D7\u5230\u6575\u4EBA\u653B\u64CA\u6642\u751F\u547D\u6703\u964D\u4F4E\uFF1B\u751F\u547D\u6B78\u96F6\u5F8C\uFF0C\u9019\u5834\u6230\u9B25\u5C31\u6703\u5931\u6557\u3002"
+  dialogueOnly: 1
+  exampleSprite: {fileID: 0}
+  hideExampleWhenEmpty: 1
+  advanceMode: 0
+  requiredSignal: 
+  signalAdvanceDelay: 0.15
+  requiredSignalCount: 1
+  requireConditionToAdvance: 1
+  hideVisualsAfterInteractionStart: 0
+  interactionStartSignal: 
+  incorrectSignals: []
+  correctionDialogueLines: []
+  showNextButton: 1
+  showBackButton: 1
+  showSkipButton: 1
+  allowBack: 1
+  targetId: Battle_PlayerHP
+  highlightTarget: 1
+  highlightPadding: {x: 20, y: 20}
+  highlightDuringDialogue: 1
+  dialogPosition: 6
+  dialogSpacing: 24
+  positionDialoguePanel: 1
+  dialogueTargetId: Battle_PlayerHP
+  dialoguePosition: 6
+  dialogueSpacing: 10
+  dialogueScreenPadding: {x: 24, y: 24}
+  followDialogueTarget: 1
+  autoAdvanceAfterSeconds: 0
+  logStep: 1

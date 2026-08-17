@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 915cab61ed86c724d8f03d93c90cdea6, type: 3}
+  m_Name: BT_11_BattleTutorialComplete
+  m_EditorClassIdentifier: Assembly-CSharp::TutorialStepData
+  stepId: 
+  dialogueLines:
+  - speaker: {fileID: 11400000, guid: 072085e8c94647149a700adcd64b275d, type: 2}
+    overridePortraitSide: 0
+    portraitSide: 0
+    portraitStyleId: Style_1
+    allowInlinePortraitChange: 0
+    text: "\u770B\u4F86\u4F60\u5DF2\u7D93\u7406\u89E3\u57FA\u672C\u7684\u6230\u9B25\u65B9\u5F0F\u4E86\u3002\n\u63A5\u4E0B\u4F86\u5C31\u6309\u7167\u6575\u4EBA\u7684\u610F\u5716\uFF0C\u9078\u64C7\u653B\u64CA\u3001\u9632\u79A6\u6216\u5176\u4ED6\u5361\u724C\u5427\u3002"
+    useTypewriter: 0
+    typewriterInterval: 0
+    allowClickToCompleteText: 0
+  pauseGameDuringDialogue: 1
+  message: 
+  dialogueOnly: 1
+  exampleSprite: {fileID: 0}
+  hideExampleWhenEmpty: 1
+  advanceMode: 2
+  requiredSignal: Battle_EndTurnPressed
+  signalAdvanceDelay: 0.2
+  requiredSignalCount: 1
+  requireConditionToAdvance: 1
+  hideVisualsAfterInteractionStart: 0
+  interactionStartSignal: 
+  incorrectSignals: []
+  correctionDialogueLines: []
+  showNextButton: 0
+  showBackButton: 0
+  showSkipButton: 0
+  allowBack: 0
+  targetId: Battle_EndTurnButton
+  highlightTarget: 1
+  highlightPadding: {x: 20, y: 20}
+  highlightDuringDialogue: 1
+  dialogPosition: 6
+  dialogSpacing: 24
+  positionDialoguePanel: 1
+  dialogueTargetId: Battle_EndTurnButton
+  dialoguePosition: 6
+  dialogueSpacing: 10
+  dialogueScreenPadding: {x: 24, y: 24}
+  followDialogueTarget: 1
+  autoAdvanceAfterSeconds: 0
+  logStep: 1

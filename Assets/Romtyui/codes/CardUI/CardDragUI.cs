@@ -1,6 +1,6 @@
-using UnityEngine;
-using UnityEngine.UI;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(RectTransform))]
 public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler
@@ -9,12 +9,12 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
     [Header("Play Rule")]
     public float playThresholdPixels = 140f;
-    // �ƹ��q���U��m���W��W�L�o�ӶZ���A�~�⥴�X
+    // 滑鼠從按下位置往上拖超過這個距離，才算打出
 
     private RectTransform rectTransform;
     private HandFanLayout handLayout;
     private CardHoverUI hoverUI;
-    private TargetArrowUI targetArrow;
+    [SerializeField] private TargetArrowUI targetArrow;
     private CanvasGroup canvasGroup;
     private CardViewUI cardViewUI;
     private BattleManager battleManager;
@@ -23,7 +23,10 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
     private Vector2 pointerDownScreenPos;
     private Vector2 startAnchoredPosition;
 
-    private bool useTargetArrowMode;
+    private bool tutorialGrabStarted;
+
+
+    [SerializeField] private bool useTargetArrowMode;
     private bool useDirectDragMode;
 
     [Header("Play Threshold Debug")]
@@ -34,6 +37,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
     private GameObject thresholdLineObject;
     private RectTransform thresholdLineRect;
+    private bool dragSignalSent;
 
     private void Awake()
     {
@@ -65,7 +69,7 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         targetArrow = FindFirstObjectByType<TargetArrowUI>(FindObjectsInactive.Include);
 
         if (targetArrow == null)
-            Debug.LogWarning("[CardDragUI] �䤣�� TargetArrowUI");
+            Debug.LogWarning("[CardDragUI] 找不到 TargetArrowUI");
     }
     private TargetType GetCurrentTargetType()
     {
@@ -113,17 +117,50 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (IsDragging)
+            return;
+
         IsDragging = true;
+        tutorialGrabStarted = true;
 
-        pointerDownScreenPos = eventData.position;
-        startAnchoredPosition = rectTransform.anchoredPosition;
+        /*
+         * 每次開始拖牌時，
+         * 重新判斷目前這張牌要使用哪一種出牌方式。
+         */
+        useTargetArrowMode =
+            ShouldUseTargetArrowMode();
 
-        useTargetArrowMode = ShouldUseTargetArrowMode();
-        useDirectDragMode = ShouldUseDirectDragMode();
+        useDirectDragMode =
+            ShouldUseDirectDragMode();
 
-        ShowThresholdLine();
+        dragSignalSent = false;
 
-        if (handLayout != null && hoverUI != null)
+        pointerDownScreenPos =
+            eventData.position;
+
+        startAnchoredPosition =
+            rectTransform.anchoredPosition;
+
+        /*
+         * 只有直接拖牌模式才需要顯示出牌線。
+         *
+         * SingleEnemy 使用箭頭，
+         * 不需要出牌線。
+         */
+        if (useDirectDragMode)
+        {
+            ShowThresholdLine();
+        }
+        else
+        {
+            HideThresholdLine();
+        }
+
+        /*
+         * 原本 HandFanLayout 功能保留。
+         */
+        if (handLayout != null &&
+            hoverUI != null)
         {
             handLayout.SetHover(hoverUI);
             handLayout.SetLockedCard(hoverUI);
@@ -131,27 +168,46 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         }
 
         rectTransform.SetAsLastSibling();
-        canvasGroup.blocksRaycasts = false;
 
+        if (canvasGroup != null)
+        {
+            canvasGroup.blocksRaycasts = false;
+        }
+
+        EnsureTargetArrow();
+
+        /*
+         * SingleEnemy：
+         * 顯示箭頭。
+         */
         if (useTargetArrowMode)
         {
-            EnsureTargetArrow();
-
             if (targetArrow != null)
             {
                 targetArrow.Show(rectTransform);
-                targetArrow.UpdateArrow(eventData.position);
-            }
-            else
-            {
-                Debug.LogWarning("[CardDragUI] ���U�d�P�ɨS�� TargetArrowUI�A�ҥH�b�Y�L�k���");
+
+                targetArrow.UpdateArrow(
+                    eventData.position
+                );
             }
         }
         else
         {
+            /*
+             * 其他牌不需要箭頭。
+             */
             if (targetArrow != null)
+            {
                 targetArrow.Hide();
+            }
         }
+
+        /*
+         * 原本 Tutorial 功能保留。
+         */
+        TutorialEventBus.Raise(
+            "Battle_CardGrabStarted"
+        );
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -159,89 +215,315 @@ public class CardDragUI : MonoBehaviour, IPointerDownHandler, IPointerUpHandler,
         if (!IsDragging)
             return;
 
+        /*
+         * =====================================================
+         * SingleEnemy
+         *
+         * 卡牌留在原本的位置，
+         * TargetArrow 跟著滑鼠。
+         * =====================================================
+         */
         if (useTargetArrowMode)
         {
             EnsureTargetArrow();
 
             if (targetArrow != null)
-                targetArrow.UpdateArrow(eventData.position);
+            {
+                targetArrow.UpdateArrow(
+                    eventData.position
+                );
+            }
 
             return;
         }
 
+        /*
+         * =====================================================
+         * Direct Drag
+         *
+         * Self
+         * None
+         * RandomEnemy
+         * AllEnemies
+         * AllCharacters
+         *
+         * 卡牌本體跟著滑鼠。
+         * =====================================================
+         */
         if (useDirectDragMode)
         {
-            UpdateDirectDragPosition(eventData.position);
+            /*
+             * 原本的新手教學 Signal 保留。
+             */
+            if (!dragSignalSent)
+            {
+                dragSignalSent = true;
+
+                TutorialEventBus.Raise(
+                    BattleTutorialSignals.CardDragStarted
+                );
+            }
+
+            UpdateDirectDragPosition(
+                eventData.position
+            );
         }
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (!IsDragging) return;
+        if (!IsDragging)
+            return;
 
         IsDragging = false;
-        canvasGroup.blocksRaycasts = true;
+
+        if (canvasGroup != null)
+        {
+            canvasGroup.blocksRaycasts = true;
+        }
 
         EnsureTargetArrow();
 
         HideThresholdLine();
 
         if (targetArrow != null)
+        {
             targetArrow.Hide();
+        }
 
         bool played = false;
 
-        bool draggedToPlayArea = IsDraggedToPlayArea(eventData.position);
+        /*
+         * Direct Drag 才需要判斷
+         * 有沒有拖過出牌線。
+         */
+        bool draggedToPlayArea =
+            IsDraggedToPlayArea(
+                eventData.position
+            );
 
-        if (draggedToPlayArea && battleManager != null && cardViewUI != null && cardViewUI.CardInstance != null)
+        /*
+         * SingleEnemy：
+         * 不需要經過出牌線。
+         *
+         * DirectDrag：
+         * 必須經過出牌線。
+         */
+        bool canAttemptPlay =
+            useTargetArrowMode ||
+            (
+                useDirectDragMode &&
+                draggedToPlayArea
+            );
+
+        if (canAttemptPlay &&
+            battleManager != null &&
+            cardViewUI != null &&
+            cardViewUI.CardInstance != null)
         {
-            CardInstance card = cardViewUI.CardInstance;
+            CardInstance card =
+                cardViewUI.CardInstance;
 
-            BattleTargetUI hoveredTarget = BattleTargetUI.CurrentHoveredTarget;
-            BattleUnit targetUnit = hoveredTarget != null ? hoveredTarget.battleUnit : null;
+            BattleTargetUI hoveredTarget =
+                BattleTargetUI.CurrentHoveredTarget;
 
-            Debug.Log($"[Release] card = {card.data.cardName}, targetType = {card.data.targetType}, target = {(targetUnit != null ? targetUnit.name : "null")}");
+            BattleUnit targetUnit =
+                hoveredTarget != null
+                    ? hoveredTarget.battleUnit
+                    : null;
+
+            string targetName =
+                targetUnit != null
+                    ? targetUnit.name
+                    : "null";
+
+            Debug.Log(
+                $"[Release] card = {card.data.cardName}, " +
+                $"targetType = {card.data.targetType}, " +
+                $"target = {targetName}, " +
+                $"ArrowMode = {useTargetArrowMode}, " +
+                $"DirectDragMode = {useDirectDragMode}, " +
+                $"DraggedToPlayArea = {draggedToPlayArea}"
+            );
 
             switch (card.data.targetType)
             {
+                /*
+                 * =================================================
+                 * 單體敵人
+                 * =================================================
+                 */
                 case TargetType.SingleEnemy:
+
                     if (targetUnit != null)
                     {
-                        played = battleManager.TryPlayCard(card, targetUnit, cardViewUI);
+                        played =
+                            battleManager.TryPlayCard(
+                                card,
+                                targetUnit,
+                                cardViewUI
+                            );
                     }
                     else
                     {
-                        Debug.Log("�����P�������ĤH���W�~�|���X");
+                        Debug.Log(
+                            "單體牌必須指定敵人才會打出"
+                        );
+
                         played = false;
                     }
+
                     break;
 
-                case TargetType.None:
-                case TargetType.Self:
-                case TargetType.RandomEnemy:
+
+                /*
+                 * =================================================
+                 * 全體敵人
+                 * =================================================
+                 */
                 case TargetType.AllEnemies:
-                case TargetType.AllCharacters:
-                    played = battleManager.TryPlayCard(card, null, cardViewUI);
+
+                    played =
+                        battleManager.TryPlayCard(
+                            card,
+                            null,
+                            cardViewUI
+                        );
+
                     break;
+
+
+                /*
+                 * =================================================
+                 * 自己
+                 * =================================================
+                 */
+                case TargetType.Self:
+
+                    played =
+                        battleManager.TryPlayCard(
+                            card,
+                            null,
+                            cardViewUI
+                        );
+
+                    break;
+
+
+                /*
+                 * =================================================
+                 * 無指定目標
+                 * =================================================
+                 */
+                case TargetType.None:
+
+                    played =
+                        battleManager.TryPlayCard(
+                            card,
+                            null,
+                            cardViewUI
+                        );
+
+                    break;
+
+
+                /*
+                 * =================================================
+                 * 隨機敵人
+                 * =================================================
+                 */
+                case TargetType.RandomEnemy:
+
+                    played =
+                        battleManager.TryPlayCard(
+                            card,
+                            null,
+                            cardViewUI
+                        );
+
+                    break;
+
+
+                /*
+                 * AllCharacters 目前 BattleManager
+                 * 還沒有真正實作完整的全角色結算。
+                 *
+                 * 所以這次先維持不支援，
+                 * 不偷偷改你的卡牌效果。
+                 */
+                case TargetType.AllCharacters:
+
+                    Debug.LogWarning(
+                        "AllCharacters 目前尚未完成出牌結算邏輯"
+                    );
+
+                    played = false;
+
+                    break;
+
 
                 default:
-                    Debug.LogWarning($"�|���䴩�� TargetType: {card.data.targetType}");
+
+                    Debug.LogWarning(
+                        $"尚未支援的 TargetType: " +
+                        $"{card.data.targetType}"
+                    );
+
                     played = false;
+
                     break;
             }
         }
         else
         {
-            Debug.Log("�S����X��P�ϡA���X�P");
+            if (useDirectDragMode &&
+                !draggedToPlayArea)
+            {
+                Debug.Log(
+                    "卡牌沒有拖過出牌線，不出牌"
+                );
+            }
+            else
+            {
+                Debug.Log(
+                    "目前無法嘗試出牌"
+                );
+            }
         }
 
+        /*
+         * 原本 HandLayout 功能保留。
+         */
         if (handLayout != null)
+        {
             handLayout.ClearAllSelection();
+        }
 
+        /*
+         * 出牌失敗：
+         * 保留原本 Tutorial Invalid Signal。
+         */
         if (!played)
         {
+            if (tutorialGrabStarted)
+            {
+                TutorialEventBus.Raise(
+                    "Battle_CardPlayInvalid"
+                );
+            }
+
             ReturnToHand();
         }
+
+        tutorialGrabStarted = false;
+
+        /*
+         * 這次拖牌結束，
+         * 清除 Runtime 模式。
+         */
+        useTargetArrowMode = false;
+        useDirectDragMode = false;
+        dragSignalSent = false;
     }
 
     private bool IsDraggedToPlayArea(Vector2 pointerUpScreenPos)

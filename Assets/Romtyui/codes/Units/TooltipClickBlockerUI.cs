@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class TooltipClickBlockerUI : MonoBehaviour, IPointerClickHandler

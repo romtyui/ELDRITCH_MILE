@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 public class FixedHandUIController : MonoBehaviour
@@ -6,7 +6,7 @@ public class FixedHandUIController : MonoBehaviour
     public BattleDeck battleDeck;
     public HandFanLayout handFanLayout;
 
-    [Header("¦Û°Ê§ì handFanLayout ©³¤U©Ò¦³ CardViewUI")]
+    [Header("è‡ªå‹•æŠ“ handFanLayout åº•ä¸‹æ‰€æœ‰ CardViewUI")]
     public List<CardViewUI> cardViews = new List<CardViewUI>();
 
     private void Awake()
@@ -27,7 +27,7 @@ public class FixedHandUIController : MonoBehaviour
 
         if (handFanLayout == null)
         {
-            Debug.LogError("[FixedHandUIController] handFanLayout ¨S¦³«ü©w");
+            Debug.LogError("[FixedHandUIController] handFanLayout æ²’æœ‰æŒ‡å®š");
             return;
         }
 
@@ -38,20 +38,20 @@ public class FixedHandUIController : MonoBehaviour
             cardViews.Add(view);
         }
 
-        Debug.Log($"[FixedHandUIController] ¦Û°Ê§ä¨ì {cardViews.Count} ±i CardViewUI");
+        Debug.Log($"[FixedHandUIController] è‡ªå‹•æ‰¾åˆ° {cardViews.Count} å¼µ CardViewUI");
     }
 
     public void RefreshHandUI()
     {
         if (battleDeck == null)
         {
-            Debug.LogError("[FixedHandUIController] battleDeck ¨S¦³«ü©w");
+            Debug.LogError("[FixedHandUIController] battleDeck æ²’æœ‰æŒ‡å®š");
             return;
         }
 
         if (handFanLayout == null)
         {
-            Debug.LogError("[FixedHandUIController] handFanLayout ¨S¦³«ü©w");
+            Debug.LogError("[FixedHandUIController] handFanLayout æ²’æœ‰æŒ‡å®š");
             return;
         }
 
@@ -87,6 +87,6 @@ public class FixedHandUIController : MonoBehaviour
 
         handFanLayout.RefreshLayout();
 
-        Debug.Log($"[RefreshHandUI] ¤âµP:{hand.Count} / CardViewUI:{cardViews.Count} / ±Æ¦C:{handFanLayout.cards.Count}");
+        Debug.Log($"[RefreshHandUI] æ‰‹ç‰Œ:{hand.Count} / CardViewUI:{cardViews.Count} / æŽ’åˆ—:{handFanLayout.cards.Count}");
     }
 }

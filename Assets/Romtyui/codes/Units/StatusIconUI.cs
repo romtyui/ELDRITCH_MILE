@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +11,10 @@ public class StatusIconUI : MonoBehaviour
     public TooltipTriggerUI tooltipTrigger;
     public TooltipKeywordDatabase keywordDatabase;
 
+    [Header("Stack Text Display")]
+    [Tooltip("ç‹€æ…‹åªæœ‰ 1 å±¤æ™‚æ˜¯å¦é¡¯ç¤ºæ•¸å­—")]
+    public bool showNumberWhenOneStack = true;
+
     public void Set(StatusType statusType, Sprite icon, int stack, TooltipKeywordDatabase database)
     {
         if (iconImage != null)
@@ -19,11 +23,7 @@ public class StatusIconUI : MonoBehaviour
             iconImage.enabled = icon != null;
         }
 
-        if (stackText != null)
-        {
-            stackText.text = stack > 1 ? stack.ToString() : "";
-            stackText.gameObject.SetActive(stack > 1);
-        }
+        RefreshStackText(stack);
 
         if (tooltipTrigger == null)
             tooltipTrigger = GetComponent<TooltipTriggerUI>();
@@ -33,8 +33,6 @@ public class StatusIconUI : MonoBehaviour
             List<TooltipEntry> entries = new List<TooltipEntry>();
 
             string key = statusType.ToString();
-            //string title = key;
-            //string body = $"¥Ø«e¼h¼Æ¡G{stack}";
             string title = GetStatusTitle(statusType);
             string body = GetStatusDescription(statusType, stack);
 
@@ -43,75 +41,96 @@ public class StatusIconUI : MonoBehaviour
             if (database != null && database.TryGet(key, out TooltipKeywordEntry entry))
             {
                 title = entry.title;
-                body = $"{entry.description}\n\n¥Ø«e¼h¼Æ¡G{stack}";
+                body = $"{entry.description}\n\nç›®å‰å±¤æ•¸ï¼š{stack}";
             }
 
             entries.Add(new TooltipEntry(title, body));
-            tooltipTrigger.SetEntries(entries, TooltipAnchorSide.Bottom);
+            tooltipTrigger.SetEntries(entries, tooltipTrigger.preferredSide);
         }
 
         gameObject.SetActive(true);
     }
+
+    private void RefreshStackText(int stack)
+    {
+        if (stackText == null)
+            return;
+
+        bool shouldShow = stack > 0;
+
+        if (stack == 1 && !showNumberWhenOneStack)
+            shouldShow = false;
+
+        stackText.text = stack.ToString();
+        stackText.gameObject.SetActive(shouldShow);
+    }
+
     private string GetStatusTitle(StatusType statusType)
     {
         switch (statusType)
         {
             case StatusType.Strength:
-                return "¤O¶q";
+                return "åŠ›é‡";
 
             case StatusType.TemporaryStrength:
-                return "Á{®É¤O¶q";
+                return "è‡¨æ™‚åŠ›é‡";
 
             case StatusType.Weak:
-                return "µê®z";
+                return "è™›å¼±";
 
             case StatusType.Vulnerable:
-                return "©ö¶Ë";
+                return "æ˜“å‚·";
 
             case StatusType.Frail:
-                return "¯Ü®z";
+                return "è„†å¼±";
 
             case StatusType.Poison:
-                return "¤¤¬r";
+                return "ä¸­æ¯’";
+
             case StatusType.Harden:
-                return "µw¤Æ";
+                return "ç¡¬åŒ–";
+
             case StatusType.Regeneration:
-                return "¦A¥Í";
+                return "å†ç”Ÿ";
+
             default:
                 return statusType.ToString();
         }
     }
+
     private string GetStatusDescription(StatusType statusType, int amount)
     {
         switch (statusType)
         {
             case StatusType.Strength:
-                return $"³y¦¨ªº§ğÀ»¶Ë®`¼W¥[ {amount} ÂI¡C";
+                return $"é€ æˆçš„æ”»æ“Šå‚·å®³å¢åŠ  {amount} é»ã€‚";
 
             case StatusType.TemporaryStrength:
-                return $"¥»¦^¦X³y¦¨ªº§ğÀ»¶Ë®`¼W¥[ {amount} ÂI¡A¦^¦Xµ²§ô«á²¾°£¡C";
+                return $"æœ¬å›åˆé€ æˆçš„æ”»æ“Šå‚·å®³å¢åŠ  {amount} é»ï¼Œå›åˆçµæŸå¾Œç§»é™¤ã€‚";
 
             case StatusType.Weak:
-                return $"³y¦¨ªº¶Ë®`­°§C¡C¥Ø«e³Ñ¾l {amount} ¼h¡C";
+                return $"é€ æˆçš„å‚·å®³é™ä½ã€‚ç›®å‰å‰©é¤˜ {amount} å±¤ã€‚";
 
             case StatusType.Vulnerable:
-                return $"¨ü¨ìªº¶Ë®`¼W¥[¡C¥Ø«e³Ñ¾l {amount} ¼h¡C";
+                return $"å—åˆ°çš„å‚·å®³å¢åŠ ã€‚ç›®å‰å‰©é¤˜ {amount} å±¤ã€‚";
 
             case StatusType.Frail:
-                return $"Àò±oªº®æ¾×­°§C¡C¥Ø«e³Ñ¾l {amount} ¼h¡C";
+                return $"ç²å¾—çš„æ ¼æ“‹é™ä½ã€‚ç›®å‰å‰©é¤˜ {amount} å±¤ã€‚";
 
             case StatusType.Poison:
-                return $"¦^¦X¶}©l®É¨ü¨ì {amount} ÂI¶Ë®`¡A¤§«á¤¤¬r¼h¼Æ´î¤Ö¡C";
+                return $"å›åˆé–‹å§‹æ™‚å—åˆ° {amount} é»å‚·å®³ï¼Œä¹‹å¾Œä¸­æ¯’å±¤æ•¸æ¸›å°‘ã€‚";
+
             case StatusType.Harden:
-                return $"¨C¦^¦X¶}©l®É¡AÀò±o {amount} ÂIÅ@¬Ş¡C";
+                return $"æ¯å›åˆé–‹å§‹æ™‚ï¼Œç²å¾— {amount} é»è­·ç›¾ã€‚";
+
             case StatusType.Regeneration:
                 {
                     int percent = amount * 5;
-                    //int healAmount = Mathf.CeilToInt(owner.maxHp * amount * 0.05f);
-                    return $"¨C¦^¦X¶}©l®É¡A«ì´_¦Û¨­³Ì¤j¥Í©R­È {percent}%ªº¥Í©R¡C\n¨ü¨ì¥Í©R¶Ë®`®É¡A¼h¼Æ´î¤Ö 1¡C";
+                    return $"æ¯å›åˆé–‹å§‹æ™‚ï¼Œæ¢å¾©è‡ªèº«æœ€å¤§ç”Ÿå‘½å€¼ {percent}% çš„ç”Ÿå‘½ã€‚\nå—åˆ°ç”Ÿå‘½å‚·å®³æ™‚ï¼Œå±¤æ•¸æ¸›å°‘ 1ã€‚";
                 }
+
             default:
-                return $"¥Ø«e¼h¼Æ¡G{amount}";
+                return $"ç›®å‰å±¤æ•¸ï¼š{amount}";
         }
     }
 }

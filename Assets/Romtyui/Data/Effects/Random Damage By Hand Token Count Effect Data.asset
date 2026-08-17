@@ -12,5 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 524e5734ac7b9f240adcf659fb7402b6, type: 3}
   m_Name: Random Damage By Hand Token Count Effect Data
   m_EditorClassIdentifier: Assembly-CSharp::RandomDamageByHandTokenCountEffectData
+  cardToAdd: {fileID: 11400000, guid: ba635f378420fdc4396ebc969de1dd74, type: 2}
+  baseAmount: 1
+  addByHandTokenCount: 0
   tokenId: goat_token
-  damagePerHit: 1
+  amountPerTokenInHand: 1
+  previewUsedTokenCount: 0

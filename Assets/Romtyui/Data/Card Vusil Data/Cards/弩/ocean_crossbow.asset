@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
+  m_Name: ocean_crossbow
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardId: ocean_crossbow
+  cardName: ocean_crossbow
+  description: "\u7372\u5F97 {block} \u9EDE\u8B77\u76FE\n\u7372\u5F971\u9EDE\u529B\u91CF"
+  visualData: {fileID: 11400000, guid: e66f8e894c5c3a440bb6d360951bde50, type: 2}
+  cardType: 1
+  rarity: 0
+  targetType: 2
+  baseCost: 1
+  exhaust: 0
+  ethereal: 0
+  retain: 0
+  isToken: 0
+  tokenId: 
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
+  effects:
+  - {fileID: 11400000, guid: 1a75a2def28f6e64a83f2b8851a52ab1, type: 2}
+  - {fileID: 11400000, guid: 22aad712da0de044c97f638ece8a80c2, type: 2}

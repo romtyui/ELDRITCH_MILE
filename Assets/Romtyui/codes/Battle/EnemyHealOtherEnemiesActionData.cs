@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Enemy Actions/Heal Other Enemies")]
 public class EnemyHealOtherEnemiesActionData : EnemyActionData
@@ -39,7 +39,7 @@ public class EnemyHealOtherEnemiesActionData : EnemyActionData
             enemy.Heal(healAmount);
             enemy.RefreshAllUI();
 
-            Debug.Log($"[EnemyAction] {context.enemy.unitName} ªvÀø {enemy.unitName} {healAmount} ÂI¥Í©R");
+            Debug.Log($"[EnemyAction] {context.enemy.unitName} æ²»ç™‚ {enemy.unitName} {healAmount} é»žç”Ÿå‘½");
         }
     }
 }

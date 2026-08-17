@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Effects/Draw Cards")]
 public class DrawCardEffectData : CardEffectData

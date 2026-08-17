@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -8,7 +8,7 @@ public class NewGameButtonUI : MonoBehaviour
     public Button newGameButton;
 
     [Header("Scene")]
-    [Tooltip("·s¹CÀ¸¶}©l«á­n¶i¤Jªº³õ´º¡A¨Ò¦p³õ´ºA©Î¾Ô°«³õ´º")]
+    [Tooltip("æ–°éŠæˆ²é–‹å§‹å¾Œè¦é€²å…¥çš„å ´æ™¯ï¼Œä¾‹å¦‚å ´æ™¯Aæˆ–æˆ°é¬¥å ´æ™¯")]
     public string startSceneName = "SceneA";
 
     [Header("Behavior")]
@@ -22,7 +22,7 @@ public class NewGameButtonUI : MonoBehaviour
         if (newGameButton != null)
             newGameButton.onClick.AddListener(OnClickNewGame);
         else
-            Debug.LogWarning("[NewGameButtonUI] §ä¤£¨ì Button", gameObject);
+            Debug.LogWarning("[NewGameButtonUI] æ‰¾ä¸åˆ° Button", gameObject);
     }
 
     private void OnDestroy()
@@ -39,7 +39,7 @@ public class NewGameButtonUI : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[NewGameButtonUI] §ä¤£¨ì RunStateManager¡AµLªk²M°£¬ö¿ı");
+            Debug.LogWarning("[NewGameButtonUI] æ‰¾ä¸åˆ° RunStateManagerï¼Œç„¡æ³•æ¸…é™¤ç´€éŒ„");
         }
 
         if (resetTimeScale)
@@ -47,11 +47,11 @@ public class NewGameButtonUI : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(startSceneName))
         {
-            Debug.LogWarning("[NewGameButtonUI] startSceneName ¬OªÅªº¡AµLªk¸ü¤J·s¹CÀ¸³õ´º");
+            Debug.LogWarning("[NewGameButtonUI] startSceneName æ˜¯ç©ºçš„ï¼Œç„¡æ³•è¼‰å…¥æ–°éŠæˆ²å ´æ™¯");
             return;
         }
 
-        Debug.Log($"[NewGameButtonUI] ¶}©l·s¹CÀ¸¡A¸ü¤J³õ´º¡G{startSceneName}");
+        Debug.Log($"[NewGameButtonUI] é–‹å§‹æ–°éŠæˆ²ï¼Œè¼‰å…¥å ´æ™¯ï¼š{startSceneName}");
 
         SceneManager.LoadScene(startSceneName);
     }

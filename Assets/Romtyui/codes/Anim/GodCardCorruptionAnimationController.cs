@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 
 public class GodCardCorruptionAnimationController : MonoBehaviour
@@ -27,20 +27,24 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
     public float blackoutFadeDuration = 0.25f;
 
+    [Header("Other Canvas Toggle")]
+    [Tooltip("ç¥ç‰Œå‹•ç•«æœŸé–“è¦æš«æ™‚éš±è—/é‡æ–°é¡¯ç¤ºçš„å…¶ä»– Canvas ç‰©ä»¶ã€‚")]
+    public GameObject otherCanvasObject;
+
     [Header("Tentacle IK Animation")]
     public GameObject tentacleRoot;
     public Animator tentacleAnimator;
     public string tentacleTriggerName = "PlayGodCorruption";
 
     [Header("Animated Corrupted Card Template")]
-    [Tooltip("°Êµe¸Ì¤w¸g¦s¦bªº¦Ã¬VµP¼ÒªO¡A¤£¦A¥Ñµ{¦¡ Instantiate¡C")]
+    [Tooltip("å‹•ç•«è£¡å·²ç¶“å­˜åœ¨çš„æ±¡æŸ“ç‰Œæ¨¡æ¿ï¼Œä¸å†ç”±ç¨‹å¼ Instantiateã€‚")]
     public CardViewUI animatedCorruptedCardTemplate;
 
-    [Tooltip("±±¨î°Êµe¼ÒªOÅã¥Ü/ÁôÂÃ¡C«ØÄ³°Êµe¤]±±¨î³o­Ó CanvasGroup Alpha¡C")]
+    [Tooltip("æ§åˆ¶å‹•ç•«æ¨¡æ¿é¡¯ç¤º/éš±è—ã€‚å»ºè­°å‹•ç•«ä¹Ÿæ§åˆ¶é€™å€‹ CanvasGroup Alphaã€‚")]
     public CanvasGroup animatedCardCanvasGroup;
 
     [Header("Fallback Wait")]
-    [Tooltip("¦pªG°Êµe¨Æ¥ó¨S¦³©I¥sµ²§ô¡A³Ì¦hµ¥«İ´X¬íÁ×§K¥d¦º¡C")]
+    [Tooltip("å¦‚æœå‹•ç•«äº‹ä»¶æ²’æœ‰å‘¼å«çµæŸï¼Œæœ€å¤šç­‰å¾…å¹¾ç§’é¿å…å¡æ­»ã€‚")]
     public float animationTimeout = 5f;
 
     [Header("End")]
@@ -77,58 +81,62 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         if (playedCardRect == null)
             yield break;
 
-        // 1. ¶Â¹õ¶}±Ò
+        // 1. é»‘å¹•é–‹å•Ÿ
         yield return FadeBlackout(true);
 
-        // 2. ¯«µP²¾¨ì°Êµe¼h
+        // 2. ç¥ç‰Œç§»åˆ°å‹•ç•«å±¤
         playedCardRect.SetParent(AnimationRoot, true);
 
-        // 3. ¯«µP­¸¦V¤¤¥¡
+        // 3. ç¥ç‰Œé£›å‘ä¸­å¤®
         if (centerPoint != null)
             yield return MoveRectWorld(playedCardRect, centerPoint.position, moveToCenterDuration);
 
-        // 4. ¯«µP¾_°Ê
+        // 4. ç¥ç‰Œéœ‡å‹•
         yield return ShakeRect(playedCardRect, shakeDuration, shakeStrength);
 
-        // 5. ¥ı°õ¦æ¦Ã¬V¡A¨ú±o¦Ã¬V«áªºµP¸ê®Æ
+        // 5. å…ˆåŸ·è¡Œæ±¡æŸ“ï¼Œå–å¾—æ±¡æŸ“å¾Œçš„ç‰Œè³‡æ–™
         CardTransformResult result = transformEffect.ExecuteTransform(context);
 
-        // 6. §â¦Ã¬V«áªºµP¸ê®ÆÄé¶i°Êµe¼ÒªO
+        // 6. æŠŠæ±¡æŸ“å¾Œçš„ç‰Œè³‡æ–™çŒé€²å‹•ç•«æ¨¡æ¿
         BindCorruptedCardToAnimationTemplate(result);
 
-        // 7. ¼½©ñ³o±i¯«µP«ü©wªº°Êµe¡A¨S¦³«ü©w´N¼½¹w³]°Êµe
+        // 7. æ’­æ”¾é€™å¼µç¥ç‰ŒæŒ‡å®šçš„å‹•ç•«ï¼Œæ²’æœ‰æŒ‡å®šå°±æ’­é è¨­å‹•ç•«
         yield return PlayGodAnimationRoutine(currentAnimationData);
 
-        // 8. µ¥°Êµeµ²§ô¨Æ¥ó
+        // 8. ç­‰å‹•ç•«çµæŸäº‹ä»¶
         yield return WaitForAnimationFinished(currentAnimationData);
 
-        // 9. ¯«µP®ø¥¢
+        // 9. ç¥ç‰Œæ¶ˆå¤±
         yield return FinishPlayedGodCard(playedCardView);
 
-        // 10. ­«¸m¼ÒªO
+        // 10. é‡ç½®æ¨¡æ¿
         ResetAnimatedCardTemplate();
 
-        // 11. Ãö³¬Ä²¤â®Úª«¥ó
+        // 11. é—œé–‰è§¸æ‰‹æ ¹ç‰©ä»¶
         if (tentacleRoot != null)
             tentacleRoot.SetActive(false);
+        // ä¿éšªï¼šé¿å…å‹•ç•«äº‹ä»¶éºå¤±å¾Œï¼Œå…¶ä»– Canvas æ°¸é ä¿æŒé—œé–‰
+        if (otherCanvasObject != null)
+            otherCanvasObject.SetActive(true);
 
-        // 12. ¶Â¹õÃö³¬
+        // 12. é»‘å¹•é—œé–‰
         yield return FadeBlackout(false);
 
         currentAnimationData = null;
+
     }
 
     private void BindCorruptedCardToAnimationTemplate(CardTransformResult result)
     {
         if (animatedCorruptedCardTemplate == null)
         {
-            Debug.LogWarning("[GodCardCorruptionAnimation] animatedCorruptedCardTemplate ¨S¦³«ü©w");
+            Debug.LogWarning("[GodCardCorruptionAnimation] animatedCorruptedCardTemplate æ²’æœ‰æŒ‡å®š");
             return;
         }
 
         if (result == null || !result.success || result.resultCardData == null)
         {
-            Debug.LogWarning("[GodCardCorruptionAnimation] ¨S¦³¦¨¥\¨ú±o¦Ã¬V«áªºµP¸ê®Æ");
+            Debug.LogWarning("[GodCardCorruptionAnimation] æ²’æœ‰æˆåŠŸå–å¾—æ±¡æŸ“å¾Œçš„ç‰Œè³‡æ–™");
             return;
         }
 
@@ -140,7 +148,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
         if (animatedCardCanvasGroup != null)
         {
-            // ¤@¶}©l¥ı«O«ù³z©ú¡A¤§«á¥Ñ°Êµe§â Alpha ©Ô¨ì 1
+            // ä¸€é–‹å§‹å…ˆä¿æŒé€æ˜ï¼Œä¹‹å¾Œç”±å‹•ç•«æŠŠ Alpha æ‹‰åˆ° 1
             animatedCardCanvasGroup.alpha = 0f;
             animatedCardCanvasGroup.blocksRaycasts = false;
             animatedCardCanvasGroup.interactable = false;
@@ -148,24 +156,24 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
         animatedCorruptedCardTemplate.gameObject.SetActive(true);
 
-        Debug.Log($"[GodCardCorruptionAnimation] °Êµe¼ÒªO¸j©w¦Ã¬VµP¡G{result.resultCardData.cardName}");
+        Debug.Log($"[GodCardCorruptionAnimation] å‹•ç•«æ¨¡æ¿ç¶å®šæ±¡æŸ“ç‰Œï¼š{result.resultCardData.cardName}");
     }
 
     private GodCardAnimationData ResolveAnimationData(GodCardAnimationData cardAnimationData)
     {
         if (cardAnimationData != null)
         {
-            Debug.Log($"[GodCardAnimation] ¨Ï¥Î¯«µP±MÄİ°Êµe¡G{cardAnimationData.animationName}");
+            Debug.Log($"[GodCardAnimation] ä½¿ç”¨ç¥ç‰Œå°ˆå±¬å‹•ç•«ï¼š{cardAnimationData.animationName}");
             return cardAnimationData;
         }
 
         if (defaultAnimationData != null)
         {
-            Debug.Log($"[GodCardAnimation] ¨Ï¥Î¹w³]¯«µP°Êµe¡G{defaultAnimationData.animationName}");
+            Debug.Log($"[GodCardAnimation] ä½¿ç”¨é è¨­ç¥ç‰Œå‹•ç•«ï¼š{defaultAnimationData.animationName}");
             return defaultAnimationData;
         }
 
-        Debug.LogWarning("[GodCardAnimation] ¨S¦³±MÄİ°Êµe¡A¤]¨S¦³¹w³]°Êµe¡A±N¨Ï¥Î Controller ¤Wªº¹w³] Trigger");
+        Debug.LogWarning("[GodCardAnimation] æ²’æœ‰å°ˆå±¬å‹•ç•«ï¼Œä¹Ÿæ²’æœ‰é è¨­å‹•ç•«ï¼Œå°‡ä½¿ç”¨ Controller ä¸Šçš„é è¨­ Trigger");
         return null;
     }
 
@@ -174,12 +182,12 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         if (tentacleRoot != null)
             tentacleRoot.SetActive(true);
 
-        // µ¥¤@´V¡AÁ×§K SetActive «á Animator ÁÙ¨Sªì©l¤Æ
+        // ç­‰ä¸€å¹€ï¼Œé¿å… SetActive å¾Œ Animator é‚„æ²’åˆå§‹åŒ–
         yield return null;
 
         if (tentacleAnimator == null)
         {
-            Debug.LogWarning("[GodCardAnimation] tentacleAnimator ¨S¦³«ü©w");
+            Debug.LogWarning("[GodCardAnimation] tentacleAnimator æ²’æœ‰æŒ‡å®š");
             yield break;
         }
 
@@ -214,7 +222,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         if (tentacleRoot != null)
             tentacleRoot.SetActive(true);
 
-        // µ¥¤@´V¡AÁ×§K­è SetActive Animator ÁÙ¨Sªì©l¤Æ´N¦Y¤£¨ì Trigger
+        // ç­‰ä¸€å¹€ï¼Œé¿å…å‰› SetActive Animator é‚„æ²’åˆå§‹åŒ–å°±åƒä¸åˆ° Trigger
         yield return null;
 
         if (tentacleAnimator != null)
@@ -226,7 +234,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[GodCardCorruptionAnimation] tentacleAnimator ¨S¦³«ü©w");
+            Debug.LogWarning("[GodCardCorruptionAnimation] tentacleAnimator æ²’æœ‰æŒ‡å®š");
         }
     }
 
@@ -245,7 +253,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
             if (timer >= timeout)
             {
-                Debug.LogWarning("[GodCardAnimation] µ¥«İ¯«µP°Êµeµ²§ô¹O®É¡A±j¨îµ²§ô");
+                Debug.LogWarning("[GodCardAnimation] ç­‰å¾…ç¥ç‰Œå‹•ç•«çµæŸé€¾æ™‚ï¼Œå¼·åˆ¶çµæŸ");
                 break;
             }
 
@@ -253,10 +261,10 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         }
     }
 
-    // µ¹ Animation Event ©I¥s
+    // çµ¦ Animation Event å‘¼å«
     public void AnimEvent_GodCorruptionFinished()
     {
-        Debug.Log("[GodCardCorruptionAnimation] ¦¬¨ì°Êµeµ²§ô¨Æ¥ó");
+        Debug.Log("[GodCardCorruptionAnimation] æ”¶åˆ°å‹•ç•«çµæŸäº‹ä»¶");
         animationFinished = true;
     }
 
@@ -298,7 +306,41 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             blackoutCanvasGroup.interactable = false;
         }
     }
+    // çµ¦ Animation Event å‘¼å«ï¼šæš«æ™‚éš±è—å…¶ä»– Canvas ç‰©ä»¶
+    public void AnimEvent_HideOtherCanvas()
+    {
+        if (otherCanvasObject == null)
+        {
+            Debug.LogWarning(
+                "[GodCardCorruptionAnimation] HideOtherCanvas å¤±æ•—ï¼ŒotherCanvasObject æ²’æœ‰æŒ‡å®š"
+            );
+            return;
+        }
 
+        otherCanvasObject.SetActive(false);
+
+        Debug.Log(
+            $"[GodCardCorruptionAnimation] æš«æ™‚éš±è— Canvas ç‰©ä»¶ï¼š{otherCanvasObject.name}"
+        );
+    }
+
+    // çµ¦ Animation Event å‘¼å«ï¼šé‡æ–°é–‹å•Ÿå…¶ä»– Canvas ç‰©ä»¶
+    public void AnimEvent_ShowOtherCanvas()
+    {
+        if (otherCanvasObject == null)
+        {
+            Debug.LogWarning(
+                "[GodCardCorruptionAnimation] ShowOtherCanvas å¤±æ•—ï¼ŒotherCanvasObject æ²’æœ‰æŒ‡å®š"
+            );
+            return;
+        }
+
+        otherCanvasObject.SetActive(true);
+
+        Debug.Log(
+            $"[GodCardCorruptionAnimation] é‡æ–°é¡¯ç¤º Canvas ç‰©ä»¶ï¼š{otherCanvasObject.name}"
+        );
+    }
     private IEnumerator FinishPlayedGodCard(CardViewUI playedCardView)
     {
         if (playedCardView == null)
@@ -375,4 +417,5 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
         rect.position = targetWorldPosition;
     }
+
 }

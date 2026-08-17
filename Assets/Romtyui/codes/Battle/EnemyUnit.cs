@@ -1,9 +1,16 @@
-using System;
+ï»¿using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+
+[System.Serializable]
+public class EnemyStatusDebugEntry
+{
+    public StatusType statusType;
+    public int amount;
+}
 
 public class EnemyUnit : BattleUnit
 {
@@ -14,6 +21,24 @@ public class EnemyUnit : BattleUnit
     public int chargeValue;
     public int chargeTurnsLeft;
 
+    [Header("Debug - Current Statuses")]
+    [SerializeField]
+    private List<EnemyStatusDebugEntry> inspectorStatuses = new List<EnemyStatusDebugEntry>();
+    [Header("Enemy Status Icon UI")]
+    [Tooltip("æ€ªç‰©ç‹€æ…‹ Icon ç”Ÿæˆä½ç½®ã€‚å»ºè­°é€™å€‹ç‰©ä»¶ä¸Šæ”¾ Horizontal Layout Group æˆ– Vertical Layout Group")]
+    public Transform statusIconRoot;
+
+    [Tooltip("ç‹€æ…‹åœ–ç¤ºè³‡æ–™åº«ï¼Œå’Œç©å®¶ç‹€æ…‹ UI ä½¿ç”¨åŒä¸€å€‹ StatusIconDatabase")]
+    public StatusIconDatabase statusIconDatabase;
+
+    [Tooltip("ç‹€æ…‹ Icon é ç½®ç‰©ï¼Œç›´æ¥ä½¿ç”¨ç©å®¶çš„ StatusIconUI Prefab")]
+    public StatusIconUI statusIconPrefab;
+
+    [Tooltip("æ²’æœ‰ä»»ä½•ç‹€æ…‹æ™‚æ˜¯å¦éš±è— StatusIconRoot")]
+    public bool hideStatusRootWhenEmpty = true;
+
+    private readonly List<StatusIconUI> spawnedStatusIcons = new List<StatusIconUI>();
+
     private bool chargeBrokenStunQueued;
     private bool stayOnCurrentIntentThisTurn;
 
@@ -23,33 +48,84 @@ public class EnemyUnit : BattleUnit
     [Header("HP UI")]
     public TMP_Text currentHpText;
     public TMP_Text maxHpText;
+
     [Header("Special Intents")]
     public EnemyIntentData stunIntent;
+
     [Header("Intent UI")]
     public Image intentImage;
     public TMP_Text intentDamageText;
+
     [Header("Damage Popup")]
     public DamagePopupUI damagePopupPrefab;
 
-    [Tooltip("³o°¦©Çª«±MÄİªº¸õ¦r¥Í¦¨ Root¡A«ØÄ³©ñ¦b EnemySlot ©³¤U")]
+    [Tooltip("é€™éš»æ€ªç‰©å°ˆå±¬çš„è·³å­—ç”Ÿæˆ Rootï¼Œå»ºè­°æ”¾åœ¨ EnemySlot åº•ä¸‹")]
     public RectTransform damagePopupRoot;
 
-    [Tooltip("¸õ¦rÁãÂI¡C³q±`¬O visualRoot ©Î MonsterVisualRoot")]
+    [Tooltip("è·³å­—éŒ¨é»ã€‚é€šå¸¸æ˜¯ visualRoot æˆ– MonsterVisualRoot")]
     public RectTransform damagePopupAnchor;
 
-    [Tooltip("³o°¦©Çª«ªº¸õ¦r°¾²¾")]
+    [Tooltip("é€™éš»æ€ªç‰©çš„è·³å­—åç§»")]
     public Vector2 damagePopupOffset = new Vector2(0f, 80f);
 
-    [Tooltip("¸õ¦rÀH¾÷´²¶}½d³ò")]
+    [Tooltip("è·³å­—éš¨æ©Ÿæ•£é–‹ç¯„åœ")]
     public Vector2 damagePopupRandomRange = new Vector2(40f, 20f);
+
+    [Header("Enemy Block UI")]
+    [Tooltip("æ•´å€‹è­·ç›¾ UI Rootã€‚å»ºè­°æ˜¯åŒ…å« Imageã€Textã€Animator çš„çˆ¶ç‰©ä»¶")]
+    public GameObject blockRoot;
+
+    [Tooltip("è­·ç›¾åœ–ç‰‡")]
+    public Image blockImage;
+
+    [Tooltip("è­·ç›¾æ•¸å€¼æ–‡å­—")]
+    public TMP_Text blockText;
+
+    [Tooltip("è­·ç›¾ UI Animatorã€‚å¯ä»¥ä¸æŒ‡å®šï¼Œæ²’æœ‰å°±ä¸æ’­æ”¾å‹•ç•«")]
+    public Animator blockAnimator;
+
+    [Header("Enemy Block UI Text")]
+    public string blockTextPrefix = "";
+    public string blockTextSuffix = "";
+
+    [Header("Enemy Block UI Animation")]
+    [Tooltip("æ˜¯å¦ä½¿ç”¨è­·ç›¾ç”Ÿæˆå‹•ç•«")]
+    public bool useBlockAppearAnimation = true;
+
+    [Tooltip("æ˜¯å¦ä½¿ç”¨è­·ç›¾å¸¸æ…‹å‹•ç•«")]
+    public bool useBlockIdleAnimation = true;
+
+    [Tooltip("æ˜¯å¦ä½¿ç”¨è­·ç›¾æ¶ˆå¤±å‹•ç•«")]
+    public bool useBlockDisappearAnimation = true;
+
+    [Tooltip("ç”Ÿæˆå‹•ç•« Trigger åç¨±")]
+    public string blockAppearTrigger = "Block_Appear";
+
+    [Tooltip("å¸¸æ…‹å‹•ç•« Trigger åç¨±")]
+    public string blockIdleTrigger = "Block_Idle";
+
+    [Tooltip("æ¶ˆå¤±å‹•ç•« Trigger åç¨±")]
+    public string blockDisappearTrigger = "Block_Disappear";
+
+    [Tooltip("ç”Ÿæˆå‹•ç•«å¤§ç´„ç§’æ•¸ã€‚æ’­æ”¾å®Œå¾Œæœƒå˜—è©¦åˆ‡åˆ°å¸¸æ…‹å‹•ç•«")]
+    public float blockAppearDuration = 0.25f;
+
+    [Tooltip("æ¶ˆå¤±å‹•ç•«å¤§ç´„ç§’æ•¸ã€‚æ’­æ”¾å®Œå¾Œæ‰éš±è—è­·ç›¾ UI")]
+    public float blockDisappearDuration = 0.25f;
+
+    private bool isBlockUIVisible;
+    private Coroutine blockAnimationCoroutine;
+
     [Header("Animation")]
     public EnemyVisualAnimationController visualAnimationController;
+
     [Header("Battle Manager")]
     public BattleManager battleManager;
+
     [Header("Intent Tooltip")]
     public TooltipTriggerUI intentTooltipTrigger;
-    public event Action OnIntentChanged;
 
+    public event Action OnIntentChanged;
 
     private bool isDead;
 
@@ -60,6 +136,7 @@ public class EnemyUnit : BattleUnit
             return isDead && gameObject.activeInHierarchy && currentHp <= 0;
         }
     }
+
     public bool TryGetChargeTooltip(out TooltipEntry entry)
     {
         entry = null;
@@ -67,8 +144,8 @@ public class EnemyUnit : BattleUnit
         if (chargeBrokenStunQueued)
         {
             entry = new TooltipEntry(
-                "·w¯t",
-                "»W¤O³Q¥´Â_¡A³o¦¸¦æ°Ê·|ªÅ¹L¤@¦^¦X¡C"
+                "æšˆçœ©",
+                "è“„åŠ›è¢«æ‰“æ–·ï¼Œé€™æ¬¡è¡Œå‹•æœƒç©ºéä¸€å›åˆã€‚"
             );
 
             return true;
@@ -78,16 +155,17 @@ public class EnemyUnit : BattleUnit
             return false;
 
         entry = new TooltipEntry(
-            "»W¤O",
-            $"¥Ø«e»W¤O­È¡G{chargeValue}\n" +
-            $"³Ñ¾l­Ë¼Æ¡G{chargeTurnsLeft} ¦^¦X\n" +
-            $"­Ë¼Æµ²§ô®É¡A³y¦¨ {chargeValue} ÂI¶Ë®`¡C\n" +
-            $"¨ü¨ì¶Ë®`·|­°§C»W¤O­È¡C\n" +
-            $"»W¤O­ÈÂk¹s®É¡A¤U¤@¦¸¦æ°Ê·|·w¯t¨ÃªÅ¹L¤@¦^¦X¡C"
+            "è“„åŠ›",
+            $"ç›®å‰è“„åŠ›å€¼ï¼š{chargeValue}\n" +
+            $"å‰©é¤˜å€’æ•¸ï¼š{chargeTurnsLeft} å›åˆ\n" +
+            $"å€’æ•¸çµæŸæ™‚ï¼Œé€ æˆ {chargeValue} é»å‚·å®³ã€‚\n" +
+            $"å—åˆ°å‚·å®³æœƒé™ä½è“„åŠ›å€¼ã€‚\n" +
+            $"è“„åŠ›å€¼æ­¸é›¶æ™‚ï¼Œä¸‹ä¸€æ¬¡è¡Œå‹•æœƒæšˆçœ©ä¸¦ç©ºéä¸€å›åˆã€‚"
         );
 
         return true;
     }
+
     public void StartCharge(int startValue, int turnCount)
     {
         isCharging = true;
@@ -99,17 +177,21 @@ public class EnemyUnit : BattleUnit
 
         RefreshIntentUI();
         RefreshIntentTooltip();
+        RefreshInspectorStatuses();
 
-        Debug.Log($"[{unitName}] ¶}©l»W¤O¡A»W¤O­È = {chargeValue}¡A­Ë¼Æ = {chargeTurnsLeft}");
+        Debug.Log($"[{unitName}] é–‹å§‹è“„åŠ›ï¼Œè“„åŠ›å€¼ = {chargeValue}ï¼Œå€’æ•¸ = {chargeTurnsLeft}");
     }
+
     public void RequestStayOnCurrentIntent()
     {
         stayOnCurrentIntentThisTurn = true;
     }
+
     public bool HasChargeBrokenStunQueued()
     {
         return chargeBrokenStunQueued;
     }
+
     public void ConsumeChargeBrokenStun()
     {
         chargeBrokenStunQueued = false;
@@ -117,8 +199,9 @@ public class EnemyUnit : BattleUnit
         chargeValue = 0;
         chargeTurnsLeft = 0;
 
-        Debug.Log($"[{unitName}] ¦]»W¤O³Q¥´¯}¦Ó·w¯t¡AªÅ¹L¤@¦^¦X");
+        Debug.Log($"[{unitName}] å› è“„åŠ›è¢«æ‰“ç ´è€Œæšˆçœ©ï¼Œç©ºéä¸€å›åˆ");
     }
+
     public int TickChargeCountdown()
     {
         if (!isCharging)
@@ -133,6 +216,7 @@ public class EnemyUnit : BattleUnit
 
         return chargeTurnsLeft;
     }
+
     public int GetChargeDamage()
     {
         if (!isCharging)
@@ -140,6 +224,7 @@ public class EnemyUnit : BattleUnit
 
         return Mathf.Max(0, chargeValue);
     }
+
     public void ClearCharge()
     {
         isCharging = false;
@@ -150,6 +235,7 @@ public class EnemyUnit : BattleUnit
 
         RefreshIntentUI();
     }
+
     protected override void OnAfterHpDamageTaken(int realHpDamage)
     {
         base.OnAfterHpDamageTaken(realHpDamage);
@@ -165,7 +251,7 @@ public class EnemyUnit : BattleUnit
         if (chargeValue < 0)
             chargeValue = 0;
 
-        Debug.Log($"[{unitName}] »W¤O¨ü¨ì¤zÂZ¡A¦©°£ {realHpDamage}¡A³Ñ¾l»W¤O­È = {chargeValue}");
+        Debug.Log($"[{unitName}] è“„åŠ›å—åˆ°å¹²æ“¾ï¼Œæ‰£é™¤ {realHpDamage}ï¼Œå‰©é¤˜è“„åŠ›å€¼ = {chargeValue}");
 
         if (chargeValue <= 0)
         {
@@ -173,14 +259,18 @@ public class EnemyUnit : BattleUnit
             chargeBrokenStunQueued = true;
             chargeTurnsLeft = 0;
 
-            Debug.Log($"[{unitName}] »W¤O³Q¥´¯}¡A¤U¤@¦¸¦æ°Ê±N·w¯t");
+            Debug.Log($"[{unitName}] è“„åŠ›è¢«æ‰“ç ´ï¼Œä¸‹ä¸€æ¬¡è¡Œå‹•å°‡æšˆçœ©");
         }
 
         RefreshIntentUI();
     }
+
     public void ResetDeathState()
     {
         isDead = false;
+
+        ClearStatusIconUI();
+        RefreshInspectorStatuses();
     }
 
     public EnemyIntentData CurrentIntent
@@ -199,6 +289,7 @@ public class EnemyUnit : BattleUnit
             return intents[currentIntentIndex];
         }
     }
+
     public void RefreshIntentTooltip()
     {
         if (intentTooltipTrigger == null)
@@ -219,13 +310,13 @@ public class EnemyUnit : BattleUnit
         if (intent != null)
         {
             string title = string.IsNullOrWhiteSpace(intent.intentName)
-                ? "·N¹Ï"
+                ? "æ„åœ–"
                 : intent.intentName;
 
             string body = intent.description;
 
             if (string.IsNullOrWhiteSpace(body))
-                body = "³o­Ó¼Ä¤H§Y±N°õ¦æ¦¹·N¹Ï¡C";
+                body = "é€™å€‹æ•µäººå³å°‡åŸ·è¡Œæ­¤æ„åœ–ã€‚";
 
             entries.Add(new TooltipEntry(title, body));
         }
@@ -246,29 +337,47 @@ public class EnemyUnit : BattleUnit
     private void OnEnable()
     {
         OnHpChanged += RefreshHpUI;
+        OnHpChanged += RefreshBlockUI;
+        OnStatusChanged += RefreshInspectorStatuses;
+        OnStatusChanged += RefreshStatusIconUI;
+
+        RefreshBlockUI();
+        RefreshInspectorStatuses();
+        RefreshStatusIconUI();
     }
 
     private void OnDisable()
     {
         OnHpChanged -= RefreshHpUI;
+        OnHpChanged -= RefreshBlockUI;
+        OnStatusChanged -= RefreshInspectorStatuses;
+        OnStatusChanged -= RefreshStatusIconUI;
+
+        if (blockAnimationCoroutine != null)
+        {
+            StopCoroutine(blockAnimationCoroutine);
+            blockAnimationCoroutine = null;
+        }
     }
 
     private void Start()
     {
         RefreshAllUI();
     }
-    
+
     protected override void OnDamagedButAlive()
     {
         base.OnDamagedButAlive();
 
         PlayHurtAnimation();
     }
+
     public void PlayHurtAnimation()
     {
         if (visualAnimationController != null)
             StartCoroutine(visualAnimationController.PlayHurt());
     }
+
     public IEnumerator PlayActionAnimation(EnemyAnimationType animationType)
     {
         if (visualAnimationController == null)
@@ -297,6 +406,7 @@ public class EnemyUnit : BattleUnit
                 break;
         }
     }
+
     public EnemyAnimationType GetCurrentIntentAnimationType()
     {
         if (intents == null || intents.Count == 0)
@@ -307,6 +417,7 @@ public class EnemyUnit : BattleUnit
 
         return intents[currentIntentIndex].animationType;
     }
+
     public void ExecuteTurn(BattleUnit player, BattleManager battleManager)
     {
         if (currentHp <= 0)
@@ -325,11 +436,11 @@ public class EnemyUnit : BattleUnit
 
         if (intent == null)
         {
-            Debug.LogWarning($"[{unitName}] ¨S¦³³]©w EnemyIntentData");
+            Debug.LogWarning($"[{unitName}] æ²’æœ‰è¨­å®š EnemyIntentData");
             return;
         }
 
-        Debug.Log($"[{unitName}] °õ¦æ·N¹Ï¡G{intent.intentName}");
+        Debug.Log($"[{unitName}] åŸ·è¡Œæ„åœ–ï¼š{intent.intentName}");
 
         EnemyActionContext context = new EnemyActionContext(this, player, battleManager);
 
@@ -371,6 +482,9 @@ public class EnemyUnit : BattleUnit
     {
         RefreshHpUI();
         RefreshIntentUI();
+        RefreshBlockUI();
+        RefreshInspectorStatuses();
+        RefreshStatusIconUI();
     }
 
     public void RefreshHpUI()
@@ -380,6 +494,330 @@ public class EnemyUnit : BattleUnit
 
         if (maxHpText != null)
             maxHpText.text = maxHp.ToString();
+    }
+
+    [ContextMenu("Refresh Inspector Statuses")]
+    public void RefreshInspectorStatuses()
+    {
+        inspectorStatuses.Clear();
+
+        Array statusValues = Enum.GetValues(typeof(StatusType));
+
+        for (int i = 0; i < statusValues.Length; i++)
+        {
+            StatusType statusType = (StatusType)statusValues.GetValue(i);
+            int amount = GetStatus(statusType);
+
+            if (amount <= 0)
+                continue;
+
+            inspectorStatuses.Add(new EnemyStatusDebugEntry
+            {
+                statusType = statusType,
+                amount = amount
+            });
+        }
+    }
+    public void RefreshStatusIconUI()
+    {
+        ClearStatusIconUI();
+
+        if (statusIconRoot == null)
+            return;
+
+        if (statusIconDatabase == null)
+        {
+            Debug.LogWarning($"[EnemyUnit] {unitName} çš„ statusIconDatabase æ²’æœ‰æŒ‡å®š", gameObject);
+            SetStatusIconRootVisible(false);
+            return;
+        }
+
+        if (statusIconPrefab == null)
+        {
+            Debug.LogWarning($"[EnemyUnit] {unitName} çš„ statusIconPrefab æ²’æœ‰æŒ‡å®š", gameObject);
+            SetStatusIconRootVisible(false);
+            return;
+        }
+
+        Dictionary<StatusType, int> currentStatuses = GetAllStatuses();
+
+        foreach (var pair in currentStatuses)
+        {
+            StatusType statusType = pair.Key;
+            int amount = pair.Value;
+
+            if (amount <= 0)
+                continue;
+
+            StatusIconUI iconUI = Instantiate(statusIconPrefab, statusIconRoot);
+
+            if (iconUI == null)
+                continue;
+
+            SetupStatusIconVisual(iconUI, statusType, amount);
+
+            spawnedStatusIcons.Add(iconUI);
+        }
+
+        SetStatusIconRootVisible(spawnedStatusIcons.Count > 0 || !hideStatusRootWhenEmpty);
+    }
+
+    public void ClearStatusIconUI()
+    {
+        for (int i = 0; i < spawnedStatusIcons.Count; i++)
+        {
+            if (spawnedStatusIcons[i] != null)
+                Destroy(spawnedStatusIcons[i].gameObject);
+        }
+
+        spawnedStatusIcons.Clear();
+
+        if (statusIconRoot != null)
+        {
+            for (int i = statusIconRoot.childCount - 1; i >= 0; i--)
+            {
+                Destroy(statusIconRoot.GetChild(i).gameObject);
+            }
+        }
+
+        SetStatusIconRootVisible(false);
+    }
+
+    private void SetupStatusIconVisual(StatusIconUI iconUI, StatusType statusType, int amount)
+    {
+        if (iconUI == null)
+            return;
+
+        Sprite icon = statusIconDatabase.GetIcon(statusType);
+
+        if (iconUI.iconImage != null)
+        {
+            iconUI.iconImage.sprite = icon;
+            iconUI.iconImage.enabled = icon != null;
+        }
+
+        if (iconUI.stackText != null)
+        {
+            iconUI.stackText.text = amount.ToString();
+            iconUI.stackText.gameObject.SetActive(amount > 0);
+        }
+
+        DisableStatusIconTooltip(iconUI);
+
+        iconUI.gameObject.SetActive(true);
+    }
+
+    private void DisableStatusIconTooltip(StatusIconUI iconUI)
+    {
+        if (iconUI == null)
+            return;
+
+        if (iconUI.tooltipTrigger != null)
+            iconUI.tooltipTrigger.enabled = false;
+
+        TooltipTriggerUI[] triggers = iconUI.GetComponentsInChildren<TooltipTriggerUI>(true);
+
+        for (int i = 0; i < triggers.Length; i++)
+        {
+            TooltipTriggerUI trigger = triggers[i];
+
+            if (trigger == null)
+                continue;
+
+            trigger.enabled = false;
+        }
+    }
+
+    private void SetStatusIconRootVisible(bool visible)
+    {
+        if (statusIconRoot == null)
+            return;
+
+        if (hideStatusRootWhenEmpty)
+            statusIconRoot.gameObject.SetActive(visible);
+        else
+            statusIconRoot.gameObject.SetActive(true);
+    }
+
+    public void RefreshBlockUI()
+    {
+        int currentBlock = block;
+
+        if (blockText != null)
+            blockText.text = $"{blockTextPrefix}{currentBlock}{blockTextSuffix}";
+
+        if (currentBlock > 0)
+        {
+            ShowBlockUI();
+        }
+        else
+        {
+            HideBlockUI();
+        }
+    }
+
+    private void ShowBlockUI()
+    {
+        if (blockRoot == null)
+            return;
+
+        if (blockAnimationCoroutine != null)
+        {
+            StopCoroutine(blockAnimationCoroutine);
+            blockAnimationCoroutine = null;
+        }
+
+        if (!isBlockUIVisible)
+        {
+            blockRoot.SetActive(true);
+            isBlockUIVisible = true;
+
+            if (CanPlayBlockAnimation(blockAppearTrigger, useBlockAppearAnimation))
+            {
+                blockAnimationCoroutine = StartCoroutine(PlayBlockAppearThenIdleRoutine());
+            }
+            else
+            {
+                PlayBlockIdleAnimation();
+            }
+
+            return;
+        }
+
+        if (!blockRoot.activeSelf)
+            blockRoot.SetActive(true);
+
+        PlayBlockIdleAnimation();
+    }
+
+    private void HideBlockUI()
+    {
+        if (blockRoot == null)
+            return;
+
+        if (!isBlockUIVisible && !blockRoot.activeSelf)
+            return;
+
+        if (blockAnimationCoroutine != null)
+        {
+            StopCoroutine(blockAnimationCoroutine);
+            blockAnimationCoroutine = null;
+        }
+
+        if (CanPlayBlockAnimation(blockDisappearTrigger, useBlockDisappearAnimation))
+        {
+            blockAnimationCoroutine = StartCoroutine(PlayBlockDisappearRoutine());
+        }
+        else
+        {
+            blockRoot.SetActive(false);
+            isBlockUIVisible = false;
+        }
+    }
+
+    private IEnumerator PlayBlockAppearThenIdleRoutine()
+    {
+        PlayBlockAnimation(blockAppearTrigger);
+
+        yield return new WaitForSeconds(blockAppearDuration);
+
+        PlayBlockIdleAnimation();
+
+        blockAnimationCoroutine = null;
+    }
+
+    private IEnumerator PlayBlockDisappearRoutine()
+    {
+        PlayBlockAnimation(blockDisappearTrigger);
+
+        yield return new WaitForSeconds(blockDisappearDuration);
+
+        if (blockRoot != null)
+            blockRoot.SetActive(false);
+
+        isBlockUIVisible = false;
+        blockAnimationCoroutine = null;
+    }
+
+    private void PlayBlockIdleAnimation()
+    {
+        if (!CanPlayBlockAnimation(blockIdleTrigger, useBlockIdleAnimation))
+            return;
+
+        PlayBlockAnimation(blockIdleTrigger);
+    }
+
+    private bool CanPlayBlockAnimation(string triggerName, bool useAnimation)
+    {
+        if (!useAnimation)
+            return false;
+
+        if (blockAnimator == null)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(triggerName))
+            return false;
+
+        return AnimatorHasTrigger(blockAnimator, triggerName);
+    }
+
+    private void PlayBlockAnimation(string triggerName)
+    {
+        if (blockAnimator == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(triggerName))
+            return;
+
+        if (!AnimatorHasTrigger(blockAnimator, triggerName))
+            return;
+
+        ResetBlockTriggerIfExists(blockAppearTrigger);
+        ResetBlockTriggerIfExists(blockIdleTrigger);
+        ResetBlockTriggerIfExists(blockDisappearTrigger);
+
+        blockAnimator.SetTrigger(triggerName);
+    }
+
+    private void ResetBlockTriggerIfExists(string triggerName)
+    {
+        if (blockAnimator == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(triggerName))
+            return;
+
+        if (!AnimatorHasTrigger(blockAnimator, triggerName))
+            return;
+
+        blockAnimator.ResetTrigger(triggerName);
+    }
+
+    private bool AnimatorHasTrigger(Animator animator, string triggerName)
+    {
+        if (animator == null)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(triggerName))
+            return false;
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            AnimatorControllerParameter parameter = parameters[i];
+
+            if (parameter == null)
+                continue;
+
+            if (parameter.type != AnimatorControllerParameterType.Trigger)
+                continue;
+
+            if (parameter.name == triggerName)
+                return true;
+        }
+
+        return false;
     }
 
     public void RefreshIntentUI()
@@ -405,6 +843,7 @@ public class EnemyUnit : BattleUnit
             intentImage.sprite = intent.intentIcon;
             intentImage.enabled = intent.intentIcon != null;
         }
+
         if (intentTooltipTrigger != null)
         {
             if (intent == null)
@@ -416,24 +855,26 @@ public class EnemyUnit : BattleUnit
                 List<TooltipEntry> entries = new List<TooltipEntry>();
 
                 string title = intent.intentName;
-                string body = $"³o¦W¼Ä¤H¤U¦^¦X·|°õ¦æ¡G{intent.intentName}";
+                string body = $"é€™åæ•µäººä¸‹å›åˆæœƒåŸ·è¡Œï¼š{intent.intentName}";
 
                 string damageText = intent.GetDamageText();
 
                 if (!string.IsNullOrWhiteSpace(damageText))
-                    body += $"\n¼Æ­È¡G{damageText}";
+                    body += $"\næ•¸å€¼ï¼š{damageText}";
 
                 entries.Add(new TooltipEntry(title, body));
 
                 intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
             }
         }
+
         if (intentDamageText != null)
         {
             intentDamageText.text = intent.GetDamageText();
+
             if (chargeBrokenStunQueued)
             {
-                intentDamageText.text = "·w";
+                intentDamageText.text = "æšˆ";
             }
             else if (isCharging)
             {
@@ -444,6 +885,7 @@ public class EnemyUnit : BattleUnit
                 intentDamageText.text = intent.GetDamageText();
             }
         }
+
         RefreshIntentTooltip();
     }
 
@@ -454,12 +896,15 @@ public class EnemyUnit : BattleUnit
 
         StartCoroutine(DieRoutine());
     }
+
     public IEnumerator DieRoutine()
     {
         if (isDead)
             yield break;
 
         isDead = true;
+
+        ClearStatusIconUI();
 
         yield return PlayActionAnimation(EnemyAnimationType.Death);
 
@@ -471,9 +916,10 @@ public class EnemyUnit : BattleUnit
         }
         else
         {
-            Debug.LogWarning($"[{unitName}] battleManager ¨S¦³«ü©w¡A¦º¤`°Êµeµ²§ô«áµLªk³qª¾ BattleManager ÀË¬d³Ó§Q");
+            Debug.LogWarning($"[{unitName}] battleManager æ²’æœ‰æŒ‡å®šï¼Œæ­»äº¡å‹•ç•«çµæŸå¾Œç„¡æ³•é€šçŸ¥ BattleManager æª¢æŸ¥å‹åˆ©");
         }
     }
+
     public void ShowDamagePopup(int damage)
     {
         if (damage <= 0)
@@ -481,13 +927,13 @@ public class EnemyUnit : BattleUnit
 
         if (damagePopupPrefab == null)
         {
-            Debug.LogWarning($"[EnemyDamagePopup] {unitName} ªº damagePopupPrefab ¨S¦³«ü©w", gameObject);
+            Debug.LogWarning($"[EnemyDamagePopup] {unitName} çš„ damagePopupPrefab æ²’æœ‰æŒ‡å®š", gameObject);
             return;
         }
 
         if (damagePopupRoot == null)
         {
-            Debug.LogWarning($"[EnemyDamagePopup] {unitName} ªº damagePopupRoot ¨S¦³«ü©w", gameObject);
+            Debug.LogWarning($"[EnemyDamagePopup] {unitName} çš„ damagePopupRoot æ²’æœ‰æŒ‡å®š", gameObject);
             return;
         }
 
@@ -497,7 +943,7 @@ public class EnemyUnit : BattleUnit
 
         if (anchor == null)
         {
-            Debug.LogWarning($"[EnemyDamagePopup] {unitName} §ä¤£¨ì¸õ¦r anchor", gameObject);
+            Debug.LogWarning($"[EnemyDamagePopup] {unitName} æ‰¾ä¸åˆ°è·³å­— anchor", gameObject);
             return;
         }
 
@@ -527,6 +973,7 @@ public class EnemyUnit : BattleUnit
             gameObject
         );
     }
+
     private Vector2 GetLocalPositionInPopupRoot(RectTransform anchor)
     {
         Canvas rootCanvas = damagePopupRoot.GetComponentInParent<Canvas>();

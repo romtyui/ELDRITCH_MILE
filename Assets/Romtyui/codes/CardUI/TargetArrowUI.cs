@@ -1,14 +1,14 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class TargetArrowUI : MonoBehaviour
 {
     public static TargetArrowUI Instance { get; private set; }
 
     [Header("Root")]
-    [Tooltip("­t³dÅã¥Ü/ÁôÂÃ¾ã²Õ½bÀY¡C³q±`¬O ArrowRoot ©Î ArrowVisualRoot¡C")]
+    [Tooltip("è² è²¬é¡¯ç¤º/éš±è—æ•´çµ„ç®­é ­ã€‚é€šå¸¸æ˜¯ ArrowRoot æˆ– ArrowVisualRootã€‚")]
     public RectTransform visualRoot;
 
-    [Tooltip("­t³d®y¼Ğ´«ºâªº¥ş¿Ã¹õ RectTransform¡C«ØÄ³¬O ArrowCanvasRoot¡C")]
+    [Tooltip("è² è²¬åº§æ¨™æ›ç®—çš„å…¨è¢å¹• RectTransformã€‚å»ºè­°æ˜¯ ArrowCanvasRootã€‚")]
     public RectTransform positionRoot;
 
     [Header("Arrow Parts")]

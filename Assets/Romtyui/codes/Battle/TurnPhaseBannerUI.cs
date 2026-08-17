@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using TMPro;
 using UnityEngine;
 
@@ -9,12 +9,12 @@ public class TurnPhaseBannerUI : MonoBehaviour
     public TMP_Text messageText;
 
     [Header("Player Turn Text")]
-    public string playerTurnTitle = "ª±®a¦^¦X";
+    public string playerTurnTitle = "ç©å®¶å›åˆ";
     public Color playerTurnTitleColor = Color.white;
     public Color playerTurnNumberColor = Color.yellow;
 
     [Header("Enemy Turn Text")]
-    public string enemyTurnTitle = "¼Ä¤è¦^¦X";
+    public string enemyTurnTitle = "æ•µæ–¹å›åˆ";
     public Color enemyTurnColor = Color.red;
 
     [Header("Animation")]
@@ -37,7 +37,7 @@ public class TurnPhaseBannerUI : MonoBehaviour
 
         string message =
             $"<color=#{titleColorHex}>{playerTurnTitle}</color>\n" +
-            $"<color=#{numberColorHex}>²Ä {turnNumber} ¦^¦X</color>";
+            $"<color=#{numberColorHex}>ç¬¬ {turnNumber} å›åˆ</color>";
 
         yield return ShowMessage(message);
     }

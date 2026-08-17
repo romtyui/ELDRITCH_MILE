@@ -1,4 +1,4 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 
 [CreateAssetMenu(menuName = "CardGame/Enemy Actions/Apply Status To Player")]
 public class EnemyApplyStatusToPlayerActionData : EnemyActionData
@@ -13,13 +13,13 @@ public class EnemyApplyStatusToPlayerActionData : EnemyActionData
 
         context.player.ApplyStatus(statusType, amount);
 
-        Debug.Log($"{context.enemy.unitName} πÔ™±Æa¨I•[ {statusType} x{amount}");
+        Debug.Log($"{context.enemy.unitName} Â∞çÁé©ÂÆ∂ÊñΩÂä† {statusType} x{amount}");
     }
     //public override TooltipEntry GetTooltipEntry()
     //{
     //    return new TooltipEntry(
     //        statusType.ToString(),
-    //        $"¨I•[ {statusType} {amount} ºh"
+    //        $"ÊñΩÂä† {statusType} {amount} Â±§"
     //    );
     //}
 }
