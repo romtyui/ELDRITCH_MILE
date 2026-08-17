@@ -27,6 +27,10 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
     public float blackoutFadeDuration = 0.25f;
 
+    [Header("Other Canvas Toggle")]
+    [Tooltip("神牌動畫期間要暫時隱藏/重新顯示的其他 Canvas 物件。")]
+    public GameObject otherCanvasObject;
+
     [Header("Tentacle IK Animation")]
     public GameObject tentacleRoot;
     public Animator tentacleAnimator;
@@ -111,11 +115,15 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         // 11. 關閉觸手根物件
         if (tentacleRoot != null)
             tentacleRoot.SetActive(false);
+        // 保險：避免動畫事件遺失後，其他 Canvas 永遠保持關閉
+        if (otherCanvasObject != null)
+            otherCanvasObject.SetActive(true);
 
         // 12. 黑幕關閉
         yield return FadeBlackout(false);
 
         currentAnimationData = null;
+
     }
 
     private void BindCorruptedCardToAnimationTemplate(CardTransformResult result)
@@ -298,7 +306,41 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             blackoutCanvasGroup.interactable = false;
         }
     }
+    // 給 Animation Event 呼叫：暫時隱藏其他 Canvas 物件
+    public void AnimEvent_HideOtherCanvas()
+    {
+        if (otherCanvasObject == null)
+        {
+            Debug.LogWarning(
+                "[GodCardCorruptionAnimation] HideOtherCanvas 失敗，otherCanvasObject 沒有指定"
+            );
+            return;
+        }
 
+        otherCanvasObject.SetActive(false);
+
+        Debug.Log(
+            $"[GodCardCorruptionAnimation] 暫時隱藏 Canvas 物件：{otherCanvasObject.name}"
+        );
+    }
+
+    // 給 Animation Event 呼叫：重新開啟其他 Canvas 物件
+    public void AnimEvent_ShowOtherCanvas()
+    {
+        if (otherCanvasObject == null)
+        {
+            Debug.LogWarning(
+                "[GodCardCorruptionAnimation] ShowOtherCanvas 失敗，otherCanvasObject 沒有指定"
+            );
+            return;
+        }
+
+        otherCanvasObject.SetActive(true);
+
+        Debug.Log(
+            $"[GodCardCorruptionAnimation] 重新顯示 Canvas 物件：{otherCanvasObject.name}"
+        );
+    }
     private IEnumerator FinishPlayedGodCard(CardViewUI playedCardView)
     {
         if (playedCardView == null)
@@ -375,4 +417,5 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
         rect.position = targetWorldPosition;
     }
+
 }
