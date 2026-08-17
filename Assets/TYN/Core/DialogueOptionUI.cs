@@ -70,9 +70,21 @@ namespace EldritchMile.Core
         /// 這是第幾個選項（0-based）。Stage 靠它把 UI 對回自己的資料。
         public int Index { get; private set; }
 
+        /// 未著色的原文。判定結果要接在它後面（C18③）
         private string baseText = "";
+
+        /// 已經把關鍵字包上顏色語法的版本。**畫面上顯示的是這個**
+        private string displayText = "";
+
+        /// 這個選項的關鍵字（會用屬性色顯示）
+        private string keyword = "";
+
         private ExploreAttribute attribute = ExploreAttribute.None;
         private Image background;
+
+        /// <summary>屬性的顏色與相剋規則都住在同一份資產裡。</summary>
+        private static AttributeChartData Chart =>
+            ProbabilityCheck.Instance != null ? ProbabilityCheck.Instance.chart : null;
 
         private void Awake()
         {
@@ -81,14 +93,31 @@ namespace EldritchMile.Core
 
         public void Bind(int index, string text, ExploreAttribute attr, Mode optionMode)
         {
+            Bind(index, text, attr, optionMode, null);
+        }
+
+        /// <summary>
+        /// 綁一個選項。<paramref name="keywordText"/> 是要用**屬性色**顯示的關鍵字。
+        ///
+        /// 【為什麼是「關鍵字」而不是讓文案自己打顏色標籤】
+        /// 讓文案在內文裡手打 `&lt;color=#...&gt;` 的話，顏色會散在幾十句台詞裡，
+        /// 之後美術調色就得全部重找。這裡只填「哪幾個字」，顏色由屬性決定 ——
+        /// 換色只要改 `AttributeChart` 一個地方。
+        /// </summary>
+        public void Bind(int index, string text, ExploreAttribute attr, Mode optionMode, string keywordText)
+        {
             Index = index;
             baseText = text ?? "";
+            keyword = keywordText ?? "";
             attribute = attr;
             mode = optionMode;
 
-            CurrentDecayMultiplier = 1f;
+            displayText = BuildDisplayText();
 
-            if (labelText != null) labelText.text = baseText;
+            CurrentDecayMultiplier = 1f;
+            SetSpent(false);
+
+            if (labelText != null) labelText.text = displayText;
 
             SetSelected(false);
             HidePreview();
@@ -154,19 +183,196 @@ namespace EldritchMile.Core
         }
 
         /// <summary>
+        /// 把關鍵字包上屬性色。找不到關鍵字就原樣回傳並提醒 —— 多半是打錯字。
+        /// </summary>
+        private string BuildDisplayText()
+        {
+            if (string.IsNullOrEmpty(keyword) || string.IsNullOrEmpty(baseText)) return baseText;
+
+            AttributeChartData chart = Chart;
+            if (chart == null) return baseText;
+
+            int at = baseText.IndexOf(keyword, System.StringComparison.Ordinal);
+            if (at < 0)
+            {
+                Debug.LogWarning(
+                    $"[選項] 關鍵字「{keyword}」不在內文裡，這一句不會有顏色。內文：{baseText}", this);
+                return baseText;
+            }
+
+            // 只換第一個出現的位置。整句都換的話，重複出現的字會整段爆色
+            return baseText.Substring(0, at)
+                 + chart.Colorize(keyword, attribute)
+                 + baseText.Substring(at + keyword.Length);
+        }
+
+        /// <summary>
         /// C18③：把判定結果反映在**選項內文**上。
         /// 由 Stage 呼叫 —— 要接什麼字是內容，不是 UI 該決定的。
         /// </summary>
         public void AppendResultText(string suffix)
         {
             if (labelText == null || string.IsNullOrEmpty(suffix)) return;
-            labelText.text = baseText + suffix;
+
+            displayText = BuildDisplayText() + suffix;
+            labelText.text = displayText;
+        }
+
+        // ==========================================
+        // 判定結果的動效：霧凝聚 → 散去
+        // ==========================================
+        [Header("判定結果動效")]
+        [Tooltip("凝聚（底色壓暗、換成結果文字）要多久")]
+        [Min(0.05f)] public float flashInSeconds = 0.28f;
+
+        [Tooltip("結果停留多久")]
+        [Min(0f)] public float flashHoldSeconds = 0.7f;
+
+        [Tooltip("散去（底色回原色、文字換回內文）要多久")]
+        [Min(0.05f)] public float flashOutSeconds = 0.34f;
+
+        [Tooltip("凝聚時底色變成什麼。預設接近黑")]
+        public Color flashColor = new Color(0.06f, 0.05f, 0.06f, 1f);
+
+        [Tooltip("結果文字的排版。\n" +
+                 "{0} = 成功／失敗（**已經上好屬性色**）、{1} = 關鍵字（原色）。\n" +
+                 "預設只顯示成功／失敗；要連關鍵字一起秀就填「{1}　{0}」")]
+        public string resultFormat = "{0}";
+
+        public string successWord = "成功";
+        public string failureWord = "失敗";
+
+        private Coroutine flashRoutine;
+
+        /// <summary>整段動效要跑多久。Stage 要等它演完才收尾時看這個，不要自己抄秒數。</summary>
+        public float TotalFlashSeconds => flashInSeconds + flashHoldSeconds + flashOutSeconds;
+
+        [Header("結案（成功之後）")]
+        [Tooltip("判定成功之後整格的透明度。留著看得見「→ 成功」，但明顯是已經處理過的")]
+        [Range(0.1f, 1f)] public float spentAlpha = 0.45f;
+
+        /// <summary>
+        /// 這個選項已經成功過了，不再接受出牌。
+        ///
+        /// 【為什麼成功要結案】對話選項的語意是「問過就問過了」——
+        /// 已經成功問出「你到底是什麼東西」，再問一次沒有意義。
+        /// 而且不結案的話同一個選項可以一直打，獎勵得另外防重複（那是治標）。
+        ///
+        /// ⚠️ **失敗不結案** —— 失敗還能再試，那正是逐次衰減存在的理由（C18④）。
+        /// </summary>
+        public bool IsSpent { get; private set; }
+
+        private CanvasGroup group;
+
+        /// <summary>
+        /// 結案。**用 CanvasGroup 擋掉滑鼠，不動 IProbabilityTarget 介面**。
+        ///
+        /// 「不再接受出牌」在這裡等於「不再收到滑鼠事件」：
+        /// 拖曳的 RaycastAll 掃不到它、點擊也點不到，兩條出牌路徑一次擋掉。
+        /// 若改成在 Core 的規則引擎裡加一個「可不可以打」的判斷，
+        /// 介面與所有實作者都要跟著改，而寶箱那邊根本沒有這個概念。
+        /// </summary>
+        public void SetSpent(bool spent)
+        {
+            IsSpent = spent;
+
+            if (group == null) group = GetComponent<CanvasGroup>();
+            if (group == null) group = gameObject.AddComponent<CanvasGroup>();
+
+            group.alpha = spent ? spentAlpha : 1f;
+            group.blocksRaycasts = !spent;
+
+            if (spent) HidePreview();
+        }
+
+        /// <summary>
+        /// 判定完播一次「霧凝聚又散去」。
+        ///
+        /// 【為什麼是換同一顆 Text 的字，而不是另外開一個結果用的 Text】
+        /// 多一個文字物件就要多維護一份位置、字級、換行與對齊，
+        /// 而且兩份很容易在改版面時走鐘。換字串只會讓 TMP 重建一次網格，
+        /// 一次動效期間發生兩次 —— 那個成本在這個規模下等於沒有。
+        ///
+        /// 文字用**淡出→換字→淡入**的方式接，硬切會看起來像閃爍。
+        /// </summary>
+        public void PlayResultFlash(bool success)
+        {
+            if (!isActiveAndEnabled) return;
+
+            if (flashRoutine != null) StopCoroutine(flashRoutine);
+            flashRoutine = StartCoroutine(FlashRoutine(success));
+        }
+
+        private System.Collections.IEnumerator FlashRoutine(bool success)
+        {
+            AttributeChartData chart = Chart;
+
+            // 上色的是「成功／失敗」那個詞，不是關鍵字 ——
+            // 關鍵字的顏色已經在選項內文裡出現過了，結果字再上一次只是重複；
+            // 玩家這一刻要讀的是「成了沒有」，顏色是用來提醒「是靠哪一種思路成的」
+            string word = success ? successWord : failureWord;
+            string coloredWord = chart != null ? chart.Colorize(word, attribute) : word;
+
+            string resultText = string.Format(resultFormat, coloredWord, keyword);
+
+            // 底色的基準是**當下的顏色**而不是 unselectedTint ——
+            // 這個選項可能正被選取或被瞄準著，動效結束要回到那個狀態，不是回到預設
+            Color from = background != null ? background.color : Color.white;
+
+            yield return Phase(flashInSeconds, from, flashColor, resultText);
+
+            if (flashHoldSeconds > 0f) yield return new WaitForSecondsRealtime(flashHoldSeconds);
+
+            yield return Phase(flashOutSeconds, flashColor, from, displayText);
+
+            // ⚠️ 結案放在動效**之後**。先變暗的話，那一下閃光是打在已經半透明的格子上，
+            //    整個效果會弱掉 —— 玩家會覺得「好像有東西閃過去」而不是「這一句成了」
+            if (success) SetSpent(true);
+
+            flashRoutine = null;
+        }
+
+        /// <summary>底色從 a 漸變到 b，文字在中點淡出→換成 newText→淡入。</summary>
+        private System.Collections.IEnumerator Phase(float seconds, Color a, Color b, string newText)
+        {
+            float t = 0f;
+            bool swapped = false;
+
+            while (t < 1f)
+            {
+                t += Time.unscaledDeltaTime / seconds;
+                float k = Mathf.Clamp01(t);
+
+                if (background != null) background.color = Color.Lerp(a, b, k);
+
+                if (labelText != null)
+                {
+                    // 0→0.5 淡出、0.5→1 淡入，中點換字
+                    float alpha = k < 0.5f ? 1f - k * 2f : (k - 0.5f) * 2f;
+                    labelText.alpha = alpha;
+
+                    if (!swapped && k >= 0.5f)
+                    {
+                        labelText.text = newText;
+                        swapped = true;
+                    }
+                }
+
+                yield return null;
+            }
+
+            if (background != null) background.color = b;
+            if (labelText != null)
+            {
+                labelText.text = newText;
+                labelText.alpha = 1f;
+            }
         }
 
         public void ShowPreview(float rate, Effectiveness eff)
         {
-            // PlainChoice 不判定，顯示機率只會誤導
-            if (mode != Mode.ProbabilityTarget || previewLabel == null) return;
+            // PlainChoice 不判定，顯示機率只會誤導；已結案的也不該再報機率
+            if (mode != Mode.ProbabilityTarget || previewLabel == null || IsSpent) return;
 
             previewLabel.gameObject.SetActive(true);
 
@@ -199,7 +405,7 @@ namespace EldritchMile.Core
 
         public void SetTargeted(bool targeted)
         {
-            if (background == null) return;
+            if (background == null || IsSpent) return;
 
             // 底色的基準是 unselectedTint（Bind 時套用的那個），不是當下的顏色 ——
             // 否則連續瞄準／取消會一次比一次暗，越疊越黑

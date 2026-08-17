@@ -196,14 +196,24 @@ namespace EldritchMile.Explore
 
             IsDragging = false;
             hand?.NotifyDragEnd(this);
-            canvasGroup.blocksRaycasts = true;
             HoverPreviewBroadcaster.Instance?.End();
             DialogueEncounterController.Instance?.ClearAimed();
 
             bool draggedFarEnough =
                 Vector2.Distance(eventData.position, pointerDownPos) >= playThresholdPixels;
 
+            // ⚠️⚠️ 找目標**必須在還原 blocksRaycasts 之前**。
+            //
+            // 拖曳中的卡片就跟在游標底下，而且住在永遠最上層的 __DragLayer。
+            // 一旦先把 blocksRaycasts 打開，這次 RaycastAll 的 results[0] 就是**卡片自己** ——
+            // 而卡片身上沒有 IProbabilityTarget，於是每一次放開都被判成「沒有打中任何東西」。
+            //
+            // 症狀非常有欺騙性：拖曳途中的瞄準回饋是好的（那時 blocksRaycasts 還是 false），
+            // 只有放開的那一瞬間失效，看起來像「目標沒反應」而不是「找錯人」。
+            // 而且它對**所有**目標都失效，不是只有選項。
             IProbabilityTarget target = draggedFarEnough ? FindTargetUnder(eventData) : null;
+
+            canvasGroup.blocksRaycasts = true;
 
             bool played = target != null && hand != null && hand.TryPlay(this, target);
 

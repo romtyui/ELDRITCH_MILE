@@ -49,6 +49,14 @@ namespace EldritchMile.Core
             "階級屬於「哪張表抽的」而不屬於物品本身。")]
         public List<string> tags = new List<string>();
 
+        [Header("戰鬥牌")]
+        [Tooltip("這件商品買下去要加進戰鬥牌組的哪一張牌。\n\n" +
+                 "武器在這個世界會變成卡牌，所以商店賣的「武器」實際上是在賣一張 CardData。\n" +
+                 "留空 = 只是普通道具，只進背包。\n\n" +
+                 "⚠️ 牌組是 `RunStateManager.savedDeck`（戰鬥端持有），\n" +
+                 "加牌走 `PlayerVitals.AddCardToDeck()`，不要自己去碰那個清單")]
+        public CardData grantsCard;
+
         /// <summary>顯示名沒填就退回 id —— 至少畫面上不會是一片空白。</summary>
         public string Label => string.IsNullOrEmpty(displayName) ? id : displayName;
 

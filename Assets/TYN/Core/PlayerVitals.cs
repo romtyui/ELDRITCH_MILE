@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace EldritchMile.Core
@@ -77,6 +78,24 @@ namespace EldritchMile.Core
         /// </summary>
         public static void EnsureInitialized(int maxHp, int maxSan)
         {
+            EnsureInitialized(maxHp, maxSan, null);
+        }
+
+        /// <summary>
+        /// 同上，但一併給出這場 run 的起始戰鬥牌組。
+        ///
+        /// 【⚠️ 為什麼牌組是必要的，不是選配】
+        /// 隊友的 `ApplyToBattle()` 裡有一段 `ApplyDeck()`，它會
+        /// **先 `battleDeck.startingDeck.Clear()`，再把 `savedDeck` 倒進去**。
+        ///
+        /// 也就是說：一旦 `hasSavedRunState` 是 true 而 `savedDeck` 是空的，
+        /// 玩家會**帶著空牌組進戰鬥** —— 沒有牌可以出，打不動也輸不了，只能重開。
+        /// 而且不會有任何錯誤訊息。
+        ///
+        /// 所以下面會擋住這個情況：牌組是空的就不初始化，寧可退回舊行為。
+        /// </summary>
+        public static void EnsureInitialized(int maxHp, int maxSan, List<CardData> startingDeck)
+        {
             if (Rs == null)
             {
                 Debug.Log("[生命值] 場上沒有 RunStateManager，跳過初始化（主選單或單獨測場景時是正常的）");
@@ -98,6 +117,25 @@ namespace EldritchMile.Core
                 return;
             }
 
+            if (startingDeck != null && startingDeck.Count > 0)
+            {
+                Rs.savedDeck.Clear();
+                Rs.savedDeck.AddRange(startingDeck);
+            }
+
+            if (Rs.savedDeck.Count == 0)
+            {
+                Debug.LogError(
+                    "[生命值] **沒有初始化** —— 因為戰鬥牌組是空的。\n\n" +
+                    "隊友的 ApplyToBattle() 會先清空 battleDeck.startingDeck 再倒入 savedDeck。\n" +
+                    "若在 savedDeck 是空的時候打開 hasSavedRunState，玩家會**帶著空牌組進戰鬥** ——\n" +
+                    "沒有牌可以出，打不動也輸不了，而且不會有任何錯誤訊息。\n\n" +
+                    "要開啟 run 起始的 HP／SAN，得同時提供起始牌組："
+                    + "EnsureInitialized(maxHp, maxSan, deck)。\n" +
+                    "這件事要跟戰鬥組確認「一場 run 的起手牌組從哪裡來」。");
+                return;
+            }
+
             Rs.savedPlayerMaxHp = maxHp;
             Rs.savedPlayerCurrentHp = maxHp;
 
@@ -110,7 +148,9 @@ namespace EldritchMile.Core
             // ⚠️ 這一行會讓隊友的 ApplyToBattle 開始生效，見上方說明
             Rs.hasSavedRunState = true;
 
-            Debug.Log($"[生命值] run 開始，初始化為 HP {maxHp}/{maxHp}、SAN {San}/{MaxSan}");
+            Debug.Log(
+                $"[生命值] run 開始，初始化為 HP {maxHp}/{maxHp}、SAN {San}/{MaxSan}、" +
+                $"牌組 {Rs.savedDeck.Count} 張");
         }
 
         // ==========================================
@@ -173,6 +213,45 @@ namespace EldritchMile.Core
 
             Rs.savedCurrentEnergy = Mathf.Min(Rs.savedCurrentEnergy + amount, Rs.savedMaxEnergy);
             Debug.Log($"[生命值] 回 SAN {amount}（現在 {San}/{MaxSan}）");
+        }
+
+        // ==========================================
+        // 戰鬥牌組
+        // ==========================================
+        /// <summary>這場 run 的戰鬥牌組有幾張。</summary>
+        public static int DeckCount => Rs != null ? Rs.savedDeck.Count : 0;
+
+        /// <summary>
+        /// 加一張牌進戰鬥牌組。商店買武器牌、事件給神牌都走這支。
+        ///
+        /// 【機制】牌組就是 `RunStateManager.savedDeck`（`List&lt;CardData&gt;`）。
+        /// 戰鬥開始時 `ApplyDeck()` 會把它倒進 `battleDeck.startingDeck`。
+        /// 所以「加牌」＝往這個清單裡加一筆，**不需要改隊友的任何程式**。
+        ///
+        /// ⚠️ 但要有牌組才加得進去 —— `IsReady` 是 false 時代表這場 run 還沒初始化，
+        /// 這時候加牌會在第一場戰鬥被 `SaveFromBattle()` 整個蓋掉。
+        /// </summary>
+        public static bool AddCardToDeck(CardData card)
+        {
+            if (card == null) return false;
+
+            if (Rs == null)
+            {
+                Debug.LogWarning("[牌組] 場上沒有 RunStateManager，加不了牌");
+                return false;
+            }
+
+            if (!IsReady)
+            {
+                Debug.LogWarning(
+                    $"[牌組] 這場 run 還沒初始化，「{card.cardName}」加進去也會被第一場戰鬥蓋掉。\n" +
+                    "請先設定 GameFlowManager 的 Starting Max Hp 與起始牌組（見 EnsureInitialized）。");
+                return false;
+            }
+
+            Rs.savedDeck.Add(card);
+            Debug.Log($"[牌組] 加入「{card.cardName}」（共 {DeckCount} 張）");
+            return true;
         }
     }
 }

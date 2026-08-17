@@ -64,6 +64,46 @@ namespace EldritchMile.Core
             }
         }
 
+        [Header("顏色")]
+        [Tooltip("無（黑白）。純文字上用中性灰，純黑在深色底上看不見")]
+        public Color noneColor = new Color(0.72f, 0.72f, 0.72f);
+
+        [Tooltip("直覺（紅）")]
+        public Color intuitionColor = new Color(0.86f, 0.34f, 0.32f);
+
+        [Tooltip("邏輯（藍）")]
+        public Color logicColor = new Color(0.36f, 0.60f, 0.86f);
+
+        [Tooltip("批判與創造（綠）")]
+        public Color insightColor = new Color(0.44f, 0.76f, 0.48f);
+
+        /// <summary>
+        /// 屬性的顏色。**放在這裡是因為這份資產已經是「屬性的事實」的家** ——
+        /// 相剋表在這裡，顏色也該在這裡，否則卡框、選項關鍵字、tooltip 會各配一套而慢慢對不起來。
+        ///
+        /// 預設值是照牌框的色系抓的近似值，**要跟美術對一次**。
+        /// </summary>
+        public Color ColorOf(ExploreAttribute attr)
+        {
+            switch (attr)
+            {
+                case ExploreAttribute.Intuition: return intuitionColor;
+                case ExploreAttribute.Logic: return logicColor;
+                case ExploreAttribute.Insight: return insightColor;
+                default: return noneColor;
+            }
+        }
+
+        /// <summary>把一段文字包成 TMP 的顏色語法。給選項的關鍵字用。</summary>
+        public string Colorize(string text, ExploreAttribute attr)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+
+            // ⚠️ 一定要用 RGB**不含 alpha** 的六碼。TMP 吃八碼，但八碼時
+            //    alpha 會覆蓋 TMP 自己的淡入淡出，做動效時文字會不跟著透明度走
+            return $"<color=#{ColorUtility.ToHtmlStringRGB(ColorOf(attr))}>{text}</color>";
+        }
+
         public float GetMultiplier(ExploreAttribute card, ExploreAttribute target)
         {
             return GetMultiplier(GetEffectiveness(card, target));

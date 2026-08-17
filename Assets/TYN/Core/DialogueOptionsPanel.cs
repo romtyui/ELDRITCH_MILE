@@ -84,6 +84,19 @@ namespace EldritchMile.Core
             IReadOnlyList<ExploreAttribute> attributes,
             DialogueOptionUI.Mode mode)
         {
+            return Show(texts, attributes, mode, null);
+        }
+
+        /// <summary>
+        /// 同上，外加每個選項的**關鍵字** —— 那幾個字會用該選項的屬性色顯示。
+        /// 商店與特殊事件不需要（它們是 PlainChoice，沒有屬性），傳 null 即可。
+        /// </summary>
+        public IReadOnlyList<DialogueOptionUI> Show(
+            IReadOnlyList<string> texts,
+            IReadOnlyList<ExploreAttribute> attributes,
+            DialogueOptionUI.Mode mode,
+            IReadOnlyList<string> keywords)
+        {
             HideAll();
 
             if (texts == null || texts.Count == 0) return active;
@@ -106,7 +119,9 @@ namespace EldritchMile.Core
                     ? attributes[i]
                     : ExploreAttribute.None;
 
-                slot.Bind(i, texts[i], attr, mode);
+                string kw = keywords != null && i < keywords.Count ? keywords[i] : null;
+
+                slot.Bind(i, texts[i], attr, mode, kw);
                 active.Add(slot);
             }
 

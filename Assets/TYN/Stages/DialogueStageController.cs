@@ -20,7 +20,11 @@ using EldritchMile.Explore;
 /// 【一起落地的三條約束】
 ///   · C18① 主要目標選定 —— 三個選項同時在場，手牌變暗必須知道是對哪一個
 ///   · C18③ 判定結果反映在選項內文 —— 選項現在有文字元件了
-///   · C18⑦ 蓄意失敗合法 —— 判定成功也不自動結束，玩家自己按結束
+///   · C18⑦ 蓄意失敗合法 —— 判定成功不會結束**整個環節**，玩家可以繼續打別的選項
+///
+/// 【2026-08-18 調整】**成功的選項會結案**（變暗、不再接受出牌）——
+/// 對話選項的語意是「問過就問過了」，再問一次沒有意義，而且不結案就能重複刷獎勵。
+/// 失敗不結案（那正是逐次衰減存在的理由）。三個都問完就自動收尾。
 /// </summary>
 public class DialogueStageController : ChoiceStageController
 {
@@ -34,6 +38,10 @@ public class DialogueStageController : ChoiceStageController
 
         [Tooltip("這個選項吃哪一種思路。與手牌的屬性相剋決定成功率")]
         public ExploreAttribute attribute = ExploreAttribute.None;
+
+        [Tooltip("要用**屬性色**顯示的關鍵字。必須是上面內文裡的一小段，例如「什麼東西」。\n" +
+                 "留空則整句都是原色。顏色由屬性決定，改色改 AttributeChart 一個地方就好")]
+        public string keyword = "";
 
         [Tooltip("判定成功時接在選項內文後面的字（C18③）")]
         public string successSuffix = "　→ 成功";
@@ -54,6 +62,25 @@ public class DialogueStageController : ChoiceStageController
     [Header("選項")]
     [Tooltip("最多三個 —— 對話框只有三個選項槽")]
     public List<Option> options = new List<Option>();
+
+    /// <summary>
+    /// 這一站已經發過獎勵的選項。
+    ///
+    /// 【為什麼需要】C18⑦「判定成功不自動結束」意味著玩家可以**對同一個選項再出一張牌**，
+    /// 而每一次成功本來都會再發一次獎勵 —— 五張手牌就能把同一個撬棍刷三根。
+    ///
+    /// 【為什麼不是「延到結算才發」】專案的既有原則是
+    /// **狀態立刻入袋、播報可以延後**（見 `ChestInteractable.Open`）——
+    /// 延到結算才發的話，玩家中途離開就會白做工。
+    /// 所以照樣立刻給，只是每個選項**只給一次**。
+    /// </summary>
+    private readonly HashSet<int> rewardedOptions = new HashSet<int>();
+
+    /// 這一站已經成功過的選項。成功即結案（選項會變暗且不再接受出牌）
+    private readonly HashSet<int> succeededOptions = new HashSet<int>();
+
+    /// 這次實際攤出來的選項。用來判斷「是不是全部都打完了」
+    private readonly List<DialogueOptionUI> shownOptions = new List<DialogueOptionUI>();
 
     [Header("打牌")]
     [Tooltip("手牌來源。牌組內容從 RunContext.exploreDeck 同步過來")]
@@ -104,8 +131,13 @@ public class DialogueStageController : ChoiceStageController
             return;
         }
 
+        rewardedOptions.Clear();
+        succeededOptions.Clear();
+        shownOptions.Clear();
+
         var texts = new List<string>();
         var attrs = new List<ExploreAttribute>();
+        var keywords = new List<string>();
 
         for (int i = 0; i < options.Count && i < Options.SlotCount; i++)
         {
@@ -114,6 +146,7 @@ public class DialogueStageController : ChoiceStageController
 
             texts.Add(o.text);
             attrs.Add(o.attribute);
+            keywords.Add(o.keyword);
         }
 
         if (texts.Count == 0)
@@ -129,7 +162,7 @@ public class DialogueStageController : ChoiceStageController
         Options.OnOptionResolved += HandleOptionResolved;
 
         IReadOnlyList<DialogueOptionUI> shown =
-            Options.Show(texts, attrs, DialogueOptionUI.Mode.ProbabilityTarget);
+            Options.Show(texts, attrs, DialogueOptionUI.Mode.ProbabilityTarget, keywords);
 
         // 抽手牌
         var hand = new List<CardInstanceExplore>();
@@ -153,7 +186,11 @@ public class DialogueStageController : ChoiceStageController
         Encounter.OnEncounterEnded += HandleEncounterEnded;
 
         var targets = new List<IProbabilityTarget>();
-        for (int i = 0; i < shown.Count; i++) targets.Add(shown[i]);
+        for (int i = 0; i < shown.Count; i++)
+        {
+            targets.Add(shown[i]);
+            shownOptions.Add(shown[i]);
+        }
 
         Encounter.Begin(hand, targets);
     }
@@ -213,6 +250,9 @@ public class DialogueStageController : ChoiceStageController
         // C18③：結果反映在**選項內文**
         option.AppendResultText(success ? data.successSuffix : data.failSuffix);
 
+        // 選項本身演一次「霧凝聚又散去」：底色壓暗、換成屬性色的「成功／失敗」，再散回內文
+        option.PlayResultFlash(success);
+
         // 同時反映在對話框正文。用 ShowInstant（即時替換）而不是排隊 ——
         // C18 的設計是連續嘗試，每出一張牌都要點掉一則訊息會被打斷得很嚴重
         string body = success ? data.successText : data.failText;
@@ -222,20 +262,61 @@ public class DialogueStageController : ChoiceStageController
                 Encounter != null ? Encounter.WithAttemptLine(body) : body);
         }
 
-        if (success && run != null)
+        if (success && run != null && data.grantItemIdsOnSuccess.Count > 0)
         {
-            for (int i = 0; i < data.grantItemIdsOnSuccess.Count; i++)
+            if (rewardedOptions.Add(option.Index))
             {
-                string id = data.grantItemIdsOnSuccess[i];
-                if (string.IsNullOrEmpty(id)) continue;
+                for (int i = 0; i < data.grantItemIdsOnSuccess.Count; i++)
+                {
+                    string id = data.grantItemIdsOnSuccess[i];
+                    if (string.IsNullOrEmpty(id)) continue;
 
-                run.AddItem(id);
-                Debug.Log($"[對話] 選項成功，獲得：{GameFlowManager.ItemName(id)}");
+                    run.AddItem(id);
+                    Debug.Log($"[對話] 選項成功，獲得：{GameFlowManager.ItemName(id)}");
+                }
+            }
+            else
+            {
+                // 判定本身仍然是真的（會照常顯示成功、照常衰減），只是不再給第二次獎勵
+                Debug.Log($"[對話] 選項 {option.Index} 已經給過獎勵了，這次成功不再發");
             }
         }
 
-        // ⚠️ 這裡刻意**不**因為成功就結束 —— 蓄意失敗是合法策略（C18⑦）。
-        //    結束由玩家按手牌區的結束鈕，或手牌用盡自動觸發。
+        // ⚠️ 成功會讓**那一個選項**結案（變暗、不再接受出牌），但**整個環節不結束** ——
+        //    蓄意失敗仍然是合法策略（C18⑦），玩家可以繼續打剩下的選項。
+        //    結案本身由 DialogueOptionUI 在動效播完後自己做。
+        if (success)
+        {
+            succeededOptions.Add(option.Index);
+
+            // 全部都問完了就沒有目標可打了。這時候還把手牌留在畫面上，
+            // 玩家會以為自己漏了什麼 —— 等動效演完就收尾
+            if (AllOptionsSpent()) StartCoroutine(EndAfterFlash(option));
+        }
+    }
+
+    /// <summary>攤出來的選項是不是全部都成功過了。</summary>
+    private bool AllOptionsSpent()
+    {
+        for (int i = 0; i < shownOptions.Count; i++)
+        {
+            if (shownOptions[i] != null && !succeededOptions.Contains(shownOptions[i].Index)) return false;
+        }
+        return shownOptions.Count > 0;
+    }
+
+    /// <summary>
+    /// 等結果動效演完才收尾。
+    ///
+    /// 直接收的話玩家最後一次成功的畫面會被轉場切掉 ——
+    /// 那一下正是他要的回饋，不能吃掉。
+    /// </summary>
+    private System.Collections.IEnumerator EndAfterFlash(DialogueOptionUI option)
+    {
+        float wait = option != null ? option.TotalFlashSeconds : 1.3f;
+        yield return new WaitForSecondsRealtime(wait + 0.15f);
+
+        if (Encounter != null && Encounter.IsActive) Encounter.EndEncounter(false);
     }
 
     private void HandleEncounterEnded()
