@@ -47,6 +47,47 @@ namespace EldritchMile.Core
         /// </summary>
         public int money = 0;
 
+        [Header("旗標")]
+        /// <summary>
+        /// 這場 run 發生過什麼。**一個字串清單就夠了**，不要為每種狀態各開一個 bool。
+        ///
+        /// 它同時解決三件本來看起來無關的事：
+        ///   · 「未觸發過的事件」 → `event_<id>` 在不在裡面
+        ///   · 「第一次踏入漁村」 → `visited_village`
+        ///   · 「坎貝爾在不在隊伍」 → 等隊伍系統做好由它來寫
+        ///
+        /// 【為什麼是 List 不是 HashSet】要能被 Unity 序列化（存檔）。
+        /// 數量是幾十個等級，查找成本可以忽略。
+        /// </summary>
+        public List<string> flags = new List<string>();
+
+        [Header("侵蝕度")]
+        /// <summary>
+        /// 各尊神的侵蝕度（0–100）。**每尊神各一條，不是單一全域值** ——
+        /// 這是企劃定的，寫在這裡免得日後有人把它壓成一個數字。
+        ///
+        /// 目前只有「深淵」是確定的（`CorruptionTracks.Abyss`），其餘保留擴充空間：
+        /// 加一尊神就是多一筆，不用改任何程式。
+        /// </summary>
+        public List<CorruptionEntry> corruption = new List<CorruptionEntry>();
+
+        [Serializable]
+        public class CorruptionEntry
+        {
+            public string godId = "";
+            [Range(0, 100)] public int value;
+        }
+
+        [Header("計時")]
+        /// <summary>
+        /// 這場 run 開跑時的 `Time.unscaledTime`。
+        /// 大綱的《門扉》觸發條件是「遊戲進行一段時間後（約 800 秒）」，靠它算。
+        /// </summary>
+        public float startedAtUnscaled;
+
+        /// <summary>這場 run 玩了幾秒。</summary>
+        public float ElapsedSeconds => Mathf.Max(0f, Time.unscaledTime - startedAtUnscaled);
+
         [Header("轉場暫存")]
         /// 進入節點前寫入，供 Stage 在 OnStageEnter 讀取。
         public RunNodeData pendingNode;
@@ -73,6 +114,38 @@ namespace EldritchMile.Core
             {
                 ItemStack s = inventory[i];
                 if (s != null && s.id == id) total += s.count;
+            }
+            return total;
+        }
+
+        /// <summary>
+        /// 身上有幾個帶這個標籤的東西。大綱的條件很多是這種形狀 ——
+        /// 「身上有糧食」「持有 20 張以上的武器牌」「持有的神牌少於 3 張」。
+        ///
+        /// 要查標籤就得問道具庫，所以沒有道具庫時一律回 0（並不報錯，
+        /// 主選單那種還沒有 GameFlowManager 的情境是正常的）。
+        /// </summary>
+        /// <param name="db">
+        /// 要查的道具庫。傳 null 就向 <see cref="GameFlowManager"/> 借。
+        /// **編輯器工具與測試一定要自己傳** —— `Instance` 只有在執行時才有值，
+        /// 沒進 Play 模式的話每一次查詢都會回 0，而且不會報錯
+        /// （跟 <see cref="LootService.Query"/> 是同一個理由）。
+        /// </param>
+        public int CountByTag(string tag, ItemDatabase db = null)
+        {
+            if (string.IsNullOrEmpty(tag)) return 0;
+
+            if (db == null && GameFlowManager.Instance != null) db = GameFlowManager.Instance.itemDatabase;
+            if (db == null) return 0;
+
+            int total = 0;
+            for (int i = 0; i < inventory.Count; i++)
+            {
+                ItemStack s = inventory[i];
+                if (s == null || s.count <= 0) continue;
+
+                ItemData d = db.GetById(s.id);
+                if (d != null && d.HasTag(tag)) total += s.count;
             }
             return total;
         }
@@ -130,6 +203,64 @@ namespace EldritchMile.Core
         }
 
         // ==========================================
+        // 旗標
+        // ==========================================
+        public bool HasFlag(string flag) =>
+            !string.IsNullOrEmpty(flag) && flags.Contains(flag);
+
+        /// <summary>立起一個旗標。已經有了就不重複加。回傳「這次是不是第一次」。</summary>
+        public bool SetFlag(string flag)
+        {
+            if (string.IsNullOrEmpty(flag) || flags.Contains(flag)) return false;
+
+            flags.Add(flag);
+            Debug.Log($"[Run] 旗標：{flag}");
+            return true;
+        }
+
+        // ==========================================
+        // 侵蝕度
+        // ==========================================
+        public int GetCorruption(string godId)
+        {
+            if (string.IsNullOrEmpty(godId)) return 0;
+
+            for (int i = 0; i < corruption.Count; i++)
+                if (corruption[i] != null && corruption[i].godId == godId) return corruption[i].value;
+
+            return 0;
+        }
+
+        /// <summary>
+        /// 加減侵蝕度，夾在 0–100。回傳**實際變動量**（被夾住時會小於傳入值）。
+        ///
+        /// 【為什麼回傳實際變動量】提示文字要說「+5%」，而不是「+5% 但其實只加了 2%」。
+        /// 已經 98% 時再 +5，玩家看到的應該是 +2。
+        /// </summary>
+        public int AddCorruption(string godId, int delta)
+        {
+            if (string.IsNullOrEmpty(godId) || delta == 0) return 0;
+
+            CorruptionEntry e = null;
+            for (int i = 0; i < corruption.Count; i++)
+                if (corruption[i] != null && corruption[i].godId == godId) { e = corruption[i]; break; }
+
+            if (e == null)
+            {
+                e = new CorruptionEntry { godId = godId, value = 0 };
+                corruption.Add(e);
+            }
+
+            int before = e.value;
+            e.value = Mathf.Clamp(before + delta, 0, 100);
+
+            int actual = e.value - before;
+            if (actual != 0) Debug.Log($"[Run] 侵蝕度 {godId}：{before} → {e.value}（{actual:+#;-#;0}）");
+
+            return actual;
+        }
+
+        // ==========================================
         // 貨幣
         // ==========================================
         public void AddMoney(int amount)
@@ -168,6 +299,7 @@ namespace EldritchMile.Core
         {
             var run = new RunContext();
             run.runSeed = seed != 0 ? seed : Environment.TickCount;
+            run.startedAtUnscaled = Time.unscaledTime;
 
             if (meta != null)
             {

@@ -4739,7 +4739,7 @@ MonoBehaviour:
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -6280,6 +6280,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.CharacterHitbox
   characterId: merchant
+  registerAsSceneSpeaker: 0
   bubbleAnchor: {fileID: 6066247003049076686}
   greetOnEnter: 0
   chatterOnClick: 1

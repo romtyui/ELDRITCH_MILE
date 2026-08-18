@@ -46,6 +46,18 @@ namespace EldritchMile.Core
 
         public bool IsAnyOpen => dialogueBox != null && dialogueBox.IsShowing;
 
+        /// <summary>還有沒有排隊等著播的訊息。</summary>
+        public bool HasPending => pending.Count > 0;
+
+        /// <summary>
+        /// 現在是不是「話都講完了」——沒有排隊、也沒有在打字。
+        ///
+        /// 【為什麼不用 OnAllClosed 判斷】那個事件是在 `Drain()` 發現佇列空了才發，
+        /// 而 `Drain()` 只有玩家**點擊推進**時才會被呼叫。
+        /// 想在「最後一句打完的當下」做事（例如顯示結束鍵），用這個。
+        /// </summary>
+        public bool IsIdle => !HasPending && (dialogueBox == null || !dialogueBox.IsTyping);
+
         private void Awake()
         {
             if (Instance != null && Instance != this)

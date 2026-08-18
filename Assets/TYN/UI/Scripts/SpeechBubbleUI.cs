@@ -104,6 +104,12 @@ namespace EldritchMile.UI
         private string pendingSpeaker;
         private Transform pendingAnchor;
 
+        // 「等這句講完才講的下一句」。與 pending 不同：pending 會打斷，queued 會等
+        private bool hasQueued;
+        private string queuedMessage;
+        private string queuedSpeaker;
+        private Transform queuedAnchor;
+
         public bool IsShowing => phase != Phase.Hidden;
 
         private void Awake()
@@ -146,12 +152,43 @@ namespace EldritchMile.UI
         /// </summary>
         public void Show(string message, Transform followTarget, string speaker)
         {
+            Show(message, followTarget, speaker, false);
+        }
+
+        /// <summary>
+        /// 顯示一句話。
+        /// </summary>
+        /// <param name="waitForCurrent">
+        /// true = **等現在這句講完再講**，不要打斷它。
+        ///
+        /// 【什麼時候要 true】兩句話**背靠背由系統送出**的時候。
+        /// 例如打完最後一張牌：判定結果的反饋才剛冒出來，環節馬上結束又要說結語 ——
+        /// 不等的話玩家根本沒機會讀到那句反饋，畫面上只會閃一下。
+        ///
+        /// 【什麼時候要 false（預設）】**玩家自己觸發**的時候 ——
+        /// 點角色、買東西。那時立刻換掉才跟手，等待反而像沒反應。
+        /// </param>
+        public void Show(string message, Transform followTarget, string speaker, bool waitForCurrent)
+        {
             if (string.IsNullOrEmpty(message)) { Hide(); return; }
+
+            // 要排隊、而且現在真的有一句在講 → 存起來等它自己收掉。
+            // ⚠️ autoHideSeconds 是 0（常駐不收）時**不能排隊** —— 前一句永遠不會結束，
+            //    排進去的話這句就永遠不會出現，而且不會有任何錯誤訊息。
+            if (waitForCurrent && autoHideSeconds > 0f && (phase == Phase.In || phase == Phase.Hold))
+            {
+                queuedMessage = message;
+                queuedSpeaker = speaker;
+                queuedAnchor = followTarget;
+                hasQueued = true;
+                return;
+            }
 
             pendingMessage = message;
             pendingSpeaker = speaker;
             pendingAnchor = followTarget;
             hasPending = true;
+            hasQueued = false;   // 有人插隊，排隊中的那句作廢
 
             // 已經有一顆在畫面上 → 先縮回去，Out 播完才換內容再彈出來。
             // 已經在縮了就不要打斷它，讓它把這一段播完自然接上新的內容。
@@ -181,6 +218,7 @@ namespace EldritchMile.UI
         public void HideImmediate()
         {
             hasPending = false;
+            hasQueued = false;
             phase = Phase.Hidden;
 
             if (group != null) group.alpha = 0f;
@@ -242,7 +280,17 @@ namespace EldritchMile.UI
 
                 case Phase.Hold:
                     SetVisual(1f, 1f);
-                    if (holdUntil > 0f && Time.unscaledTime >= holdUntil) Hide();
+
+                    if (holdUntil > 0f && Time.unscaledTime >= holdUntil)
+                    {
+                        if (hasQueued)
+                        {
+                            // 排隊中的那句接上來：照樣走「縮回去→彈出來」，不是硬切
+                            hasQueued = false;
+                            Show(queuedMessage, queuedAnchor, queuedSpeaker);
+                        }
+                        else Hide();
+                    }
                     break;
 
                 case Phase.Out:

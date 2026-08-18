@@ -30,8 +30,45 @@ namespace EldritchMile.Core
         [Tooltip("玩家看到的名字。這個可以隨時改")]
         public string displayName = "";
 
-        [Tooltip("立繪／頭像。對話框的特寫圖與氣泡的小頭像共用")]
+        [Tooltip("預設立繪（平常表情）。對話框的特寫圖與氣泡的小頭像共用")]
         public Sprite portrait;
+
+        [Serializable]
+        public class MoodPortrait
+        {
+            [Tooltip("表情的名字。自己取，但**要跟 Stage 上填的字一模一樣**。\n" +
+                     "建議用中文短詞：得意／冷淡／驚訝／苦笑")]
+            public string mood = "";
+
+            public Sprite sprite;
+        }
+
+        [Tooltip("表情差分。填了才會用，**沒填就一律用上面的預設立繪**。\n\n" +
+                 "所以現在沒有素材也不影響 —— 等美術給圖再往這裡加，程式不用改。")]
+        public List<MoodPortrait> moodPortraits = new List<MoodPortrait>();
+
+        /// <summary>
+        /// 取某個表情的立繪。**找不到就退回預設**，不會變成空白。
+        ///
+        /// 【為什麼是「退回」而不是報錯】表情是漸進補上的資產：
+        /// 文案可能先寫好「這句要得意」，但美術還沒畫。
+        /// 那時應該照常顯示平常表情、把台詞演完，而不是讓角色消失或跳一堆警告。
+        /// </summary>
+        public Sprite GetPortrait(string mood)
+        {
+            if (string.IsNullOrEmpty(mood) || moodPortraits == null) return portrait;
+
+            for (int i = 0; i < moodPortraits.Count; i++)
+            {
+                MoodPortrait m = moodPortraits[i];
+                if (m == null || m.sprite == null) continue;
+
+                if (string.Equals(m.mood, mood, System.StringComparison.OrdinalIgnoreCase))
+                    return m.sprite;
+            }
+
+            return portrait;
+        }
 
         [Header("分類")]
         [Tooltip("角色標籤。例如 [漁村, 商人]。日後「這個區域派誰來顧店」可以靠它查")]
@@ -49,6 +86,17 @@ namespace EldritchMile.Core
         [Tooltip("閒聊。**照順序輪，不隨機** ——\n" +
                  "隨機的話玩家連點會撞到同一句，看起來像壞了")]
         [TextArea(2, 3)] public List<string> chatter = new List<string>();
+
+        [Header("對話節點的即時反饋")]
+        [Tooltip("判定**成功**時說的話。隨機挑一句。\n" +
+                 "與商店的成交台詞是同一個形狀 —— 完整的句子，不帶變數")]
+        [TextArea(2, 3)] public List<string> successLines = new List<string>();
+
+        [Tooltip("判定**失敗**時說的話。隨機挑一句")]
+        [TextArea(2, 3)] public List<string> failureLines = new List<string>();
+
+        [Tooltip("通用結語。這一段對話結束時說。隨機挑一句")]
+        [TextArea(2, 3)] public List<string> farewells = new List<string>();
 
         [Serializable]
         public class ConditionalLines
@@ -73,22 +121,33 @@ namespace EldritchMile.Core
         public string Label => string.IsNullOrEmpty(displayName) ? id : displayName;
 
         /// <summary>隨機挑一句寒暄。沒有就回空字串。</summary>
-        public string PickGreeting(System.Random rng)
-        {
-            if (greetings == null || greetings.Count == 0) return "";
-            if (rng == null) return greetings[0];
+        public string PickGreeting(System.Random rng) => PickFrom(greetings, rng);
 
-            return greetings[rng.Next(greetings.Count)];
+        /// <summary>判定成功時說的話。</summary>
+        public string PickSuccessLine(System.Random rng) => PickFrom(successLines, rng);
+
+        /// <summary>判定失敗時說的話。</summary>
+        public string PickFailureLine(System.Random rng) => PickFrom(failureLines, rng);
+
+        /// <summary>通用結語。</summary>
+        public string PickFarewell(System.Random rng) => PickFrom(farewells, rng);
+
+        /// <summary>
+        /// 從一組台詞裡隨機挑一句。空的就回空字串（呼叫端一律用「空就不說」處理）。
+        ///
+        /// ⚠️ 這裡的亂數**不該綁 run 種子** —— 綁了的話同一場 run 每次都聽到同一句，
+        /// 三句等於只有一句。詳見 HANDOFF §4.5。
+        /// </summary>
+        private static string PickFrom(List<string> lines, System.Random rng)
+        {
+            if (lines == null || lines.Count == 0) return "";
+            if (rng == null) return lines[0];
+
+            return lines[rng.Next(lines.Count)];
         }
 
         /// <summary>隨機挑一句成交台詞。沒有就回空字串。</summary>
-        public string PickPurchaseLine(System.Random rng)
-        {
-            if (purchaseLines == null || purchaseLines.Count == 0) return "";
-            if (rng == null) return purchaseLines[0];
-
-            return purchaseLines[rng.Next(purchaseLines.Count)];
-        }
+        public string PickPurchaseLine(System.Random rng) => PickFrom(purchaseLines, rng);
 
         /// <summary>
         /// 組出這次要輪的閒聊池：固定閒聊 + 條件成立的彩蛋。

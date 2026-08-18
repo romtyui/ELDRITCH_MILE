@@ -356,6 +356,44 @@ ExitTab_Zone   ← 固定不動的感應區（Image alpha 0、raycastTarget）
 
 ---
 
+## 4.6 對話節點的氣泡（2026-08-18）
+
+企劃定案是**並存**：對話框放旁白／敘述，氣泡放角色的話。四個時機：
+
+| 時機 | 說什麼 | 欄位 |
+|---|---|---|
+| **打牌開始的那一刻** | 招呼 | `greetings` |
+| 點立繪 | 閒聊（照順序輪） | `chatter` |
+| 判定完 | 成功／失敗的即時反饋 | `successLines` / `failureLines` |
+| 環節結束 | 通用結語 | `farewells` |
+
+### 招呼為什麼不在進場時說
+
+進場正在播開場白（對話框），氣泡同時冒出來的話**畫面上會有兩個地方在講話**，
+玩家不知道該讀哪一個。所以招呼延到 `Encounter.Begin()` 之後 —— 那時對話框只剩一句提示撐版面。
+
+### 場景物件與 prefab 的那道牆
+
+立繪住在**場景**（`DialogueUI/PotraitRoot`），Stage 住在 **prefab**，
+而 prefab 不能在 Inspector 引用場景物件（[HANDOFF.md](HANDOFF.md) §4.5）。
+
+作法與 `PopupService.Instance` 一致：`CharacterHitbox` 多了一個
+**`registerAsSceneSpeaker`** 旗標，勾了的那一個會把自己登記成 `CharacterHitbox.SceneSpeaker`，
+Stage 執行時去拿。
+
+> 為什麼要旗標而不是「找第一個」：商店的 prefab 裡也有一個 `CharacterHitbox`，
+> 用 `FindFirstObjectByType` 會變成看執行順序決定抓到誰。
+
+**一塊點擊區服務所有對話角色** —— Stage 進場時呼叫 `SetCharacter(id)` 換人，
+不用每個角色各放一塊。
+
+### 台詞的亂數不綁 run 種子
+
+跟商店的成交台詞同一個判準：**玩家會不會拿它做決策**。
+商店賣什麼要能重現，講哪一句不用 —— 綁了的話同一場 run 每次都聽到同一句。
+
+---
+
 ## 5. 這批新增／改動的檔案
 
 ### 新增

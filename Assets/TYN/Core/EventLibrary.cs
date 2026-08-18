@@ -1,0 +1,120 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace EldritchMile.Core
+{
+    /// <summary>
+    /// 所有事件的登記處，兼「這一站要不要觸發事件」的裁判。
+    ///
+    /// 【形狀跟 LootTable 一樣】候選 → 濾掉條件不成立的 → 依權重隨機挑一個。
+    /// 差別只在候選是事件、而且多一道「未觸發過」與「機率」。
+    ///
+    /// 【機率為什麼分兩層】
+    ///   · `EventLibrary.globalChance` —— 「這一站到底要不要有事件」
+    ///   · `EventData.chance` —— 「就算選到我，我也只有 30% 會真的發生」
+    ///
+    /// 大綱兩種都有：整體是「**有概率**觸發事件」，而《螺湮的祝福》另外寫了
+    /// 「打倒半魚人祭司后 **30% 概率**」。壓成一層的話就表達不出後者。
+    /// </summary>
+    [CreateAssetMenu(fileName = "EventLibrary", menuName = "Eldritch/Event Library")]
+    public class EventLibrary : ScriptableObject
+    {
+        [Tooltip("所有事件。順序不影響行為")]
+        public List<EventData> events = new List<EventData>();
+
+        [Tooltip("每進一個節點，有多少機率「會有事件」。\n" +
+                 "1 = 只要有合格的事件就一定觸發（做教學或測試時用）")]
+        [Range(0f, 1f)] public float globalChance = 0.35f;
+
+        [Tooltip("把每次的判定過程印到 Console。查「為什麼那個事件沒出來」時打開")]
+        public bool verbose = false;
+
+        /// <summary>
+        /// 挑一個這一站要觸發的事件。沒有就回 null。
+        ///
+        /// ⚠️ **這支不會改動任何狀態** —— 不立旗標、不扣東西。
+        /// 「標記成觸發過」是事件真的播完之後的事（見 <see cref="MarkTriggered"/>），
+        /// 否則玩家中途離開，那個事件就再也不會出現了。
+        /// </summary>
+        public EventData Pick(RunContext run, System.Random rng, ItemDatabase db = null)
+        {
+            if (run == null || rng == null) return null;
+
+            if (globalChance < 1f && rng.NextDouble() > globalChance)
+            {
+                if (verbose) Debug.Log("[事件] 這一站沒抽中「要有事件」");
+                return null;
+            }
+
+            var candidates = new List<EventData>();
+            float total = 0f;
+
+            for (int i = 0; i < events.Count; i++)
+            {
+                EventData e = events[i];
+                if (e == null) continue;
+
+                if (string.IsNullOrEmpty(e.id))
+                {
+                    Debug.LogWarning($"[事件] 「{e.name}」沒有填 Id，無法記錄觸發狀態，跳過。", e);
+                    continue;
+                }
+
+                // 「未觸發過」不是特例，它就是一條旗標條件
+                if (e.once && run.HasFlag(e.TriggeredFlag))
+                {
+                    if (verbose) Debug.Log($"[事件] {e.title} 已經觸發過");
+                    continue;
+                }
+
+                if (!GameCondition.AllMet(e.conditions, run, db))
+                {
+                    if (verbose)
+                        Debug.Log($"[事件] {e.title} 條件不合：{GameCondition.FirstUnmet(e.conditions, run, db)}");
+                    continue;
+                }
+
+                if (e.weight <= 0f) continue;
+
+                candidates.Add(e);
+                total += e.weight;
+            }
+
+            if (candidates.Count == 0)
+            {
+                if (verbose) Debug.Log("[事件] 沒有任何合格的事件");
+                return null;
+            }
+
+            // 依權重挑一個
+            double roll = rng.NextDouble() * total;
+            EventData picked = candidates[candidates.Count - 1];
+
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                roll -= candidates[i].weight;
+                if (roll <= 0) { picked = candidates[i]; break; }
+            }
+
+            // 事件自己的機率是**最後一關** —— 沒過就這一站不觸發，
+            // 而不是換一個事件。否則「30% 機率」會被其他事件補位而形同虛設
+            if (picked.chance < 1f && rng.NextDouble() > picked.chance)
+            {
+                if (verbose) Debug.Log($"[事件] {picked.title} 選到了但沒抽中它自己的 {picked.chance:P0}");
+                return null;
+            }
+
+            if (verbose) Debug.Log($"[事件] 觸發：{picked.title}（{candidates.Count} 個合格）");
+            return picked;
+        }
+
+        /// <summary>
+        /// 標記成「觸發過」。**事件播完才呼叫**，不是選到的時候。
+        /// </summary>
+        public static void MarkTriggered(EventData e, RunContext run)
+        {
+            if (e == null || run == null || !e.once) return;
+            run.SetFlag(e.TriggeredFlag);
+        }
+    }
+}

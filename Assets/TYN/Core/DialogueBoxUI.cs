@@ -67,6 +67,32 @@ namespace EldritchMile.Core
         /// </summary>
         public bool HoldOptions { get; set; }
 
+        /// <summary>
+        /// 立繪固定顯示中 —— 訊息不可以把它關掉。
+        ///
+        /// 【為什麼需要】`ShowSpeech` 與 `ShowSystem` 都是
+        /// `portraitRoot.SetActive(圖 != null)` —— 也就是**每一句沒帶立繪的台詞
+        /// 都會主動把立繪關掉**。對話節點的開場白、選項提示、判定結果全都沒帶圖，
+        /// 於是角色一講話立繪就消失，掛在立繪上的點擊區也跟著死掉。
+        ///
+        /// 由 <see cref="SetPersistentPortrait"/> 開啟，`Hide()` 時清掉 ——
+        /// 跟 <see cref="HoldOpen"/> 是同一個模式。
+        /// </summary>
+        public bool HoldPortrait { get; set; }
+
+        /// <summary>
+        /// 讓立繪**整段對話都留著**，不隨訊息開開關關。
+        ///
+        /// 傳 null 等於解除固定（立繪恢復成「有帶圖才顯示」）。
+        /// </summary>
+        public void SetPersistentPortrait(Sprite portrait)
+        {
+            HoldPortrait = portrait != null;
+
+            if (portraitRoot != null) portraitRoot.SetActive(portrait != null);
+            if (portraitImage != null && portrait != null) portraitImage.sprite = portrait;
+        }
+
         [Header("打字機")]
         [Tooltip("每秒顯示幾個字。設 0 = 不用打字機，直接全部顯示")]
         public float charsPerSecond = 40f;
@@ -165,7 +191,8 @@ namespace EldritchMile.Core
 
             // 打牌期間立繪位置放的是對象大圖（SpawnTargetView 生成的），
             // 後續訊息不可以把它關掉，否則玩家就沒有東西可以出牌了。
-            if (spawnedTargets.Count == 0)
+            // HoldPortrait 期間不碰立繪 —— 否則每一句沒帶圖的訊息都會把它關掉
+            if (spawnedTargets.Count == 0 && !HoldPortrait)
             {
                 if (portraitRoot != null) portraitRoot.SetActive(closeUp != null);
                 if (portraitImage != null && closeUp != null) portraitImage.sprite = closeUp;
@@ -183,7 +210,8 @@ namespace EldritchMile.Core
             if (nameBox != null) nameBox.SetActive(!string.IsNullOrEmpty(speaker));
             if (nameText != null) nameText.text = speaker;
 
-            if (spawnedTargets.Count == 0)
+            // 同上：固定立繪期間，沒帶圖的台詞不該把角色關掉
+            if (spawnedTargets.Count == 0 && !HoldPortrait)
             {
                 if (portraitRoot != null) portraitRoot.SetActive(portrait != null);
                 if (portraitImage != null && portrait != null) portraitImage.sprite = portrait;
@@ -245,6 +273,7 @@ namespace EldritchMile.Core
             CancelAutoAdvance();
             IsShowing = false;
             HoldOpen = false;
+            HoldPortrait = false;
             ClearTargetViews();
 
             if (root != null) root.SetActive(false);
@@ -311,6 +340,12 @@ namespace EldritchMile.Core
 
             portraitRoot.SetActive(true);
 
+            // ⚠️ 對象大圖與立繪**共用同一個位置**，所以要把立繪本身藏起來，
+            //    否則開寶箱時角色會站在特寫圖後面。
+            //    用 enabled 而不是 SetActive —— portraitImage 是 portraitRoot 的子物件，
+            //    停用它整個 GameObject 會連帶影響之後想再顯示立繪時的還原。
+            if (portraitImage != null) portraitImage.enabled = false;
+
             EncounterTargetView view = Instantiate(targetViewPrefab, portraitRoot.transform);
             view.Bind(source, closeUp);
             spawnedTargets.Add(view);
@@ -325,6 +360,9 @@ namespace EldritchMile.Core
                 if (spawnedTargets[i] != null) Destroy(spawnedTargets[i].gameObject);
             }
             spawnedTargets.Clear();
+
+            // 大圖收掉了，立繪可以回來（要不要真的顯示由 portraitRoot 決定）
+            if (portraitImage != null) portraitImage.enabled = true;
         }
 
         private readonly List<EncounterTargetView> spawnedTargets = new List<EncounterTargetView>();

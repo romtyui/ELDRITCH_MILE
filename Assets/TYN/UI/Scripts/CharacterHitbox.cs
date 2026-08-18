@@ -25,9 +25,27 @@ namespace EldritchMile.UI
     [RequireComponent(typeof(Image))]
     public class CharacterHitbox : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
+        /// <summary>
+        /// 場景常駐的那一個（掛在立繪上）。Stage 用它來讓角色講話。
+        ///
+        /// 【為什麼要靜態】立繪住在場景，Stage 住在 prefab，而
+        /// **prefab 不能在 Inspector 引用場景物件**（HANDOFF §4.5）。
+        /// 這跟 `PopupService.Instance` / `DialogueOptionsPanel.Instance` 是同一個處理方式。
+        ///
+        /// 【為什麼要靠旗標而不是「第一個找到的」】商店的 prefab 裡也有一個 CharacterHitbox，
+        /// 用 `FindFirstObjectByType` 會看執行順序決定抓到誰。旗標讓它明確。
+        /// </summary>
+        public static CharacterHitbox SceneSpeaker { get; private set; }
+
         [Header("角色")]
-        [Tooltip("這塊區域是誰。對應 CharacterDatabase 裡的 id")]
+        [Tooltip("這塊區域是誰。對應 CharacterDatabase 裡的 id。\n" +
+                 "場景常駐的那一個由 Stage 在執行時指定，這裡可以留空")]
         public string characterId = "";
+
+        [Tooltip("把自己註冊成「場景常駐的說話者」，讓 Stage 找得到。\n\n" +
+                 "只有掛在**場景立繪**上的那一個要勾。\n" +
+                 "商店那種住在 Stage prefab 裡、自己有固定角色的**不要勾**")]
+        public bool registerAsSceneSpeaker = false;
 
         [Header("氣泡")]
         [Tooltip("氣泡要指的位置。通常放在頭頂上方一點。\n" +
@@ -69,6 +87,9 @@ namespace EldritchMile.UI
         private System.Collections.Generic.List<string> chatterPool;
         private float nextIdleChatterAt;
 
+        /// <summary>挑台詞用的亂數。刻意**不綁 run 種子**，理由見 <see cref="Greet"/>。</summary>
+        private readonly System.Random chatRng = new System.Random();
+
         /// <summary>
         /// 重新組閒聊池。條件變了（例如坎貝爾離隊）之後要呼叫一次。
         ///
@@ -91,10 +112,35 @@ namespace EldritchMile.UI
             image.raycastTarget = true;
 
             if (hoverHighlight != null) hoverHighlight.SetActive(false);
+
+            if (registerAsSceneSpeaker) SceneSpeaker = this;
+        }
+
+        private void OnDestroy()
+        {
+            if (SceneSpeaker == this) SceneSpeaker = null;
+        }
+
+        /// <summary>
+        /// 換一個角色。場景常駐的那個點擊區靠這支切換說話者 ——
+        /// 一段對話換一個人，不需要每個角色各放一塊點擊區。
+        /// </summary>
+        public void SetCharacter(string id)
+        {
+            characterId = id ?? "";
+            RebuildChatterPool();
         }
 
         private void OnEnable()
         {
+            // ⚠️ 註冊要在 Awake **和** OnEnable 都做一次。
+            //
+            // 對話的立繪會被 DialogueBoxUI 開開關關，而 **Awake 在物件一開始就
+            // inactive 的情況下根本不會執行**（HANDOFF §4.5）——
+            // 只寫在 Awake 的話，場景存檔時立繪剛好是關的，SceneSpeaker 就永遠是 null，
+            // 而且不會有任何錯誤訊息，只是點角色沒反應。
+            if (registerAsSceneSpeaker) SceneSpeaker = this;
+
             RebuildChatterPool();
             PostponeIdleChatter();
 
@@ -140,17 +186,22 @@ namespace EldritchMile.UI
             CharacterData c = Character;
             if (c == null) return;
 
-            RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
-            var rng = new System.Random(run != null ? run.runSeed : Environment.TickCount);
-
-            string line = c.PickGreeting(rng);
+            // ⚠️ 這裡**不能綁 run 種子**。綁了的話同一場 run 每次進店都聽到同一句招呼 ——
+            //    而寒暄有三句的用意就是不要每次都一樣。
+            //    「賣什麼」要能重現（那是玩家的決策依據），「講哪一句」不用。
+            string line = c.PickGreeting(chatRng);
             if (string.IsNullOrEmpty(line)) return;
 
             Say(line);
         }
 
         /// <summary>讓這個角色說一句話。氣泡會指到他頭上。</summary>
-        public void Say(string line)
+        public void Say(string line) => Say(line, false);
+
+        /// <param name="waitForCurrent">
+        /// true = 等現在那句講完再講，不打斷。系統背靠背送兩句時要用（見 SpeechBubbleUI.Show）
+        /// </param>
+        public void Say(string line, bool waitForCurrent)
         {
             PostponeIdleChatter();   // 剛講完話就不算發呆
 
@@ -162,7 +213,7 @@ namespace EldritchMile.UI
             }
 
             CharacterData c = Character;
-            bubble.Show(line, Anchor, c != null ? c.Label : characterId);
+            bubble.Show(line, Anchor, c != null ? c.Label : characterId, waitForCurrent);
         }
 
         public void OnPointerClick(PointerEventData eventData)

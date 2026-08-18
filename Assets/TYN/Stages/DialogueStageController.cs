@@ -6,6 +6,7 @@ using EldritchMile.Core;
 // 探索的寶箱與這裡的對話選項用的是同一組手牌。
 // （名稱是歷史因素：它先為探索而生。日後若要搬進 Core，改這一行即可。）
 using EldritchMile.Explore;
+using EldritchMile.UI;
 
 /// <summary>
 /// 對話 Stage（Phase 6 的核心，C18 的完整形狀）。
@@ -82,6 +83,29 @@ public class DialogueStageController : ChoiceStageController
     /// 這次實際攤出來的選項。用來判斷「是不是全部都打完了」
     private readonly List<DialogueOptionUI> shownOptions = new List<DialogueOptionUI>();
 
+    [Header("說話的人（氣泡 / bark）")]
+    [Tooltip("這一段對話是誰在說。對應 CharacterDatabase 的 id。\n" +
+             "留空則完全不出現氣泡 —— 純旁白的節點就留空")]
+    public string speakerCharacterId = "";
+
+    [Tooltip("立繪上的隱形點擊區，讓玩家點角色聽閒聊。\n\n" +
+             "⚠️ 它住在**場景**（立繪是場景物件），而 prefab 不能引用場景物件，\n" +
+             "所以這裡留空即可 —— 執行時會自己找 CharacterHitbox.SceneSpeaker")]
+    public CharacterHitbox speakerHitbox;
+
+    [Tooltip("判定**成功**時換成哪個表情。要跟角色資料上 Mood Portraits 的名字一致。\n" +
+             "留空 = 不換表情。角色沒有那張圖時也會安靜地維持預設立繪")]
+    public string moodOnSuccess = "";
+
+    [Tooltip("判定**失敗**時換成哪個表情。留空 = 不換")]
+    public string moodOnFailure = "";
+
+    /// <summary>挑台詞用。**不綁 run 種子** —— 綁了同一場 run 每次都聽到同一句。</summary>
+    private readonly System.Random lineRng = new System.Random();
+
+    /// <summary>這一段對話的說話者。找不到就是 null（不出現氣泡）。</summary>
+    private CharacterData Speaker => GameFlowManager.Character(speakerCharacterId);
+
     [Header("打牌")]
     [Tooltip("手牌來源。牌組內容從 RunContext.exploreDeck 同步過來")]
     public ExplorationDeck explorationDeck;
@@ -99,6 +123,17 @@ public class DialogueStageController : ChoiceStageController
     {
         run = context;
         SyncDeckFromRun();
+
+        // ⚠️ 立繪要在**任何一句台詞排隊之前**就固定住。
+        //
+        // `ShowSpeech` / `ShowSystem` 都是 `portraitRoot.SetActive(圖 != null)` ——
+        // 也就是**每一句沒帶立繪的台詞都會主動把立繪關掉**。
+        // 對話節點的開場白、選項提示、判定結果全都沒帶圖，
+        // 所以晚一步設，角色一開口立繪就不見，掛在立繪上的點擊區也跟著死掉。
+        //
+        // 這跟 `HoldOpen` 必須早設是同一個時序問題（見 ChoiceStageController.OnStageEnter）。
+        CharacterData c = Speaker;
+        if (c != null && c.portrait != null) Box?.SetPersistentPortrait(c.portrait);
     }
 
     /// <summary>與 ExploreStageController 相同：牌組的真相在 RunContext，跨房間保存。</summary>
@@ -193,10 +228,17 @@ public class DialogueStageController : ChoiceStageController
         }
 
         Encounter.Begin(hand, targets);
+
+        // 第一句招呼在**打牌開始的這一刻**才出現（企劃指定）——
+        // 進場就冒的話會跟開場白的對話框打架，兩個框同時在講話
+        BeginSpeaker();
     }
 
     protected override void Unsubscribe()
     {
+        // 解除固定，否則下一個 Stage 會帶著這個角色的立繪進場
+        Box?.SetPersistentPortrait(null);
+
         if (Options != null)
         {
             Options.OnOptionClicked -= HandleOptionClicked;
@@ -252,6 +294,14 @@ public class DialogueStageController : ChoiceStageController
 
         // 選項本身演一次「霧凝聚又散去」：底色壓暗、換成屬性色的「成功／失敗」，再散回內文
         option.PlayResultFlash(success);
+
+        // 角色也用氣泡給一句即時反饋（與商店買東西是同一個形狀）
+        CharacterData c = Speaker;
+        if (c != null)
+        {
+            Say(success ? c.PickSuccessLine(lineRng) : c.PickFailureLine(lineRng));
+            SetMood(success ? moodOnSuccess : moodOnFailure);
+        }
 
         // 同時反映在對話框正文。用 ShowInstant（即時替換）而不是排隊 ——
         // C18 的設計是連續嘗試，每出一張牌都要點掉一則訊息會被打斷得很嚴重
@@ -328,6 +378,73 @@ public class DialogueStageController : ChoiceStageController
         // Q13 暫行做法：環節結束就把剩下的手牌棄掉
         if (explorationDeck != null) explorationDeck.DiscardHand();
 
+        // 通用結語。**在收尾台詞排隊之前說** —— 對話框接著會播 outro，
+        // 兩個一起出現時氣泡是角色的話、對話框是旁白，剛好分工
+        CharacterData c = Speaker;
+        if (c != null) Say(c.PickFarewell(lineRng), true);   // ← 排隊，不要蓋掉最後一句反饋
+
         BeginOutro();
+    }
+
+    // ==========================================
+    // 氣泡（bark）
+    // ==========================================
+    /// <summary>
+    /// 打牌開始的那一刻，讓角色講第一句招呼，並把場景上的點擊區指向他。
+    ///
+    /// 【為什麼不在進場時做】進場正在播開場白（對話框），氣泡同時冒出來的話
+    /// 畫面上會有兩個地方在講話，玩家不知道該讀哪一個。
+    /// </summary>
+    private void BeginSpeaker()
+    {
+        CharacterData c = Speaker;
+        if (c == null) return;
+
+        // prefab 存不下場景物件的引用，所以執行時才解析（見欄位說明）
+        if (speakerHitbox == null) speakerHitbox = CharacterHitbox.SceneSpeaker;
+
+        // 同一塊點擊區服務所有對話角色，進來時換人就好
+        speakerHitbox?.SetCharacter(speakerCharacterId);
+
+        Say(c.PickGreeting(lineRng));
+    }
+
+    /// <summary>
+    /// 讓說話者用氣泡講一句。空字串就不說（沒填那組台詞是合法的）。
+    ///
+    /// 有點擊區就走它（氣泡會指到立繪頭上）；沒有就退回氣泡自己的預設錨點。
+    /// </summary>
+    /// <summary>
+    /// 換立繪的表情。**沒有那張圖就安靜地維持現況** —— 見 CharacterData.GetPortrait。
+    ///
+    /// 走 `SetPersistentPortrait` 而不是直接改 Image，是為了同時維持 `HoldPortrait`；
+    /// 直接改圖的話下一句沒帶立繪的訊息就會把整個立繪關掉。
+    /// </summary>
+    private void SetMood(string mood)
+    {
+        if (string.IsNullOrEmpty(mood)) return;
+
+        CharacterData c = Speaker;
+        if (c == null || Box == null) return;
+
+        Box.SetPersistentPortrait(c.GetPortrait(mood));
+    }
+
+    private void Say(string line) => Say(line, false);
+
+    /// <param name="waitForCurrent">
+    /// true = 等現在那句講完再講。**結語要用這個** ——
+    /// 打出最後一張牌時，判定反饋才剛冒出來，環節馬上就結束了；
+    /// 不等的話結語會把那句反饋直接刷掉，玩家只看到閃一下。
+    /// </param>
+    private void Say(string line, bool waitForCurrent)
+    {
+        if (string.IsNullOrEmpty(line)) return;
+
+        if (speakerHitbox != null) { speakerHitbox.Say(line, waitForCurrent); return; }
+
+        CharacterData c = Speaker;
+        SpeechBubbleUI.Instance?.Show(
+            line, null, c != null ? c.Label : speakerCharacterId, waitForCurrent);
     }
 }

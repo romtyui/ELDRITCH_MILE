@@ -38,6 +38,10 @@ namespace EldritchMile.Core
                  "留空不會壞，只是玩家會看到 id（例如「lockpick」）而不是「撬棍」")]
         public ItemDatabase itemDatabase;
 
+        [Header("事件")]
+        [Tooltip("隨機事件庫。留空則永遠不會觸發事件（不會壞，只是沒有事件）")]
+        public EventLibrary eventLibrary;
+
         [Header("角色")]
         [Tooltip("角色資料庫（id → 名字／立繪／寒暄）。\n" +
                  "留空不會壞，只是氣泡與對話框會顯示 id 而不是「時藏」")]
@@ -69,6 +73,18 @@ namespace EldritchMile.Core
 
         /// 單場 run。死亡或通關時整個丟棄重建。
         public RunContext Run { get; private set; }
+
+        /// <summary>
+        /// 正在插播的事件。**Event Stage 靠它知道自己該演哪一個。**
+        ///
+        /// 【為什麼要有這個中繼】事件不是節點，是「進節點之前插播的一段」。
+        /// Stage prefab 沒辦法在 Inspector 指定「這次要演哪個事件」——
+        /// 那是執行時才決定的，所以由總管放在這裡讓 Stage 來拿。
+        /// </summary>
+        public EventData PendingEvent { get; private set; }
+
+        /// <summary>事件播完後要接著進的那個節點的 Stage。</summary>
+        private StageType stageAfterEvent = StageType.None;
 
         /// 跨輪迴保存。遺產機制的載體，死亡不會清空。
         public MetaProgressData Meta { get; private set; }
@@ -230,10 +246,46 @@ namespace EldritchMile.Core
             if (mapOverlay != null) yield return mapOverlay.SlideUp();
 
             yield return FadeOut();
-            yield return SwitchStageInternal(StageTypeForNode(node));
+
+            // ── 事件的前置檢查（大綱：「每當前進到下一張地圖…就會有概率觸發事件」）──
+            //
+            // 只在**這一個點**檢查，不要散在各 Stage 裡。
+            // 有事件就先演事件，演完再由 StageCompleteRoutine 接回原本的節點 ——
+            // 前置，不覆蓋。玩家不會因為運氣好觸發了事件反而少玩到一間房。
+            StageType nodeStage = StageTypeForNode(node);
+            EventData ev = PickEventForNode();
+
+            if (ev != null)
+            {
+                PendingEvent = ev;
+                stageAfterEvent = nodeStage;
+                yield return SwitchStageInternal(StageType.Event);
+            }
+            else
+            {
+                yield return SwitchStageInternal(nodeStage);
+            }
+
             yield return FadeIn();
 
             IsTransitioning = false;
+        }
+
+        /// <summary>
+        /// 這一站要不要插播事件。抽不到就回 null。
+        ///
+        /// 亂數綁 run 種子 + 節點 id —— 同一場 run 的同一個節點，
+        /// 重進不會重骰出不同的事件。
+        /// </summary>
+        private EventData PickEventForNode()
+        {
+            if (eventLibrary == null || Run == null) return null;
+
+            RunNodeData node = Run.pendingNode;
+            int seed = Run.runSeed ^ (node != null && !string.IsNullOrEmpty(node.nodeId)
+                ? node.nodeId.GetHashCode() : 0);
+
+            return eventLibrary.Pick(Run, new System.Random(seed), itemDatabase);
         }
 
         private IEnumerator StageCompleteRoutine(StageResult result)
@@ -241,6 +293,25 @@ namespace EldritchMile.Core
             IsTransitioning = true;
 
             Debug.Log($"[Flow] {currentStage} 完成：{result}");
+
+            // ── 事件播完 → 接回原本那個節點，而不是收工回地圖 ──
+            if (currentStage == StageType.Event && stageAfterEvent != StageType.None)
+            {
+                // 標記成觸發過**是在這裡**，不是選到的時候 ——
+                // 玩家中途離開的話，那個事件應該還能再出現
+                EventLibrary.MarkTriggered(PendingEvent, Run);
+                PendingEvent = null;
+
+                StageType next = stageAfterEvent;
+                stageAfterEvent = StageType.None;
+
+                yield return FadeOut();
+                yield return SwitchStageInternal(next);
+                yield return FadeIn();
+
+                IsTransitioning = false;
+                yield break;
+            }
 
             // ── 遺產結算點 ──
             if (result == StageResult.PlayerDied || result == StageResult.RunFinished)

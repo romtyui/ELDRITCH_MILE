@@ -14,6 +14,15 @@ namespace EldritchMile.Core
         Shop,
         Dialogue,
         SpecialEvent,   // C16：獲得神牌
+
+        /// <summary>
+        /// 隨機事件（大綱〈事件〉那一章）。
+        ///
+        /// ⚠️ 它與其他 Stage 不同：**不是地圖上的一種節點**，而是「進節點之前插播的一段」。
+        /// 播完會照常進原本那個節點的 Stage —— 前置，不覆蓋。
+        /// 所以地圖不會生成 Event 節點，`StageTypeForNode` 也不會回傳它。
+        /// </summary>
+        Event,
     }
 
     /// <summary>

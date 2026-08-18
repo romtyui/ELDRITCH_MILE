@@ -160,8 +160,15 @@ C# 名稱解析在同一層「宣告永遠贏過 using 匯入」，而檔案最�
 | **prefab ↔ 場景的引用是單向禁止的** | prefab 不能在 Inspector 引用場景物件，**場景物件也不能引用 prefab 內部的東西**。跨界一律用單例（專案慣例：`PopupService.Instance` 這種） |
 | **拖曳結束時 Unity 也會送 `OnPointerClick`** | 沒濾掉 `eventData.dragging` 的話，放開卡牌會順便把它選起來 |
 | **URP 沒有 `Clear Flags`** | 對應欄位是 Camera 的 **Environment → Background Type** |
+| **`System.Random` 用相近的小種子會產生幾乎一樣的序列** | 測戰利品時用 `new Random(s*31)`（31/62/93/124）跑四次，**四次結果一模一樣**，看起來像機率表壞了。實際上是 .NET 舊版 `Random` 的已知特性：種子相近時前幾個亂數也相近。**驗機率一定要用分散的種子或同一個 rng 連抽**。專案裡真正在用的種子都是 `runSeed ^ hashcode`（夠分散），不受影響 |
+| **綁 run 種子要看「玩家會不會拿它做決策」** | 商店賣什麼要能重現（離開再進來不能重骰），但**講哪一句台詞不用** —— 綁了的話同一場 run 每次進店都聽到同一句招呼，三句寒暄等於只有一句 |
 | **改欄位的預設值不會動到已存在的 prefab** | `public float x = 4f;` 只影響**之後**才建立的實例。已經存進 prefab 的還是舊值（而且舊值可能是零填充的 0）。改預設值時要順手把既有的 prefab 也設一遍 |
 | **`LoadPrefabContents` → `SaveAsPrefabAsset` 會弄丟「指向自己」的引用** | `SpeechBubbleUI.bubbleRoot` 指著自己那顆 GameObject 的 RectTransform，第一次建立時是好的，經過一次載入／存回的來回之後變成 null，**沒有任何警告**。改 prefab 之後要把自我引用的欄位驗一遍（用 `SerializedObject` 讀，不要直接讀屬性 —— 直接讀會丟 `UnassignedReferenceException`） |
+| **Stage prefab 裡的 UI 天生被對話框蓋住** | `Canvas_Stage` 的 sortingOrder 是 **100**，而 `DialogueUI` 自己是一個 sortingOrder **101** 的 Canvas。所以 Stage prefab 裡的按鈕預設就在對話框後面。解法是給那個物件自己一個 Canvas、`overrideSorting = true` 並拉高 order（事件的結束鍵用 150），**還要補一個 `GraphicRaycaster`**，否則看得到卻點不到 |
+| **`Canvas.overrideSorting` 用程式設會設不進去** | `c.overrideSorting = true` 在剛 `AddComponent` 之後常常不會存下來。要用 `SerializedObject` 寫 `m_OverrideSorting` / `m_SortingOrder` |
+| **訊息排隊時「對話框開著」就不會立刻播** | `PopupService.Enqueue` 只有在 `!IsAnyOpen` 時才 `Drain()`。在對話框還開著的時候排隊，玩家得**再點一下**才看得到 —— 但 `Debug.Log` 早就印了，看起來像「Console 有、畫面沒有」。要當下就換掉正文請用 `ShowInstant` |
+| **`OnAllClosed` 不是「文字播完了」** | 它是在 `Drain()` 發現佇列空掉時才發，而 `Drain()` 只有玩家**點擊推進**才會跑。想在「最後一句打完的當下」做事，用 `PopupService.IsIdle` 輪詢 |
+| **「沒帶圖」＝「把圖關掉」** | `DialogueBoxUI.ShowSpeech/ShowSystem` 是 `portraitRoot.SetActive(圖 != null)` —— 每一句**沒帶立繪的台詞都會主動關掉立繪**，連掛在立繪底下的點擊區一起弄死。要整段留著就用 `SetPersistentPortrait()`（`HoldPortrait`），而且**要在第一句台詞排隊之前設**，跟 `HoldOpen` 是同一個時序問題 |
 | **`OnValidate` 不會因為「程式改了清單」而觸發** | 只有 Inspector 編輯、Undo、匯入才會。用編輯器腳本 `items.Add(...)` 之後，靠 `OnValidate` 清掉的**查表快取還停在舊內容**，剛加進去的東西查不到而且**不報錯**。`ItemDatabase` / `CharacterDatabase` 現在會比對筆數自動重建，並提供 `Invalidate()`；**數量沒變的元素調換仍要自己呼叫** |
 
 ---
