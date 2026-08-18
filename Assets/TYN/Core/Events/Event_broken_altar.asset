@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 250aa35ed90ba144ea37b115a4b32b80, type: 3}
+  m_Name: Event_broken_altar
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.EventData
+  id: broken_altar
+  title: "\u640D\u58DE\u7684\u796D\u58C7"
+  conditions:
+  - kind: 5
+    key: GodCard
+    value: 3
+  chance: 1
+  once: 1
+  weight: 1
+  bodyText: "\u4F60\u4F86\u5230\u4E00\u5EA7\u5EE2\u68C4\u7684\u796D\u58C7\uFF0C\u6B64\u8655\u6563\u767C\u8457\u4E0D\u8A73\u7684\u6C23\u606F\uFF0C\u8B93\u4F60\u4E0D\u5BD2\u800C\u6144\u3002\n\u796D\u58C7\u7684\u4E2D\u9593\u6709\u5EA7\u640D\u58DE\u7684\u96D5\u50CF\uFF0C\u5DF2\u7D93\u7121\u6CD5\u8FA8\u8B58\u5177\u9AD4\u7684\u9762\u76EE\u3002\n\u82E5\u5411\u5176\u737B\u4E0A\u7948\u79B1\uFF0C\u6216\u8A31\u53EF\u4EE5\u5F97\u5230\u795E\u660E\u7684\u4F51\u8B77......"
+  image: {fileID: 0}
+  options:
+  - label: "\u7948\u79B1"
+    resultText: "\u4F86\u81EA\u60A0\u4E45\u6DF1\u57DF\u7684\u795E\u660E\u56DE\u61C9\u4E86\u4F60\uFF0C\u672A\u77E5\u7684\u529B\u91CF\u6D8C\u73FE\u4E86\u51FA\u4F86\u3002"
+    effects:
+    - kind: 103
+      key: 
+      amount: 1
+  - label: "\u7121\u8996"
+    resultText: "\u4F60\u7121\u8996\u4E26\u96E2\u958B\u4E86\u796D\u58C7\u3002"
+    effects:
+    - kind: 3
+      key: 
+      amount: 20
+  notes: "\u5927\u7DB1\u3008\u5E38\u99D0\u3009\u3002\n\u26A0\uFE0F \u9078\u9805 A
+    \u7684\u300C\u7372\u5F97 1 \u5F35\u795E\u724C\u300D\u5C1A\u672A\u63A5\u4E0A\uFF08\u795E\u724C\u7CFB\u7D71\u4E0D\u5B58\u5728\uFF09\uFF0C\u6703\u5728
+    Console \u8AAA\u660E\u4E26\u8DF3\u904E\u3002\n\u26A0\uFE0F \u689D\u4EF6\u300C\u6301\u6709\u795E\u724C
+    < 3\u300D\u7528\u7684\u662F\u6A19\u7C64 GodCard \u2014\u2014 \u76EE\u524D\u6C92\u6709\u4EFB\u4F55\u9053\u5177\u5E36\u9019\u500B\u6A19\u7C64\uFF0C\u6240\u4EE5\u6C38\u9060\u6210\u7ACB\u3002\u795E\u724C\u505A\u597D\u5F8C\u8981\u8A18\u5F97\u7D66\u5B83\u5011\u6253\u4E0A
+    GodCard \u6A19\u7C64\u3002"

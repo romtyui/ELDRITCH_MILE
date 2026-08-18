@@ -83,6 +83,10 @@ namespace EldritchMile.Core
 
             IsOpen = true;
             ApplyInteractable(true);
+
+            // 新手教學要等「地圖真的攤開了」才提示玩家點節點。
+            // 放在 ApplyInteractable 之後 —— 提示冒出來的時候，地圖必須已經可以點
+            TutorialSignal.MapOpened();
         }
 
         /// 玩家選好節點後收起
@@ -97,6 +101,8 @@ namespace EldritchMile.Core
             yield return Slide(shownY, hiddenY);
 
             IsOpen = false;
+
+            TutorialSignal.MapClosed();
         }
 
         private IEnumerator Slide(float fromY, float toY)

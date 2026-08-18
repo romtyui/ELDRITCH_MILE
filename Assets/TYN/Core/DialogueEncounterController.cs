@@ -292,6 +292,10 @@ namespace EldritchMile.Core
             actual.OnCheckResult(success, usedRate);
             OnCardResolved?.Invoke(card, actual, success, usedRate);
 
+            // 新手教學的「使用卡牌」這一步在這裡才算完成 —— 拖到目標上還不算，
+            // 要判定跑完。**成功失敗都算**：大綱教的是「怎麼出牌」，不是「要出中」
+            TutorialSignal.ExploreCardPlayed();
+
             // ⚠️ 這裡刻意「不」判斷成功就結束 —— 蓄意失敗是合法策略（C18⑦）。
             //    只有手牌耗盡才自動收尾，其餘一律等玩家按結束鈕。
             if (hand.Count == 0)

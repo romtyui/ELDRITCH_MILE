@@ -40,6 +40,14 @@ namespace EldritchMile.Core
             /// 給錢
             GrantMoney = 6,
 
+            /// <summary>
+            /// 消耗**任何**帶某個標籤的東西。《貪吃鬼》→「消耗多少糧食」。
+            ///
+            /// 跟 <see cref="ConsumeItem"/> 的差別：那個要指名某一條魚，這個只說「糧食」。
+            /// 文案不會知道玩家背包裡當下有哪一種，所以大部分「消耗某類資源」都該用這個。
+            /// </summary>
+            ConsumeItemByTag = 7,
+
             // ── 以下四種還沒有系統可以接 ──
 
             /// 《喂米可吃飯》永久銷毀 1 張武器牌。**需要牌組編輯，尚未接上**
@@ -59,6 +67,7 @@ namespace EldritchMile.Core
         public Kind kind = Kind.GrantItem;
 
         [Tooltip("GrantItem / ConsumeItem：道具 id\n" +
+                 "ConsumeItemByTag：道具**標籤**（Food / Weapon / Curio…）\n" +
                  "Corruption：神的 id（深淵 = abyss）\n" +
                  "SetFlag：旗標名稱\n" +
                  "其餘不用填")]
@@ -100,6 +109,27 @@ namespace EldritchMile.Core
 
                     // 付不起就不扣 —— 與 RunContext.ConsumeItem 的「全有或全無」一致
                     return run.ConsumeItem(key, want) ? $"失去 {n} ×{want}" : "";
+                }
+
+                case Kind.ConsumeItemByTag:
+                {
+                    if (string.IsNullOrEmpty(key)) return "";
+
+                    int want = Mathf.Max(1, amount);
+                    System.Collections.Generic.List<ItemStack> taken = run.ConsumeByTag(key, want);
+
+                    // 扣不起就什麼都沒發生。條件層應該已經擋掉了，
+                    // 但條件與效果之間有可能被別的效果插隊（同一個選項先扣再扣）
+                    if (taken.Count == 0) return "";
+
+                    var names = new System.Collections.Generic.List<string>();
+                    for (int t = 0; t < taken.Count; t++)
+                    {
+                        string n = GameFlowManager.ItemName(taken[t].id);
+                        names.Add(taken[t].count > 1 ? $"{n} ×{taken[t].count}" : n);
+                    }
+
+                    return "失去 " + string.Join("、", names.ToArray());
                 }
 
                 case Kind.Corruption:

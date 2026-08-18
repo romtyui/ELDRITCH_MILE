@@ -164,12 +164,31 @@ namespace EldritchMile.Core
                 {
                     s.count += count;
                     Debug.Log($"[Run] 獲得道具：{id} ×{count}（共 {CountOf(id)}）");
+                    NotifyTutorial(id);
                     return;
                 }
             }
 
             inventory.Add(new ItemStack(id, count));
             Debug.Log($"[Run] 獲得道具：{id} ×{count}（共 {count}）");
+            NotifyTutorial(id);
+        }
+
+        /// <summary>
+        /// 拿到東西時，看要不要通知新手教學。
+        ///
+        /// 【為什麼掛在 AddItem 而不是寶箱】獲得道具的路有好幾條
+        /// （寶箱、對話選項、事件效果、商店），**這裡是唯一的匯流點**。
+        /// 掛在寶箱上的話，換一條路拿到武器教學就會卡住。
+        ///
+        /// 大綱那一步寫的是「探索場地、獲得武器」，理論上比這裡窄；
+        /// 但教學進行中玩家只有探索那一條路，所以實際上是一樣的，
+        /// 而且寬一點不會壞（多發的訊號沒有人在等，就散掉了）。
+        /// </summary>
+        private static void NotifyTutorial(string id)
+        {
+            ItemData d = GameFlowManager.Item(id);
+            if (d != null && d.HasTag("Weapon")) TutorialSignal.WeaponObtained();
         }
 
         /// <summary>
@@ -200,6 +219,51 @@ namespace EldritchMile.Core
 
             Debug.Log($"[Run] 消耗道具：{id} ×{count}（剩 {CountOf(id)}）");
             return true;
+        }
+
+        /// <summary>
+        /// 消耗「**任何**帶這個標籤的東西」。同樣是全有或全無。
+        ///
+        /// 【為什麼需要這一支】大綱的《好餓好餓的貪吃鬼》寫的是「消耗多少**糧食**」——
+        /// 不是某一種糧食。文案不會（也不該）指定要扣哪一條魚，
+        /// 那是玩家背包當下有什麼決定的。
+        ///
+        /// 【扣的順序：從背包尾端往前】沒有「先扣最便宜的」這種聰明邏輯 ——
+        /// 那需要價值評估，而價值是會變的（漁村的鹹魚在後段一文不值）。
+        /// 真的要挑，應該是讓玩家自己挑，不是程式替他決定。
+        /// </summary>
+        /// <returns>實際扣掉的東西。扣不起就是空清單（**什麼都不會少**）。</returns>
+        public List<ItemStack> ConsumeByTag(string tag, int count, ItemDatabase db = null)
+        {
+            var taken = new List<ItemStack>();
+            if (string.IsNullOrEmpty(tag) || count <= 0) return taken;
+
+            if (db == null && GameFlowManager.Instance != null) db = GameFlowManager.Instance.itemDatabase;
+            if (db == null) return taken;
+
+            // 先確認付得起，才動手扣（與 ConsumeItem 同一條規矩）
+            if (CountByTag(tag, db) < count) return taken;
+
+            int remaining = count;
+
+            for (int i = inventory.Count - 1; i >= 0 && remaining > 0; i--)
+            {
+                ItemStack s = inventory[i];
+                if (s == null || s.count <= 0) continue;
+
+                ItemData d = db.GetById(s.id);
+                if (d == null || !d.HasTag(tag)) continue;
+
+                int take = Math.Min(s.count, remaining);
+                s.count -= take;
+                remaining -= take;
+
+                taken.Add(new ItemStack(s.id, take));
+
+                if (s.count <= 0) inventory.RemoveAt(i);
+            }
+
+            return taken;
         }
 
         // ==========================================
