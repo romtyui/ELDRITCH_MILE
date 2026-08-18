@@ -71,8 +71,20 @@ namespace EldritchMile.Core
         }
 
         [Header("分類")]
-        [Tooltip("角色標籤。例如 [漁村, 商人]。日後「這個區域派誰來顧店」可以靠它查")]
+        [Tooltip("角色標籤。例如 [漁村, 商人]。「這個區域派誰來說話」就是靠它查 —— 見 CharacterPool")]
         public List<string> tags = new List<string>();
+
+        /// <summary>有沒有這個標籤。大小寫不敏感 —— 與 <see cref="ItemData.HasTag"/> 同一個形狀。</summary>
+        public bool HasTag(string tag)
+        {
+            if (string.IsNullOrEmpty(tag) || tags == null) return false;
+
+            for (int i = 0; i < tags.Count; i++)
+            {
+                if (string.Equals(tags[i], tag, System.StringComparison.OrdinalIgnoreCase)) return true;
+            }
+            return false;
+        }
 
         [Header("寒暄 (Bark)")]
         [Tooltip("進場自動冒出來的那一句。多句就隨機挑一句 —— 每次進店講同一句話很快就膩")]

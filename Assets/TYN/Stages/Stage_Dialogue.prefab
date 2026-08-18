@@ -90,7 +90,10 @@ MonoBehaviour:
     grantItemIdsOnSuccess:
     - lockpick
   speakerCharacterId: campbell
+  speakerPool: {fileID: 11400000, guid: deb98e9a02a2ad84db5fdba53f585b75, type: 2}
   speakerHitbox: {fileID: 0}
+  moodOnSuccess: 
+  moodOnFailure: 
   explorationDeck: {fileID: 1363206467663512756}
   cardsPerEncounter: 5
 --- !u!114 &1363206467663512756

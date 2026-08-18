@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ad5e8300ac6b7543a347b4d81643781, type: 3}
+  m_Name: Chars_Dialogue_Village
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.CharacterPool
+  entries:
+  - note: "\u5354\u52A9\u8005\u30FB\u574E\u8C9D\u723E \u2014\u2014 \u76EE\u524D\u5C0D\u8A71\u7BC0\u9EDE\u7684\u9810\u8A2D\u8AAA\u8A71\u8005"
+    kind: 0
+    characterId: campbell
+    requireTags: []
+    excludeTags: []
+    pool: {fileID: 0}
+    weight: 100
+    conditions: []
+  - note: "\u6F01\u6751\u5C45\u6C11 \u2014\u2014 \u89D2\u8272\u8CC7\u6599\u6253\u4E0A
+      [\u6F01\u6751] \u6A19\u7C64\u5C31\u6703\u81EA\u52D5\u9032\u6C60"
+    kind: 1
+    characterId: 
+    requireTags:
+    - "\u6F01\u6751"
+    excludeTags: []
+    pool: {fileID: 0}
+    weight: 40
+    conditions:
+    - kind: 2
+      key: abyss
+      value: 50
+  verbose: 0

@@ -85,8 +85,27 @@ public class DialogueStageController : ChoiceStageController
 
     [Header("說話的人（氣泡 / bark）")]
     [Tooltip("這一段對話是誰在說。對應 CharacterDatabase 的 id。\n" +
-             "留空則完全不出現氣泡 —— 純旁白的節點就留空")]
+             "留空則完全不出現氣泡 —— 純旁白的節點就留空。\n\n" +
+             "下面填了角色池的話，這裡變成**備援** —— 池子挑不到人才用它")]
     public string speakerCharacterId = "";
+
+    [Tooltip("說話者從這個池子裡隨機挑。**填了就蓋過上面手填的 id**。\n\n" +
+             "「對話從該區域的角色池隨機一個，符合條件時特定角色也加入」——\n" +
+             "條件（侵蝕度／旗標）寫在池子的條目上，這支程式不必知道有哪些人。\n\n" +
+             "亂數綁節點：同一個節點重進**還是同一個人**，離開再進來不會換人")]
+    public CharacterPool speakerPool;
+
+    /// <summary>
+    /// 這一站實際挑中的人。空字串代表沒挑（或沒有池子），此時退回 <see cref="speakerCharacterId"/>。
+    ///
+    /// ⚠️ 刻意不直接覆寫 `speakerCharacterId` —— 那是 prefab 上的資料，
+    /// 執行時改掉的話，下一次載入這個 Stage 會以為手填的就是上次抽到的人。
+    /// </summary>
+    private string resolvedSpeakerId = "";
+
+    /// <summary>這一段對話說話者的 id。池子挑到誰就是誰，沒有就用手填的。</summary>
+    private string SpeakerId =>
+        !string.IsNullOrEmpty(resolvedSpeakerId) ? resolvedSpeakerId : speakerCharacterId;
 
     [Tooltip("立繪上的隱形點擊區，讓玩家點角色聽閒聊。\n\n" +
              "⚠️ 它住在**場景**（立繪是場景物件），而 prefab 不能引用場景物件，\n" +
@@ -104,7 +123,7 @@ public class DialogueStageController : ChoiceStageController
     private readonly System.Random lineRng = new System.Random();
 
     /// <summary>這一段對話的說話者。找不到就是 null（不出現氣泡）。</summary>
-    private CharacterData Speaker => GameFlowManager.Character(speakerCharacterId);
+    private CharacterData Speaker => GameFlowManager.Character(SpeakerId);
 
     [Header("打牌")]
     [Tooltip("手牌來源。牌組內容從 RunContext.exploreDeck 同步過來")]
@@ -123,6 +142,10 @@ public class DialogueStageController : ChoiceStageController
     {
         run = context;
         SyncDeckFromRun();
+
+        // ⚠️ 挑人要在**立繪固定之前** —— 下面那一段要拿說話者的立繪，
+        //    順序反了會固定成上一站那個人的圖
+        ResolveSpeaker();
 
         // ⚠️ 立繪要在**任何一句台詞排隊之前**就固定住。
         //
@@ -395,6 +418,60 @@ public class DialogueStageController : ChoiceStageController
     /// 【為什麼不在進場時做】進場正在播開場白（對話框），氣泡同時冒出來的話
     /// 畫面上會有兩個地方在講話，玩家不知道該讀哪一個。
     /// </summary>
+    /// <summary>
+    /// 決定這一站是誰在說話。沒有池子、或池子挑不到人，就用 prefab 上手填的 id。
+    ///
+    /// 【亂數為什麼綁節點】商店的「賣什麼」是同一個道理 ——
+    /// 玩家離開再進來看到的必須是同一個人，否則等於可以重骰到自己想見的角色。
+    ///
+    /// 【為什麼要跟事件的種子錯開】兩者都在同一個節點抽，
+    /// 直接共用 `runSeed ^ nodeId` 的話兩條抽獎會完全相關
+    /// （事件抽中第一順位時，說話者也一定是第一順位）。加一撮鹽把它們分開。
+    /// </summary>
+    private void ResolveSpeaker()
+    {
+        resolvedSpeakerId = "";
+        if (speakerPool == null) return;
+
+        int seed = run != null ? run.runSeed : 0;
+
+        EldritchMile.Core.RunNodeData node = run != null ? run.CurrentNode : null;
+        if (node != null && !string.IsNullOrEmpty(node.nodeId)) seed ^= node.nodeId.GetHashCode();
+
+        seed ^= SpeakerSeedSalt;
+
+        CharacterData picked = speakerPool.Pick(run, new System.Random(seed));
+
+        if (picked == null)
+        {
+            Debug.LogWarning(
+                $"[對話] 角色池「{speakerPool.name}」挑不到人，退回手填的「{speakerCharacterId}」。\n" +
+                "池子裡的條目全部條件不成立、或 Weight 都是 0。");
+            return;
+        }
+
+        resolvedSpeakerId = picked.id;
+        Debug.Log($"[對話] 這一站的說話者：{picked.Label}（來自 {speakerPool.name}）");
+
+        // ⚠️ 池子挑到的人**不保證素材齊全** —— 手填 id 的年代是人工確認的，
+        //    現在換人是隨機的，缺什麼只會靜靜地不顯示。所以在這裡講出來。
+        if (picked.portrait == null)
+        {
+            Debug.LogWarning(
+                $"[對話] 「{picked.Label}」沒有立繪 —— 這一站不會有角色圖，" +
+                "掛在立繪上的點擊區也不會出現，氣泡會退回預設錨點。", picked);
+        }
+
+        if (picked.successLines.Count == 0 || picked.failureLines.Count == 0)
+        {
+            Debug.LogWarning(
+                $"[對話] 「{picked.Label}」沒有成功／失敗台詞 —— 判定完不會有氣泡反饋。", picked);
+        }
+    }
+
+    /// <summary>把說話者的抽獎與事件的抽獎錯開。數字本身沒有意義，只要不是 0。</summary>
+    private const int SpeakerSeedSalt = 0x5EA1;
+
     private void BeginSpeaker()
     {
         CharacterData c = Speaker;
@@ -404,7 +481,7 @@ public class DialogueStageController : ChoiceStageController
         if (speakerHitbox == null) speakerHitbox = CharacterHitbox.SceneSpeaker;
 
         // 同一塊點擊區服務所有對話角色，進來時換人就好
-        speakerHitbox?.SetCharacter(speakerCharacterId);
+        speakerHitbox?.SetCharacter(SpeakerId);
 
         Say(c.PickGreeting(lineRng));
     }
@@ -445,6 +522,6 @@ public class DialogueStageController : ChoiceStageController
 
         CharacterData c = Speaker;
         SpeechBubbleUI.Instance?.Show(
-            line, null, c != null ? c.Label : speakerCharacterId, waitForCurrent);
+            line, null, c != null ? c.Label : SpeakerId, waitForCurrent);
     }
 }
