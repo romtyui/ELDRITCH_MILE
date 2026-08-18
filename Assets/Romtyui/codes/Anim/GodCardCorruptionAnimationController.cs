@@ -9,10 +9,16 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
     [Header("Roots")]
 
-    [Tooltip("神牌動畫 Prefab 生成時使用的父物件。可以放在專門的動畫 Canvas 底下。")]
+    [Tooltip(
+        "神牌動畫 Prefab 生成時使用的父物件。" +
+        "可以放在專門的神牌動畫 Canvas。"
+    )]
     public RectTransform animationRoot;
 
-    [Tooltip("打出的神牌 CardViewUI 使用的父物件。建議放在卡牌原本使用的 Canvas 底下。")]
+    [Tooltip(
+        "打出的神牌 CardViewUI 使用的父物件。" +
+        "建議跟卡牌 UI 使用相同 Canvas。"
+    )]
     public RectTransform cardRoot;
 
 
@@ -22,7 +28,10 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
     [Header("Played God Card")]
 
-    [Tooltip("打出的神牌移動到中央時的目標位置。建議和 Card Root 使用相同 Canvas。")]
+    [Tooltip(
+        "打出的神牌移動到的位置。" +
+        "建議和 Card Root 使用相同 Canvas。"
+    )]
     public RectTransform centerPoint;
 
     public float moveToCenterDuration = 0.35f;
@@ -38,27 +47,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
     [Header("Default God Animation")]
 
-    [Tooltip("如果卡片沒有指定專屬神牌動畫資料，可以使用這個預設動畫資料。")]
     public GodCardAnimationData defaultAnimationData;
-
-
-    // =========================================================
-    // Runtime
-    // =========================================================
-
-    [Header("Runtime")]
-
-    [SerializeField]
-    private GodCardAnimationData currentAnimationData;
-
-    [SerializeField]
-    private bool animationFinished;
-
-    [SerializeField]
-    private GameObject currentAnimationObject;
-
-    [SerializeField]
-    private Animator currentAnimationAnimator;
 
 
     // =========================================================
@@ -76,14 +65,27 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
     // =========================================================
+    // UI Hide During God Animation
+    // =========================================================
+
+    [Header("UI Hide During God Animation")]
+
+    [Tooltip(
+        "神牌動畫開始時隱藏，" +
+        "整個神牌動畫結束後重新顯示的 UI。"
+    )]
+    public GameObject hideDuringGodAnimationUI;
+
+
+    // =========================================================
     // Animation Prefab
     // =========================================================
 
     [Header("God Animation Prefab")]
 
     [Tooltip(
-        "如果開啟，生成的神牌動畫 Prefab 如果有 RectTransform，" +
-        "會自動拉滿 Animation Root。"
+        "如果開啟，生成的動畫 Prefab 如果有 RectTransform，" +
+        "會填滿 Animation Root。"
     )]
     public bool stretchAnimationPrefabToRoot = false;
 
@@ -94,10 +96,14 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
     [Header("Animated Corrupted Card Template")]
 
-    [Tooltip("動畫中用來顯示污染後卡牌的 CardViewUI 模板。")]
+    [Tooltip(
+        "動畫中顯示變換後卡牌的 CardViewUI 模板。"
+    )]
     public CardViewUI animatedCorruptedCardTemplate;
 
-    [Tooltip("控制污染後卡牌模板的顯示 / 隱藏。")]
+    [Tooltip(
+        "控制變換後卡牌模板顯示 / 隱藏。"
+    )]
     public CanvasGroup animatedCardCanvasGroup;
 
 
@@ -107,7 +113,9 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
     [Header("Fallback Wait")]
 
-    [Tooltip("如果動畫沒有送出結束 Animation Event，最多等待幾秒，避免流程卡死。")]
+    [Tooltip(
+        "如果動畫沒有正常結束，最多等待幾秒避免流程卡死。"
+    )]
     public float animationTimeout = 5f;
 
 
@@ -121,7 +129,48 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
     // =========================================================
-    // Animation Root
+    // Runtime Animation
+    // =========================================================
+
+    [Header("Runtime Animation")]
+
+    [SerializeField]
+    private GodCardAnimationData currentAnimationData;
+
+    [SerializeField]
+    private GameObject currentAnimationObject;
+
+    [SerializeField]
+    private Animator currentAnimationAnimator;
+
+    [SerializeField]
+    private GodCardAnimationSignalEmitter currentSignalEmitter;
+
+    [SerializeField]
+    private bool animationFinished;
+
+
+    // =========================================================
+    // Runtime Transform
+    // =========================================================
+
+    [Header("Runtime Transform")]
+
+    [SerializeField]
+    private bool transformTriggered;
+
+    private TransformRandomCardByPoolEffectData
+        pendingTransformEffect;
+
+    private CardResolveContext
+        pendingTransformContext;
+
+    private CardTransformResult
+        currentTransformResult;
+
+
+    // =========================================================
+    // Root Properties
     // =========================================================
 
     public Transform AnimationRoot
@@ -135,12 +184,6 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         }
     }
 
-    [Header("UI Hide During God Animation")]
-    [Tooltip("神牌動畫播放期間要暫時隱藏的 UI 物件。")]
-    public GameObject hideDuringGodAnimationUI;
-    // =========================================================
-    // Card Root
-    // =========================================================
 
     public Transform CardRoot
     {
@@ -155,7 +198,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
     // =========================================================
-    // 神牌完整動畫流程
+    // Main Sequence
     // =========================================================
 
     public IEnumerator PlayGodCorruptionSequence(
@@ -165,6 +208,10 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         GodCardAnimationData animationData
     )
     {
+        // =====================================================
+        // Validation
+        // =====================================================
+
         if (playedCardView == null)
         {
             Debug.LogWarning(
@@ -174,6 +221,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             yield break;
         }
 
+
         if (transformEffect == null)
         {
             Debug.LogWarning(
@@ -182,6 +230,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
             yield break;
         }
+
 
         if (context == null)
         {
@@ -194,7 +243,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
         // =====================================================
-        // Root 檢查
+        // Root Debug
         // =====================================================
 
         if (animationRoot == null)
@@ -204,6 +253,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
                 "動畫 Prefab 會生成在 Controller 自己底下。"
             );
         }
+
 
         if (cardRoot == null)
         {
@@ -215,49 +265,73 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
         // =====================================================
-        // 初始化
+        // Runtime 初始化
         // =====================================================
 
         currentAnimationData =
-            ResolveAnimationData(animationData);
+            ResolveAnimationData(
+                animationData
+            );
 
-        animationFinished = false;
+
+        animationFinished =
+            false;
+
+
+        transformTriggered =
+            false;
+
+
+        currentTransformResult =
+            null;
+
+
+        // =====================================================
+        // 保存這次真正要執行的 Transform
+        //
+        // 注意：
+        // 這裡完全沒有 ExecuteTransform。
+        // =====================================================
+
+        pendingTransformEffect =
+            transformEffect;
+
+
+        pendingTransformContext =
+            context;
 
 
         RectTransform playedCardRect =
-            playedCardView.GetComponent<RectTransform>();
+            playedCardView
+                .GetComponent<RectTransform>();
+
 
         if (playedCardRect == null)
         {
-            Debug.LogWarning(
-                "[GodCardAnimation] playedCardView 找不到 RectTransform"
-            );
+            ClearPendingTransform();
 
             yield break;
         }
 
-        // =====================================================
-        // 1. 隱藏神牌動畫期間不需要的 UI
-        // =====================================================
-
-        HideUIForGodAnimation();
-
 
         // =====================================================
-        // 2. 黑幕開啟
+        // 1. 隱藏指定 UI
         // =====================================================
 
-        yield return FadeBlackout(true);
+        //HideUIForGodAnimation();
 
 
         // =====================================================
-        // 2. 打出的神牌移到 Card Root
-        //
-        // 注意：
-        // 現在不是 Animation Root。
-        //
-        // 這樣 Animation Canvas 和 Card Canvas
-        // 就可以完全分開。
+        // 1. 開啟黑幕
+        // =====================================================
+
+        yield return FadeBlackout(
+            true
+        );
+
+
+        // =====================================================
+        // 3. 神牌移到 Card Root
         // =====================================================
 
         playedCardRect.SetParent(
@@ -265,11 +339,12 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             true
         );
 
+
         playedCardRect.SetAsLastSibling();
 
 
         // =====================================================
-        // 3. 神牌飛向中央
+        // 4. 神牌飛到中央
         // =====================================================
 
         if (centerPoint != null)
@@ -289,7 +364,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
         // =====================================================
-        // 4. 神牌震動
+        // 5. 神牌震動
         // =====================================================
 
         yield return ShakeRect(
@@ -300,24 +375,17 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
         // =====================================================
-        // 5. 執行污染
+        // ★ 以前這裡會 ExecuteTransform()
+        //
+        // 現在不會。
+        //
+        // 要等動畫 Signal Track 到指定 Keyframe
+        // 才真正變換。
         // =====================================================
-
-        CardTransformResult result =
-            transformEffect.ExecuteTransform(context);
-
-
-        // =====================================================
-        // 6. 把污染後的牌資料灌進動畫模板
-        // =====================================================
-
-        BindCorruptedCardToAnimationTemplate(
-            result
-        );
 
 
         // =====================================================
-        // 7. 生成並播放這張神牌自己的動畫 Prefab
+        // 6. 生成並播放動畫 Prefab
         // =====================================================
 
         yield return PlayGodAnimationRoutine(
@@ -326,12 +394,32 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
         // =====================================================
-        // 8. 等動畫結束
+        // 7. 等動畫結束
         // =====================================================
 
         yield return WaitForAnimationFinished(
             currentAnimationData
         );
+
+
+        // =====================================================
+        // 8. Transform 保底
+        //
+        // 如果 Signal Track 沒有成功發送，
+        // 還是一定要完成遊戲邏輯。
+        // =====================================================
+
+        if (!transformTriggered)
+        {
+            Debug.LogWarning(
+                "[GodCardAnimation] " +
+                "動畫結束前沒有收到 Transform Moment，" +
+                "執行保底 Transform。"
+            );
+
+
+            TriggerTransformMoment();
+        }
 
 
         // =====================================================
@@ -344,49 +432,158 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
         // =====================================================
-        // 10. 重置污染牌 Template
+        // 10. 重置變換後卡牌 Template
         // =====================================================
 
         ResetAnimatedCardTemplate();
 
 
         // =====================================================
-        // 11. 刪除這次生成的動畫 Prefab
+        // 11. 刪除這次的動畫 Prefab
         // =====================================================
 
         DestroyCurrentAnimationPrefab();
 
 
         // =====================================================
-        // 12. 黑幕關閉
+        // 12. 關閉黑幕
         // =====================================================
 
-        yield return FadeBlackout(false);
+        yield return FadeBlackout(
+            false
+        );
 
 
         // =====================================================
-        // 13. 恢復原本暫時隱藏的 UI
+        // 13. 顯示原本隱藏 UI
         // =====================================================
 
         ShowUIAfterGodAnimation();
 
 
         // =====================================================
-        // 14. Runtime 清除
+        // 14. 清除 Pending Transform
         // =====================================================
 
-        currentAnimationData = null;
+        ClearPendingTransform();
 
-        animationFinished = false;
 
-        currentAnimationObject = null;
+        // =====================================================
+        // 15. Runtime 清除
+        // =====================================================
 
-        currentAnimationAnimator = null;
+        currentAnimationData =
+            null;
+
+
+        animationFinished =
+            false;
+
+
+        transformTriggered =
+            false;
+
+
+        currentTransformResult =
+            null;
     }
 
 
     // =========================================================
-    // 綁定污染後卡牌
+    // Transform Moment
+    //
+    // 真正修改牌組是在這裡。
+    // =========================================================
+
+    public void TriggerTransformMoment()
+    {
+        // =====================================================
+        // 防止同一張神牌重複 Transform
+        // =====================================================
+
+        if (transformTriggered)
+        {
+            Debug.Log(
+                "[GodCardAnimation] " +
+                "Transform Moment 已執行過，忽略重複訊號。"
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // Validation
+        // =====================================================
+
+        if (pendingTransformEffect == null)
+        {
+            Debug.LogWarning(
+                "[GodCardAnimation] " +
+                "Transform Moment 發生，" +
+                "但 pendingTransformEffect 是 null"
+            );
+
+            return;
+        }
+
+
+        if (pendingTransformContext == null)
+        {
+            Debug.LogWarning(
+                "[GodCardAnimation] " +
+                "Transform Moment 發生，" +
+                "但 pendingTransformContext 是 null"
+            );
+
+            return;
+        }
+
+
+        // 所有檢查通過後才算真的觸發
+        transformTriggered =
+            true;
+
+
+        Debug.Log(
+            "[GodCardAnimation] " +
+            "★ 到達動畫 Transform Keyframe，現在正式變換卡牌 ★"
+        );
+
+
+        // =====================================================
+        // 1. 現在才真正修改抽牌堆
+        // =====================================================
+
+        currentTransformResult =
+            pendingTransformEffect
+                .ExecuteTransform(
+                    pendingTransformContext
+                );
+
+
+        // =====================================================
+        // 2. 綁定變換後卡牌資料
+        // =====================================================
+
+        BindCorruptedCardToAnimationTemplate(
+            currentTransformResult
+        );
+    }
+
+
+    // =========================================================
+    // Signal Callback
+    // =========================================================
+
+    private void OnTransformMomentSignal()
+    {
+        TriggerTransformMoment();
+    }
+
+
+    // =========================================================
+    // Bind Corrupted Card
     // =========================================================
 
     private void BindCorruptedCardToAnimationTemplate(
@@ -396,7 +593,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         if (animatedCorruptedCardTemplate == null)
         {
             Debug.LogWarning(
-                "[GodCardCorruptionAnimation] " +
+                "[GodCardAnimation] " +
                 "animatedCorruptedCardTemplate 沒有指定"
             );
 
@@ -409,8 +606,8 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             result.resultCardData == null)
         {
             Debug.LogWarning(
-                "[GodCardCorruptionAnimation] " +
-                "沒有成功取得污染後的牌資料"
+                "[GodCardAnimation] " +
+                "沒有成功取得變換後卡牌資料"
             );
 
             return;
@@ -438,12 +635,21 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
         if (animatedCardCanvasGroup != null)
         {
-            // 一開始保持透明
-            // 可以由 Animation 控制 Alpha 顯示
-            animatedCardCanvasGroup.alpha = 0f;
+            /*
+             * 保持你原本的功能：
+             *
+             * Bind 完先 Alpha = 0。
+             *
+             * 你的 Animation Clip 本身
+             * 可以繼續控制這張卡什麼時候顯示。
+             */
+            animatedCardCanvasGroup.alpha =
+                0f;
+
 
             animatedCardCanvasGroup.blocksRaycasts =
                 false;
+
 
             animatedCardCanvasGroup.interactable =
                 false;
@@ -452,19 +658,21 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
         animatedCorruptedCardTemplate
             .gameObject
-            .SetActive(true);
+            .SetActive(
+                true
+            );
 
 
         Debug.Log(
-            $"[GodCardCorruptionAnimation] " +
-            $"動畫模板綁定污染牌：" +
+            $"[GodCardAnimation] " +
+            $"變換後卡牌 Template 綁定：" +
             $"{result.resultCardData.cardName}"
         );
     }
 
 
     // =========================================================
-    // 決定使用哪個 GodCardAnimationData
+    // Resolve Animation Data
     // =========================================================
 
     private GodCardAnimationData ResolveAnimationData(
@@ -479,6 +687,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
                 $"{cardAnimationData.animationName}"
             );
 
+
             return cardAnimationData;
         }
 
@@ -491,28 +700,31 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
                 $"{defaultAnimationData.animationName}"
             );
 
+
             return defaultAnimationData;
         }
 
 
         Debug.LogWarning(
             "[GodCardAnimation] " +
-            "沒有設定專屬動畫，也沒有 Default Animation Data"
+            "沒有設定任何 GodCardAnimationData"
         );
+
 
         return null;
     }
 
 
     // =========================================================
-    // 播放神牌動畫
+    // Play Animation
     // =========================================================
 
     private IEnumerator PlayGodAnimationRoutine(
-        GodCardAnimationData animationData
-    )
+    GodCardAnimationData animationData
+)
     {
-        animationFinished = false;
+        animationFinished =
+            false;
 
 
         if (animationData == null)
@@ -521,7 +733,10 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
                 "[GodCardAnimation] animationData 是 null"
             );
 
-            animationFinished = true;
+
+            animationFinished =
+                true;
+
 
             yield break;
         }
@@ -535,7 +750,10 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
                 $"沒有設定 Animation Prefab"
             );
 
-            animationFinished = true;
+
+            animationFinished =
+                true;
+
 
             yield break;
         }
@@ -549,17 +767,16 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
         if (!spawnSuccess)
         {
-            animationFinished = true;
+            animationFinished =
+                true;
+
 
             yield break;
         }
 
 
         // =====================================================
-        // 等一幀
-        //
-        // 讓 Instantiate 出來的 Prefab
-        // 和 Animator 完成初始化
+        // 等 Animator 初始化
         // =====================================================
 
         yield return null;
@@ -569,10 +786,13 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         {
             Debug.LogWarning(
                 "[GodCardAnimation] " +
-                "生成的動畫 Prefab 找不到 Animator"
+                "動畫 Prefab 找不到 Animator"
             );
 
-            animationFinished = true;
+
+            animationFinished =
+                true;
+
 
             yield break;
         }
@@ -587,35 +807,60 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             Debug.LogWarning(
                 $"[GodCardAnimation] " +
                 $"{animationData.animationName} " +
-                $"沒有設定 Trigger Name"
+                $"Trigger Name 是空的"
             );
 
-            animationFinished = true;
+
+            animationFinished =
+                true;
+
 
             yield break;
         }
 
 
+        // =====================================================
+        // ★ 真正神牌 Prefab 動畫即將開始
+        //
+        // 到這一刻才隱藏指定 UI。
+        //
+        // 前面的：
+        // Blackout
+        // Card Move
+        // Shake
+        //
+        // 都不會提前把 UI 隱藏。
+        // =====================================================
+
+        HideUIForGodAnimation();
+
+
         Debug.Log(
             $"[GodCardAnimation] " +
-            $"播放動畫：{animationData.animationName}，" +
+            $"開始播放：{animationData.animationName}，" +
             $"Trigger = {trigger}"
         );
 
 
-        currentAnimationAnimator.ResetTrigger(
-            trigger
-        );
+        // =====================================================
+        // 播放動畫
+        // =====================================================
+
+        currentAnimationAnimator
+            .ResetTrigger(
+                trigger
+            );
 
 
-        currentAnimationAnimator.SetTrigger(
-            trigger
-        );
+        currentAnimationAnimator
+            .SetTrigger(
+                trigger
+            );
     }
 
 
     // =========================================================
-    // 生成神牌動畫 Prefab
+    // Spawn Animation Prefab
     // =========================================================
 
     private bool SpawnAnimationPrefab(
@@ -623,41 +868,27 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
     )
     {
         if (animationData == null)
-        {
-            Debug.LogWarning(
-                "[GodCardAnimation] " +
-                "SpawnAnimationPrefab animationData 是 null"
-            );
-
             return false;
-        }
 
 
         if (animationData.animationPrefab == null)
-        {
-            Debug.LogWarning(
-                "[GodCardAnimation] " +
-                "SpawnAnimationPrefab animationPrefab 是 null"
-            );
-
             return false;
-        }
 
 
         // =====================================================
-        // 防止上一次動畫 Prefab 殘留
+        // 防止上一個 Prefab 殘留
         // =====================================================
 
         DestroyCurrentAnimationPrefab();
 
 
-        // =====================================================
-        // 動畫永遠生成在 Animation Root
-        // =====================================================
-
         Transform parent =
             AnimationRoot;
 
+
+        // =====================================================
+        // Instantiate
+        // =====================================================
 
         currentAnimationObject =
             Instantiate(
@@ -673,12 +904,24 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
                 "Instantiate Animation Prefab 失敗"
             );
 
+
             return false;
         }
 
 
         // =====================================================
-        // 設定 Prefab Transform
+        // 即使 Prefab Asset 原本 inactive
+        // Runtime 也強制開啟。
+        // =====================================================
+
+        currentAnimationObject
+            .SetActive(
+                true
+            );
+
+
+        // =====================================================
+        // Transform
         // =====================================================
 
         RectTransform rect =
@@ -693,11 +936,14 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
                 rect.anchorMin =
                     Vector2.zero;
 
+
                 rect.anchorMax =
                     Vector2.one;
 
+
                 rect.offsetMin =
                     Vector2.zero;
+
 
                 rect.offsetMax =
                     Vector2.zero;
@@ -707,34 +953,36 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             rect.localPosition =
                 Vector3.zero;
 
+
             rect.localRotation =
                 Quaternion.identity;
+
 
             rect.localScale =
                 Vector3.one;
         }
         else
         {
-            Transform animationTransform =
-                currentAnimationObject.transform;
+            Transform spawnedTransform =
+                currentAnimationObject
+                    .transform;
 
 
-            animationTransform.localPosition =
+            spawnedTransform.localPosition =
                 Vector3.zero;
 
-            animationTransform.localRotation =
+
+            spawnedTransform.localRotation =
                 Quaternion.identity;
 
-            animationTransform.localScale =
+
+            spawnedTransform.localScale =
                 Vector3.one;
         }
 
 
         // =====================================================
-        // 找 Animator
-        //
-        // 先找 Root
-        // Root 沒有再往 Children 找
+        // Animator
         // =====================================================
 
         currentAnimationAnimator =
@@ -757,56 +1005,66 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             Debug.LogWarning(
                 $"[GodCardAnimation] " +
                 $"Prefab {animationData.animationPrefab.name} " +
-                $"裡找不到 Animator"
+                $"找不到 Animator"
             );
 
 
             DestroyCurrentAnimationPrefab();
+
 
             return false;
         }
 
 
         // =====================================================
-        // 找 Animation Event Relay
+        // Signal Emitter
         // =====================================================
 
-        GodCardAnimationEventRelay relay =
-            currentAnimationAnimator
-                .GetComponent<GodCardAnimationEventRelay>();
+        currentSignalEmitter =
+            currentAnimationObject
+                .GetComponent<GodCardAnimationSignalEmitter>();
 
 
-        if (relay == null)
+        if (currentSignalEmitter == null)
         {
-            relay =
+            currentSignalEmitter =
                 currentAnimationObject
-                    .GetComponentInChildren<GodCardAnimationEventRelay>(
+                    .GetComponentInChildren<
+                        GodCardAnimationSignalEmitter
+                    >(
                         true
                     );
         }
 
 
-        if (relay != null)
-        {
-            relay.Initialize(this);
-        }
-        else
+        if (currentSignalEmitter == null)
         {
             Debug.LogWarning(
                 $"[GodCardAnimation] " +
                 $"Prefab {animationData.animationPrefab.name} " +
-                $"沒有 GodCardAnimationEventRelay。" +
-                $"如果動畫沒有其他方式呼叫結束事件，" +
-                $"流程會等到 Timeout。"
+                $"找不到 GodCardAnimationSignalEmitter。" +
+                $"如果 Signal 沒有發出，最後會使用保底 Transform。"
             );
+        }
+        else
+        {
+            // 防止重複訂閱
+            currentSignalEmitter.TransformMoment -=
+                OnTransformMomentSignal;
+
+
+            // 訂閱這一次動畫 Prefab
+            currentSignalEmitter.TransformMoment +=
+                OnTransformMomentSignal;
         }
 
 
         Debug.Log(
             $"[GodCardAnimation] " +
-            $"生成動畫 Prefab：" +
-            $"{animationData.animationPrefab.name} " +
-            $"→ Parent = {parent.name}"
+            $"動畫 Prefab 已生成：" +
+            $"{currentAnimationObject.name}，" +
+            $"Parent = {parent.name}，" +
+            $"Active = {currentAnimationObject.activeInHierarchy}"
         );
 
 
@@ -815,16 +1073,35 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
     // =========================================================
-    // 刪除目前生成的動畫 Prefab
+    // Destroy Animation Prefab
     // =========================================================
 
     private void DestroyCurrentAnimationPrefab()
     {
+        // =====================================================
+        // 先取消訂閱
+        // =====================================================
+
+        if (currentSignalEmitter != null)
+        {
+            currentSignalEmitter.TransformMoment -=
+                OnTransformMomentSignal;
+        }
+
+
+        currentSignalEmitter =
+            null;
+
+
+        // =====================================================
+        // Destroy
+        // =====================================================
+
         if (currentAnimationObject != null)
         {
             Debug.Log(
                 $"[GodCardAnimation] " +
-                $"刪除動畫 Prefab：" +
+                $"Destroy 動畫 Prefab：" +
                 $"{currentAnimationObject.name}"
             );
 
@@ -835,34 +1112,21 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         }
 
 
-        currentAnimationObject = null;
+        currentAnimationObject =
+            null;
 
-        currentAnimationAnimator = null;
+
+        currentAnimationAnimator =
+            null;
     }
 
 
     // =========================================================
-    // 重置污染卡牌模板
-    // =========================================================
-
-    private void ResetAnimatedCardTemplate()
-    {
-        if (animatedCardCanvasGroup != null)
-        {
-            animatedCardCanvasGroup.alpha =
-                0f;
-
-            animatedCardCanvasGroup.blocksRaycasts =
-                false;
-
-            animatedCardCanvasGroup.interactable =
-                false;
-        }
-    }
-
-
-    // =========================================================
-    // 等動畫結束
+    // Wait For Animation Finished
+    //
+    // 這裡不依賴 Animation Event。
+    //
+    // 直接讀 Animator State。
     // =========================================================
 
     private IEnumerator WaitForAnimationFinished(
@@ -881,48 +1145,180 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         }
 
 
-        float timer = 0f;
+        float timer =
+            0f;
 
 
-        while (!animationFinished)
+        // =====================================================
+        // 先等 Animator 真正進入播放 State
+        // =====================================================
+
+        yield return null;
+
+
+        bool hasStartedPlaying =
+            false;
+
+
+        while (timer < timeout)
         {
-            timer += Time.deltaTime;
+            timer +=
+                Time.deltaTime;
 
 
-            if (timer >= timeout)
+            if (currentAnimationAnimator == null)
             {
-                Debug.LogWarning(
+                animationFinished =
+                    true;
+
+                yield break;
+            }
+
+
+            AnimatorStateInfo stateInfo =
+                currentAnimationAnimator
+                    .GetCurrentAnimatorStateInfo(
+                        0
+                    );
+
+
+            /*
+             * 只要 normalizedTime > 0，
+             * 代表 Animator 已開始跑目前 State。
+             */
+            if (stateInfo.normalizedTime > 0f)
+            {
+                hasStartedPlaying =
+                    true;
+            }
+
+
+            /*
+             * 非 Loop 動畫播放到 1，
+             * 且目前不在 Transition，
+             * 視為完成。
+             */
+            if (hasStartedPlaying &&
+                stateInfo.normalizedTime >= 1f &&
+                !currentAnimationAnimator.IsInTransition(0))
+            {
+                animationFinished =
+                    true;
+
+
+                Debug.Log(
                     "[GodCardAnimation] " +
-                    "等待神牌動畫結束逾時，強制繼續流程"
+                    "Animator 動畫播放完成"
                 );
 
-                break;
+
+                yield break;
             }
 
 
             yield return null;
         }
-    }
 
 
-    // =========================================================
-    // Animation Event
-    // =========================================================
-
-    public void AnimEvent_GodCorruptionFinished()
-    {
-        Debug.Log(
-            "[GodCardCorruptionAnimation] " +
-            "收到動畫結束事件"
+        Debug.LogWarning(
+            "[GodCardAnimation] " +
+            "等待 Animator 動畫完成逾時，" +
+            "使用保底流程。"
         );
 
 
-        animationFinished = true;
+        animationFinished =
+            true;
     }
 
 
     // =========================================================
-    // Blackout
+    // Reset Corrupted Card Template
+    // =========================================================
+
+    private void ResetAnimatedCardTemplate()
+    {
+        if (animatedCardCanvasGroup != null)
+        {
+            animatedCardCanvasGroup.alpha =
+                0f;
+
+
+            animatedCardCanvasGroup.blocksRaycasts =
+                false;
+
+
+            animatedCardCanvasGroup.interactable =
+                false;
+        }
+    }
+
+
+    // =========================================================
+    // Hide UI
+    // =========================================================
+
+    private void HideUIForGodAnimation()
+    {
+        if (hideDuringGodAnimationUI == null)
+            return;
+
+
+        hideDuringGodAnimationUI
+            .SetActive(
+                false
+            );
+
+
+        Debug.Log(
+            $"[GodCardAnimation] " +
+            $"神牌動畫開始，隱藏 UI：" +
+            $"{hideDuringGodAnimationUI.name}"
+        );
+    }
+
+
+    // =========================================================
+    // Show UI
+    // =========================================================
+
+    private void ShowUIAfterGodAnimation()
+    {
+        if (hideDuringGodAnimationUI == null)
+            return;
+
+
+        hideDuringGodAnimationUI
+            .SetActive(
+                true
+            );
+
+
+        Debug.Log(
+            $"[GodCardAnimation] " +
+            $"神牌動畫結束，顯示 UI：" +
+            $"{hideDuringGodAnimationUI.name}"
+        );
+    }
+
+
+    // =========================================================
+    // Clear Pending Transform
+    // =========================================================
+
+    private void ClearPendingTransform()
+    {
+        pendingTransformEffect =
+            null;
+
+
+        pendingTransformContext =
+            null;
+    }
+
+
+    // =========================================================
+    // Fade Blackout
     // =========================================================
 
     private IEnumerator FadeBlackout(
@@ -935,6 +1331,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
         blackoutCanvasGroup.blocksRaycasts =
             show;
+
 
         blackoutCanvasGroup.interactable =
             show;
@@ -961,7 +1358,6 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
                 : 0f;
 
 
-        // 沒有淡入時間時直接設定
         if (blackoutFadeDuration <= 0f)
         {
             blackoutCanvasGroup.alpha =
@@ -973,6 +1369,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
                 blackoutCanvasGroup.blocksRaycasts =
                     false;
 
+
                 blackoutCanvasGroup.interactable =
                     false;
             }
@@ -982,12 +1379,15 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         }
 
 
-        float timer = 0f;
+        float timer =
+            0f;
 
 
-        while (timer < blackoutFadeDuration)
+        while (timer <
+               blackoutFadeDuration)
         {
-            timer += Time.deltaTime;
+            timer +=
+                Time.deltaTime;
 
 
             float t =
@@ -998,7 +1398,8 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
             float smoothT =
-                t * t * (3f - 2f * t);
+                t * t *
+                (3f - 2f * t);
 
 
             blackoutCanvasGroup.alpha =
@@ -1022,6 +1423,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             blackoutCanvasGroup.blocksRaycasts =
                 false;
 
+
             blackoutCanvasGroup.interactable =
                 false;
         }
@@ -1029,7 +1431,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
     // =========================================================
-    // 原本打出的神牌消失
+    // Finish Played God Card
     // =========================================================
 
     private IEnumerator FinishPlayedGodCard(
@@ -1050,6 +1452,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             Destroy(
                 playedCardView.gameObject
             );
+
 
             yield break;
         }
@@ -1079,12 +1482,6 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
         if (godCardFadeDuration <= 0f)
         {
-            canvasGroup.alpha = 0f;
-
-            rect.localScale =
-                Vector3.one * 0.2f;
-
-
             Destroy(
                 playedCardView.gameObject
             );
@@ -1094,12 +1491,15 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         }
 
 
-        float timer = 0f;
+        float timer =
+            0f;
 
 
-        while (timer < godCardFadeDuration)
+        while (timer <
+               godCardFadeDuration)
         {
-            timer += Time.deltaTime;
+            timer +=
+                Time.deltaTime;
 
 
             float t =
@@ -1129,9 +1529,6 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         }
 
 
-        canvasGroup.alpha = 0f;
-
-
         Destroy(
             playedCardView.gameObject
         );
@@ -1139,7 +1536,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
     // =========================================================
-    // 神牌震動
+    // Shake
     // =========================================================
 
     private IEnumerator ShakeRect(
@@ -1160,12 +1557,14 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             rect.position;
 
 
-        float timer = 0f;
+        float timer =
+            0f;
 
 
         while (timer < duration)
         {
-            timer += Time.deltaTime;
+            timer +=
+                Time.deltaTime;
 
 
             Vector3 offset =
@@ -1197,7 +1596,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
     // =========================================================
-    // 神牌移動
+    // Move Card
     // =========================================================
 
     private IEnumerator MoveRectWorld(
@@ -1219,16 +1618,19 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             rect.position =
                 targetWorldPosition;
 
+
             yield break;
         }
 
 
-        float timer = 0f;
+        float timer =
+            0f;
 
 
         while (timer < duration)
         {
-            timer += Time.deltaTime;
+            timer +=
+                Time.deltaTime;
 
 
             float t =
@@ -1239,7 +1641,8 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
             float smoothT =
-                t * t * (3f - 2f * t);
+                t * t *
+                (3f - 2f * t);
 
 
             rect.position =
@@ -1260,45 +1663,25 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
 
     // =========================================================
-    // Controller 被 Destroy 時
-    // 清掉還存在的動畫 Prefab
+    // Disable
+    // =========================================================
+
+    private void OnDisable()
+    {
+        ShowUIAfterGodAnimation();
+    }
+
+
+    // =========================================================
+    // Destroy
     // =========================================================
 
     private void OnDestroy()
     {
-        if (currentAnimationObject != null)
-        {
-            Destroy(
-                currentAnimationObject
-            );
+        DestroyCurrentAnimationPrefab();
 
+        ShowUIAfterGodAnimation();
 
-            currentAnimationObject = null;
-
-            currentAnimationAnimator = null;
-        }
-    }
-    private void HideUIForGodAnimation()
-    {
-        if (hideDuringGodAnimationUI == null)
-            return;
-
-        hideDuringGodAnimationUI.SetActive(false);
-
-        Debug.Log(
-            $"[GodCardAnimation] 隱藏 UI：{hideDuringGodAnimationUI.name}"
-        );
-    }
-
-    private void ShowUIAfterGodAnimation()
-    {
-        if (hideDuringGodAnimationUI == null)
-            return;
-
-        hideDuringGodAnimationUI.SetActive(true);
-
-        Debug.Log(
-            $"[GodCardAnimation] 顯示 UI：{hideDuringGodAnimationUI.name}"
-        );
+        ClearPendingTransform();
     }
 }

@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class GodCardAnimationEventRelay : MonoBehaviour
 {
@@ -24,14 +24,13 @@ public class GodCardAnimationEventRelay : MonoBehaviour
         {
             Debug.LogWarning(
                 "[GodCardAnimationEventRelay] " +
-                "Controller ©|¥¼³]©w"
+                "Controller å°šæœªè¨­å®š"
             );
 
             return;
         }
 
 
-        controller
-            .AnimEvent_GodCorruptionFinished();
+        //controller.AnimEvent_GodCorruptionFinished();
     }
 }
