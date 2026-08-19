@@ -1,91 +1,159 @@
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class RelicsInventory : MonoBehaviour
 {
+    // =========================================================
+    // Current Relics
+    // =========================================================
+
     [Header("Current Relics")]
-    [Tooltip("¼È®É¨Ï¥Î ScriptableObject Àx¦s¿òª«¸ê®Æ¡C¨ú±o¥¿¦¡¿òª«¸ê®ÆÃş§O«á¡A¦A´À´«¦¨¹ï¤èªº RelicData Ãş«¬¡C")]
+    [Tooltip(
+        "ç›®å‰ä½¿ç”¨ ScriptableObject å„²å­˜ç©å®¶æŒæœ‰çš„éºç‰©è³‡æ–™ã€‚" +
+        "å–å¾—æ­£å¼éºç‰©è³‡æ–™é¡åˆ¥å¾Œï¼Œå¯ä»¥å†æ›¿æ›æˆå°æ–¹çš„ RelicData é¡å‹ã€‚"
+    )]
     [SerializeField]
-    private List<ScriptableObject> currentRelics = new();
+    private List<ScriptableObject> currentRelics =
+        new();
 
-    public IReadOnlyList<ScriptableObject> CurrentRelics =>
-        currentRelics;
 
-    public int Count => currentRelics.Count;
+    public IReadOnlyList<ScriptableObject>
+        CurrentRelics =>
+            currentRelics;
 
-    public event Action OnRelicsChanged;
 
-    public bool AddRelic(ScriptableObject relic)
+    public int Count =>
+        currentRelics.Count;
+
+
+    public event Action
+        OnRelicsChanged;
+
+
+    // =========================================================
+    // Add Relic
+    // =========================================================
+
+    public bool AddRelic(
+        ScriptableObject relic
+    )
     {
         if (relic == null)
         {
             Debug.LogWarning(
-                "[RelicsInventory] AddRelic ¥¢±Ñ¡Arelic ¬O null"
+                "[RelicsInventory] " +
+                "AddRelic å¤±æ•—ï¼Œrelic æ˜¯ null"
             );
 
             return false;
         }
 
-        currentRelics.Add(relic);
 
-        Debug.Log(
-            $"[RelicsInventory] Àò±o¿òª«¡G{relic.name}"
+        currentRelics.Add(
+            relic
         );
 
+
+        Debug.Log(
+            $"[RelicsInventory] " +
+            $"ç²å¾—éºç‰©ï¼š{relic.name}"
+        );
+
+
         OnRelicsChanged?.Invoke();
+
 
         return true;
     }
 
-    public bool RemoveRelic(ScriptableObject relic)
+
+    // =========================================================
+    // Remove Relic
+    // =========================================================
+
+    public bool RemoveRelic(
+        ScriptableObject relic
+    )
     {
         if (relic == null)
             return false;
 
+
         bool removed =
-            currentRelics.Remove(relic);
+            currentRelics.Remove(
+                relic
+            );
+
 
         if (!removed)
             return false;
 
+
         Debug.Log(
-            $"[RelicsInventory] ²¾°£¿òª«¡G{relic.name}"
+            $"[RelicsInventory] " +
+            $"ç§»é™¤éºç‰©ï¼š{relic.name}"
         );
 
+
         OnRelicsChanged?.Invoke();
+
 
         return true;
     }
 
-    public bool RemoveRelicAt(int index)
+
+    // =========================================================
+    // Remove Relic At
+    // =========================================================
+
+    public bool RemoveRelicAt(
+        int index
+    )
     {
         if (index < 0 ||
             index >= currentRelics.Count)
         {
             Debug.LogWarning(
-                $"[RelicsInventory] RemoveRelicAt index ¶W¥X½d³ò¡G{index}"
+                $"[RelicsInventory] " +
+                $"RemoveRelicAt index è¶…å‡ºç¯„åœï¼š" +
+                $"{index}"
             );
 
             return false;
         }
 
+
         ScriptableObject relic =
             currentRelics[index];
 
-        currentRelics.RemoveAt(index);
+
+        currentRelics.RemoveAt(
+            index
+        );
+
 
         Debug.Log(
-            $"[RelicsInventory] ²¾°£¿òª«¡G" +
+            $"[RelicsInventory] " +
+            $"ç§»é™¤éºç‰©ï¼š" +
             $"{(relic != null ? relic.name : "null")}"
         );
 
+
         OnRelicsChanged?.Invoke();
+
 
         return true;
     }
 
-    public ScriptableObject GetRelic(int index)
+
+    // =========================================================
+    // Get Relic
+    // =========================================================
+
+    public ScriptableObject GetRelic(
+        int index
+    )
     {
         if (index < 0 ||
             index >= currentRelics.Count)
@@ -93,8 +161,14 @@ public class RelicsInventory : MonoBehaviour
             return null;
         }
 
+
         return currentRelics[index];
     }
+
+
+    // =========================================================
+    // Contains
+    // =========================================================
 
     public bool ContainsRelic(
         ScriptableObject relic
@@ -103,17 +177,28 @@ public class RelicsInventory : MonoBehaviour
         if (relic == null)
             return false;
 
-        return currentRelics.Contains(relic);
+
+        return currentRelics.Contains(
+            relic
+        );
     }
+
+
+    // =========================================================
+    // Clear
+    // =========================================================
 
     public void Clear()
     {
         currentRelics.Clear();
 
+
         OnRelicsChanged?.Invoke();
 
+
         Debug.Log(
-            "[RelicsInventory] ¤w²MªÅ©Ò¦³¿òª«"
+            "[RelicsInventory] " +
+            "å·²æ¸…ç©ºæ‰€æœ‰éºç‰©"
         );
     }
 }

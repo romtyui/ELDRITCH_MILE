@@ -63,6 +63,9 @@ public class BattleManager : MonoBehaviour
 
     private bool isChangingTurn;
 
+    [Header("Relics")]
+    public RelicsRuntime relicsRuntime;
+
     [Header("Special Animation")]
     public CardTransformAnimationController transformAnimationController;
 
@@ -156,120 +159,44 @@ public class BattleManager : MonoBehaviour
         RefreshPlayerBarsUI();
         RefreshStatusUI();
 
+        // =========================================================
+        // Relics：Battle Start
+        // =========================================================
+
+        TriggerRelics(RelicsTriggerType.BattleStart);
+
+
+        // =========================================================
+        // 開始玩家回合
+        // =========================================================
+
         StartPlayerTurn();
+
 
         TutorialEventBus.Raise(BattleTutorialSignals.BattleStarted);
 
+
         if (playerDeck != null)
+        {
             Debug.Log($"{playerDeck.Hand.Count}");
+        }
     }
-    //    public void SaveBattleStartDeckSnapshot(
-    //    BattleUnit playerUnit,
-    //    EnergySystem energySystem,
-    //    BattleDeck battleDeck
-    //)
-    //    {
-    //        if (battleStartDeckSnapshot == null)
-    //            battleStartDeckSnapshot = new BattleStartDeckSnapshot();
+    private void TriggerRelics(RelicsTriggerType triggerType,CardInstance playedCard = null)
+    {
+        if (relicsRuntime == null)
+            return;
 
-    //        battleStartDeckSnapshot.hasSnapshot = true;
 
-    //        if (playerUnit != null)
-    //        {
-    //            battleStartDeckSnapshot.playerMaxHp = playerUnit.maxHp;
-    //            battleStartDeckSnapshot.playerCurrentHp = playerUnit.currentHp;
+        RelicsUseContext context = new RelicsUseContext(this,playerUnit,triggerType,playedCard);
 
-    //            battleStartDeckSnapshot.playerStatuses.Clear();
 
-    //            List<StatusSnapshotEntry> statusEntries = playerUnit.CaptureStatusSnapshot();
+        relicsRuntime.Trigger(triggerType,context);
 
-    //            for (int i = 0; i < statusEntries.Count; i++)
-    //            {
-    //                battleStartDeckSnapshot.playerStatuses.Add(statusEntries[i]);
-    //            }
-    //        }
 
-    //        if (energySystem != null)
-    //        {
-    //            battleStartDeckSnapshot.maxEnergy = energySystem.maxEnergy;
-    //            battleStartDeckSnapshot.currentEnergy = energySystem.currentEnergy;
-    //        }
-
-    //        battleStartDeckSnapshot.drawPileOrder.Clear();
-
-    //        if (battleDeck != null && battleDeck.DrawPile != null)
-    //        {
-    //            for (int i = 0; i < battleDeck.DrawPile.Count; i++)
-    //            {
-    //                CardInstance card = battleDeck.DrawPile[i];
-
-    //                if (card == null || card.data == null)
-    //                    continue;
-
-    //                battleStartDeckSnapshot.drawPileOrder.Add(card.data);
-    //            }
-    //        }
-
-    //        Debug.Log(
-    //            $"[RunStateManager] 已保存戰鬥開始牌組快照：" +
-    //            $"HP {battleStartDeckSnapshot.playerCurrentHp}/{battleStartDeckSnapshot.playerMaxHp}, " +
-    //            $"Energy {battleStartDeckSnapshot.currentEnergy}/{battleStartDeckSnapshot.maxEnergy}, " +
-    //            $"DrawPileOrder {battleStartDeckSnapshot.drawPileOrder.Count}"
-    //        );
-    //    }
-    //    public void ApplyBattleStartDeckSnapshot(
-    //    BattleUnit playerUnit,
-    //    EnergySystem energySystem,
-    //    BattleDeck battleDeck
-    //)
-    //    {
-    //        if (battleStartDeckSnapshot == null || !battleStartDeckSnapshot.hasSnapshot)
-    //        {
-    //            Debug.LogWarning("[RunStateManager] 沒有戰鬥開始牌組快照，無法還原");
-    //            return;
-    //        }
-
-    //        if (playerUnit != null)
-    //        {
-    //            playerUnit.maxHp = battleStartDeckSnapshot.playerMaxHp;
-    //            playerUnit.currentHp = Mathf.Clamp(
-    //                battleStartDeckSnapshot.playerCurrentHp,
-    //                0,
-    //                battleStartDeckSnapshot.playerMaxHp
-    //            );
-
-    //            playerUnit.RestoreStatusSnapshot(battleStartDeckSnapshot.playerStatuses);
-
-    //            playerUnit.OnHpChanged?.Invoke();
-    //            playerUnit.OnStatusChanged?.Invoke();
-    //        }
-
-    //        if (energySystem != null)
-    //        {
-    //            energySystem.maxEnergy = battleStartDeckSnapshot.maxEnergy;
-    //            energySystem.currentEnergy = Mathf.Clamp(
-    //                battleStartDeckSnapshot.currentEnergy,
-    //                0,
-    //                battleStartDeckSnapshot.maxEnergy
-    //            );
-    //        }
-
-    //        if (battleDeck != null)
-    //        {
-    //            battleDeck.RestoreDrawPileOrderOnly(
-    //                battleStartDeckSnapshot.drawPileOrder
-    //            );
-    //        }
-
-    //        pendingRestoreBattleStartDeckSnapshot = false;
-
-    //        Debug.Log(
-    //            $"[RunStateManager] 已還原戰鬥開始牌組快照：" +
-    //            $"HP {battleStartDeckSnapshot.playerCurrentHp}/{battleStartDeckSnapshot.playerMaxHp}, " +
-    //            $"Energy {battleStartDeckSnapshot.currentEnergy}/{battleStartDeckSnapshot.maxEnergy}, " +
-    //            $"DrawPileOrder {battleStartDeckSnapshot.drawPileOrder.Count}"
-    //        );
-    //    }
+        // 遺物可能造成回血、護盾、狀態等變化。
+        RefreshPlayerBarsUI();
+        RefreshStatusUI();
+    }
     private void SpawnEnemiesForBattle()
     {
         if (enemyFormationSpawner != null)
@@ -333,15 +260,47 @@ public class BattleManager : MonoBehaviour
 
         if (playerUnit != null)
         {
+            // =====================================================
+            // 原本玩家回合開始 Status
+            // =====================================================
+
             playerUnit.ResetBlock();
+
             playerUnit.OnTurnStart();
+
+
+            // =====================================================
+            // Relics：Player Turn Start
+            //
+            // 放在 ResetBlock / OnTurnStart 後面。
+            //
+            // 例如：
+            // 每回合開始獲得 5 Block
+            //
+            // 就不會剛獲得馬上被 ResetBlock 清掉。
+            // =====================================================
+
+            TriggerRelics(
+                RelicsTriggerType.PlayerTurnStart
+            );
+
+
+            // =====================================================
+            // 原本 UI
+            // =====================================================
 
             RefreshPlayerBarsUI();
             RefreshStatusUI();
 
+
+            // =====================================================
+            // 原本死亡判定
+            // =====================================================
+
             if (playerUnit.currentHp <= 0)
             {
                 EndBattle(false);
+
                 yield break;
             }
         }
@@ -427,36 +386,83 @@ public class BattleManager : MonoBehaviour
     {
         isChangingTurn = true;
 
+
         if (turnEndButtonAnimatorUI != null)
+        {
             turnEndButtonAnimatorUI.SetEnemyTurnIdle();
+        }
+
+
+        // =========================================================
+        // Relics：Player Turn End
+        // =========================================================
+        //
+        // 先觸發遺物的回合結束效果。
+        //
+        // 例如：
+        // 回合結束回血
+        // 回合結束加盾
+        // 回合結束造成傷害
+        //
+        // =========================================================
+
+        TriggerRelics( RelicsTriggerType.PlayerTurnEnd);
+
+
+        // =========================================================
+        // 原本玩家 Status 回合結束
+        // =========================================================
 
         if (playerUnit != null)
         {
             playerUnit.OnTurnEnd();
 
+
             RefreshPlayerBarsUI();
+
             RefreshStatusUI();
+
 
             if (playerUnit.currentHp <= 0)
             {
                 EndBattle(false);
+
                 yield break;
             }
         }
 
+
+        // =========================================================
+        // 原本棄牌
+        // =========================================================
+
         if (playerDeck != null)
+        {
             playerDeck.DiscardHandAtEndTurn();
+        }
+
 
         RefreshHandUI();
 
 
-        Debug.Log("玩家回合結束");
+        Debug.Log( "玩家回合結束");
+
+
+        // =========================================================
+        // 你原本後面的 Tutorial / EnemyTurn 流程
+        // 請全部保留
+        // =========================================================
+
         TutorialEventBus.Raise(BattleTutorialSignals.TurnEnded);
 
-        if (turnPhaseBannerUI != null)
-            yield return turnPhaseBannerUI.ShowEnemyTurn();
 
-        StartCoroutine(EnemyTurnRoutine());
+        if (turnPhaseBannerUI != null)
+        {
+            yield return turnPhaseBannerUI.ShowEnemyTurn();
+        }
+
+
+        yield return EnemyTurnRoutine();
     }
     private IEnumerator EnemyTurnRoutine()
     {
@@ -668,11 +674,7 @@ public class BattleManager : MonoBehaviour
         StartCoroutine(PlayCardRoutine(card, finalTarget, playedCardView));
         return true;
     }
-    private IEnumerator PlayCardRoutine(
-      CardInstance card,
-      BattleUnit finalTarget,
-      CardViewUI playedCardView
-  )
+    private IEnumerator PlayCardRoutine( CardInstance card,BattleUnit finalTarget, CardViewUI playedCardView)
     {
         /*
          * =========================================================
@@ -706,8 +708,7 @@ public class BattleManager : MonoBehaviour
          * =========================================================
          */
 
-        bool isTransformCard =
-            HasTransformEffect(card);
+        bool isTransformCard =  HasTransformEffect(card);
 
 
         /*
@@ -1178,6 +1179,16 @@ public class BattleManager : MonoBehaviour
         RefreshStatusUI();
 
 
+        // =========================================================
+        // Relics：Card Played
+        //
+        // 整張牌的效果與動畫都已經處理完後，
+        // 才算真正的 CardPlayed。
+        // =========================================================
+
+        TriggerRelics( RelicsTriggerType.CardPlayed, card);
+
+
         /*
          * =========================================================
          * 勝負判定
@@ -1196,13 +1207,9 @@ public class BattleManager : MonoBehaviour
          * =========================================================
          */
 
-        TutorialEventBus.Raise(
-            BattleTutorialSignals.CardPlayed
-        );
+        TutorialEventBus.Raise(BattleTutorialSignals.CardPlayed);
 
-        TutorialEventBus.Raise(
-            "Battle_CardPlayed"
-        );
+        TutorialEventBus.Raise("Battle_CardPlayed");
 
 
         /*
