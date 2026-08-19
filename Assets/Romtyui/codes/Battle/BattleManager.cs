@@ -619,62 +619,63 @@ public class BattleManager : MonoBehaviour
         StartPlayerTurn();
     }
 
-    public bool TryPlayCard(CardInstance card, BattleUnit target, CardViewUI playedCardView)
+    public bool TryPlayCard(CardInstance card, BattleUnit target, CardViewUI playedCardView, Vector3? releaseWorldPosition = null)
     {
         if (isResolvingCard)
         {
-            Debug.Log("�d�P���b���⤤");
+            Debug.Log("卡牌正在結算中");
             return false;
         }
 
         if (currentPhase != BattlePhase.PlayerTurn)
         {
-            Debug.Log("�{�b���O���a�^�X�A����X�P");
+            Debug.Log("現在不是玩家回合，不能出牌");
             return false;
         }
 
         if (card == null || card.data == null)
         {
-            Debug.LogWarning("[TryPlayCard] card �� card.data �O null");
+            Debug.LogWarning("[TryPlayCard] card 或 card.data 是 null");
             return false;
         }
+
 
         BattleUnit finalTarget = ResolveTarget(card.data.targetType, target);
 
         if (card.data.targetType == TargetType.SingleEnemy && finalTarget == null)
         {
-            Debug.Log("�S�����ĤH");
+            Debug.Log("沒有指定敵人");
             return false;
         }
 
         if (card.data.targetType == TargetType.RandomEnemy && finalTarget == null)
         {
-            Debug.Log("�S���i�Ϊ��H���ĤH");
+            Debug.Log("沒有可用的隨機敵人");
             return false;
         }
 
         if (card.data.targetType == TargetType.AllEnemies && GetAliveEnemies().Count == 0)
         {
-            Debug.Log("�S������ĤH�i�H����");
+            Debug.Log("沒有存活敵人可以攻擊");
             return false;
         }
 
         if (energySystem == null)
         {
-            Debug.LogWarning("[TryPlayCard] energySystem �S�����w");
+            Debug.LogWarning("[TryPlayCard] energySystem 沒有指定");
             return false;
         }
 
         if (!energySystem.CanSpend(card.currentCost))
         {
-            Debug.Log("��q����");
+            Debug.Log("能量不足");
             return false;
         }
 
-        StartCoroutine(PlayCardRoutine(card, finalTarget, playedCardView));
+        StartCoroutine(PlayCardRoutine(card, finalTarget, playedCardView, releaseWorldPosition));
         return true;
     }
-    private IEnumerator PlayCardRoutine( CardInstance card,BattleUnit finalTarget, CardViewUI playedCardView)
+    private IEnumerator PlayCardRoutine( CardInstance card,BattleUnit finalTarget, CardViewUI playedCardView,  Vector3? releaseWorldPosition)
     {
         /*
          * =========================================================
@@ -843,14 +844,39 @@ public class BattleManager : MonoBehaviour
          * =========================================================
          */
 
-        if (!isTransformCard &&
-            playedCardView != null &&
-            generalCardPlayAnimationController != null)
+        if (!isTransformCard && playedCardView != null && generalCardPlayAnimationController != null)
         {
-            yield return
-                generalCardPlayAnimationController.PlayIntro(
-                    playedCardView
+            /*
+             * SingleEnemy：
+             * 完全照舊，使用 Inspector 固定的 playedCardPosition。
+             */
+            if (card.data.targetType == TargetType.SingleEnemy)
+            {
+                yield return generalCardPlayAnimationController.PlayIntro(playedCardView);
+            }
+
+            /*
+             * Direct Drag：
+             * 使用玩家放開牌時的位置。
+             */
+            else if (releaseWorldPosition.HasValue)
+            {
+                yield return generalCardPlayAnimationController.PlayIntroAtWorldPosition(
+                    playedCardView,
+                    releaseWorldPosition.Value
                 );
+            }
+
+            /*
+             * 保底：
+             * 如果不是從 CardDragUI 出牌，
+             * 沒有 Release Position，
+             * 就照原本固定位置。
+             */
+            else
+            {
+                yield return generalCardPlayAnimationController.PlayIntro(playedCardView);
+            }
         }
 
 
