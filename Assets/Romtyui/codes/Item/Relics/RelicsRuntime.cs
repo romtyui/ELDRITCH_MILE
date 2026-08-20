@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class RelicsRuntime : MonoBehaviour
+public class RelicsRuntime : MonoBehaviour, IModifierProvider
 {
     // =========================================================
     // References
@@ -19,10 +19,7 @@ public class RelicsRuntime : MonoBehaviour
     /// <summary>
     /// 執行指定時間點的所有遺物效果。
     /// </summary>
-    public void Trigger(
-        RelicsTriggerType triggerType,
-        RelicsUseContext context
-    )
+    public void Trigger(RelicsTriggerType triggerType, RelicsUseContext context)
     {
         // =====================================================
         // 基本檢查
@@ -30,131 +27,134 @@ public class RelicsRuntime : MonoBehaviour
 
         if (relicsInventory == null)
         {
-            Debug.LogWarning(
-                "[RelicsRuntime] " +
-                "RelicsInventory 沒有指定"
-            );
-
+            Debug.LogWarning("[RelicsRuntime] RelicsInventory 沒有指定");
             return;
         }
-
 
         if (context == null)
         {
-            Debug.LogWarning(
-                "[RelicsRuntime] " +
-                "RelicsUseContext 是 null"
-            );
-
+            Debug.LogWarning("[RelicsRuntime] RelicsUseContext 是 null");
             return;
         }
 
+        context.triggerType = triggerType;
 
-        context.triggerType =
-            triggerType;
-
-
-        IReadOnlyList<ScriptableObject>
-            currentRelics =
-                relicsInventory.CurrentRelics;
-
+        IReadOnlyList<ScriptableObject> currentRelics = relicsInventory.CurrentRelics;
 
         if (currentRelics == null)
             return;
-
 
         // =====================================================
         // 遍歷目前持有的所有 Relic
         // =====================================================
 
-        for (
-            int relicIndex = 0;
-            relicIndex < currentRelics.Count;
-            relicIndex++
-        )
+        for (int relicIndex = 0; relicIndex < currentRelics.Count; relicIndex++)
         {
-            ScriptableObject relicObject =
-                currentRelics[relicIndex];
-
+            ScriptableObject relicObject = currentRelics[relicIndex];
 
             if (relicObject == null)
                 continue;
-
 
             // =================================================
             // 取得這個 Relic 的 Effects
             // =================================================
 
-            IRelicsEffectSource effectSource =
-                relicObject as IRelicsEffectSource;
-
+            IRelicsEffectSource effectSource = relicObject as IRelicsEffectSource;
 
             if (effectSource == null)
             {
-                Debug.LogWarning(
-                    $"[RelicsRuntime] " +
-                    $"遺物 {relicObject.name} " +
-                    $"沒有實作 IRelicsEffectSource，" +
-                    $"因此無法取得 Relics Effects。"
-                );
-
+                Debug.LogWarning($"[RelicsRuntime] 遺物 {relicObject.name} 沒有實作 IRelicsEffectSource，因此無法取得 Relics Effects。");
                 continue;
             }
 
-
-            IReadOnlyList<RelicsEffectData>
-                effects =
-                    effectSource.RelicsEffects;
-
+            IReadOnlyList<RelicsEffectData> effects = effectSource.RelicsEffects;
 
             if (effects == null)
                 continue;
-
 
             // =================================================
             // 遍歷這個 Relic 的所有 Effect
             // =================================================
 
-            for (
-                int effectIndex = 0;
-                effectIndex < effects.Count;
-                effectIndex++
-            )
+            for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
             {
-                RelicsEffectData effect =
-                    effects[effectIndex];
-
+                RelicsEffectData effect = effects[effectIndex];
 
                 if (effect == null)
                     continue;
 
+                // =================================================
+                // Modifier 型效果不透過 Trigger 執行
+                // =================================================
+
+                if (effect is RelicsModifierEffectData)
+                    continue;
 
                 // =============================================
                 // Trigger 不符合
                 // =============================================
 
-                if (!effect.CanTrigger(
-                        triggerType))
-                {
+                if (!effect.CanTrigger(triggerType))
                     continue;
-                }
-
 
                 // =============================================
                 // Trigger 符合
                 // =============================================
 
-                Debug.Log(
-                    $"[RelicsRuntime] " +
-                    $"Trigger = {triggerType}，" +
-                    $"Relic = {relicObject.name}，" +
-                    $"Effect = {effect.name}"
-                );
+                Debug.Log($"[RelicsRuntime] Trigger = {triggerType}，Relic = {relicObject.name}，Effect = {effect.name}");
 
+                effect.Execute(context);
+            }
+        }
+    }
 
-                effect.Execute(
-                    context
-                );
+    // =========================================================
+    // Modifier Provider
+    // =========================================================
+
+    public void CollectModifiers(ModifierQuery query, List<ModifierValue> results)
+    {
+        if (query == null || results == null)
+            return;
+
+        if (relicsInventory == null)
+            return;
+
+        IReadOnlyList<ScriptableObject> currentRelics = relicsInventory.CurrentRelics;
+
+        if (currentRelics == null)
+            return;
+
+        for (int relicIndex = 0; relicIndex < currentRelics.Count; relicIndex++)
+        {
+            ScriptableObject relicObject = currentRelics[relicIndex];
+
+            if (relicObject == null)
+                continue;
+
+            IRelicsEffectSource effectSource = relicObject as IRelicsEffectSource;
+
+            if (effectSource == null)
+                continue;
+
+            IReadOnlyList<RelicsEffectData> effects = effectSource.RelicsEffects;
+
+            if (effects == null)
+                continue;
+
+            for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
+            {
+                RelicsEffectData effect = effects[effectIndex];
+
+                if (effect == null)
+                    continue;
+
+                RelicsModifierEffectData modifierEffect = effect as RelicsModifierEffectData;
+
+                if (modifierEffect == null)
+                    continue;
+
+                modifierEffect.CollectModifiers(query, results, relicObject);
             }
         }
     }
