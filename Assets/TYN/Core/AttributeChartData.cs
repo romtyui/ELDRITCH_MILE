@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace EldritchMile.Core
 {
@@ -64,18 +65,46 @@ namespace EldritchMile.Core
             }
         }
 
+        [Header("顯示名")]
+        [Tooltip("玩家目前看不到屬性的名字（只看得到顏色），這幾格是給文件、Console、\n" +
+                 "以及日後可能出現的 UI 用的。\n\n" +
+                 "**改名字改這裡就好，不要動 ExploreAttribute 的數值** —— 那個一改，\n" +
+                 "所有卡牌與物件都會對錯屬性，而且不會有任何錯誤訊息。")]
+        public string idName = "本我";
+        public string superegoName = "超我";
+        public string egoName = "自我";
+        public string noneName = "無";
+
         [Header("顏色")]
         [Tooltip("無（黑白）。純文字上用中性灰，純黑在深色底上看不見")]
         public Color noneColor = new Color(0.72f, 0.72f, 0.72f);
 
-        [Tooltip("直覺（紅）")]
-        public Color intuitionColor = new Color(0.86f, 0.34f, 0.32f);
+        // ⚠️ 這三個欄位改過名字（intuition/logic/insight → id/superego/ego）。
+        //    FormerlySerializedAs 是必要的 —— 少了它，AttributeChart.asset 裡
+        //    已經調好的顏色會在下次匯入時**靜靜地回到預設值**，沒有任何提示。
+        [Tooltip("本我（紅）。與超我對立")]
+        [FormerlySerializedAs("intuitionColor")]
+        public Color idColor = new Color(0.86f, 0.34f, 0.32f);
 
-        [Tooltip("邏輯（藍）")]
-        public Color logicColor = new Color(0.36f, 0.60f, 0.86f);
+        [Tooltip("超我（藍）。與本我對立")]
+        [FormerlySerializedAs("logicColor")]
+        public Color superegoColor = new Color(0.36f, 0.60f, 0.86f);
 
-        [Tooltip("批判與創造（綠）")]
-        public Color insightColor = new Color(0.44f, 0.76f, 0.48f);
+        [Tooltip("自我（綠）。調停者 —— 對誰都沾得上邊")]
+        [FormerlySerializedAs("insightColor")]
+        public Color egoColor = new Color(0.44f, 0.76f, 0.48f);
+
+        /// <summary>屬性的顯示名。查不到就回 enum 本身的名字。</summary>
+        public string NameOf(ExploreAttribute attr)
+        {
+            switch (attr)
+            {
+                case ExploreAttribute.Id: return string.IsNullOrEmpty(idName) ? "本我" : idName;
+                case ExploreAttribute.Superego: return string.IsNullOrEmpty(superegoName) ? "超我" : superegoName;
+                case ExploreAttribute.Ego: return string.IsNullOrEmpty(egoName) ? "自我" : egoName;
+                default: return string.IsNullOrEmpty(noneName) ? "無" : noneName;
+            }
+        }
 
         /// <summary>
         /// 屬性的顏色。**放在這裡是因為這份資產已經是「屬性的事實」的家** ——
@@ -87,9 +116,9 @@ namespace EldritchMile.Core
         {
             switch (attr)
             {
-                case ExploreAttribute.Intuition: return intuitionColor;
-                case ExploreAttribute.Logic: return logicColor;
-                case ExploreAttribute.Insight: return insightColor;
+                case ExploreAttribute.Id: return idColor;
+                case ExploreAttribute.Superego: return superegoColor;
+                case ExploreAttribute.Ego: return egoColor;
                 default: return noneColor;
             }
         }
