@@ -113,10 +113,11 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
     [Header("Fallback Wait")]
 
-    [Tooltip(
-        "如果動畫沒有正常結束，最多等待幾秒避免流程卡死。"
-    )]
-    public float animationTimeout = 5f;
+    [Tooltip("Animator 動畫總長度之外，額外增加多少秒作為 Timeout 緩衝。")]
+    public float animationTimeoutBuffer = 2f;
+
+    [Tooltip("如果無法取得 Animator 動畫總長度，使用這個固定 Timeout。")]
+    public float fallbackAnimationTimeout = 10f;
 
 
     // =========================================================
@@ -581,7 +582,15 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         TriggerTransformMoment();
     }
 
+    private void OnAnimationFinishedSignal()
+    {
+        if (animationFinished)
+            return;
 
+        animationFinished = true;
+
+        Debug.Log("[GodCardAnimation] ★ 收到 Animation Finished Signal，整段神牌動畫正式完成 ★");
+    }
     // =========================================================
     // Bind Corrupted Card
     // =========================================================
@@ -863,9 +872,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
     // Spawn Animation Prefab
     // =========================================================
 
-    private bool SpawnAnimationPrefab(
-        GodCardAnimationData animationData
-    )
+    private bool SpawnAnimationPrefab(GodCardAnimationData animationData)
     {
         if (animationData == null)
             return false;
@@ -1049,13 +1056,13 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         else
         {
             // 防止重複訂閱
-            currentSignalEmitter.TransformMoment -=
-                OnTransformMomentSignal;
-
+            currentSignalEmitter.TransformMoment -= OnTransformMomentSignal;
+            currentSignalEmitter.AnimationFinished -= OnAnimationFinishedSignal;
+           
 
             // 訂閱這一次動畫 Prefab
-            currentSignalEmitter.TransformMoment +=
-                OnTransformMomentSignal;
+            currentSignalEmitter.TransformMoment += OnTransformMomentSignal;
+            currentSignalEmitter.AnimationFinished += OnAnimationFinishedSignal;
         }
 
 
@@ -1084,8 +1091,8 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
 
         if (currentSignalEmitter != null)
         {
-            currentSignalEmitter.TransformMoment -=
-                OnTransformMomentSignal;
+            currentSignalEmitter.TransformMoment -=  OnTransformMomentSignal;
+            currentSignalEmitter.AnimationFinished -= OnAnimationFinishedSignal;
         }
 
 
@@ -1129,106 +1136,26 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
     // 直接讀 Animator State。
     // =========================================================
 
-    private IEnumerator WaitForAnimationFinished(
-        GodCardAnimationData animationData
-    )
+    private IEnumerator WaitForAnimationFinished(GodCardAnimationData animationData)
     {
-        float timeout =
-            animationTimeout;
+        float timeout = CalculateAnimationTimeout(animationData);
+        float timer = 0f;
 
-
-        if (animationData != null &&
-            animationData.animationTimeout > 0f)
+        while (!animationFinished)
         {
-            timeout =
-                animationData.animationTimeout;
-        }
+            timer += Time.deltaTime;
 
-
-        float timer =
-            0f;
-
-
-        // =====================================================
-        // 先等 Animator 真正進入播放 State
-        // =====================================================
-
-        yield return null;
-
-
-        bool hasStartedPlaying =
-            false;
-
-
-        while (timer < timeout)
-        {
-            timer +=
-                Time.deltaTime;
-
-
-            if (currentAnimationAnimator == null)
+            if (timer >= timeout)
             {
-                animationFinished =
-                    true;
-
+                Debug.LogWarning($"[GodCardAnimation] 等待 Animation Finished Signal 逾時。Timeout = {timeout:F2} 秒，使用保底流程。");
+                animationFinished = true;
                 yield break;
             }
-
-
-            AnimatorStateInfo stateInfo =
-                currentAnimationAnimator
-                    .GetCurrentAnimatorStateInfo(
-                        0
-                    );
-
-
-            /*
-             * 只要 normalizedTime > 0，
-             * 代表 Animator 已開始跑目前 State。
-             */
-            if (stateInfo.normalizedTime > 0f)
-            {
-                hasStartedPlaying =
-                    true;
-            }
-
-
-            /*
-             * 非 Loop 動畫播放到 1，
-             * 且目前不在 Transition，
-             * 視為完成。
-             */
-            if (hasStartedPlaying &&
-                stateInfo.normalizedTime >= 1f &&
-                !currentAnimationAnimator.IsInTransition(0))
-            {
-                animationFinished =
-                    true;
-
-
-                Debug.Log(
-                    "[GodCardAnimation] " +
-                    "Animator 動畫播放完成"
-                );
-
-
-                yield break;
-            }
-
 
             yield return null;
         }
 
-
-        Debug.LogWarning(
-            "[GodCardAnimation] " +
-            "等待 Animator 動畫完成逾時，" +
-            "使用保底流程。"
-        );
-
-
-        animationFinished =
-            true;
+        Debug.Log("[GodCardAnimation] Animation Finished Signal 已收到，繼續神牌收尾。");
     }
 
 
@@ -1434,104 +1361,86 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
     // Finish Played God Card
     // =========================================================
 
-    private IEnumerator FinishPlayedGodCard(
-        CardViewUI playedCardView
-    )
+    private IEnumerator FinishPlayedGodCard(CardViewUI playedCardView)
     {
+        Debug.Log("[GodCardAnimation] ★ FinishPlayedGodCard 開始，原本神牌現在開始縮小 ★");
+
+
         if (playedCardView == null)
             yield break;
 
+        RectTransform playedCardRect = playedCardView.GetComponent<RectTransform>();
 
-        RectTransform rect =
-            playedCardView
-                .GetComponent<RectTransform>();
-
-
-        if (rect == null)
+        if (playedCardRect == null)
         {
-            Destroy(
-                playedCardView.gameObject
-            );
-
-
+            Destroy(playedCardView.gameObject);
             yield break;
         }
 
+        CanvasGroup playedCardCanvasGroup = playedCardView.GetComponent<CanvasGroup>();
 
-        CanvasGroup canvasGroup =
-            playedCardView
-                .GetComponent<CanvasGroup>();
+        if (playedCardCanvasGroup == null)
+            playedCardCanvasGroup = playedCardView.gameObject.AddComponent<CanvasGroup>();
 
+        Transform animationTransform = null;
+        CanvasGroup animationCanvasGroup = null;
 
-        if (canvasGroup == null)
+        if (currentAnimationObject != null)
         {
-            canvasGroup =
-                playedCardView
-                    .gameObject
-                    .AddComponent<CanvasGroup>();
+            animationTransform = currentAnimationObject.transform;
+            animationCanvasGroup = currentAnimationObject.GetComponent<CanvasGroup>();
+
+            if (animationCanvasGroup == null)
+                animationCanvasGroup = currentAnimationObject.AddComponent<CanvasGroup>();
         }
 
+        float playedCardStartAlpha = playedCardCanvasGroup.alpha;
+        Vector3 playedCardStartScale = playedCardRect.localScale;
 
-        float startAlpha =
-            canvasGroup.alpha;
+        float animationStartAlpha = 1f;
+        Vector3 animationStartScale = Vector3.one;
 
+        if (animationTransform != null)
+            animationStartScale = animationTransform.localScale;
 
-        Vector3 startScale =
-            rect.localScale;
-
+        if (animationCanvasGroup != null)
+            animationStartAlpha = animationCanvasGroup.alpha;
 
         if (godCardFadeDuration <= 0f)
         {
-            Destroy(
-                playedCardView.gameObject
-            );
-
-
+            Destroy(playedCardView.gameObject);
             yield break;
         }
 
+        float timer = 0f;
 
-        float timer =
-            0f;
-
-
-        while (timer <
-               godCardFadeDuration)
+        while (timer < godCardFadeDuration)
         {
-            timer +=
-                Time.deltaTime;
+            timer += Time.deltaTime;
+            float t = Mathf.Clamp01(timer / godCardFadeDuration);
 
+            playedCardCanvasGroup.alpha = Mathf.Lerp(playedCardStartAlpha, 0f, t);
+            playedCardRect.localScale = Vector3.Lerp(playedCardStartScale, Vector3.one * 0.2f, t);
 
-            float t =
-                Mathf.Clamp01(
-                    timer /
-                    godCardFadeDuration
-                );
+            if (animationTransform != null)
+                animationTransform.localScale = Vector3.Lerp(animationStartScale, animationStartScale * 0.2f, t);
 
-
-            canvasGroup.alpha =
-                Mathf.Lerp(
-                    startAlpha,
-                    0f,
-                    t
-                );
-
-
-            rect.localScale =
-                Vector3.Lerp(
-                    startScale,
-                    Vector3.one * 0.2f,
-                    t
-                );
-
+            if (animationCanvasGroup != null)
+                animationCanvasGroup.alpha = Mathf.Lerp(animationStartAlpha, 0f, t);
 
             yield return null;
         }
 
+        playedCardCanvasGroup.alpha = 0f;
+        playedCardRect.localScale = Vector3.one * 0.2f;
 
-        Destroy(
-            playedCardView.gameObject
-        );
+        if (animationTransform != null)
+            animationTransform.localScale = animationStartScale * 0.2f;
+
+        if (animationCanvasGroup != null)
+            animationCanvasGroup.alpha = 0f;
+
+        Destroy(playedCardView.gameObject);
     }
 
 
@@ -1683,5 +1592,35 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         ShowUIAfterGodAnimation();
 
         ClearPendingTransform();
+    }
+
+    private float CalculateAnimationTimeout(GodCardAnimationData animationData)
+    {
+        if (currentAnimationAnimator == null || currentAnimationAnimator.runtimeAnimatorController == null)
+            return fallbackAnimationTimeout;
+
+        AnimationClip[] clips = currentAnimationAnimator.runtimeAnimatorController.animationClips;
+
+        if (clips == null || clips.Length == 0)
+            return fallbackAnimationTimeout;
+
+        float totalDuration = 0f;
+
+        foreach (AnimationClip clip in clips)
+        {
+            if (clip == null)
+                continue;
+
+            totalDuration += clip.length / 0.5f; ;
+        }
+
+        if (totalDuration <= 0f)
+            return fallbackAnimationTimeout;
+
+        float timeout = totalDuration + animationTimeoutBuffer;
+
+        Debug.Log($"[GodCardAnimation] 動畫總長度 = {totalDuration:F2} 秒，Buffer = {animationTimeoutBuffer:F2} 秒，Timeout = {timeout:F2} 秒");
+
+        return timeout;
     }
 }
