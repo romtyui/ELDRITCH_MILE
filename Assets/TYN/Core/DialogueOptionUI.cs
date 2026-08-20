@@ -421,12 +421,19 @@ namespace EldritchMile.Core
         // ==========================================
         public void OnPointerEnter(PointerEventData eventData)
         {
+            // 事件的選項不打牌，但**滑過去也要有反應** —— 不然玩家不確定它能不能點。
+            // 直接沿用「被瞄準」那個變暗效果，事件與打牌兩邊的回饋才一致
+            //（也跟商店貨架的 hover 一致，全專案就這一種語彙）
+            if (mode == Mode.PlainChoice) { SetTargeted(true); return; }
+
             DialogueEncounterController e = DialogueEncounterController.Instance;
             if (e != null && e.IsActive && e.HasArmedCard) e.SetAimed(this);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            if (mode == Mode.PlainChoice) { SetTargeted(false); return; }
+
             DialogueEncounterController e = DialogueEncounterController.Instance;
             if (e != null && ReferenceEquals(e.AimedTarget, this)) e.ClearAimed();
         }

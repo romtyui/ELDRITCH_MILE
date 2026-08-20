@@ -146,6 +146,12 @@ namespace EldritchMile.Core
             Source?.ApplyDecay(step);
         }
 
+        /// <summary>轉給真正的目標 —— 衰減的真相在 Source 身上，這裡只是一張臉。</summary>
+        public void ResetDecay()
+        {
+            Source?.ResetDecay();
+        }
+
         public void OnCheckResult(bool success, float usedRate)
         {
             // 先讓真正的目標處理結果（開箱、給道具、變更狀態），

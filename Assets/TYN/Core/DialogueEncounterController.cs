@@ -114,6 +114,16 @@ namespace EldritchMile.Core
                     if (t == null) continue;
 
                     targets.Add(t);
+
+                    // ⚠️ **這裡刻意不重置衰減。**
+                    //
+                    // 規則是「新的一手牌 ＝ 新的衰減」，不是「開一個環節就重置」——
+                    // Begin() 每開一個容器就會呼叫一次，在這裡重置的話，
+                    // 玩家離開容器再點一次就把衰減洗掉了。
+                    //
+                    // 重置的責任在**發牌的那一方**：
+                    //   · 探索 → `ExploreStageController.EnsureRoomHand()`（一間房一次）
+                    //   · 對話 → `DialogueStageController.ShowOptions()`（一個節點一次）
                     HoverPreviewBroadcaster.Instance?.Register(t);
                 }
             }

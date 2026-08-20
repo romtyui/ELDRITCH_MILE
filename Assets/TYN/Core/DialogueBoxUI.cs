@@ -278,6 +278,17 @@ namespace EldritchMile.Core
 
             if (root != null) root.SetActive(false);
             if (dimmer != null) dimmer.SetActive(false);
+
+            // ⚠️ 這幾個是**兄弟，不是 root 的子物件** —— 關 root 不會連帶關掉它們。
+            //
+            // `root` 以前指的是整塊 DialogueUI 畫布，所以關一個等於全關；
+            // 但那也把氣泡、EncounterUI、RetryAskPanel 一起連坐關掉了（bark 被吞的原因）。
+            // 改成只關對話框本體之後，這些就得各自點名。
+            //
+            // 漏掉的症狀是「立繪浮在主選單上」—— 因為沒有人關它。
+            if (portraitRoot != null) portraitRoot.SetActive(false);
+            if (optionBox != null) optionBox.SetActive(false);
+            if (nameBox != null) nameBox.SetActive(false);
         }
 
         public void HideImmediate() => Hide();

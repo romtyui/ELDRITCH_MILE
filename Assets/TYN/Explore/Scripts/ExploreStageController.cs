@@ -66,9 +66,22 @@ namespace EldritchMile.Explore
         private bool uiRefsResolved;
         private bool continueAskShown;
 
-        // 中途結束時保留的手牌，防止重抽（見 BeginEncounter 的說明）
-        private IProbabilityTarget suspendedTarget;
-        private readonly List<CardInstanceExplore> suspendedHand = new List<CardInstanceExplore>();
+        /// <summary>
+        /// **這一間房的手牌。** 房裡所有容器共用同一疊。
+        ///
+        /// 【為什麼是一間房一手牌，不是一個容器一手牌】(2026-08-19 定案)
+        ///
+        /// 舊做法是「同一個目標再進來就接續用剩下的」，但那條防線只擋得住
+        /// 「離開後立刻回到同一個箱子」—— 玩家換去打別的容器就重抽了，
+        /// 回來時原本的暫存也已經被蓋掉。等於**繞一圈就能拿到全新的一手**，
+        /// 逐次衰減完全沒有代價。
+        ///
+        /// 改成整間房共用一疊之後，「要開哪幾個櫃子」變成真正的取捨。
+        /// </summary>
+        private readonly List<CardInstanceExplore> roomHand = new List<CardInstanceExplore>();
+
+        /// 這間房抽過牌了沒。**重進同一間房不會再抽**
+        private bool roomHandDrawn;
 
         // 延後播報的開箱結果
         private string pendingLootName;
@@ -226,6 +239,11 @@ namespace EldritchMile.Explore
             currentRoom = Instantiate(prefab, parent, false);
             currentRoom.name = $"Room_{node?.kind}";
 
+            // 新的一間房 = 新的一手牌。實際的抽牌延到玩家第一次打開容器時
+            //（有些房間玩家會直接走掉，沒必要先扣牌）
+            roomHand.Clear();
+            roomHandDrawn = false;
+
             room = currentRoom.GetComponent<RoomController>();
             if (room != null)
             {
@@ -364,28 +382,14 @@ namespace EldritchMile.Explore
                 }
             }
 
-            // ⚠️ 防止「點結束再點一次目標」來重抽手牌。
+            // ⚠️ 一間房只抽一次牌。**換去打別的容器不會重抽。**
             //
-            // 衰減本身已經限制了總嘗試次數（衰減記在目標上，不會因為重進而重置），
-            // 但重抽會讓玩家能一直換一手更好的屬性組合去試 —— 那等於繞過了
-            // 「這次遭遇你只有這幾張牌」的設計。
-            //
-            // 所以中途結束時手牌會被保留，同一個目標再進來就接著用剩下的。
-            var hand = new List<CardInstanceExplore>();
+            // 重抽會讓玩家一直換一手更好的屬性組合去試，逐次衰減就完全沒有代價了。
+            // 舊做法是把手牌暫存在「同一個目標」上，但玩家繞去別的容器再回來就破功。
+            EnsureRoomHand();
 
-            if (suspendedTarget == target && suspendedHand.Count > 0)
-            {
-                hand.AddRange(suspendedHand);
-                Debug.Log($"[打牌] 接續上次中斷的手牌：{hand.Count} 張");
-            }
-            else if (explorationDeck != null)
-            {
-                explorationDeck.DrawCards(cardsPerEncounter);
-                hand.AddRange(explorationDeck.Hand);
-            }
+            var hand = new List<CardInstanceExplore>(roomHand);
 
-            suspendedTarget = null;
-            suspendedHand.Clear();
             currentEncounterTarget = target;
 
             if (hand.Count == 0)
@@ -406,6 +410,44 @@ namespace EldritchMile.Explore
 
             // 目前一次只針對一個目標。Phase 6 的多選項對話會傳入整組選項。
             Encounter.Begin(hand, new List<IProbabilityTarget> { encounterTarget });
+        }
+
+        /// <summary>
+        /// 確保這間房已經有一手牌。**只在第一次需要時抽，之後沿用剩下的。**
+        ///
+        /// 【衰減為什麼在這裡重置，不在 `Encounter.Begin()` 裡】
+        /// 規則是「**新的一手牌 ＝ 新的衰減**」，不是「開一個環節就重置」。
+        /// 放在 Begin 裡的話，玩家離開容器再點一次就把衰減洗掉了 ——
+        /// 那正是我們要擋的重抽漏洞的另一個版本。
+        ///
+        /// 所以兩件事綁在同一個時機：抽新的一手，順便把整間房的衰減歸零。
+        /// </summary>
+        private void EnsureRoomHand()
+        {
+            if (roomHandDrawn && roomHand.Count > 0) return;
+            if (roomHandDrawn) return;   // 抽過了但已經用完 —— 不補牌
+            if (explorationDeck == null) return;
+
+            explorationDeck.DrawCards(cardsPerEncounter);
+
+            roomHand.Clear();
+            roomHand.AddRange(explorationDeck.Hand);
+            roomHandDrawn = true;
+
+            ResetRoomDecay();
+
+            Debug.Log($"[打牌] 這間房發了 {roomHand.Count} 張手牌，房裡所有容器共用");
+        }
+
+        /// <summary>把這間房所有目標的衰減歸零。跟著「發新的一手牌」一起做。</summary>
+        private void ResetRoomDecay()
+        {
+            if (currentRoom == null) return;
+
+            var targets = currentRoom.GetComponentsInChildren<IProbabilityTarget>(true);
+            for (int i = 0; i < targets.Length; i++) targets[i]?.ResetDecay();
+
+            if (targets.Length > 0) Debug.Log($"[打牌] 重置了 {targets.Length} 個目標的衰減");
         }
 
         /// <summary>
@@ -531,15 +573,14 @@ namespace EldritchMile.Explore
             // 手牌用盡才離開的話不留 —— 那次遭遇已經用完了。
             if (Encounter.HasCardsLeft)
             {
-                suspendedTarget = Encounter.PrimaryTarget ?? currentEncounterTarget;
-                suspendedHand.Clear();
-                suspendedHand.AddRange(Encounter.Hand);
-                Debug.Log($"[打牌] 中途結束，保留 {suspendedHand.Count} 張手牌");
+                // 剩下的牌**還給房間**，不是還給這個容器 —— 下一個容器接著用同一疊
+                roomHand.Clear();
+                roomHand.AddRange(Encounter.Hand);
+                Debug.Log($"[打牌] 中途結束，這間房還剩 {roomHand.Count} 張手牌");
             }
             else
             {
-                suspendedTarget = null;
-                suspendedHand.Clear();
+                roomHand.Clear();
 
                 // 手牌用盡 = 這次遭遇的機會用完了，通知目標結案。
                 // ⚠️ 只有這一條路要通知 —— 中途按結束（上面那個分支）是暫停不是用盡，

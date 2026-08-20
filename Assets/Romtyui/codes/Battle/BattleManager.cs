@@ -1598,6 +1598,10 @@ public class BattleManager : MonoBehaviour
                 Debug.Log("[BattleManager] 戰鬥勝利：已保存玩家進度，並清除保留怪物組");
             }
 
+            // ⚠️ 這一行要在 SaveFromBattle() **之後**。
+            // 探索流程端（EldritchMile.Core.BattleStageController）收到訊號就會去讀
+            // RunStateManager 的 HP / SAN / 牌組；早一步發的話會讀到上一場的數值。
+            TutorialEventBus.Raise(TutorialSignals.BattleWon);
         }
         else
         {
@@ -1605,6 +1609,10 @@ public class BattleManager : MonoBehaviour
 
             if (optionMenuUI != null)
                 optionMenuUI.OpenDeathMenu();
+
+            // 失敗這一支他原本沒有對應的常數，用字面值 —— 與 "Battle_EndTurnPressed" 同一個寫法。
+            // 我方對應的是 EldritchMile.Core.TutorialSignal.BattleLost，**兩邊字串要一致**。
+            TutorialEventBus.Raise("BattleLost");
         }
     }
     private void CommitCurrentFormation()

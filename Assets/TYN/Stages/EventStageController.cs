@@ -88,6 +88,9 @@ public class EventStageController : ChoiceStageController
         }
 
         Debug.Log($"[事件] 開始演出：{data.title}（{introLines.Count} 段）");
+
+        // 新手教學的【觸發祭壇事件】那一步在等這個。沒填就不發
+        TutorialSignal.Raise(data.startSignal);
     }
 
     /// <summary>
@@ -258,6 +261,10 @@ public class EventStageController : ChoiceStageController
     private string ApplyOption(EventData.Option option)
     {
         if (option == null) return "";
+
+        // 教學要分辨玩家走了哪一條（祈禱 / 無視）。
+        // 在效果之前發 —— 教學的下一步可能就是要看那個效果的結果
+        TutorialSignal.Raise(option.chosenSignal);
 
         RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
         if (run == null) return "";

@@ -128,9 +128,29 @@
 **下週對接要問的**：教學序列資產由誰填？那三個祭壇訊號要不要我方從
 `EventStageController` 發（可以在 `EventData` 加一個「開始時發哪個訊號」的欄位）？
 
-### 4. 背包 UI
+### 4. ~~背包 UI~~ → 除錯面板 ✅ ＋ 快捷欄（等別人）
 
-玩家目前看不到自己身上有什麼。資料層（`ItemStack` ／ `ItemDatabase`）早就好了。
+**背包 UI 被否決了** —— 組員要的是快捷欄，食物／收藏／卡片完全分開。合理，
+玩家不需要開一個大背包翻東西。
+
+但「開發時看不見身上有什麼」是另一回事，所以做了 `Core/RunDebugPanel.cs`：
+
+- **IMGUI，按 F1 開合**，掛在 `[SYSTEM]` 上。不用拉 Canvas、不用對位
+- `#if UNITY_EDITOR || DEVELOPMENT_BUILD` —— **正式包裡整個類別會消失**
+- 分頁是「全部／糧食／收藏品／補給／其他」，**就是日後快捷欄要分的那幾類** ——
+  先證明「依標籤過濾」這條路走得通，快捷欄接的是同一份資料
+- 查不到的道具會標成「**沒登記**」，抓 id 打錯與忘記登記
+
+#### ⚠️ 做快捷欄的人第一天就要知道：卡片不在背包裡
+
+武器牌買下去是進 `RunStateManager.savedDeck`（戰鬥端持有），
+跟 `RunContext.inventory` 是**兩份不同的東西**。所以「卡片」那一格查的是另一個來源。
+面板刻意把兩者分開列，就是為了讓這件事一眼看得到。
+
+#### 快捷欄還卡著
+
+**食物快捷欄需要「使用道具」這個動作，那個還不存在**，
+點下去要發生什麼（回多少 HP、扣多少 SAN）也還沒有數值。
 
 ---
 
@@ -138,10 +158,30 @@
 
 | 事情 | 狀況 |
 |---|---|
-| **戰鬥接入** | 下週三／四對接。隊友會盡量包成 prefab |
-| **起始戰鬥牌組從哪來** | ⛔ **這個沒解，`startingMaxHp` 就不能填** —— 填了會讓玩家帶空牌組進戰鬥（見 [SystemsStatus.md](SystemsStatus.md) §2.1）。<br>連帶「扣 HP／SAN 換重試」也還是關的 |
+| ~~起始戰鬥牌組~~ | ✅ 解了 —— `StartingDeck_Default`（8 張，照他 SampleScene 那副**去掉兩張神牌**），已掛上 `GameFlowManager` |
+| ~~武器牌的 `CardData`~~ | ✅ 接了 —— 商店那 4 格 = 匕首／弩／矛／盾（`human_*`），價格仍是佔位 |
+| **`startingMaxHp` 的數字** | 🔶 欄位通了，**只差一個數值**。填了戰鬥就會套用我方的血條而不是他的預設值，要跟他對 |
+| **`Stage_Battle` prefab** | ⛔ 戰鬥那一組還在 `SampleScene`，要包成 prefab 才放得進 StageHost |
+| **`EnemyData.enemyId` 全是空的** | ⛔ 五個敵人資產都沒填 → `ReserveEncounterByEnemyData()` 整組跳過，**指定不了對手**。<br>建議：`boss` / `coral_paguroidea` / `fish_priest` / `tua_khoo_tai` / `minnow`。<br>⚠️ `fish_priest` 要跟《螺湮的祝福》的旗標 `killed_fish_priest` 對得上 |
+| 死亡選單誰管 | 戰鬥失敗時他會開自己的死亡選單，那跟我方的輪迴結算是兩套。要確認「玩家按重來」之後歸誰 |
 | 收藏品的效果 | Romtyui 說他會做，之後把效果資料放進大資料 |
-| 武器牌的 `CardData` | 那 4 張佔位牌還沒有對應的卡資產，指過來就會進戰鬥牌組 |
+
+### 戰鬥接入 —— 形狀已經接好了（2026-08-19）
+
+**已完成：**
+
+- `Stages/BattleStageController.cs` —— 進場預約敵人 → `StartBattle()`；
+  收到結束訊號 → 立 `killed_<enemyId>` 旗標 → `NotifyStageComplete()`
+- `BattleManager.EndBattle()` **加了兩行**（經同意動了 `Assets/Romtyui/`）：
+  勝利發 `TutorialSignals.BattleWon`、失敗發 `"BattleLost"`。
+  ⚠️ 勝利那一行**放在 `SaveFromBattle()` 之後** —— 早一步發，我方會讀到上一場的 HP／SAN／牌組
+- `TutorialSignal.BattleWon` / `.BattleLost` —— 我方對應的常數。
+  ⚠️ `BattleLost` **兩邊都是字面值**，改字串要一起改
+
+**為什麼不輪詢**：勝利時他會 `SetActive(false)` 自己，但**失敗時物件還開著**（他去開死亡選單），
+所以輪詢只抓得到一半。
+
+**還跑不完整**，卡在上表那兩個 ⛔。
 
 ---
 

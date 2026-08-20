@@ -48,6 +48,15 @@ namespace EldritchMile.Core
             /// </summary>
             ConsumeItemByTag = 7,
 
+            /// <summary>
+            /// 抽一張戰利品表，抽到什麼給什麼。
+            /// 《喂米可吃飯》選項 A 的「（可能獲得某些資源）」——
+            /// 文案說的是「某些」，本來就不該指名。
+            ///
+            /// 表填在 <see cref="table"/>，跟寶箱與商店用的是同一種資產。
+            /// </summary>
+            GrantFromTable = 8,
+
             // ── 以下四種還沒有系統可以接 ──
 
             /// 《喂米可吃飯》永久銷毀 1 張武器牌。**需要牌組編輯，尚未接上**
@@ -75,6 +84,9 @@ namespace EldritchMile.Core
 
         [Tooltip("數量／百分比／增減值。SetFlag 不用填")]
         public int amount = 1;
+
+        [Tooltip("GrantFromTable：要抽的戰利品表。跟寶箱／商店用的是同一種資產")]
+        public LootTable table;
 
         /// <summary>
         /// 套用這個效果，回傳**要給玩家看的一行提示**（沒有就回空字串）。
@@ -165,6 +177,36 @@ namespace EldritchMile.Core
                     return PlayerVitals.SpendHp(-delta) ? $"失去 {-delta} 點 HP" : "";
                 }
 
+                case Kind.GrantFromTable:
+                {
+                    if (table == null)
+                    {
+                        Debug.LogWarning("[事件] GrantFromTable 沒有指定戰利品表，這次跳過。");
+                        return "";
+                    }
+
+                    // ⚠️ 亂數**不綁 run 種子**。
+                    //
+                    // 商店的「賣什麼」要能重現（玩家離開再進來不該重骰），
+                    // 但事件的獎勵是一次性的 —— 綁了種子反而會讓同一場 run 裡
+                    // 兩次觸發同一個事件拿到完全一樣的東西。
+                    System.Collections.Generic.List<ItemStack> loot =
+                        LootService.Roll(table, new System.Random());
+
+                    if (loot.Count == 0) return "";
+
+                    var names = new System.Collections.Generic.List<string>();
+                    for (int i = 0; i < loot.Count; i++)
+                    {
+                        run.AddItem(loot[i].id, loot[i].count);
+
+                        string n = GameFlowManager.ItemName(loot[i].id);
+                        names.Add(loot[i].count > 1 ? $"{n} ×{loot[i].count}" : n);
+                    }
+
+                    return "獲得 " + string.Join("、", names.ToArray());
+                }
+
                 case Kind.SetFlag:
                     run.SetFlag(key);
                     return "";
@@ -243,6 +285,12 @@ namespace EldritchMile.Core
         [Tooltip("事件的圖（CG）。可留空")]
         public Sprite image;
 
+        [Header("新手教學")]
+        [Tooltip("這個事件**開始播的時候**要發哪個教學訊號。留空 = 不發。\n\n" +
+                 "《損壞的祭壇》填 AltarOpened —— 教學序列在等這一步。\n" +
+                 "沒在跑教學時發了也不會怎樣（沒有人訂閱，訊號就散掉）")]
+        public string startSignal = "";
+
         [Serializable]
         public class Option
         {
@@ -255,6 +303,11 @@ namespace EldritchMile.Core
 
             [Tooltip("選了之後發生的事")]
             public List<EventEffect> effects = new List<EventEffect>();
+
+            [Tooltip("**選了這一項**要發哪個教學訊號。留空 = 不發。\n\n" +
+                     "《損壞的祭壇》：祈禱填 GodCardObtained、無視填 PrayerDeclined —— \n" +
+                     "教學序列靠這兩個分辨玩家走了哪一條")]
+            public string chosenSignal = "";
         }
 
         [Tooltip("選項。**可以是 0 個** —— 《無人的小船》那種只有敘述、沒有選擇的事件\n" +

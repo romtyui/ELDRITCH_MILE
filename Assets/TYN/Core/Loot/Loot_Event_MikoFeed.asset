@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 561859799a7153440bfd8ba4f08c9da2, type: 3}
+  m_Name: Loot_Event_MikoFeed
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.LootTable
+  pools:
+  - note: "\u7C73\u53EF\u5403\u6389\u6B66\u5668\u724C\u5F8C\u5410\u51FA\u4F86\u7684\uFF08\u300C\u4F60\u6CE8\u610F\u5230\u5305\u88E1\u591A\u51FA\u4E86\u4E00\u4E9B\u6771\u897F\u300D\uFF09"
+    chance: 1
+    rollsMin: 1
+    rollsMax: 2
+    distinct: 1
+    entries:
+    - kind: 1
+      itemId: 
+      requireTags:
+      - Supply
+      excludeTags: []
+      table: {fileID: 0}
+      weight: 55
+      countMin: 1
+      countMax: 1
+    - kind: 1
+      itemId: 
+      requireTags:
+      - Food
+      excludeTags: []
+      table: {fileID: 0}
+      weight: 30
+      countMin: 1
+      countMax: 1
+    - kind: 1
+      itemId: 
+      requireTags:
+      - Curio
+      - Common
+      excludeTags: []
+      table: {fileID: 0}
+      weight: 15
+      countMin: 1
+      countMax: 1

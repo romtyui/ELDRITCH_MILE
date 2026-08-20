@@ -222,7 +222,11 @@ public class DialogueStageController : ChoiceStageController
         IReadOnlyList<DialogueOptionUI> shown =
             Options.Show(texts, attrs, DialogueOptionUI.Mode.ProbabilityTarget, keywords);
 
-        // 抽手牌
+        // 抽手牌。**發牌的人負責重置衰減** —— 規則是「新的一手牌 ＝ 新的衰減」，
+        // 見 DialogueEncounterController.Begin() 的說明。
+        // 對話節點一次只發一手，所以這裡跟進場是同一個時機
+        for (int i = 0; i < shown.Count; i++) shown[i]?.ResetDecay();
+
         var hand = new List<CardInstanceExplore>();
         if (explorationDeck != null)
         {

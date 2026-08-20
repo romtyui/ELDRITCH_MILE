@@ -1521,7 +1521,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d89af608413ee4b9c3752ec4ad05cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.DialogueBoxUI
-  root: {fileID: 407060544}
+  root: {fileID: 1367195476}
   bodyText: {fileID: 2031421464}
   nameBox: {fileID: 1594026980}
   nameText: {fileID: 1364016841}
@@ -3819,6 +3819,7 @@ MonoBehaviour:
   characterDatabase: {fileID: 11400000, guid: 8cc0a05b8aedc6a48a23caba02a3e0e3, type: 2}
   bootStage: 1
   startingMoney: 120
+  startingDeck: {fileID: 11400000, guid: 62ea6c15f92595b4f98ffee8d3ecdfbd, type: 2}
   startingMaxHp: 0
   startingMaxSan: 0
   currentStage: 0
@@ -6529,6 +6530,7 @@ GameObject:
   - component: {fileID: 1745722952}
   - component: {fileID: 1745722953}
   - component: {fileID: 1745722954}
+  - component: {fileID: 1745722955}
   m_Layer: 0
   m_Name: '[SYSTEM]'
   m_TagString: Untagged
@@ -6604,6 +6606,22 @@ MonoBehaviour:
   retryAskLabel: {fileID: 1937968048}
   handInteractionGroup: {fileID: 212650081}
   askDelay: 0.35
+--- !u!114 &1745722955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1745722950}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4b298c2cd643fb4ab9d4f09189d91d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.RunDebugPanel
+  toggleKey: 94
+  openOnStart: 0
+  width: 420
+  fontSize: 13
 --- !u!1 &1785196182
 GameObject:
   m_ObjectHideFlags: 0

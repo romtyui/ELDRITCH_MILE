@@ -120,6 +120,18 @@ namespace EldritchMile.Explore
             CurrentDecayMultiplier = Mathf.Max(0f, CurrentDecayMultiplier - step);
         }
 
+        /// <summary>
+        /// 回到 1.0。開新環節時由 `DialogueEncounterController.Begin()` 呼叫。
+        ///
+        /// ⚠️ **只重置衰減，不碰 `retryCount`** —— 那兩個是不同的東西：
+        /// 衰減是「這一手牌之內越試越難」，重試次數是「這個箱子被砸過幾次」，
+        /// 後者本來就設計成不歸零（遞增代價靠它）。
+        /// </summary>
+        public void ResetDecay()
+        {
+            CurrentDecayMultiplier = 1f;
+        }
+
         [Header("判定結果文字 (C18③)")]
         [Tooltip("判定成功時即時顯示的一句話")]
         [TextArea(2, 3)]

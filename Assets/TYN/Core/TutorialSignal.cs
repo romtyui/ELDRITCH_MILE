@@ -53,8 +53,34 @@ namespace EldritchMile.Core
         /// <summary>拿到了武器（不分來源）。大綱：【玩家操作：探索場地、獲得武器】</summary>
         public static void WeaponObtained() => Raise(TutorialSignals.WeaponObtained);
 
-        private static void Raise(string signalId)
+        // ==========================================
+        // 戰鬥結束 —— 這兩個是**別人發、我方聽**
+        // ==========================================
+        /// <summary>
+        /// 戰鬥勝利。由 `BattleManager.EndBattle()` 發出，**在 `SaveFromBattle()` 之後**。
+        /// 聽到它的時候，`RunStateManager` 裡的 HP／SAN／牌組已經是這場戰鬥的結果了。
+        /// </summary>
+        public const string BattleWon = TutorialSignals.BattleWon;
+
+        /// <summary>
+        /// 戰鬥失敗。
+        ///
+        /// ⚠️ **他那邊沒有對應的常數，兩邊都是字面值 `"BattleLost"`。**
+        /// 改字串要兩邊一起改 —— 不一致的話不會有編譯錯誤，
+        /// 症狀是「打輸了畫面就停在那裡」，因為我方永遠等不到回報。
+        /// </summary>
+        public const string BattleLost = "BattleLost";
+
+        /// <summary>
+        /// 發一個任意名稱的訊號。**資產上填了字串的那些走這支**
+        /// （`EventData.startSignal` / `Option.chosenSignal`）。
+        ///
+        /// 空字串代表「這一筆不發」，是合法的 —— 大部分事件都不參與教學。
+        /// </summary>
+        public static void Raise(string signalId)
         {
+            if (string.IsNullOrEmpty(signalId)) return;
+
             if (Verbose) Debug.Log($"[教學訊號] {signalId}");
 
             TutorialEventBus.Raise(signalId);

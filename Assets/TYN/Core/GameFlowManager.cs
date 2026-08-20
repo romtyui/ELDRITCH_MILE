@@ -55,6 +55,12 @@ namespace EldritchMile.Core
                  "定案後這個值多半會改由遺產或難度決定，不會留在這裡")]
         [Min(0)] public int startingMoney = 0;
 
+        [Tooltip("開局的戰鬥牌組。大綱裡是坎貝爾幫你準備的那一套。\n\n" +
+                 "⚠️ **沒有這個，Starting Max Hp 填了也不會生效** ——\n" +
+                 "空牌組進戰鬥是打不動的，所以 PlayerVitals 會擋住並退回舊行為。\n" +
+                 "見 StartingDeckData 的說明")]
+        public StartingDeckData startingDeck;
+
         [Tooltip("開局的 HP 上限。**0 = 不初始化**（維持舊行為：等第一場戰鬥打完才有值）。\n\n" +
                  "⚠️ 填了非 0 之後，戰鬥開始也會套用這條血條而不是戰鬥自己的預設值 ——\n" +
                  "那正是「run 開始就初始化」的用意，但要跟戰鬥組確認數值對得上")]
@@ -206,7 +212,12 @@ namespace EldritchMile.Core
 
             // HP／SAN 不存在 RunContext 裡 —— 它們歸 RunStateManager（戰鬥端）持有，
             // 我方只負責「run 開始時把它設好」。見 PlayerVitals 的說明。
-            if (startingMaxHp > 0) PlayerVitals.EnsureInitialized(startingMaxHp, startingMaxSan);
+            if (startingMaxHp > 0)
+            {
+                PlayerVitals.EnsureInitialized(
+                    startingMaxHp, startingMaxSan,
+                    startingDeck != null ? startingDeck.Resolve() : null);
+            }
 
             // 地圖在此一次生成，之後整場 run 都用同一份 —— 地圖 UI 反覆下拉收起不會重生成
             Run.mapData = MapGenerator.Generate(mapSettings, Run.runSeed);
@@ -382,6 +393,21 @@ namespace EldritchMile.Core
             // 換環節時把訊息佇列清乾淨。放在這裡而不是各 Stage 的 OnStageExit ——
             // 否則每新增一個 Stage 就要記得再寫一次，遲早會有人漏掉。
             PopupService.Instance?.CloseAll();
+
+            // 手牌區（含「結束」鍵）同理。**它是場景常駐的，沒有人主動收就會一直留著。**
+            //
+            // 以前不需要這一行，是因為對話框的 root 指的是整塊 DialogueUI 畫布，
+            // 關對話框等於把畫布底下所有東西連坐關掉 —— 手牌區剛好在裡面。
+            // 那個連坐後來被拆掉了（它同時也把氣泡吞掉，見 DialogueBoxUI.Hide），
+            // 於是「從主選單進地圖，背景浮著一顆結束鍵」就跑出來了。
+            EldritchMile.Explore.ExploreHandUI.Instance?.Hide();
+
+            // 氣泡也是同一批「畫布連坐關掉」的受害者，只是還沒有人回報 ——
+            // 換環節時正好有一句話在播，它會被帶到下一個畫面上。
+            // 用 Immediate：這一刻要卸載了，播收合動畫會來不及，殘影反而更糟。
+            //
+            // ⚠️ 這行在**新環節載入之前**，所以不會蓋掉新環節自己的招呼（例如商店的寒暄）
+            EldritchMile.UI.SpeechBubbleUI.Instance?.HideImmediate();
 
             if (stageHost != null && stageHost.Current != null)
             {
