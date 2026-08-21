@@ -45,13 +45,46 @@ public class MapNodeUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
              "【為什麼預設關掉】縮放在這張地圖上已經被「狀態」用掉了" +
              "（當前 1.2 / 可前往 1.0 / 去不了 0.8）。再讓 hover 也改縮放，" +
              "玩家會分不出「這個比較大」是因為它是當前位置，還是滑鼠剛好在上面。\n\n" +
-             "【什麼時候該開】tooltip 還沒設定好、但又需要 hover 有回饋時，" +
-             "暫時設 1.1 頂著。tooltip 上線後建議調回 1")]
+             "【2026-08-21】tooltip 與下面的顏色高亮都上線了，三個 prefab 已全部調回 1。" +
+             "要再開的話請先想清楚上一段 —— 那個理由沒有變得比較不成立")]
     public float scaleHover = 1f;
+
+    [Header("Hover 高亮（顏色，不是縮放）")]
+    [Tooltip("hover 時把節點變鮮豔。**需要 nodeIcon 的材質是 MapNodeHighlight.mat**，" +
+             "不是的話這一整組不會有作用（Awake 會發一次警告，不會安靜地失效）。" +
+             "【為什麼是飽和度而不是變亮】明暗已經被「狀態」用掉了" +
+             "（亮 = 可前往、暗 = 去不了）。hover 再去動明暗，" +
+             "暗節點就會在滑鼠底下假裝自己可以點。" +
+             "飽和度是還空著的通道，所以拿它來表達「滑鼠在這裡」。")]
+    [Range(1f, 3f)] public float hoverSaturation = 1.7f;
+
+    [Tooltip("往暖光色染多少。**黑筆觸只吃這一項** —— " +
+             "純黑的飽和度是 0，上面那個旋鈕對墨線完全沒作用，" +
+             "所以要靠這一項才會讓整個圖示（不只紅圈）亮起來。" +
+             "調太高會變成一片色塊，0.2~0.35 之間比較像「亮了一下」")]
+    [Range(0f, 1f)] public float hoverGlow = 0.28f;
+
+    [Tooltip("暖光的顏色。預設偏紅，配這批圖原本的暗紅圈")]
+    public Color hoverGlowColor = new Color(1f, 0.42f, 0.36f, 1f);
+
+    [Tooltip("高亮淡入／淡出的秒數。0 就是立刻切換（會很生硬）")]
+    public float hoverFadeSeconds = 0.12f;
 
     private CanvasGroup canvasGroup;
     private MapView owner;
     private bool isSelectable;
+
+    /// 這個節點專屬的材質副本。**一定要是副本** ——
+    /// 直接改 prefab 上那份共用材質的話，滑鼠停在一個節點上會讓**整張地圖**一起發亮。
+    private Material iconMaterial;
+
+    /// 現在的高亮程度 0~1，與 hoverTarget 之間由 Update 補間
+    private float hoverAmount;
+    private float hoverTarget;
+
+    private static readonly int SaturationId = Shader.PropertyToID("_Saturation");
+    private static readonly int GlowId = Shader.PropertyToID("_Glow");
+    private static readonly int GlowColorId = Shader.PropertyToID("_GlowColor");
 
     /// tooltip 要講的三種狀態。與 UpdateVisual 的參數一致。
     public enum NodeState { Current, Selectable, Unreachable, Visited }
@@ -67,6 +100,65 @@ public class MapNodeUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
     private void Awake()
     {
         canvasGroup = GetComponent<CanvasGroup>();
+        SetupHoverMaterial();
+    }
+
+    /// <summary>
+    /// 複製一份自己的材質。
+    ///
+    /// ⚠️ 代價是**每個節點各自一個 draw call**（材質不同就併不起來）。
+    /// 一張地圖十幾個節點，這個代價可以忽略；但若哪天節點變成上百個，
+    /// 要改成共用材質、只有正在 hover 的那一個才用副本。
+    /// </summary>
+    private void SetupHoverMaterial()
+    {
+        if (nodeIcon == null) return;
+
+        Material source = nodeIcon.material;
+        if (source == null || !source.HasProperty(SaturationId))
+        {
+            // 這個專案踩過「安靜地失效」的坑，所以寧可吵一點
+            Debug.LogWarning(
+                $"[地圖] {name} 的 nodeIcon 材質不是 MapNodeHighlight.mat，hover 顏色高亮不會有作用。" +
+                "要用的話把 Image 的 Material 指到 Assets/TYN/Map/MapNodeHighlight.mat", this);
+            return;
+        }
+
+        iconMaterial = new Material(source);
+        nodeIcon.material = iconMaterial;
+        ApplyHover(0f);
+    }
+
+    private void OnDestroy()
+    {
+        // 執行時 new 出來的材質不會自己被回收
+        if (iconMaterial != null) Destroy(iconMaterial);
+    }
+
+    /// <summary>
+    /// 【為什麼用 unscaledDeltaTime】地圖是 UI。之後若因為選單或事件把
+    /// `Time.timeScale` 設成 0，用 deltaTime 的話高亮會整個凍住，
+    /// 看起來會像 hover 壞掉。
+    /// </summary>
+    private void Update()
+    {
+        if (iconMaterial == null) return;
+        if (Mathf.Approximately(hoverAmount, hoverTarget)) return;
+
+        float step = hoverFadeSeconds <= 0f
+            ? 1f
+            : Time.unscaledDeltaTime / hoverFadeSeconds;
+
+        hoverAmount = Mathf.MoveTowards(hoverAmount, hoverTarget, step);
+        ApplyHover(hoverAmount);
+    }
+
+    private void ApplyHover(float t)
+    {
+        if (iconMaterial == null) return;
+        iconMaterial.SetFloat(SaturationId, Mathf.Lerp(1f, hoverSaturation, t));
+        iconMaterial.SetFloat(GlowId, Mathf.Lerp(0f, hoverGlow, t));
+        iconMaterial.SetColor(GlowColorId, hoverGlowColor);
     }
 
     /// <summary>
@@ -93,6 +185,10 @@ public class MapNodeUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
     public void UpdateVisual(bool isCurrent, bool selectable, bool isVisited)
     {
         isSelectable = selectable;
+
+        // 走過去之後這個節點就不能點了，但滑鼠可能還停在上面 ——
+        // 不收掉的話會留下一個亮著、卻點不動的節點
+        if (!selectable) hoverTarget = 0f;
 
         if (isCurrent)
         {
@@ -144,6 +240,10 @@ public class MapNodeUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
     {
         if (owner != null) owner.ShowNodeTooltip(this);
 
+        // 高亮只給**可前往**的節點。tooltip 三種狀態都給（那是說明），
+        // 但「亮起來」在玩家眼裡等於可以點，去不了的節點亮起來會騙人
+        hoverTarget = isSelectable ? 1f : 0f;
+
         if (isSelectable && !Mathf.Approximately(scaleHover, 1f))
         {
             transform.localScale = Vector3.one * (scaleSelectable * scaleHover);
@@ -153,6 +253,8 @@ public class MapNodeUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
     public void OnPointerExit(PointerEventData eventData)
     {
         if (owner != null) owner.HideNodeTooltip(this);
+
+        hoverTarget = 0f;
 
         if (isSelectable && !Mathf.Approximately(scaleHover, 1f))
         {
@@ -173,6 +275,12 @@ public class MapNodeUI : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
         // 節點被停用 ＝ 地圖收起來或重建了。這時要**真的關掉**說明框 ——
         // 用一般的 Hide()，固定面板只會換成閒置文字，那個框會孤零零留在探索畫面上
         if (owner != null) owner.ForceHideNodeTooltip();
+
+        // 同理：關地圖時不會送 OnPointerExit，高亮會被凍在補間到一半的地方，
+        // 下次打開地圖那個節點就是亮的。所以這裡直接歸零，不補間
+        hoverTarget = 0f;
+        hoverAmount = 0f;
+        ApplyHover(0f);
     }
 }
 }
