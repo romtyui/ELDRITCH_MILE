@@ -642,8 +642,9 @@ public class MapOverlayController : MonoBehaviour
 
 
 // ─────────── ExploreAttribute.cs / AttributeChartData.cs ───────────
-// C17/C19：屬性與相剋表。屬性名稱待定（Q7），先用佔位值；倍率已定案為 1/0.5/0。
-public enum ExploreAttribute { None, Intuition, Logic, Insight }  // Q7a 已定案 2026-08-15
+// C17/C19：屬性與相剋表。倍率已定案為 1/0.5/0。
+// Q7a 定名 2026-08-15，Q7b 改名 2026-08-21（數值沒動，純換名字）。
+public enum ExploreAttribute { None, Id, Superego, Ego }  // 本我(紅) / 超我(藍) / 自我(綠)
 
 /// C19：三級，**沒有 2×**。卡片自身機率即上限，相剋只往下扣。
 public enum Effectiveness
@@ -1126,6 +1127,7 @@ public event System.Action<BattleOutcome> OnBattleEnded;
 | # | 問題 | 最晚需要 | 暫行做法 |
 |---|---|---|---|
 | ~~**Q7a**~~ | 屬性的**實際名稱與數量** | ~~Phase 4b 收尾~~ | ✅ **已定案 2026-08-15**：無(黑白)/直覺(紅)/邏輯(藍)/批判與創造(綠)。相剋見 `AttributeChart.asset` |
+| ~~**Q7b**~~ | 屬性**改名**（接上世界觀） | ~~—~~ | ✅ **已定案 2026-08-21**：無(黑白)/**本我**(紅)/**超我**(藍)/**自我**(綠)。佛洛伊德心靈三分，enum 數值與相剋表零改動 |
 | **Q11** | **衰減級距**：每次降多少？線性（1→0.8→0.6…）還是比例（每次 ×0.7）？ | Phase 4c | 先做線性，級距 = `1 / 手牌總數`，讓最後一張剛好接近 0 |
 | **Q12** | 「主要目標」選定後**能否更換**？換了之後衰減進度如何處理？ | Phase 4c | 先允許自由更換，各目標保有各自的衰減進度 |
 | **Q13** | 打牌環節結束後，**未使用的手牌**如何處理？保留到下個事件還是棄掉？ | Phase 4c | 先棄掉並在下個事件重抽 |

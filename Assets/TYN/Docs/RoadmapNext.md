@@ -12,7 +12,7 @@
 | 項目 | Status.md 記錄 | 實際現況 |
 |---|---|---|
 | Phase 4c 打牌 UI | 🔴 完全未做 | 🔶 **第一批已完成**（拖曳出牌、hover 全選項預覽、即時判定、逐次衰減、`EncounterTargetView` 對話框特寫圖）。詳見 [Phase4c_CardPlay.md](Phase4c_CardPlay.md) |
-| 卡牌屬性資料 | `AttrA~AttrD` 佔位、單一機率階梯 | 已重構為 **三屬性 × 0/20/40/60/80/100 六階梯**，各自配 `_vis` 視覺資產。**Q7a 已定案**：`Card_data/v3/explore_{Intuition,Logic,Insight}_{0..100}.asset` |
+| 卡牌屬性資料 | `AttrA~AttrD` 佔位、單一機率階梯 | 已重構為 **三屬性 × 0/20/40/60/80/100 六階梯**，各自配 `_vis` 視覺資產。**Q7a 定名、Q7b 改名皆已定案**：`Card_data/v3/explore_{Id,Superego,Ego}_{0..100}.asset` |
 | `TwoStageConfirm.cs` | 保留，服務 C8/C14 | **已封存**（非刪除，`.meta` 一起搬到 `_Archive/Scripts/`，符合封存慣例）。**已靜態確認安全**：全專案 `.unity`/`.prefab` 沒有任何物件掛它（`git grep` GUID 零命中）。C14 實際靠 `BookmarkHover`（滑下）+ 普通 `Button`（`ExitTag.onClick → ShowContinueAsk()`）+ `ContinueAskPanel` 構成兩段式，C8 抓取靠 `InteractableBase` 直接呼叫 `CursorManager` 的 `HoverChest`/`HoldChest`。兩者都不依賴 `TwoStageConfirm`，封存不影響功能 |
 | `ExplorationHandUIController.cs` | 待改寫的 8 個之一 | 已封存到 `_Archive/Scripts/`，由新的 `ExploreHandUI` 取代 |
 | 未提交改動規模 | 174 rename + 108 delete | ~~更大~~ **已於 2026-08-14 19:41 commit `f8bf980「Phase4」`**，工作區目前乾淨。原本的風險項目已解除 |
@@ -311,6 +311,7 @@ charset = utf-8
 | # | 問題 | 現況 | 最晚需要 |
 |---|---|---|---|
 | ~~Q7a~~ | 屬性正式名稱 | ✅ **已定案 2026-08-15**：無(黑白)/直覺(紅)/邏輯(藍)/批判與創造(綠)，相剋表見 [Phase4c4_Attributes.md](Phase4c4_Attributes.md) | — |
+| ~~Q7b~~ | 屬性**改名** | ✅ **已定案 2026-08-21**：無(黑白)/**本我**(紅)/**超我**(藍)/**自我**(綠)。enum 數值與相剋表沒動，只換名字＋卡片檔名。見 [SystemsStatus.md](SystemsStatus.md) §1.3 | — |
 | Q11 | 衰減級距：線性或比例 | `DialogueEncounterController` 有 `Decay Scaled To Hand Size` 開關，暫行線性 | 若本輪測試手感不對，這是第一個要調的參數 |
 | Q12 | 主要目標可否更換 | 暫行可自由更換，各自獨立衰減 | 第 1 節做「主要目標選定 UI」時會直接遇到，順手定案 |
 | Q13 | 未用手牌怎麼處理 | 暫行棄掉、下個事件重抽 | 同上 |
