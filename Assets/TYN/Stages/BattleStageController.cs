@@ -26,12 +26,19 @@ using EldritchMile.Core;
 ///    不做對照表 —— 旗標名直接從敵人 id 推得出來，多一張表就多一個會對不上的地方。
 ///
 /// ────────────────────────────────────────────────────────
-/// 【⚠️ 兩件還沒到位的事，到位之前這支跑不完整】
+/// 【④ 接上宿主場景】`Stage_Battle` 是 prefab，**prefab 存不了場景引用**。
+/// 戰鬥那一組原本在 `SampleScene` 靠 Inspector 指著相機／BGM／全域單例，
+/// 包成 prefab 後那些欄位全部是 `None`，所以進場時要補綁 —— 見 `BindToHostScene()`。
+/// 這些失效全部是安靜的，`verboseBinding` 打開會逐項印出來。
 ///
-///   1. **沒有 `Stage_Battle` prefab** —— 戰鬥那一組（BattleManager／BattleDeck／
-///      EnergySystem／戰鬥 UI）還住在 `SampleScene`，要先包成 prefab 放進 StageHost。
+/// ────────────────────────────────────────────────────────
+/// 【⚠️ 還沒到位的事，到位之前這支跑不完整】
+///
+///   1. ~~沒有 `Stage_Battle` prefab~~ ✅ 2026-08-22 建好了，在 `Assets/TYN/Stages/`。
 ///   2. **`EnemyData.enemyId` 全是空的** —— 五個敵人資產都沒填，
 ///      `ReserveEncounterByEnemyData()` 會整組跳過並警告。填了才能指定打誰。
+///   3. **`TutorialStarter.battleManager` 是 private** —— 我們指不了，
+///      戰鬥教學序列因此拿不到 BattleManager。要請 Romtyui 開個公開的設定方式。
 /// </summary>
 public class BattleStageController : StageController
 {
@@ -52,6 +59,15 @@ public class BattleStageController : StageController
     [Tooltip("打倒敵人時立的旗標前綴。`killed_` ＋ 敵人 id。\n" +
              "《螺湮的祝福》等的是 killed_fish_priest")]
     public string defeatFlagPrefix = "killed_";
+
+    [Header("診斷")]
+    [Tooltip("印出每一項「接上宿主場景」的結果（相機、BGM、遺物加成、教學 UI）。" +
+             "這些綁定失敗全都是安靜的，畫面看起來只是怪，不會報錯 —— 覺得哪裡不對就先打開這個")]
+    public bool verboseBinding = false;
+
+    /// 這一場登記進 ModifierSystem 的 RelicsRuntime。離場時要註銷，
+    /// 否則 providers 會累積一堆已被銷毀的物件
+    private RelicsRuntime boundRelicsRuntime;
 
     /// <summary>
     /// 下一場戰鬥要打誰。**事件的 `StartBattle` 效果靠它指定對手**
@@ -77,6 +93,10 @@ public class BattleStageController : StageController
 
         if (battleManager == null) battleManager = GetComponentInChildren<BattleManager>(true);
 
+        // 接上宿主場景的東西。**一定要在 StartBattle 之前** ——
+        // 相機沒綁好的話第一幀就會用錯的排序畫出來
+        BindToHostScene();
+
         // ⚠️ 訂閱要在 StartBattle 之前 —— 一場空的戰鬥（沒有敵人）
         //    有可能在同一幀就結束，晚訂就收不到了
         TutorialEventBus.OnSignalRaised -= HandleSignal;
@@ -100,7 +120,137 @@ public class BattleStageController : StageController
     public override IEnumerator OnStageExit()
     {
         TutorialEventBus.OnSignalRaised -= HandleSignal;
+        UnbindFromHostScene();
         yield break;
+    }
+
+    // ==========================================
+    // 接上宿主場景
+    // ==========================================
+    /// <summary>
+    /// `Stage_Battle` 是 prefab，**prefab 存不了場景引用**。
+    /// 戰鬥那一組原本在 `SampleScene` 裡靠 Inspector 指著場景物件（相機、BGM、
+    /// 全域單例），包成 prefab 之後那些欄位全部會是 `None`。這裡在進場時補回來。
+    ///
+    /// ⚠️ **這些全部安靜地失效** —— 相機沒綁只是排序不對、BGM 沒綁只是音量鍵沒反應，
+    /// 一個錯誤訊息都不會有。所以每一項失敗都要印出來。
+    /// </summary>
+    private void BindToHostScene()
+    {
+        BindCanvasCameras();
+        BindBgmToOptionMenu();
+        BindModifierSystem();
+        BindTutorialUI();
+    }
+
+    /// <summary>
+    /// 四個 Canvas 有三個是 `ScreenSpaceCamera`。
+    ///
+    /// ⚠️ 相機是 null 時 Unity **不會報錯**，而是當成 Overlay 來畫 ——
+    /// 但戰鬥用的是 URP 2D 燈光（`Light2D` / `PSBMonsterLightReveal`），
+    /// Overlay 的 Canvas 不吃燈光也不跟世界物件排序，結果會像「美術壞掉」，
+    /// 沒有人會聯想到是 prefab 化造成的。
+    /// </summary>
+    private void BindCanvasCameras()
+    {
+        Camera cam = Camera.main;
+        if (cam == null) cam = FindAnyObjectByType<Camera>();
+
+        if (cam == null)
+        {
+            Debug.LogWarning("[戰鬥] 場景裡找不到相機，ScreenSpaceCamera 的 Canvas 會退化成 Overlay，" +
+                             "2D 燈光與排序會不正確", this);
+            return;
+        }
+
+        int bound = 0;
+        foreach (Canvas canvas in GetComponentsInChildren<Canvas>(true))
+        {
+            // Overlay 的 Canvas 不需要相機，指了也無害；一起指是為了他哪天改 renderMode
+            if (canvas.worldCamera == cam) continue;
+            canvas.worldCamera = cam;
+            bound++;
+        }
+
+        if (verboseBinding) Debug.Log($"[戰鬥] 已把 {bound} 個 Canvas 綁到相機「{cam.name}」", this);
+    }
+
+    /// <summary>
+    /// 戰鬥的選項選單有音量控制，指的是 `SampleScene` 那顆 BGMManager。
+    ///
+    /// 【為什麼不把 BGMManager 包進 prefab】場景裡已經有一顆在播同一首曲子了。
+    /// 包進來會變成兩個 AudioSource 播同一首、相位差幾毫秒，聽起來像破音；
+    /// 而且他那顆音量是 1.0，會直接蓋過場景的設定。
+    /// </summary>
+    private void BindBgmToOptionMenu()
+    {
+        OptionMenuUI menu = GetComponentInChildren<OptionMenuUI>(true);
+        if (menu == null) return;
+
+        AudioSource bgm = null;
+        foreach (AudioSource src in FindObjectsByType<AudioSource>(FindObjectsInactive.Include))
+        {
+            // 只認宿主場景的 —— 自己樹底下的不算
+            if (src.transform.IsChildOf(transform)) continue;
+            if (!src.loop) continue;                 // BGM 一定是循環的，音效不是
+            bgm = src;
+            break;
+        }
+
+        if (bgm == null)
+        {
+            if (verboseBinding) Debug.Log("[戰鬥] 場景裡沒有循環播放的 AudioSource，選項選單的音量鍵不會有作用", this);
+            return;
+        }
+
+        menu.controlledAudioSources = new[] { bgm };
+        if (verboseBinding) Debug.Log($"[戰鬥] 選項選單的音量已綁到「{bgm.name}」", this);
+    }
+
+    /// <summary>
+    /// `ModifierSystem`（遺物加成）在 `Awake` 時 `FindFirstObjectByType&lt;RelicsRuntime&gt;()`，
+    /// 但那時候 `Stage_Battle` 還沒生出來，所以它一定找不到 —— 必須由我們補登記。
+    ///
+    /// ⚠️ 進場登記就要離場註銷。`RelicsRuntime` 是**每場戰鬥一個新的**（跟著 prefab 生滅），
+    /// 不註銷的話 `ModifierSystem` 的 providers 會一場一場累積已被銷毀的物件。
+    /// </summary>
+    private void BindModifierSystem()
+    {
+        if (ModifierSystem.Instance == null) return;   // 沒有它只是遺物加成不生效，不是錯誤
+
+        boundRelicsRuntime = GetComponentInChildren<RelicsRuntime>(true);
+        if (boundRelicsRuntime == null) return;
+
+        ModifierSystem.Instance.RegisterProvider(boundRelicsRuntime);
+        if (verboseBinding) Debug.Log("[戰鬥] RelicsRuntime 已登記進 ModifierSystem", this);
+    }
+
+    /// <summary>
+    /// `TutorialManager` 也是在 `Awake` 找 `TutorialUI`，同樣找不到。
+    /// 這個欄位是 public，可以直接指。
+    ///
+    /// ⚠️ **`TutorialStarter.battleManager` 是 private，我們指不了。**
+    /// 戰鬥教學要真的跑起來的話，需要請 Romtyui 開一個公開的設定方式
+    /// （欄位改 public，或加一支 `Rebind()`）。在那之前教學序列拿不到 BattleManager。
+    /// </summary>
+    private void BindTutorialUI()
+    {
+        if (TutorialManager.Instance == null) return;
+
+        TutorialUI ui = GetComponentInChildren<TutorialUI>(true);
+        if (ui == null) return;
+
+        TutorialManager.Instance.tutorialUI = ui;
+        if (verboseBinding) Debug.Log("[戰鬥] TutorialUI 已接上 TutorialManager", this);
+    }
+
+    private void UnbindFromHostScene()
+    {
+        if (boundRelicsRuntime != null && ModifierSystem.Instance != null)
+        {
+            ModifierSystem.Instance.UnregisterProvider(boundRelicsRuntime);
+        }
+        boundRelicsRuntime = null;
     }
 
     // ==========================================

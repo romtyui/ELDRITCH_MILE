@@ -1329,6 +1329,70 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 358534869}
   m_CullTransparentMesh: 1
+--- !u!1 &398155699
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 398155700}
+  - component: {fileID: 398155701}
+  m_Layer: 0
+  m_Name: RunStateManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &398155700
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 398155699}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1745722951}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &398155701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 398155699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b9e2798087f5554b8a3bb6c6ad847e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunStateManager
+  savedPlayerMaxHp: 0
+  savedPlayerCurrentHp: 0
+  savedMaxEnergy: 0
+  savedCurrentEnergy: 0
+  savedDeck: []
+  hasSavedRunState: 0
+  enemyDatabase: {fileID: 11400000, guid: 31645b554ca8acf40b17416357cd2125, type: 2}
+  hasReservedEncounter: 0
+  reservedEnemyIds: []
+  reservedFormation: {fileID: 0}
+  hasReservedFormation: 0
+  battleStartDeckSnapshot:
+    hasSnapshot: 0
+    playerMaxHp: 0
+    playerCurrentHp: 0
+    maxEnergy: 0
+    currentEnergy: 0
+    playerStatuses: []
+    drawPileOrder: []
+  pendingRestoreBattleStartDeckSnapshot: 0
 --- !u!1 &404171100
 GameObject:
   m_ObjectHideFlags: 0
@@ -3767,6 +3831,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 947116770}
   m_CullTransparentMesh: 1
+--- !u!1 &960474884
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 960474885}
+  - component: {fileID: 960474886}
+  m_Layer: 0
+  m_Name: ModifierSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &960474885
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 960474884}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1745722951}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &960474886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 960474884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9d0a3dd86b38d44fa6613f2c82b81b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ModifierSystem
+  relicsRuntime: {fileID: 0}
 --- !u!1 &960529863
 GameObject:
   m_ObjectHideFlags: 0
@@ -4430,6 +4539,9 @@ MonoBehaviour:
   - type: 8
     prefab: {fileID: 6450695220657823247, guid: 7c6299e907ec2034c827ba5a695ffcf5, type: 3}
     customParent: {fileID: 0}
+  - type: 4
+    prefab: {fileID: 540733404379552859, guid: 56ee89cdc25c8a54886ace9d14ff5862, type: 3}
+    customParent: {fileID: 211474239}
 --- !u!1 &1312533093
 GameObject:
   m_ObjectHideFlags: 0
@@ -6556,6 +6668,8 @@ Transform:
   - {fileID: 1032895042}
   - {fileID: 802593045}
   - {fileID: 1431294022}
+  - {fileID: 398155700}
+  - {fileID: 960474885}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1745722952
