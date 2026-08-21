@@ -355,8 +355,9 @@ MonoBehaviour:
   checkPromptText: "\u4E0A\u4E86\u9396\u3002\u4E5F\u8A31\u80FD\u7528\u9EDE\u624B\u6BB5\u64AC\u958B\u3002"
   lootItems: []
   grantedItemIds: []
+  lootTable: {fileID: 0}
   attribute: 2
-  retryPolicy: 1
+  retryPolicy: 0
   tier: 0
   retryCost: {fileID: 11400000, guid: 38697413f04c0344e8449c15b3468835, type: 2}
   retryItemId: lockpick
@@ -366,5 +367,6 @@ MonoBehaviour:
   previewLabel: {fileID: 0}
   successText: "\u9396\u300C\u5580\u300D\u5730\u4E00\u8072\u9B06\u958B\u4E86\u3002"
   failText: "\u6C92\u80FD\u64AC\u958B\u3002\u9396\u7D0B\u98A8\u4E0D\u52D5\u3002"
-  exhaustedText: "\u4E0D\u60F3\u958B\u4E86\u3002"
-  alreadyFailedText: "\u5DF2\u7D93\u6C92\u6551\u4E86\uFF0C\u5225\u518D\u8CBB\u5DE5\u592B\u3002"
+  exhaustedText: "\u6253\u4E0D\u958B\u3002"
+  alreadyFailedText: "\u5931\u6557\u7684\u5617\u8A66\u3002"
+  targetedTint: {r: 0.72, g: 0.72, b: 0.72, a: 1}
