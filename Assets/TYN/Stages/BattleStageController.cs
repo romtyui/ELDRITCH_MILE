@@ -60,6 +60,19 @@ public class BattleStageController : StageController
              "《螺湮的祝福》等的是 killed_fish_priest")]
     public string defeatFlagPrefix = "killed_";
 
+    [Header("神牌動畫（特殊：要綁另一台相機）")]
+    [Tooltip("神牌動畫掛在哪個 Canvas 底下（`GodCardCorruptionAnimationController.animationRoot` 的根 Canvas，" +
+             "目前是 AnimCanvas）。\n\n" +
+             "【為什麼這一個要特別處理】神牌動畫的 prefab（TentacleGroup，109 個物件）" +
+             "整包在 `GodCardAnimation` 層，靠一台**只畫那一層的 URP Overlay 相機**" +
+             "疊在 Base 相機之後，才會蓋在戰鬥 UI 上面。\n" +
+             "綁到主相機的話動畫會被 ScreenSpaceOverlay 的戰鬥 UI 蓋掉 —— 而且不會報錯。")]
+    public Canvas godCardAnimationCanvas;
+
+    [Tooltip("神牌動畫專用的 layer 名稱。用來在場景裡找出那台 Overlay 相機 ——\n" +
+             "規則是「cullingMask 包含這一層的相機」，主相機已經把這一層關掉了，所以只會找到它")]
+    public string godCardAnimationLayerName = "GodCardAnimation";
+
     [Header("診斷")]
     [Tooltip("印出每一項「接上宿主場景」的結果（相機、BGM、遺物加成、教學 UI）。" +
              "這些綁定失敗全都是安靜的，畫面看起來只是怪，不會報錯 —— 覺得哪裡不對就先打開這個")]
@@ -150,6 +163,9 @@ public class BattleStageController : StageController
     /// 但戰鬥用的是 URP 2D 燈光（`Light2D` / `PSBMonsterLightReveal`），
     /// Overlay 的 Canvas 不吃燈光也不跟世界物件排序，結果會像「美術壞掉」，
     /// 沒有人會聯想到是 prefab 化造成的。
+    ///
+    /// ⚠️ **神牌動畫那個 Canvas 要綁另一台相機**，理由見
+    /// <see cref="godCardAnimationCanvas"/>。綁錯不會報錯，只是動畫被 UI 蓋住。
     /// </summary>
     private void BindCanvasCameras()
     {
@@ -163,16 +179,56 @@ public class BattleStageController : StageController
             return;
         }
 
+        Camera godCam = FindGodCardAnimationCamera();
+
+        if (godCardAnimationCanvas != null && godCam == null)
+        {
+            Debug.LogWarning(
+                $"[戰鬥] 場景裡沒有畫「{godCardAnimationLayerName}」層的相機，" +
+                "神牌動畫會被戰鬥 UI 蓋住（不會有錯誤訊息，只是看起來像沒播）。\n" +
+                "需要一台 URP Overlay 相機，cullingMask 只勾那一層，並加進主相機的 Camera Stack；" +
+                "同時主相機的 cullingMask 要把那一層取消勾選", this);
+        }
+
         int bound = 0;
         foreach (Canvas canvas in GetComponentsInChildren<Canvas>(true))
         {
+            Camera target = (godCam != null && canvas == godCardAnimationCanvas) ? godCam : cam;
+
             // Overlay 的 Canvas 不需要相機，指了也無害；一起指是為了他哪天改 renderMode
-            if (canvas.worldCamera == cam) continue;
-            canvas.worldCamera = cam;
+            if (canvas.worldCamera == target) continue;
+            canvas.worldCamera = target;
             bound++;
         }
 
-        if (verboseBinding) Debug.Log($"[戰鬥] 已把 {bound} 個 Canvas 綁到相機「{cam.name}」", this);
+        if (verboseBinding)
+        {
+            Debug.Log($"[戰鬥] 已綁 {bound} 個 Canvas。一般 →「{cam.name}」；" +
+                      $"神牌動畫 →「{(godCam != null ? godCam.name : "找不到")}」", this);
+        }
+    }
+
+    /// <summary>
+    /// 找出神牌動畫專用的那台相機。
+    ///
+    /// 【為什麼用 cullingMask 找而不是用名字】名字會被改，圖層用途不會。
+    /// 主相機已經把 `GodCardAnimation` 這層取消勾選了，所以「看得到這一層的相機」
+    /// 只會有那一台 —— 這個規則本身就說明了它的用途。
+    /// </summary>
+    private Camera FindGodCardAnimationCamera()
+    {
+        int layer = LayerMask.NameToLayer(godCardAnimationLayerName);
+        if (layer < 0) return null;
+
+        int mask = 1 << layer;
+
+        foreach (Camera c in FindObjectsByType<Camera>(FindObjectsInactive.Include))
+        {
+            if (c.transform.IsChildOf(transform)) continue;   // 只認宿主場景的相機
+            if ((c.cullingMask & mask) != 0) return c;
+        }
+
+        return null;
     }
 
     /// <summary>
