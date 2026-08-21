@@ -6,10 +6,11 @@ public class GodCardAnimationData : ScriptableObject
     [Header("Info")]
     public string animationName;
 
-    [Header("Animator")]
-    public RuntimeAnimatorController animatorController;
+    [Header("Animation Prefab")]
+    [Tooltip("播放神牌動畫時才生成的 Prefab。Prefab 本身需要掛 Animator。")]
+    public GameObject animationPrefab;
 
-    [Tooltip("要觸發的 Animator Trigger 名稱")]
+    [Tooltip("Prefab Animator 要觸發的 Trigger 名稱")]
     public string triggerName = "PlayGodCorruption";
 
     [Header("Blackout")]

@@ -7,7 +7,15 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+[Serializable]
+public class TutorialDialogueBackgroundPreset
+{
+    [Tooltip("這個版型使用的對話框背景圖片")]
+    public Sprite backgroundSprite;
 
+    [Tooltip("這個版型的 BackgroundImage 尺寸")]
+    public Vector2 backgroundSize = new Vector2(800f, 300f);
+}
 public class TutorialUI :
     MonoBehaviour,
     IPointerClickHandler
@@ -43,6 +51,34 @@ public class TutorialUI :
     [Header("Dialogue Panel")]
     [SerializeField]
     private GameObject dialoguePanel;
+
+    [SerializeField]
+    private Image dialogueBackgroundImage;
+
+    [Header("Dialogue Background Presets")]
+
+    [SerializeField]
+    private TutorialDialogueBackgroundPreset smallDialogueBackground = new TutorialDialogueBackgroundPreset();
+
+    [SerializeField]
+    private TutorialDialogueBackgroundPreset mediumDialogueBackground = new TutorialDialogueBackgroundPreset();
+
+    [SerializeField]
+    private TutorialDialogueBackgroundPreset largeDialogueBackground = new TutorialDialogueBackgroundPreset();
+
+    [Header("Dialogue Background Text Length")]
+
+    [Header("Dialogue Background Line Count")]
+
+    [Tooltip("實際排版行數小於等於這個值時使用 Small")]
+    [Min(1)]
+    [SerializeField]
+    private int smallDialogueMaxLines = 2;
+
+    [Tooltip("實際排版行數小於等於這個值時使用 Medium，超過則使用 Large")]
+    [Min(1)]
+    [SerializeField]
+    private int mediumDialogueMaxLines = 4;
 
     [Header("Dialogue Position")]
 
@@ -170,10 +206,7 @@ public class TutorialUI :
         AutoFindReferences();
 
         if (instructionPanelRect != null)
-        {
-            defaultDialogPosition =
-                instructionPanelRect.anchoredPosition;
-        }
+            defaultDialogPosition = instructionPanelRect.anchoredPosition;
 
         BindButtons();
         InitializeInverseMaskMaterial();
@@ -1034,6 +1067,70 @@ public class TutorialUI :
             instructionPanel.SetActive(false);
     }
 
+
+    private void ApplyDialogueBackgroundByTextLength(string content)
+    {
+
+        if (dialogueBackgroundImage == null || dialogueText == null)
+            return;
+
+        string textToMeasure = content ?? string.Empty;
+
+        float availableWidth = Mathf.Max(1f, dialogueText.rectTransform.rect.width);
+        Vector2 preferredSize = dialogueText.GetPreferredValues(textToMeasure, availableWidth, 0f);
+
+        float lineHeight = Mathf.Max(1f, dialogueText.fontSize * 1.2f);
+        int estimatedLines = Mathf.Max(1, Mathf.CeilToInt(preferredSize.y / lineHeight));
+
+        if (estimatedLines <= smallDialogueMaxLines)
+        {
+            ApplyDialogueBackgroundPreset(smallDialogueBackground);
+            return;
+        }
+
+        if (estimatedLines <= mediumDialogueMaxLines)
+        {
+            ApplyDialogueBackgroundPreset(mediumDialogueBackground);
+            return;
+        }
+
+        ApplyDialogueBackgroundPreset(largeDialogueBackground);
+    }
+
+    private void ApplyDialogueBackgroundPreset(TutorialDialogueBackgroundPreset preset)
+    {
+        if (preset == null || dialogueBackgroundImage == null)
+            return;
+
+        if (preset.backgroundSprite != null)
+            dialogueBackgroundImage.sprite = preset.backgroundSprite;
+
+        RectTransform backgroundRect = dialogueBackgroundImage.rectTransform;
+        backgroundRect.sizeDelta = preset.backgroundSize;
+
+        CenterDialogueTextToBackground();
+    }
+
+    private void CenterDialogueTextToBackground()
+    {
+        if (dialogueText == null || dialogueBackgroundImage == null)
+            return;
+
+        RectTransform textRect = dialogueText.rectTransform;
+        RectTransform backgroundRect = dialogueBackgroundImage.rectTransform;
+
+        Vector3 backgroundWorldCenter = backgroundRect.TransformPoint(backgroundRect.rect.center);
+
+        RectTransform textParent = textRect.parent as RectTransform;
+
+        if (textParent == null)
+            return;
+
+        Vector3 textParentLocalPosition = textParent.InverseTransformPoint(backgroundWorldCenter);
+
+        textRect.anchoredPosition = new Vector2(textParentLocalPosition.x, textParentLocalPosition.y);
+    }
+
     public void ShowDialogueLine(TutorialDialogueLine line)
     {
         StopDialogueTypewriter();
@@ -1051,16 +1148,20 @@ public class TutorialUI :
 
         SetupDialogueSpeaker(line);
 
-        currentDialogueFullText =
-            ParseDialogueText(
-                line,
-                line.text ?? string.Empty
-            );
+        currentDialogueFullText = ParseDialogueText(line, line.text ?? string.Empty);
 
-        SetupDialoguePortrait(
-            line,
-            line.GetInitialPortraitStyleId()
-        );
+        /*
+         * 根據真正顯示的文字內容，
+         * 自動選擇 Small / Medium / Large 對話框。
+         *
+         * 這裡使用 Parse 完的文字，
+         * 所以 {portrait:xxx} 這種控制標籤
+         * 不會被當成實際文字長度計算。
+         */
+        ApplyDialogueBackgroundByTextLength(currentDialogueFullText);
+
+
+        SetupDialoguePortrait(line, line.GetInitialPortraitStyleId());
 
         ApplyPortraitCuesUpTo(0);
 

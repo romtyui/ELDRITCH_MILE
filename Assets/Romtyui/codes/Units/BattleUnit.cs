@@ -102,8 +102,21 @@ public class BattleUnit : MonoBehaviour
         damage += temporaryStrength;
 
         if (GetStatus(StatusType.Weak) > 0)
-        {
             damage = Mathf.CeilToInt(damage * 0.75f);
+
+        if (ModifierSystem.Instance != null)
+        {
+            ModifierQuery query = new ModifierQuery(
+                ModifierType.DamageDealt,
+                this,
+                null,
+                null
+            );
+
+            query.roundingMode = ModifierRoundingMode.Nearest;
+            query.clampResultToZero = true;
+
+            damage = ModifierSystem.Instance.ModifyInt(query, damage);
         }
 
         return Mathf.Max(0, damage);
@@ -112,8 +125,21 @@ public class BattleUnit : MonoBehaviour
     public virtual int ModifyIncomingDamage(int damage)
     {
         if (GetStatus(StatusType.Vulnerable) > 0)
-        {
             damage = Mathf.CeilToInt(damage * 1.5f);
+
+        if (ModifierSystem.Instance != null)
+        {
+            ModifierQuery query = new ModifierQuery(
+                ModifierType.DamageReceived,
+                null,
+                this,
+                null
+            );
+
+            query.roundingMode = ModifierRoundingMode.Nearest;
+            query.clampResultToZero = true;
+
+            damage = ModifierSystem.Instance.ModifyInt(query, damage);
         }
 
         return Mathf.Max(0, damage);
@@ -122,8 +148,21 @@ public class BattleUnit : MonoBehaviour
     public virtual int ModifyBlockGain(int amount)
     {
         if (GetStatus(StatusType.Frail) > 0)
-        {
             amount = Mathf.FloorToInt(amount * 0.75f);
+
+        if (ModifierSystem.Instance != null)
+        {
+            ModifierQuery query = new ModifierQuery(
+                ModifierType.BlockGain,
+                this,
+                this,
+                null
+            );
+
+            query.roundingMode = ModifierRoundingMode.Nearest;
+            query.clampResultToZero = true;
+
+            amount = ModifierSystem.Instance.ModifyInt(query, amount);
         }
 
         return Mathf.Max(0, amount);
@@ -196,16 +235,87 @@ public class BattleUnit : MonoBehaviour
     protected virtual void OnAfterHpDamageTaken(int realHpDamage)
     {
     }
+
+    ////回血加乘倍率
+    //public virtual int ModifyHealingReceived(int amount)
+    //{
+    //    if (amount <= 0)
+    //        return 0;
+
+    //    if (!isPlayerUnit)
+    //        return amount;
+
+    //    BattleManager battleManager = FindFirstObjectByType<BattleManager>();
+
+    //    if (battleManager == null || battleManager.relicsRuntime == null)
+    //        return amount;
+
+    //    float healingIncreasePercent = battleManager.relicsRuntime.GetHealingIncreasePercent();
+
+    //    if (healingIncreasePercent <= 0f)
+    //        return amount;
+
+    //    float multiplier = 1f + healingIncreasePercent;
+
+    //    return Mathf.Max(0, Mathf.CeilToInt(amount * multiplier));
+    //}
+
+    //回血總控
     public virtual void Heal(int amount)
     {
-        currentHp += amount;
+        Heal(amount, this, null);
+    }
+
+    public virtual void Heal(int amount, BattleUnit healSource, CardInstance sourceCard = null)
+    {
+        if (amount <= 0)
+            return;
+
+        int finalAmount = amount;
+
+        ModifierSystem modifierSystem = ModifierSystem.Instance;
+
+        if (modifierSystem != null)
+        {
+            BattleUnit finalSource = healSource != null ? healSource : this;
+
+            ModifierQuery healingDoneQuery = new ModifierQuery(
+                ModifierType.HealingDone,
+                finalSource,
+                this,
+                sourceCard
+            );
+
+            healingDoneQuery.roundingMode = ModifierRoundingMode.Nearest;
+            healingDoneQuery.clampResultToZero = true;
+
+            finalAmount = modifierSystem.ModifyInt(healingDoneQuery, finalAmount);
+
+            ModifierQuery healingReceivedQuery = new ModifierQuery(
+                ModifierType.HealingReceived,
+                finalSource,
+                this,
+                sourceCard
+            );
+
+            healingReceivedQuery.roundingMode = ModifierRoundingMode.Nearest;
+            healingReceivedQuery.clampResultToZero = true;
+
+            finalAmount = modifierSystem.ModifyInt(healingReceivedQuery, finalAmount);
+        }
+
+        int hpBefore = currentHp;
+
+        currentHp += finalAmount;
 
         if (currentHp > maxHp)
             currentHp = maxHp;
 
+        int actualHeal = currentHp - hpBefore;
+
         OnHpChanged?.Invoke();
 
-        Debug.Log($"{unitName} 回復 {amount} HP，當前 HP: {currentHp}");
+        Debug.Log($"{unitName} 原始治療 {amount}，Modifier 後 {finalAmount}，實際恢復 {actualHeal} HP，當前 HP: {currentHp}");
     }
 
     public virtual void GainBlock(int amount)
