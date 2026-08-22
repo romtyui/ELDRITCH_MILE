@@ -42,6 +42,10 @@ namespace EldritchMile.Core
         [Tooltip("隨機事件庫。留空則永遠不會觸發事件（不會壞，只是沒有事件）")]
         public EventLibrary eventLibrary;
 
+        [Tooltip("這一區的戰鬥節點會遇到誰。留空 = 每一場都交給戰鬥組自己抽怪。\n\n" +
+                 "在開新 run、地圖生成之後套用一次（見 EncounterPlanner）")]
+        public EncounterPool encounterPool;
+
         [Header("角色")]
         [Tooltip("角色資料庫（id → 名字／立繪／寒暄）。\n" +
                  "留空不會壞，只是氣泡與對話框會顯示 id 而不是「時藏」")]
@@ -229,6 +233,13 @@ namespace EldritchMile.Core
 
             // 地圖在此一次生成，之後整場 run 都用同一份 —— 地圖 UI 反覆下拉收起不會重生成
             Run.mapData = MapGenerator.Generate(mapSettings, Run.runSeed);
+
+            // 每個戰鬥節點要打誰，也在這裡一次安排好（保證項先佔位，剩下的抽）。
+            // ⚠️ 種子跟地圖**錯開**（^ 1）—— 用同一個的話，敵人的抽選會跟
+            //    地圖形狀綁在一起，兩張長得像的地圖會配到一樣的怪
+            EncounterPlanner.AssignEnemies(
+                Run.mapData, encounterPool, Run,
+                new System.Random(Run.runSeed ^ 1), itemDatabase);
 
             Debug.Log(
                 $"[Flow] 開始新的一場 run（seed {Run.runSeed}）：" +

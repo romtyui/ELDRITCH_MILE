@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78cb96ebf6d154646a90e283b9d51942, type: 3}
+  m_Name: Encounters_Village
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.EncounterPool
+  entries:
+  - note: "\u6F01\u6751\u5E38\u898B\u3002\u8207\u53E6\u5916\u5169\u96BB\u540C\u968E\uFF0C\u6A5F\u5236\u4E0D\u540C"
+    enemyId: coral_paguroidea
+    weight: 10
+    conditions: []
+  - note: "\u6F01\u6751\u5E38\u898B\u3002\u540C\u4E0A"
+    enemyId: fish_priest
+    weight: 10
+    conditions: []
+  - note: "\u6F01\u6751\u5E38\u898B\u3002\u540C\u4E0A"
+    enemyId: tua_khoo_tai
+    weight: 10
+    conditions: []
+  - note: "\u96DC\u9B5A\u3002\u6B0A\u91CD\u4F4E\u4E00\u9EDE\uFF0C\u7576\u8ABF\u5291\u7528"
+    enemyId: minnow
+    weight: 5
+    conditions: []
+  guaranteed:
+  - note: "\u300A\u87BA\u6E6E\u7684\u795D\u798F\u300B\u8981\u6253\u5012\u4ED6\u624D\u6703\u89F8\u767C\uFF0C\u4E0D\u80FD\u53EA\u9760\u62BD"
+    enemyId: fish_priest
+    count: 1
+    minLayer: 1
+    maxLayer: -1
+  bossEnemyId: boss
+  verbose: 0

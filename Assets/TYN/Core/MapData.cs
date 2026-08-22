@@ -43,6 +43,19 @@ namespace EldritchMile.Core
         /// 房間內容的資料 id。Phase 3 接上實際的房間資料庫。
         public string contentId;
 
+        /// <summary>
+        /// 這一站的戰鬥要打誰（`EnemyData.enemyId`）。只有戰鬥／Boss 節點會有值。
+        ///
+        /// 【為什麼存在節點上，不是打的時候才抽】
+        /// 「保證出現半魚人祭司」這種需求，必須在**看得到整張地圖**的時候安排，
+        /// 否則只能寄望隨機。而且存在節點上還有一個好處：
+        /// **同一個節點重進是同一隻怪** —— 現場才抽的話玩家離開再進來就換人了。
+        ///
+        /// 由 <see cref="EncounterPlanner"/> 在地圖生成後填一次。
+        /// 留空 = 交給戰鬥組自己的抽怪邏輯。
+        /// </summary>
+        public string enemyId;
+
         public bool visited;
     }
 

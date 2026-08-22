@@ -329,11 +329,21 @@ public class BattleStageController : StageController
     {
         var ids = new List<string>();
 
-        // 事件指定的優先（《貪吃鬼》選項 B），用完就清
+        // ── 優先序：事件指定 > 地圖節點上安排好的 > prefab 上手填的 ──
+        //
+        // 事件最優先，因為那是「劇情說了你現在要打這個」（《貪吃鬼》選項 B），
+        // 比地圖原本排的更具體。用完就清。
         if (!string.IsNullOrEmpty(PendingEnemyId))
         {
             ids.Add(PendingEnemyId);
             PendingEnemyId = null;
+        }
+        // 地圖生成時由 EncounterPlanner 安排在這個節點上的對手。
+        // 存在節點上而不是現場抽，所以**同一個節點重進是同一隻怪**
+        else if (run != null && run.pendingNode != null
+                 && !string.IsNullOrEmpty(run.pendingNode.enemyId))
+        {
+            ids.Add(run.pendingNode.enemyId);
         }
         else
         {
