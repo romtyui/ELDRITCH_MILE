@@ -92,6 +92,14 @@ namespace EldritchMile.Core
         /// <summary>事件播完後要接著進的那個節點的 Stage。</summary>
         private StageType stageAfterEvent = StageType.None;
 
+        /// <summary>
+        /// 戰鬥打完後要接著進的 Stage。**只有事件把玩家拉進戰鬥時才會設**
+        /// （見 <see cref="InsertBattleBeforeNextStage"/>）。
+        ///
+        /// 一般從地圖走到戰鬥節點時這裡是 None，打完照常回地圖。
+        /// </summary>
+        private StageType stageAfterBattle = StageType.None;
+
         /// 跨輪迴保存。遺產機制的載體，死亡不會清空。
         public MetaProgressData Meta { get; private set; }
 
@@ -283,6 +291,46 @@ namespace EldritchMile.Core
         }
 
         /// <summary>
+        /// 把一場戰鬥**插在**事件與原本那個節點之間。由事件效果
+        /// `EventEffect.Kind.StartBattle`（《好餓好餓的貪吃鬼》選項 B）呼叫。
+        ///
+        /// 【為什麼是「插入」不是「取代」】跟事件本身同一個原則 ——
+        /// 「前置，不覆蓋。玩家不會因為運氣好觸發了事件反而少玩到一間房。」
+        /// 直接把 stageAfterEvent 改成 Battle 的話，這一站的房間就被吃掉了。
+        /// 所以先把原本要去的地方存進 stageAfterBattle，打完再接回去。
+        ///
+        /// ⚠️ 只有在事件流程中呼叫才有意義。不在事件裡呼叫會發警告並忽略 ——
+        /// 沒有東西可以「接回去」的話，戰鬥打完玩家會被丟回地圖，
+        /// 那跟呼叫方預期的「打完繼續」不一樣，而且不會有任何錯誤訊息。
+        /// </summary>
+        /// <param name="enemyId">要打誰。留空則交給戰鬥組自己抽怪。</param>
+        public void InsertBattleBeforeNextStage(string enemyId = null)
+        {
+            if (currentStage != StageType.Event || stageAfterEvent == StageType.None)
+            {
+                Debug.LogWarning(
+                    "[Flow] InsertBattleBeforeNextStage 只能在事件流程中呼叫 —— " +
+                    $"現在是 {currentStage}、stageAfterEvent = {stageAfterEvent}。這次忽略。");
+                return;
+            }
+
+            if (stageAfterEvent == StageType.Battle)
+            {
+                Debug.LogWarning("[Flow] 這個事件已經安排過一場戰鬥了，不重複插入");
+                return;
+            }
+
+            stageAfterBattle = stageAfterEvent;
+            stageAfterEvent = StageType.Battle;
+
+            BattleStageController.PendingEnemyId = string.IsNullOrEmpty(enemyId) ? null : enemyId;
+
+            Debug.Log(
+                $"[Flow] 事件安排了一場戰鬥（對手：{(string.IsNullOrEmpty(enemyId) ? "交給戰鬥組抽" : enemyId)}），" +
+                $"打完接回 {stageAfterBattle}");
+        }
+
+        /// <summary>
         /// 這一站要不要插播事件。抽不到就回 null。
         ///
         /// 亂數綁 run 種子 + 節點 id —— 同一場 run 的同一個節點，
@@ -323,6 +371,31 @@ namespace EldritchMile.Core
                 IsTransitioning = false;
                 yield break;
             }
+
+            // ── 事件安排的戰鬥打完 → 接回原本那個節點 ──
+            //
+            // ⚠️ 只在「玩家還活著」時接回去。戰死的話要走下面的遺產結算，
+            //    硬接回房間會變成死了還能繼續探索。
+            if (currentStage == StageType.Battle
+                && stageAfterBattle != StageType.None
+                && result == StageResult.Completed)
+            {
+                StageType next = stageAfterBattle;
+                stageAfterBattle = StageType.None;
+
+                Debug.Log($"[Flow] 事件安排的戰鬥結束，接回 {next}");
+
+                yield return FadeOut();
+                yield return SwitchStageInternal(next);
+                yield return FadeIn();
+
+                IsTransitioning = false;
+                yield break;
+            }
+
+            // 走到這裡代表不會再接回去了（打輸、或本來就沒安排）——
+            // 留著的話下一場從地圖進的戰鬥打完會被莫名其妙送去某個房間
+            stageAfterBattle = StageType.None;
 
             // ── 遺產結算點 ──
             if (result == StageResult.PlayerDied || result == StageResult.RunFinished)

@@ -57,16 +57,21 @@ namespace EldritchMile.Core
             /// </summary>
             GrantFromTable = 8,
 
-            // ── 以下四種還沒有系統可以接 ──
+            /// <summary>
+            /// 《好餓好餓的貪吃鬼》選項 B：**插一場戰鬥**，打完接回這一站原本的內容。
+            ///
+            /// `key` = 對手的 `EnemyData.enemyId`，留空則交給戰鬥組自己抽怪。
+            /// ⚠️ 目前五個 EnemyData 的 enemyId 都還是空字串，填了也指定不到。
+            /// </summary>
+            StartBattle = 102,
+
+            // ── 以下三種還沒有系統可以接 ──
 
             /// 《喂米可吃飯》永久銷毀 1 張武器牌。**需要牌組編輯，尚未接上**
             DestroyWeaponCard = 100,
 
             /// 《門扉》隨機傳送到地圖的任意節點。**需要地圖跳轉 API，尚未接上**
             TeleportRandomNode = 101,
-
-            /// 《貪吃鬼》選項 B 進入戰鬥。**需要戰鬥接入，尚未接上**
-            StartBattle = 102,
 
             /// 《損壞的祭壇》獲得 1 張神牌。**需要神牌系統，尚未接上**
             GrantGodCard = 103,
@@ -215,10 +220,25 @@ namespace EldritchMile.Core
                     run.AddMoney(amount);
                     return $"獲得 {amount} 金幣";
 
+                case Kind.StartBattle:
+                    // 戰鬥**插在**事件與這一站原本的內容之間，不是取代它 ——
+                    // 理由見 GameFlowManager.InsertBattleBeforeNextStage()。
+                    //
+                    // key 留空就交給戰鬥組自己抽怪。目前五個 EnemyData 的 enemyId
+                    // 都還是空字串，所以填了也指定不到 —— 那一格填了才會生效。
+                    if (GameFlowManager.Instance == null)
+                    {
+                        Debug.LogWarning("[事件] 想開始戰鬥但找不到 GameFlowManager，這次跳過");
+                        return "";
+                    }
+
+                    GameFlowManager.Instance.InsertBattleBeforeNextStage(key);
+                    return "";
+
                 default:
                     Debug.LogWarning(
                         $"[事件] 效果 {kind} **尚未接上**，這次跳過。\n" +
-                        "它需要的系統還不存在（牌組編輯／地圖跳轉／戰鬥／神牌）。\n" +
+                        "它需要的系統還不存在（牌組編輯／地圖跳轉／神牌）。\n" +
                         "文案可以照寫，等系統做好補上對應的 case 就會生效。");
                     return "";
             }
