@@ -1,12 +1,14 @@
 # 接下來做什麼
 
-> 更新：2026-08-18 · 這份是**短的**。全景看 [SystemsStatus.md](SystemsStatus.md)，慣例與踩坑看 [HANDOFF.md](HANDOFF.md)
+> 更新：2026-08-22 · 這份是**短的**。全景看 [SystemsStatus.md](SystemsStatus.md)，慣例與踩坑看 [HANDOFF.md](HANDOFF.md)
 
 ---
 
 ## 現在的狀態
 
-一條龍已經通了：**主選單 → 地圖 → （可能插播事件）→ 探索／對話／商店／特殊事件 → 回地圖**。
+一條龍已經通了：**主選單 → 地圖 → （可能插播事件）→ 探索／對話／商店／特殊事件／戰鬥 → 回地圖**。
+
+**戰鬥自 2026-08-22 起也在這條線上了**（`Stage_Battle` prefab，見〈卡在別人身上的〉）。
 
 | 系統 | 狀態 |
 |---|---|
@@ -18,8 +20,22 @@
 | 條件層（旗標／侵蝕度／六種條件） | ✅ 離線驗證 |
 | 事件系統（資料 → 庫 → Stage → 流程掛鉤） | ✅ 已驗收 |
 | 角色池（區域標籤查詢＋條件指名） | ✅ 離線驗證，**已掛上對話節點** |
-| 漁村小屋／中屋／大屋 ＋ 五種容器 | 🔶 **建好了但還沒實際玩過** |
-| HP／SAN 轉接頭 `PlayerVitals` | 🔶 程式好了，**缺起始值** |
+| 漁村小屋／中屋／大屋 ＋ 五種容器 | ✅ 已實機玩過（2026-08-22），修掉兩個問題見下 |
+| HP／SAN 轉接頭 `PlayerVitals` | 🔶 程式好了、`RunStateManager` 也進 EventScene 了，**只差 `startingMaxHp` 的數值** |
+| 戰鬥（`Stage_Battle`） | 🔶 打得起來，但 `EnemyData.enemyId` 全空 → **指定不了對手** |
+
+### 實機玩過之後修掉的兩個問題（2026-08-22）
+
+- **手牌用完再點容器會卡死** —— `BeginEncounter()` 先把對話框鎖成 `HoldOpen`、
+  先生出寶箱近照，**之後**才檢查有沒有牌；沒牌就 return，畫面留下一個關不掉的空框。
+  檢查已經搬到動對話框之前，並新增 `Out Of Cards Text` 告訴玩家原因。
+- **手牌打完的瞬間，角色立繪出現在寶箱近照後面** —— `ClearTargetViews()` 無條件把
+  `portraitImage.enabled` 打開，但同一個函式裡的 `Destroy` 要到該幀結束才生效。
+  改成只有 `HoldPortrait` 時才還原，否則連 sprite 一起清掉。
+
+> 💡 兩個都是**收尾那一半沒有跟開場對稱**。`SpawnTargetView` 特地關掉立繪、
+> `ClearTargetViews` 卻無條件開回來；開場鎖了 `HoldOpen`、失敗路徑卻沒解鎖。
+> 之後寫這種「開場動 UI」的流程，記得先問「早退的那條路誰負責還原」。
 
 ---
 
@@ -248,7 +264,8 @@ monsterCanvas/monster_Panel/MonsterPos_1/Image1/StatusRoot_01/血量UI (1)/Block
 ## 正式配內容前要還原的測試腳手架
 
 - `EventLibrary.globalChance` = **1**（每站必檢查事件）→ 大綱寫的是「有概率觸發」
-- `MapGenerationSettings.Use Demo Route` 開著 → 固定直線路線，為了避開戰鬥節點
+- `MapGenerationSettings.Use Demo Route` 開著 → 固定直線路線。
+  `demoRouteKinds` 已插入一個戰鬥節點（為了測 `Stage_Battle`），正式配內容前要改回來
 - `RoomContent_Village` 裡 `chest_RequiresKey` / `chest_Document` 權重 = 0
 - `RoomLibrary` 的 `Room_Village_01` 權重 = 0（舊測試房，確認新的沒問題後可封存）
 - 商人的彩蛋條件 `campbell_absent` 是**手填**的（隊伍系統還不存在）
@@ -258,7 +275,11 @@ monsterCanvas/monster_Panel/MonsterPos_1/Image1/StatusRoot_01/血量UI (1)/Block
 
 ---
 
-## 還沒 commit
+## 版控備註
 
-這一輪的工作量不小，記得 commit。`.mcp.json` 被 `.gitignore` 忽略，不會跟著進版控 ——
+`.mcp.json` 被 `.gitignore` 忽略，**不會跟著進版控** ——
 換機或清工作區之後要重建，內容見記憶或 [HANDOFF.md](HANDOFF.md) §5。
+
+`Library/` 裡的 TMP 動態字型圖集（`LiberationSans SDF - Fallback.asset`）會在畫到
+新的中文字時被改寫，常常無故出現在 `git status` 裡。那是快取，缺的字 Unity 會自己補，
+**看到它變動直接 `git checkout` 還原就好**，不用進 commit。
