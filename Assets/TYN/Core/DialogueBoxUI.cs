@@ -90,7 +90,14 @@ namespace EldritchMile.Core
             HoldPortrait = portrait != null;
 
             if (portraitRoot != null) portraitRoot.SetActive(portrait != null);
-            if (portraitImage != null && portrait != null) portraitImage.sprite = portrait;
+
+            if (portraitImage != null)
+            {
+                // enabled 要一起處理，理由同 ShowSystem；設 null 時把圖也清掉，
+                // 免得殘留的舊立繪在下次 portraitRoot 被打開時冒出來
+                portraitImage.enabled = portrait != null;
+                portraitImage.sprite = portrait;
+            }
         }
 
         [Header("打字機")]
@@ -195,7 +202,14 @@ namespace EldritchMile.Core
             if (spawnedTargets.Count == 0 && !HoldPortrait)
             {
                 if (portraitRoot != null) portraitRoot.SetActive(closeUp != null);
-                if (portraitImage != null && closeUp != null) portraitImage.sprite = closeUp;
+
+                // enabled 要一起開 —— ClearTargetViews() 會把它關掉，
+                // 只設 sprite 的話這張圖不會出現，而且不會有任何錯誤訊息
+                if (portraitImage != null && closeUp != null)
+                {
+                    portraitImage.sprite = closeUp;
+                    portraitImage.enabled = true;
+                }
             }
 
             if (bodyText != null) bodyText.color = systemTextColor;
@@ -214,7 +228,13 @@ namespace EldritchMile.Core
             if (spawnedTargets.Count == 0 && !HoldPortrait)
             {
                 if (portraitRoot != null) portraitRoot.SetActive(portrait != null);
-                if (portraitImage != null && portrait != null) portraitImage.sprite = portrait;
+
+                // enabled 要一起開，理由同 ShowSystem
+                if (portraitImage != null && portrait != null)
+                {
+                    portraitImage.sprite = portrait;
+                    portraitImage.enabled = true;
+                }
             }
 
             if (bodyText != null) bodyText.color = speechTextColor;
@@ -372,8 +392,21 @@ namespace EldritchMile.Core
             }
             spawnedTargets.Clear();
 
-            // 大圖收掉了，立繪可以回來（要不要真的顯示由 portraitRoot 決定）
-            if (portraitImage != null) portraitImage.enabled = true;
+            // ⚠️ **不可以無條件把立繪打開。**
+            //
+            // 上面的 Destroy 要到這一幀結束才生效，但 enabled 是立刻的 ——
+            // 中間這段時間，「上一次對話留下的角色立繪」會出現在還沒消失的近照後面。
+            // 而且打牌結束後對話框常常還開著（`CloseWhenDrained()` 會等後續訊息播完），
+            // 所以那不是一閃而過，是會停在畫面上。
+            //
+            // 正確的規則是「本來就該顯示立繪時才還原」＝ HoldPortrait。
+            // 不該顯示的話連 sprite 一起清掉，免得下次有人把 portraitRoot 打開時
+            // 又冒出上一個角色。
+            if (portraitImage != null)
+            {
+                portraitImage.enabled = HoldPortrait;
+                if (!HoldPortrait) portraitImage.sprite = null;
+            }
         }
 
         private readonly List<EncounterTargetView> spawnedTargets = new List<EncounterTargetView>();

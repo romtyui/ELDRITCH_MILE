@@ -53,6 +53,12 @@ namespace EldritchMile.Explore
         [Tooltip("每次開始打牌環節抽幾張。C18⑤：這個數字同時也是可嘗試的次數上限")]
         [Min(1)] public int cardsPerEncounter = 5;
 
+        [Tooltip("這間房的手牌已經用完，玩家又去點容器時顯示的訊息。\n" +
+                 "留空則不顯示（但環節一樣不會開始）。\n\n" +
+                 "**不要留空** —— 沒有訊息的話玩家只會看到「點了沒反應」，" +
+                 "分不出是遊戲壞了還是自己沒牌了")]
+        [TextArea] public string outOfCardsText = "手上已經沒有牌了。這間屋子裡能試的都試過了。";
+
         // 打牌環節的 UI 與規則引擎都常駐在 EventScene（手牌與對話框是同一組構圖），
         // 而 prefab 無法在 Inspector 引用場景物件，所以執行時才解析。
         private DialogueEncounterController Encounter => DialogueEncounterController.Instance;
@@ -362,6 +368,31 @@ namespace EldritchMile.Explore
                 PopupService.Instance?.ShowText(promptText);
             }
 
+            // ⚠️ **手牌檢查一定要在動到對話框之前。**
+            //
+            // 底下會做兩件不可逆的事：把對話框設成 HoldOpen（點擊只推進文字、不關閉），
+            // 以及生出對象大圖。等那兩件做完才發現沒牌的話，畫面上會留下
+            // 「一個關不掉的框 ＋ 一張寶箱近照」，但沒有手牌、沒有環節、沒有結束鍵 ——
+            // 玩家完全卡死。之前就是這樣。
+            //
+            // 檢查放在 promptText 之後是刻意的：容器本身的描述照樣讀得到，
+            // 後面再接一句「沒牌了」，玩家知道發生什麼事。
+            EnsureRoomHand();
+
+            var hand = new List<CardInstanceExplore>(roomHand);
+
+            if (hand.Count == 0)
+            {
+                Debug.LogWarning("[探索] 這間房的手牌已經用完，不開打牌環節（對話框維持可關閉）");
+
+                if (!string.IsNullOrEmpty(outOfCardsText))
+                {
+                    PopupService.Instance?.ShowText(outOfCardsText);
+                }
+
+                return;
+            }
+
             // 在對話框裡生成對象化身：卡片打在它身上、機率顯示在它頭上。
             // 世界裡的寶箱維持狀態真相，但不再是拖曳目標 —— 它可能被遮住或位置不佳。
             IProbabilityTarget encounterTarget = target;
@@ -382,21 +413,12 @@ namespace EldritchMile.Explore
                 }
             }
 
+            // 手牌已經在上面備妥了（`EnsureRoomHand()`）。
             // ⚠️ 一間房只抽一次牌。**換去打別的容器不會重抽。**
             //
             // 重抽會讓玩家一直換一手更好的屬性組合去試，逐次衰減就完全沒有代價了。
             // 舊做法是把手牌暫存在「同一個目標」上，但玩家繞去別的容器再回來就破功。
-            EnsureRoomHand();
-
-            var hand = new List<CardInstanceExplore>(roomHand);
-
             currentEncounterTarget = target;
-
-            if (hand.Count == 0)
-            {
-                Debug.LogWarning("[探索] 牌組抽不到任何卡，打牌環節不會開始");
-                return;
-            }
 
             // 先開手牌區再 Begin —— 手牌區在 Start 才訂閱事件，
             // 順序反了就會漏掉第一次的 OnHandChanged，卡片畫不出來。
