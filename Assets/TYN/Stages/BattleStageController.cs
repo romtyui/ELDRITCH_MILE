@@ -153,7 +153,7 @@ public class BattleStageController : StageController
         BindCanvasCameras();
         BindBgmToOptionMenu();
         BindModifierSystem();
-        BindTutorialUI();
+        BindTutorial();
     }
 
     /// <summary>
@@ -282,22 +282,32 @@ public class BattleStageController : StageController
     }
 
     /// <summary>
-    /// `TutorialManager` 也是在 `Awake` 找 `TutorialUI`，同樣找不到。
-    /// 這個欄位是 public，可以直接指。
+    /// 教學系統有兩個東西是在 `Awake` 自己找的，而那時 `Stage_Battle` 還沒生出來，
+    /// 所以兩個都會找到 null：`TutorialManager.tutorialUI` 與
+    /// `TutorialStarter` 的 BattleManager。這裡補指。
     ///
-    /// ⚠️ **`TutorialStarter.battleManager` 是 private，我們指不了。**
-    /// 戰鬥教學要真的跑起來的話，需要請 Romtyui 開一個公開的設定方式
-    /// （欄位改 public，或加一支 `Rebind()`）。在那之前教學序列拿不到 BattleManager。
+    /// 前者是 public 欄位；後者原本是 private，2026-08-22 經同意在
+    /// `TutorialStarter` 加了 `BindBattleManager()`（欄位維持 private，
+    /// Inspector 的用法不變）。
     /// </summary>
-    private void BindTutorialUI()
+    private void BindTutorial()
     {
-        if (TutorialManager.Instance == null) return;
+        if (TutorialManager.Instance != null)
+        {
+            TutorialUI ui = GetComponentInChildren<TutorialUI>(true);
+            if (ui != null)
+            {
+                TutorialManager.Instance.tutorialUI = ui;
+                if (verboseBinding) Debug.Log("[戰鬥] TutorialUI 已接上 TutorialManager", this);
+            }
+        }
 
-        TutorialUI ui = GetComponentInChildren<TutorialUI>(true);
-        if (ui == null) return;
-
-        TutorialManager.Instance.tutorialUI = ui;
-        if (verboseBinding) Debug.Log("[戰鬥] TutorialUI 已接上 TutorialManager", this);
+        TutorialStarter starter = FindAnyObjectByType<TutorialStarter>();
+        if (starter != null && battleManager != null)
+        {
+            starter.BindBattleManager(battleManager);
+            if (verboseBinding) Debug.Log("[戰鬥] BattleManager 已接上 TutorialStarter", this);
+        }
     }
 
     private void UnbindFromHostScene()

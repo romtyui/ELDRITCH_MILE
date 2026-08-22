@@ -43,6 +43,26 @@ public class TutorialStarter : MonoBehaviour
                 FindFirstObjectByType<BattleManager>();
         }
     }
+
+    /// <summary>
+    /// 從外部重新指定 BattleManager。
+    ///
+    /// 【為什麼需要這一支】上面 Awake 的自動尋找，前提是「戰鬥在場景載入時就已經存在」——
+    /// 在 SampleScene 成立，但探索流程把整組戰鬥包成了 Stage_Battle prefab、
+    /// 進到戰鬥站才 Instantiate。那時 TutorialStarter 的 Awake 早就跑完了，
+    /// FindFirstObjectByType 找到的是 null，而且**不會有任何錯誤訊息** ——
+    /// 教學只會安靜地拿不到 BattleManager。
+    ///
+    /// 由 BattleStageController 在進場時呼叫。欄位維持 [SerializeField] private，
+    /// Inspector 的指定方式不變。
+    /// </summary>
+    public void BindBattleManager(BattleManager manager)
+    {
+        if (manager == null)
+            return;
+
+        battleManager = manager;
+    }
     [ContextMenu("Play Tutorial")]
     public void PlayTutorial()
     {

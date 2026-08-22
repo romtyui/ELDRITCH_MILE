@@ -798,6 +798,13 @@ public class EnemyUnit : BattleUnit
         if (animator == null)
             return false;
 
+        // ⚠️ 沒有指定 Controller 的 Animator，讀 .parameters 會噴
+        //    "Animator is not playing an AnimatorController"。
+        //    場上的 BlockAnimator_01~03 就是這種（格擋動畫還沒做完），
+        //    所以每次查詢都會噴一次。沒有 controller 就等於沒有任何 trigger。
+        if (animator.runtimeAnimatorController == null)
+            return false;
+
         if (string.IsNullOrWhiteSpace(triggerName))
             return false;
 
