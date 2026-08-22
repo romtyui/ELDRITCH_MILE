@@ -173,10 +173,58 @@
 | ~~起始戰鬥牌組~~ | ✅ 解了 —— `StartingDeck_Default`（8 張，照他 SampleScene 那副**去掉兩張神牌**），已掛上 `GameFlowManager` |
 | ~~武器牌的 `CardData`~~ | ✅ 接了 —— 商店那 4 格 = 匕首／弩／矛／盾（`human_*`），價格仍是佔位 |
 | **`startingMaxHp` 的數字** | 🔶 欄位通了，**只差一個數值**。填了戰鬥就會套用我方的血條而不是他的預設值，要跟他對 |
-| **`Stage_Battle` prefab** | ⛔ 戰鬥那一組還在 `SampleScene`，要包成 prefab 才放得進 StageHost |
+| ~~**`Stage_Battle` prefab**~~ | ✅ 2026-08-22 做好了，在 `Assets/TYN/Stages/`。已註冊進 StageHost（`customParent = WorldRoot`） |
 | **`EnemyData.enemyId` 全是空的** | ⛔ 五個敵人資產都沒填 → `ReserveEncounterByEnemyData()` 整組跳過，**指定不了對手**。<br>建議：`boss` / `coral_paguroidea` / `fish_priest` / `tua_khoo_tai` / `minnow`。<br>⚠️ `fish_priest` 要跟《螺湮的祝福》的旗標 `killed_fish_priest` 對得上 |
 | 死亡選單誰管 | 戰鬥失敗時他會開自己的死亡選單，那跟我方的輪迴結算是兩套。要確認「玩家按重來」之後歸誰 |
 | 收藏品的效果 | Romtyui 說他會做，之後把效果資料放進大資料 |
+
+### 戰鬥 Console 的兩組錯誤 —— 查過了，**不是我方造成的**（2026-08-22）
+
+包成 prefab 之後 Console 會一直噴這兩組。**已經確認跟 prefab 化無關**，
+但如果 Romtyui 請我方代修，資料都在這裡，不用重查。
+
+#### ① `Parameter 'block' / 'special' does not exist`
+
+`EnemyVisualAnimationController.PlayTriggerOnAnimators()` **無條件** reset 六個 trigger
+（`idle` / `atk` / `hurt` / `death` / `block` / `special`），但各敵人的 AnimatorController
+實際只有 4～5 個：
+
+| 敵人 | controller 現有的參數 | 缺 |
+|---|---|---|
+| Boss | idle, atk, hurt, death, special | **block** |
+| coral Paguroidea | atk, block, idle, hurt, death | **special** |
+| Mermaid Priest | idle, atk, hurt, death, block | **special** |
+| tuā-khoo-tai | idle, atk, hurt, death | **block、special** |
+| 雜魚 | idle, atk, hurt, death, block | **special** |
+
+**兩種修法**（要他決定走哪條，因為這是設計問題不是 bug）：
+- 把缺的參數補進那幾個 controller —— 動的是他的美術資產
+- reset 前先檢查參數存不存在 —— `EnemyUnit` 裡已經有現成的 `AnimatorHasTrigger()` 可以用
+
+#### ② `Animator is not playing an AnimatorController`
+
+三個 Animator **沒有指定 Controller**：
+
+```
+monsterCanvas/monster_Panel/MonsterPos_1/Image1/StatusRoot_01/血量UI (1)/BlockRoot_01/BlockAnimator_01
+                            MonsterPos_2/Image2/StatusRoot_02/血量UI (1)/BlockRoot_02/BlockAnimator_02
+                            MonsterPos_3/Image /StatusRoot_01/血量UI (1)/BlockRoot_03/BlockAnimator_03
+```
+
+`EnemyUnit.AnimatorHasTrigger()` 去讀 `animator.parameters` 時就會噴。
+
+#### 為什麼確定不是我方弄的
+
+- 這兩組都指向**同一個還沒做完的功能：格擋（block）**。物件建好了、controller 沒指定、參數沒補。
+- 用 git 比對過 **`7b2bc6b`**（合併完 `damege_test`、但還沒重構 SampleScene 的那一版）——
+  三個 `BlockAnimator_*` 當時就在，而且本來就掛在 `BattleContentRoot/monsterCanvas/…` 底下，
+  那整棵樹從一開始就是 `BattleSystemPrefab` 的一部分。
+- 我方重構只搬了六個物件：`Player`、`BattleDeck`、`MonsterLightReveal`、`WorldVisualRoot`、
+  `ScreenShakeController`、`Freeform Light 2D` —— 沒有一個是它們，也不是它們的父物件。
+
+> 💡 **這個驗法之後可以重複用。** 再遇到戰鬥端的錯誤、要判斷是不是我方 prefab 化弄出來的，
+> 就拿 `7b2bc6b`（合併完、重構前）的版本比對。
+> `git show 7b2bc6b:Assets/Romtyui/scene/SampleScene.unity | grep ...`
 
 ### 戰鬥接入 —— 形狀已經接好了（2026-08-19）
 
