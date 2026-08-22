@@ -13,17 +13,27 @@ namespace EldritchMile.Core
     [CreateAssetMenu(fileName = "MapGenerationSettings", menuName = "Eldritch/Map Generation Settings")]
     public class MapGenerationSettings : ScriptableObject
     {
-        [Header("結構")]
-        [Tooltip("總層數，含起點層與最後的 Boss 層")]
-        [Range(2, 12)] public int mapLayers = 5;
+        [Header("結構（網格 ＋ 隨機遊走）")]
+        [Tooltip("總層數，含起點層與最後的 Boss 層。**這就是一場 run 有多長**")]
+        [Range(2, 16)] public int mapLayers = 8;
 
-        [Tooltip("第 0 層（起點）的節點數")]
+        [Tooltip("網格有幾欄。**這是畫面有多寬** ——\n" +
+                 "欄數是「格子」不是「節點數」，實際每層有幾個節點由路徑走出來決定。\n" +
+                 "欄少了路線會擠成一條，多了會變得鬆散、線很長")]
+        [Range(3, 9)] public int gridColumns = 5;
+
+        [Tooltip("走幾條路徑。**這是地圖有多密** ——\n" +
+                 "路徑會自然合流與分岔，所以節點數不等於路徑數 × 層數。\n" +
+                 "太少會變成幾條互不相干的線，太多會把整個網格填滿、又變回長條")]
+        [Range(2, 8)] public int pathCount = 4;
+
+        [Tooltip("第 0 層（起點）至少要有幾個不同的格子。\n" +
+                 "前幾條路徑會被強制排到不同的起點欄，之後的隨機")]
         [Range(1, 5)] public int startNodeCount = 2;
 
-        [Tooltip("中間層的節點數下限")]
+        [Tooltip("⚠️ **新的網格演算法不使用這兩個欄位**（每層節點數由路徑決定）。\n" +
+                 "留著只是為了不讓既有資產掉資料，日後確認沒人用可以移除")]
         [Range(1, 5)] public int midLayerMin = 2;
-
-        [Tooltip("中間層的節點數上限")]
         [Range(1, 6)] public int midLayerMax = 3;
 
         [Header("節點類型機率（中間層）")]
