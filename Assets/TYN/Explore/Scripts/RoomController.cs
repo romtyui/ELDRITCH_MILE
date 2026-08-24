@@ -73,6 +73,63 @@ namespace EldritchMile.Explore
             int filled = 0;
             int maxFill = contentData.maxFilled > 0 ? contentData.maxFilled : shuffled.Count;
 
+            // ── 第一段：群組配額先佔位 ──
+            //
+            // 【順序不能反】先讓家具把位子填滿的話，寶箱就沒地方站了。
+            // 這跟 EncounterPlanner 的「保證出現」踩的是同一個坑，做法也一樣。
+            var groupQuota = new Dictionary<string, int>();
+            var groupFilled = new Dictionary<string, int>();
+
+            foreach (string g in contentData.QuotaGroups)
+            {
+                if (groupQuota.ContainsKey(g)) continue;
+
+                int want = contentData.RollQuota(g, rng);
+                if (want < 0) continue;
+
+                // ⚠️ 配額要被位子數與 maxFilled 夾住。小屋只有幾個位子，
+                //    擲到 2 個寶箱又照填的話整間房都是寶箱、沒有場景互動
+                int room = Mathf.Min(maxFill, shuffled.Count) - filled;
+                if (want > room)
+                {
+                    Debug.LogWarning(
+                        $"[房間] {name} 群組「{g}」配額 {want} 個，但這間房只放得下 {room} 個，已裁掉。\n" +
+                        "位子太少或 Max Filled 太小。", this);
+                    want = Mathf.Max(0, room);
+                }
+
+                groupQuota[g] = want;
+                groupFilled[g] = 0;
+
+                int placed = 0;
+                foreach (SpawnSlot slot in shuffled)
+                {
+                    if (placed >= want) break;
+                    if (slot == null || slot.IsOccupied) continue;
+
+                    // 配額階段**不看 fillChance** —— 那是「這個位子空著的機率」，
+                    // 但配額是「這間房一定要有這麼多」，兩者衝突時配額優先
+                    RoomContentData.Entry entry = contentData.PickFor(slot, rng, usedCount, g);
+                    if (entry == null) continue;
+
+                    SpawnInto(slot, entry, rng);
+                    usedCount[entry] = usedCount.TryGetValue(entry, out int c0) ? c0 + 1 : 1;
+                    placed++;
+                    filled++;
+                }
+
+                groupFilled[g] = placed;
+
+                if (placed < want)
+                {
+                    // 設定了卻安靜地沒發生，是這個專案最難查的一類問題
+                    Debug.LogWarning(
+                        $"[房間] {name} 群組「{g}」需要 {want} 個但只放進 {placed} 個。\n" +
+                        "可能是沒有條目屬於這個群組，或所有位子的 Placement／Tag 都不接受。", this);
+                }
+            }
+
+            // ── 第二段：其餘位子照原本的邏輯填，已滿額的群組被排除 ──
             foreach (SpawnSlot slot in shuffled)
             {
                 if (filled >= maxFill) break;
@@ -82,15 +139,19 @@ namespace EldritchMile.Explore
                 bool mustFill = filled < contentData.minFilled;
                 if (!mustFill && rng.NextDouble() > slot.fillChance) continue;
 
-                RoomContentData.Entry entry = contentData.PickFor(slot, rng, usedCount);
+                RoomContentData.Entry entry = contentData.PickFor(slot, rng, usedCount, null, groupFilled, groupQuota);
                 if (entry == null) continue;
 
                 SpawnInto(slot, entry, rng);
                 usedCount[entry] = usedCount.TryGetValue(entry, out int c) ? c + 1 : 1;
+                if (!string.IsNullOrEmpty(entry.group))
+                    groupFilled[entry.group] = groupFilled.TryGetValue(entry.group, out int gf) ? gf + 1 : 1;
                 filled++;
             }
 
-            Debug.Log($"[房間] {name} 填入 {filled} / {slots.Count} 個位子");
+            Debug.Log($"[房間] {name} 填入 {filled} / {slots.Count} 個位子"
+                + (groupQuota.Count > 0 ? "（配額：" + string.Join("、", System.Linq.Enumerable.ToArray(
+                    System.Linq.Enumerable.Select(groupQuota, kv => kv.Key + " " + groupFilled[kv.Key] + "/" + kv.Value))) + "）" : ""));
         }
 
         private void SpawnInto(SpawnSlot slot, RoomContentData.Entry entry, System.Random rng)

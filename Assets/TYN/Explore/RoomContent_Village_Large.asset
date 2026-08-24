@@ -18,15 +18,42 @@ MonoBehaviour:
     placement: 0
     tag: 
     maxPerRoom: 2
+    group: 
   - prefab: {fileID: 8227302718710912474, guid: f677cf00c6c32674d8fd1ce89a538b72, type: 3}
     weight: 2
     placement: 0
     tag: 
     maxPerRoom: 2
+    group: 
   - prefab: {fileID: 8227302718710912474, guid: 222c73263d5eb294d980b811d0383c43, type: 3}
     weight: 1
     placement: 0
     tag: 
     maxPerRoom: 1
-  minFilled: 5
-  maxFilled: 5
+    group: 
+  - prefab: {fileID: 3602004590472384861, guid: 329a6d1cd6d60fd44bd1266f519e3318, type: 3}
+    weight: 10
+    placement: 0
+    tag: 
+    maxPerRoom: 0
+    group: chest
+  - prefab: {fileID: 8227302718710912474, guid: fa3ab529c4883d74eac06f23e7fdcbfb, type: 3}
+    weight: 10
+    placement: 0
+    tag: 
+    maxPerRoom: 0
+    group: chest
+  - prefab: {fileID: 8227302718710912474, guid: aafd2b20a2ae7cf4d8144a44fe203a9d, type: 3}
+    weight: 0
+    placement: 0
+    tag: 
+    maxPerRoom: 0
+    group: chest
+  groupQuotas:
+  - group: chest
+    countWeights:
+    - 0
+    - 70
+    - 30
+  minFilled: 1
+  maxFilled: 4
