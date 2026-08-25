@@ -65,6 +65,19 @@ namespace EldritchMile.Core
         /// </summary>
         public EncounterPool.Tier enemyTier = EncounterPool.Tier.Minion;
 
+        /// <summary>
+        /// 這一站的場景擺設種子 —— 決定哪些家具／物件會出現。
+        ///
+        /// 【為什麼存在節點上】兩個理由，缺一不可：
+        ///   1. **同一個節點重進要長一樣。**現場擲的話玩家離開再進來整間房就變了，
+        ///      那比「每間都一樣」更糟 —— 會讓人懷疑自己記錯。
+        ///   2. **探索與戰鬥要是同一個地方。**兩個 Stage 讀同一個種子，
+        ///      背後的擺設自然一致，不用互相傳資料。
+        ///
+        /// 由 <see cref="MapGenerator"/> 在生成節點時填。
+        /// </summary>
+        public int dressingSeed;
+
         public bool visited;
     }
 

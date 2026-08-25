@@ -154,6 +154,11 @@ public class BattleStageController : StageController
         BindBgmToOptionMenu();
         BindModifierSystem();
         BindTutorial();
+
+        // 場景擺設用**節點上的種子**，跟探索讀的是同一個 ——
+        // 企劃要的是「從探索到戰鬥，背後是同一個地方」。
+        // 這裡只是接上；戰鬥要真的顯示那組美術，還需要有人把 Art_* 放進 Stage_Battle
+        EldritchMile.Explore.ExploreStageController.ApplyDressing(gameObject, run?.pendingNode);
     }
 
     /// <summary>

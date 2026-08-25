@@ -193,6 +193,9 @@ namespace EldritchMile.Core
                 nodeId = $"Node_{layer}_{col}",
                 kind = PickKind(s, rng, layer, layerCount),
                 layer = layer,
+                // 每個節點一個獨立的擺設種子。探索與戰鬥都讀它，
+                // 所以同一站的背景在兩個 Stage 裡是同一套
+                dressingSeed = rng.Next(),
                 xPercent = Mathf.Clamp(baseX + jitter, 8f, 92f),
                 yPercent = s.verticalMargin
                            + (100f - s.verticalMargin * 2f) / (layerCount - 1) * layer,
@@ -259,6 +262,7 @@ namespace EldritchMile.Core
                     nodeId = $"Node_{i}",
                     kind = kinds[i],
                     layer = i,
+                    dressingSeed = rng.Next(),
                     xPercent = 50f + (float)(rng.NextDouble() * 6 - 3),
                     yPercent = yPercent,
                 };

@@ -133,6 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5631812139509595537}
   - component: {fileID: 5043199326596922632}
+  - component: {fileID: 480278697182635593}
   m_Layer: 0
   m_Name: Art_Village_Outdoor
   m_TagString: Untagged
@@ -169,3 +170,17 @@ SortingGroup:
   m_SortingOrder: -100
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
+--- !u!114 &480278697182635593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683223685573105826}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 261a086fba44ec74d825c280c6219c00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Explore.SceneDressing
+  pieces: []
+  verbose: 0

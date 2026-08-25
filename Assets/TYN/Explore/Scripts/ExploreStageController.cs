@@ -250,11 +250,32 @@ namespace EldritchMile.Explore
             roomHand.Clear();
             roomHandDrawn = false;
 
+            // 場景擺設：哪些家具／物件會出現。**用節點上的種子，不是房間的 seed** ——
+            // 戰鬥那邊讀的是同一個，所以「從探索到戰鬥，背後是同一個地方」
+            ApplyDressing(currentRoom, node);
+
             room = currentRoom.GetComponent<RoomController>();
             if (room != null)
             {
                 room.Populate(seed);
                 room.OnRoomCleared += HandleRoomCleared;
+            }
+        }
+
+        /// <summary>
+        /// 套用這一站的場景擺設。**任何 Stage 都可以呼叫** ——
+        /// 戰鬥端也用同一支，兩邊自然一致。
+        ///
+        /// 找不到 <see cref="SceneDressing"/> 時安靜跳過 ——
+        /// 沒有可切換組件的房間（例如還在用佔位背景的）是正常狀態，不是錯誤。
+        /// </summary>
+        public static void ApplyDressing(GameObject root, RunNodeData node)
+        {
+            if (root == null || node == null) return;
+
+            foreach (SceneDressing d in root.GetComponentsInChildren<SceneDressing>(true))
+            {
+                d.Apply(node.dressingSeed);
             }
         }
 

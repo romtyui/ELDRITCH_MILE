@@ -442,6 +442,7 @@ GameObject:
   m_Component:
   - component: {fileID: 675554753125956602}
   - component: {fileID: 8008065379444818901}
+  - component: {fileID: 5610160259317373588}
   m_Layer: 0
   m_Name: Art_Altar
   m_TagString: Untagged
@@ -479,6 +480,35 @@ SortingGroup:
   m_SortingOrder: -100
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
+--- !u!114 &5610160259317373588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8109907187099927432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 261a086fba44ec74d825c280c6219c00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Explore.SceneDressing
+  pieces:
+  - target: {fileID: 7091679403626299553}
+    chance: 0.65
+    always: 0
+  - target: {fileID: 9127812756121466368}
+    chance: 0.65
+    always: 0
+  - target: {fileID: 5922495584922731559}
+    chance: 0.65
+    always: 0
+  - target: {fileID: 6469174108401358303}
+    chance: 0.65
+    always: 0
+  - target: {fileID: 196773928155314797}
+    chance: 0.65
+    always: 0
+  verbose: 0
 --- !u!1 &8251356869684037895
 GameObject:
   m_ObjectHideFlags: 0

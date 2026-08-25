@@ -101,6 +101,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8019740102203634998}
   - component: {fileID: 2003413173269684399}
+  - component: {fileID: 6243347354523322213}
   m_Layer: 0
   m_Name: Art_Village_MiddleRoom
   m_TagString: Untagged
@@ -137,6 +138,38 @@ SortingGroup:
   m_SortingOrder: -100
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
+--- !u!114 &6243347354523322213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 837729014738982194}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 261a086fba44ec74d825c280c6219c00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Explore.SceneDressing
+  pieces:
+  - target: {fileID: 7448172853219375315}
+    chance: 0.65
+    always: 0
+  - target: {fileID: 4871093588019730942}
+    chance: 0.65
+    always: 0
+  - target: {fileID: 968347975514276924}
+    chance: 0.65
+    always: 0
+  - target: {fileID: 7886732130899443374}
+    chance: 0.65
+    always: 0
+  - target: {fileID: 1517741865504685029}
+    chance: 0.65
+    always: 0
+  - target: {fileID: 625525374735741288}
+    chance: 0.65
+    always: 0
+  verbose: 0
 --- !u!1 &968347975514276924
 GameObject:
   m_ObjectHideFlags: 0
