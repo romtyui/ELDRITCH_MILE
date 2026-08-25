@@ -38,6 +38,25 @@ namespace EldritchMile.Core
     [CreateAssetMenu(fileName = "Encounters_", menuName = "Eldritch/Encounter Pool")]
     public class EncounterPool : ScriptableObject
     {
+        /// <summary>
+        /// 難度級別。**玩家在地圖上就看得到**，用來決定要不要走那條路。
+        ///
+        /// 【為什麼分級掛在池子而不是 EnemyData】同一隻怪在不同區域可以是不同級別
+        /// （漁村的菁英到了深處只是雜魚）。而且 `EnemyData` 在 `Assets/Romtyui/`，
+        /// 那是戰鬥組的地盤 —— 難度是**關卡設計**，該由我方的池子決定。
+        /// </summary>
+        public enum Tier
+        {
+            /// 一般戰鬥。地圖上不特別標示
+            Minion = 0,
+
+            /// 菁英。**地圖上要看得出來** —— 玩家要能選擇繞路或挑戰
+            Elite = 1,
+
+            /// Boss。玩家本來就知道它在終點，標示只是確認
+            Boss = 2,
+        }
+
         [Serializable]
         public class Entry
         {
@@ -51,8 +70,12 @@ namespace EldritchMile.Core
                      "⚠️ Unity 用 + 新增 List 元素時會零填充 —— 記得改成 1 以上，否則這條永遠抽不到")]
             [Min(0f)] public float weight = 1f;
 
-            [Tooltip("條件全部成立這一條才進池。留空 = 無條件。\n" +
-                     "與事件的條件是**同一個型別**，寫法完全一樣。\n" +
+            [Tooltip("難度級別。**玩家在地圖上看得到**，用來決定要不要走那條路。" +
+                     "同一隻怪在不同區域可以是不同級別，所以分級掛在池子上、不掛在 EnemyData")]
+            public Tier tier = Tier.Minion;
+
+            [Tooltip("條件全部成立這一條才進池。留空 = 無條件。" +
+                     "與事件的條件是**同一個型別**，寫法完全一樣。" +
                      "難度曲線就用這裡做：例如「已通過節點數 ≥ 3」")]
             public List<GameCondition> conditions = new List<GameCondition>();
         }
@@ -86,6 +109,9 @@ namespace EldritchMile.Core
                      "設上限是為了留出後續空間 —— 打完祭司才觸發的事件，\n" +
                      "如果祭司排在最後一層，那個事件就沒有機會出現了")]
             public int maxLayer = -1;
+
+            [Tooltip("這一場的難度級別。保證出現的通常是菁英")]
+            public Tier tier = Tier.Elite;
         }
 
         [Header("一般戰鬥節點的候選。順序不影響行為")]
@@ -114,6 +140,14 @@ namespace EldritchMile.Core
         /// </param>
         public string Pick(RunContext run, System.Random rng, ItemDatabase itemDb = null)
         {
+            Tier ignored;
+            return Pick(run, rng, out ignored, itemDb);
+        }
+
+        /// <summary>抽一個敵人，同時回報難度級別（地圖要顯示）。</summary>
+        public string Pick(RunContext run, System.Random rng, out Tier tier, ItemDatabase itemDb = null)
+        {
+            tier = Tier.Minion;
             if (rng == null) return null;
 
             var candidates = new List<Entry>();
@@ -155,12 +189,14 @@ namespace EldritchMile.Core
                 acc += candidates[i].weight;
                 if (roll <= acc)
                 {
+                    tier = candidates[i].tier;
                     if (verbose)
                         Debug.Log($"[敵人池]「{name}」{candidates.Count} 個候選 → {candidates[i].enemyId}", this);
                     return candidates[i].enemyId;
                 }
             }
 
+            tier = candidates[candidates.Count - 1].tier;
             return candidates[candidates.Count - 1].enemyId;
         }
     }

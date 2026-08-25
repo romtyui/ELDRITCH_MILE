@@ -117,6 +117,14 @@ public class MapView : MapOverlayController
              "沒有對應條目的類型會退回顯示 enum 名稱，不會是空白")]
     public List<NodeTooltipInfo> nodeTooltipTexts = new List<NodeTooltipInfo>();
 
+    [Header("節點 Tooltip — 難度")]
+    [Tooltip("戰鬥節點的難度標示。**一般雜魚刻意留空** ——\n" +
+             "每一站都標「普通」的話，「菁英」那兩個字就不顯眼了；\n" +
+             "只標特別的，玩家才會注意到")]
+    public string tooltipTierMinion = "";
+    public string tooltipTierElite = "<color=#FF9B6A>◆ 菁英 —— 這一站不好惹。</color>";
+    public string tooltipTierBoss = "<color=#FF6A6A>◆◆ 首領。</color>";
+
     [Header("節點 Tooltip — 狀態附註")]
     [Tooltip("接在說明後面的一行，講「你現在能不能去」。留空則不附加")]
     public string tooltipStateCurrent = "<color=#FFD98A>你在這裡。</color>";
@@ -167,6 +175,14 @@ public class MapView : MapOverlayController
 
         string body = info != null ? info.body : "";
 
+        // 難度先講 —— 「這站硬不硬」是玩家在分岔口最想知道的事，
+        // 排在說明後面的話會被當成附註掃過去
+        string tierNote = TierNote(node.Data);
+        if (!string.IsNullOrEmpty(tierNote))
+        {
+            body = string.IsNullOrEmpty(body) ? tierNote : tierNote + "\n" + body;
+        }
+
         string state = StateNote(node.State);
         if (!string.IsNullOrEmpty(state))
         {
@@ -206,6 +222,26 @@ public class MapView : MapOverlayController
             if (info != null && info.kind == kind) return info;
         }
         return null;
+    }
+
+    /// <summary>
+    /// 這一站的難度標示。只有戰鬥／Boss 節點有，而且**一般雜魚不標**。
+    ///
+    /// 【為什麼不標普通】每一站都掛一個「普通」的話，「菁英」就淹沒在裡面了。
+    /// 標示的價值來自稀有 —— 這也是這種分岔地圖存在的意義：
+    /// 玩家要能看出「那條路比較硬」，才有選擇可言。
+    /// </summary>
+    private string TierNote(RunNodeData data)
+    {
+        if (data == null) return "";
+        if (data.kind != MapNodeKind.Combat && data.kind != MapNodeKind.Boss) return "";
+
+        switch (data.enemyTier)
+        {
+            case EncounterPool.Tier.Elite: return tooltipTierElite;
+            case EncounterPool.Tier.Boss: return tooltipTierBoss;
+            default: return tooltipTierMinion;
+        }
     }
 
     private string StateNote(MapNodeUI.NodeState state)

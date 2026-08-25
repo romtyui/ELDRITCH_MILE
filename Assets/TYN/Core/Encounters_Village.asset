@@ -16,18 +16,22 @@ MonoBehaviour:
   - note: "\u6F01\u6751\u5E38\u898B\u3002\u8207\u53E6\u5916\u5169\u96BB\u540C\u968E\uFF0C\u6A5F\u5236\u4E0D\u540C"
     enemyId: coral_paguroidea
     weight: 10
+    tier: 0
     conditions: []
   - note: "\u6F01\u6751\u5E38\u898B\u3002\u540C\u4E0A"
     enemyId: fish_priest
     weight: 10
+    tier: 0
     conditions: []
   - note: "\u6F01\u6751\u5E38\u898B\u3002\u540C\u4E0A"
     enemyId: tua_khoo_tai
     weight: 10
+    tier: 0
     conditions: []
   - note: "\u96DC\u9B5A\u3002\u6B0A\u91CD\u4F4E\u4E00\u9EDE\uFF0C\u7576\u8ABF\u5291\u7528"
     enemyId: minnow
     weight: 5
+    tier: 0
     conditions: []
   guaranteed:
   - note: "\u300A\u87BA\u6E6E\u7684\u795D\u798F\u300B\u8981\u6253\u5012\u4ED6\u624D\u6703\u89F8\u767C\uFF0C\u4E0D\u80FD\u53EA\u9760\u62BD\u3002\n\u4E0A\u9650\u8A2D
@@ -37,5 +41,6 @@ MonoBehaviour:
     count: 1
     minLayer: 1
     maxLayer: 5
+    tier: 1
   bossEnemyId: boss
   verbose: 0

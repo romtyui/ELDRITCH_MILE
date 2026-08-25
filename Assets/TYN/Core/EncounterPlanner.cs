@@ -59,7 +59,11 @@ namespace EldritchMile.Core
 
             if (!string.IsNullOrEmpty(pool.bossEnemyId))
             {
-                for (int i = 0; i < bossNodes.Count; i++) bossNodes[i].enemyId = pool.bossEnemyId;
+                for (int i = 0; i < bossNodes.Count; i++)
+                {
+                    bossNodes[i].enemyId = pool.bossEnemyId;
+                    bossNodes[i].enemyTier = EncounterPool.Tier.Boss;
+                }
             }
 
             // ── 保證出現：先佔位 ──
@@ -89,6 +93,7 @@ namespace EldritchMile.Core
 
                     RunNodeData chosen = eligible[rng.Next(eligible.Count)];
                     chosen.enemyId = req.enemyId;
+                    chosen.enemyTier = req.tier;
                     free.Remove(chosen);
                     placed++;
                 }
@@ -110,9 +115,11 @@ namespace EldritchMile.Core
             int filled = 0;
             for (int i = 0; i < free.Count; i++)
             {
-                string id = pool.Pick(run, rng, itemDb);
+                EncounterPool.Tier tier;
+                string id = pool.Pick(run, rng, out tier, itemDb);
                 if (string.IsNullOrEmpty(id)) continue;   // 抽不到就留空 = 交給戰鬥組
                 free[i].enemyId = id;
+                free[i].enemyTier = tier;
                 filled++;
             }
 

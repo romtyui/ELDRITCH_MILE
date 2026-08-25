@@ -56,6 +56,15 @@ namespace EldritchMile.Core
         /// </summary>
         public string enemyId;
 
+        /// <summary>
+        /// 這一站的難度級別。**玩家在地圖上就要看得到** ——
+        /// 菁英要能被看出來，玩家才有「繞路或挑戰」的選擇；
+        /// 那正是這種地圖存在的意義，看不出來的話分岔就沒有意義了。
+        ///
+        /// 由 <see cref="EncounterPlanner"/> 跟 enemyId 一起填。
+        /// </summary>
+        public EncounterPool.Tier enemyTier = EncounterPool.Tier.Minion;
+
         public bool visited;
     }
 
