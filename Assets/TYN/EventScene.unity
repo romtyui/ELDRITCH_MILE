@@ -4543,6 +4543,9 @@ MonoBehaviour:
   - type: 4
     prefab: {fileID: 540733404379552859, guid: 56ee89cdc25c8a54886ace9d14ff5862, type: 3}
     customParent: {fileID: 211474239}
+  - type: 9
+    prefab: {fileID: 7707460458205152320, guid: 37e6767f6a350234296f742793598e83, type: 3}
+    customParent: {fileID: 0}
 --- !u!1 &1312533093
 GameObject:
   m_ObjectHideFlags: 0
@@ -8007,69 +8010,15 @@ MonoBehaviour:
   - kind: 4
     title: "\u7279\u6B8A"
     body: 
+  tooltipTierMinion: 
+  tooltipTierElite: "<color=#FF9B6A>\u25C6 \u83C1\u82F1 \u2014\u2014 \u9019\u4E00\u7AD9\u4E0D\u597D\u60F9\u3002</color>"
+  tooltipTierBoss: "<color=#FF6A6A>\u25C6\u25C6 \u9996\u9818\u3002</color>"
   tooltipStateCurrent: "<color=#FFD98A>\u4F60\u5728\u9019\u88E1\u3002</color>"
   tooltipStateSelectable: "<color=#9BE39B>\u53EF\u4EE5\u524D\u5F80\u3002</color>"
   tooltipStateVisited: "<color=#8A8A8A>\u5DF2\u7D93\u53BB\u904E\u4E86\u3002</color>"
   tooltipStateUnreachable: "<color=#8A8A8A>\u5F9E\u9019\u88E1\u904E\u4E0D\u53BB\u3002</color>"
   mapBannerUI: {fileID: 224495840}
   mapEnterText: "<color=#FFFFFF>\u5730\u5716</color>"
---- !u!1001 &7897719936388052686
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 4002517356769039405, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4002517356769039405, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4002517356769039405, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4002517356769039405, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4002517356769039405, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4002517356769039405, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4002517356769039405, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4002517356769039405, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4002517356769039405, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4002517356769039405, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8231844150561813217, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
-      propertyPath: m_Name
-      value: Stage_SpecialEvent
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 7f5efda721ea5364c9df451cf6859e35, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -8084,5 +8033,4 @@ SceneRoots:
   - {fileID: 1277115877}
   - {fileID: 2110897643}
   - {fileID: 1628889181}
-  - {fileID: 7897719936388052686}
   - {fileID: 398155700}

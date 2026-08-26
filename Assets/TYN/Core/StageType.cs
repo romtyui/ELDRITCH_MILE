@@ -23,6 +23,18 @@ namespace EldritchMile.Core
         /// 所以地圖不會生成 Event 節點，`StageTypeForNode` 也不會回傳它。
         /// </summary>
         Event,
+
+        /// <summary>
+        /// 機率卡牌對話（Romtyui 規格書《對話機率卡牌功能》）。
+        ///
+        /// ⚠️ **與 <see cref="Dialogue"/> 是兩套，刻意並存。**
+        /// 舊的對話（卡打在目標上、出牌即判定、屬性相剋）已經驗收過，
+        /// 而且探索打牌跟它共用同一支 controller —— 直接取代會連帶弄壞探索。
+        /// 兩個 StageType 並存的成本只是多一個 enum 值，換到的是「舊的還能跑」。
+        ///
+        /// 等新的這套驗收完、舊對話的資產也都轉過來之後，再考慮退役舊的。
+        /// </summary>
+        ProbabilityDialogue,
     }
 
     /// <summary>

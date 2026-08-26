@@ -342,6 +342,42 @@ namespace EldritchMile.Core
         }
 
         /// <summary>
+        /// **除錯用**：直接切到某個 Stage，跳過地圖與節點。
+        ///
+        /// 新做好的 Stage 常常還沒有地圖入口，那時要驗畫面就得先想辦法走到它。
+        /// 這一支讓「看一眼」變成一秒的事。
+        ///
+        /// ⚠️ 跳過去的 Stage 結束後**照常回報完成、地圖照常下拉**，
+        /// 所以不會把流程弄壞 —— 只是少了「從節點進來」那一段。
+        ///
+        /// `#if` 包起來：**正式包裡整個方法會消失**，不會變成可以被誤用的後門。
+        /// </summary>
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+        public void DebugJumpToStage(StageType type)
+        {
+            if (IsTransitioning)
+            {
+                Debug.LogWarning("[Flow] 轉場中，這次跳轉忽略");
+                return;
+            }
+
+            StartCoroutine(DebugJumpRoutine(type));
+        }
+
+        private IEnumerator DebugJumpRoutine(StageType type)
+        {
+            IsTransitioning = true;
+
+            if (mapOverlay != null) yield return mapOverlay.SlideUp();
+            yield return FadeOut();
+            yield return SwitchStageInternal(type);
+            yield return FadeIn();
+
+            IsTransitioning = false;
+        }
+
+        /// <summary>
         /// 這一站要不要插播事件。抽不到就回 null。
         ///
         /// 亂數綁 run 種子 + 節點 id —— 同一場 run 的同一個節點，

@@ -695,6 +695,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4289596397439847250}
   - component: {fileID: 7110822869174005160}
+  - component: {fileID: 2140840410260245636}
   m_Layer: 0
   m_Name: Stage_ProbabilityDialogue
   m_TagString: Untagged
@@ -758,3 +759,18 @@ MonoBehaviour:
   noEffectHint: {fileID: 2213540150150925300}
   noEffectSeconds: 1.2
   resolveDisplaySeconds: 1
+--- !u!114 &2140840410260245636
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7707460458205152320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c912aa0618fc8443abf54bebbae5607, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ProbabilityDialogueStageController
+  view: {fileID: 7110822869174005160}
+  defaultDialogue: {fileID: 11400000, guid: cdf0ca70c2a392f40bff0f56004aac82, type: 2}
+  endDelaySeconds: 1.6

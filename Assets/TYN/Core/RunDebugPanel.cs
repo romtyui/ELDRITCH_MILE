@@ -106,6 +106,8 @@ namespace EldritchMile.Core
 
             DrawVitals(run);
 
+            DrawStageJump();
+
             GUILayout.Space(6);
             tab = GUILayout.Toolbar(tab, TabNames);
 
@@ -118,6 +120,42 @@ namespace EldritchMile.Core
 
             GUILayout.EndScrollView();
             GUILayout.EndArea();
+        }
+
+        /// <summary>
+        /// 直接跳到某個 Stage。
+        ///
+        /// 【為什麼需要】新做好的 Stage 常常還沒有「地圖上的入口」——
+        /// 那時候要驗畫面就得先想辦法走到它，很浪費時間。
+        /// 這幾顆按鈕讓「看一眼新畫面」變成一秒的事。
+        ///
+        /// ⚠️ 這是**跳過流程**的捷徑，不是正常入口。跳過去的 Stage 結束之後
+        /// 會照常回報完成、地圖下拉，所以不會把流程弄壞。
+        /// </summary>
+        private void DrawStageJump()
+        {
+            if (GameFlowManager.Instance == null) return;
+
+            GUILayout.Space(4);
+            GUILayout.Label("直接跳到（除錯用，跳過流程）", labelStyle);
+
+            GUILayout.BeginHorizontal();
+            foreach (StageType t in new[]
+            {
+                StageType.ProbabilityDialogue,
+                StageType.Dialogue,
+                StageType.Explore,
+                StageType.Shop,
+                StageType.Battle,
+            })
+            {
+                if (GUILayout.Button(t.ToString()))
+                {
+                    Debug.Log($"[除錯] 直接跳到 {t}");
+                    GameFlowManager.Instance.DebugJumpToStage(t);
+                }
+            }
+            GUILayout.EndHorizontal();
         }
 
         // ==========================================
