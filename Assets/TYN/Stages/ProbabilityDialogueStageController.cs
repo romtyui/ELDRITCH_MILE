@@ -35,8 +35,15 @@ public class ProbabilityDialogueStageController : StageController
     public static ProbabilityDialogueData PendingDialogue;
 
     [Header("結束")]
-    [Tooltip("結束後隔多久才回報流程完成。讓玩家看得完最後一句")]
-    [Min(0f)] public float endDelaySeconds = 1.6f;
+    [Tooltip("結束後**最少**停留幾秒。這段時間內點擊無效 ——\n" +
+             "不然玩家在判定瞬間的那一下點擊會直接把結果跳掉")]
+    [Min(0f)] public float endMinSeconds = 0.8f;
+
+    [Tooltip("超過這個秒數還沒點，就自動結束。0 = 一定要玩家點。\n\n" +
+             "【為什麼不是純計時】讀字的速度因人而異，計時到了就跳走的話\n" +
+             "讀得慢的人永遠看不完最後一句。但也不能只等點擊 ——\n" +
+             "玩家放著去做別的事回來會不知道自己卡在哪")]
+    [Min(0f)] public float endAutoSeconds = 6f;
 
     private ProbabilityDialogueSession session;
     private bool reported;
@@ -85,12 +92,30 @@ public class ProbabilityDialogueStageController : StageController
     private void HandleEnded(bool success)
     {
         Debug.Log($"[機率對話] 結束：{(success ? "成功" : "全部失敗")}");
-        StartCoroutine(ReportAfterDelay());
+        StartCoroutine(WaitThenReport());
     }
 
-    private IEnumerator ReportAfterDelay()
+    /// <summary>
+    /// 等玩家看完最後一句。**先擋一段不可跳過的時間，再等點擊，最後才自動結束。**
+    ///
+    /// 三段都有理由：
+    ///   · 前面那段不可跳過 —— 玩家在判定瞬間的那一下點擊會直接把結果跳掉
+    ///   · 中間等點擊 —— 讀字速度因人而異，計時到了就跳走的話讀得慢的人看不完
+    ///   · 最後自動結束 —— 玩家放著去做別的事，回來不會不知道自己卡在哪
+    /// </summary>
+    private IEnumerator WaitThenReport()
     {
-        yield return new WaitForSecondsRealtime(endDelaySeconds);
+        float t = 0f;
+        while (t < endMinSeconds) { t += Time.unscaledDeltaTime; yield return null; }
+
+        while (true)
+        {
+            if (Input.GetMouseButtonDown(0) || Input.anyKeyDown) break;
+            if (endAutoSeconds > 0f && t >= endAutoSeconds) break;
+            t += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
         Report();
     }
 

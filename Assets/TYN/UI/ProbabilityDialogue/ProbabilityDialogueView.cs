@@ -240,8 +240,16 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
         private void HandleOptionResolved(ProbabilityDialogueSession.RuntimeOption o, int roll, bool success)
         {
-            // 判定完先讓玩家看到結果，再讓 Session 的後續（換問話／結束）顯示出來。
-            // Session 已經算完了，這裡只是節奏
+            // ⚠️ **成功時要把 successText 畫出來**（規格 §9.2 第 4 步）。
+            //
+            // 失敗那條路是 Session 換 CurrentPrompt、透過 OnPromptChanged 通知，
+            // 但成功不走那條 —— 所以這裡不寫的話，玩家會看到「按下去沒反應、然後跳走」。
+            if (success && promptText != null && o?.source != null
+                && !string.IsNullOrEmpty(o.source.successText))
+            {
+                promptText.text = o.source.successText;
+            }
+
             StartCoroutine(UnlockAfterDisplay());
         }
 
