@@ -1,6 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+// ⚠️ 這個專案的 Player Settings 切到 **Input System package**。
+// 舊的 `UnityEngine.Input.mousePosition` 執行時會丟 InvalidOperationException，
+// 而且**編譯期完全看不出來** —— 舊 API 仍然存在、仍然編得過。
+// 寫法對齊 RunDebugPanel 與隊友的 BattleDebugHotkeys，全專案一致。
+using UnityEngine.InputSystem;
+
 namespace EldritchMile.UI.Shortcut
 {
     /// <summary>
@@ -69,7 +75,12 @@ namespace EldritchMile.UI.Shortcut
 
         private bool IsPointerNearEdge()
         {
-            Vector3 m = Input.mousePosition;
+            // 沒有滑鼠（手把、觸控裝置）時 Mouse.current 是 null，不是錯誤 ——
+            // 那種情況下就當作「不靠近」，介面維持收合
+            Mouse mouse = Mouse.current;
+            if (mouse == null) return false;
+
+            Vector2 m = mouse.position.ReadValue();
 
             // 滑鼠跑到視窗外時不要判定成「靠近邊緣」
             if (m.x < 0 || m.y < 0 || m.x > Screen.width || m.y > Screen.height) return false;

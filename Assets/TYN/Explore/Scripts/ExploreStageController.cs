@@ -473,9 +473,31 @@ namespace EldritchMile.Explore
         /// </summary>
         private void EnsureRoomHand()
         {
-            if (roomHandDrawn && roomHand.Count > 0) return;
-            if (roomHandDrawn) return;   // 抽過了但已經用完 —— 不補牌
-            if (explorationDeck == null) return;
+            if (roomHandDrawn && roomHand.Count > 0)
+            {
+                Debug.Log($"[打牌] 沿用這間房剩下的 {roomHand.Count} 張（沒有重抽）");
+                return;
+            }
+
+            if (roomHandDrawn)
+            {
+                Debug.Log("[打牌] 這間房的牌已經用完，不補牌");
+                return;   // 抽過了但已經用完
+            }
+
+            if (explorationDeck == null)
+            {
+                Debug.LogWarning("[打牌] 這個 Stage 沒有指定 ExplorationDeck，發不出手牌", this);
+                return;
+            }
+
+            // ⚠️ **關鍵**：DrawCards 是把牌加進 ExplorationDeck 自己的 hand，
+            //    而我們接著整包複製過來。如果它的 hand 沒有被清乾淨，
+            //    或 drawPile 見底，數量就不會是 cardsPerEncounter。
+            //    這幾個數字是查「為什麼只有 N 張」的唯一依據，所以印出來
+            int beforeHand = explorationDeck.Hand.Count;
+            int beforeDraw = explorationDeck.DrawPile.Count;
+            int beforeDiscard = explorationDeck.DiscardPile.Count;
 
             explorationDeck.DrawCards(cardsPerEncounter);
 
@@ -485,7 +507,18 @@ namespace EldritchMile.Explore
 
             ResetRoomDecay();
 
-            Debug.Log($"[打牌] 這間房發了 {roomHand.Count} 張手牌，房裡所有容器共用");
+            Debug.Log(
+                $"[打牌] 這間房發了 {roomHand.Count} 張（要 {cardsPerEncounter} 張）。\n" +
+                $"    抽之前：手 {beforeHand}、抽牌堆 {beforeDraw}、棄牌堆 {beforeDiscard}\n" +
+                $"    抽之後：手 {explorationDeck.Hand.Count}、抽牌堆 {explorationDeck.DrawPile.Count}、棄牌堆 {explorationDeck.DiscardPile.Count}\n" +
+                $"    牌組來源 startingDeck {explorationDeck.startingDeck.Count} 張、run.exploreDeck {(run != null ? run.exploreDeck.Count : -1)} 張");
+
+            if (roomHand.Count < cardsPerEncounter)
+            {
+                Debug.LogWarning(
+                    $"[打牌] ⚠️ 只發到 {roomHand.Count} 張，少於設定的 {cardsPerEncounter} 張。\n" +
+                    "看上面那行：抽牌堆見底（牌組太小或沒回收），還是抽之前手裡就有牌？");
+            }
         }
 
         /// <summary>把這間房所有目標的衰減歸零。跟著「發新的一手牌」一起做。</summary>

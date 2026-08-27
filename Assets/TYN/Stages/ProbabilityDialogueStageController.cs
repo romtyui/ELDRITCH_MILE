@@ -1,5 +1,9 @@
 using System.Collections;
 using UnityEngine;
+
+// ⚠️ 專案切到 Input System package。舊的 UnityEngine.Input 執行時會丟
+// InvalidOperationException，而且編譯期看不出來。見 RunDebugPanel 的說明。
+using UnityEngine.InputSystem;
 using EldritchMile.Core;
 using EldritchMile.Core.ProbabilityDialogue;
 using EldritchMile.UI.ProbabilityDialogue;
@@ -110,13 +114,30 @@ public class ProbabilityDialogueStageController : StageController
 
         while (true)
         {
-            if (Input.GetMouseButtonDown(0) || Input.anyKeyDown) break;
+            if (AnyContinuePressed()) break;
             if (endAutoSeconds > 0f && t >= endAutoSeconds) break;
             t += Time.unscaledDeltaTime;
             yield return null;
         }
 
         Report();
+    }
+
+    /// <summary>
+    /// 玩家有沒有按下「繼續」。滑鼠左鍵或任何按鍵都算。
+    ///
+    /// 沒有滑鼠／鍵盤時對應的 current 是 null，那不是錯誤（手把、觸控裝置），
+    /// 所以兩個都要各自判空 —— 少判一個就會在那種裝置上丟例外。
+    /// </summary>
+    private static bool AnyContinuePressed()
+    {
+        Mouse mouse = Mouse.current;
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame) return true;
+
+        Keyboard kb = Keyboard.current;
+        if (kb != null && kb.anyKey.wasPressedThisFrame) return true;
+
+        return false;
     }
 
     private void Report()
