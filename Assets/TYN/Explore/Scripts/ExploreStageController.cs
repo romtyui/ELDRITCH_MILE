@@ -402,6 +402,12 @@ namespace EldritchMile.Explore
 
             var hand = new List<CardInstanceExplore>(roomHand);
 
+            // 「為什麼只有 N 張」是這裡最常被問的問題。一間房只抽一次牌、
+            // 房裡所有容器**共用**同一疊 —— 所以第二個容器拿到的是剩下的。
+            // 把這件事印出來，免得每次都要回去翻設計
+            Debug.Log($"[打牌] 這個容器拿到 {hand.Count} 張（一間房抽一次 {cardsPerEncounter} 張，" +
+                      $"房內所有容器共用；打掉的不會回來）");
+
             if (hand.Count == 0)
             {
                 Debug.LogWarning("[探索] 這間房的手牌已經用完，不開打牌環節（對話框維持可關閉）");

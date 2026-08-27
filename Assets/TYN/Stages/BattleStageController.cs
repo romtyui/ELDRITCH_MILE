@@ -126,8 +126,16 @@ public class BattleStageController : StageController
             return;
         }
 
+        // ⚠️ **只 SetActive，不要再呼叫 StartBattle()。**
+        //
+        // BattleManager.Start() 自己就會呼叫 StartBattle()。我方再呼叫一次的話
+        // 一場戰鬥會開兩次 —— 症狀是**第一回合抽 10 張而不是 5 張**
+        // （cardsPerTurn 是 5，抽了兩輪）。
+        //
+        // 所以 prefab 裡那個物件是**停用**的：預約完敵人才啟用，
+        // Unity 就會在對的時機呼叫 Start()，而且只呼叫一次。
+        // 順序也才對 —— 先 ReserveEnemies 再啟用，他才撈得到我們預約的對手。
         battleManager.gameObject.SetActive(true);
-        battleManager.StartBattle();
     }
 
     public override IEnumerator OnStageExit()
