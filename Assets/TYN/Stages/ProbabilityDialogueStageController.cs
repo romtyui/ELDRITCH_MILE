@@ -86,7 +86,21 @@ public class ProbabilityDialogueStageController : StageController
 
         session.OnEnded += HandleEnded;
 
-        if (!session.Begin(data, new System.Random(seed)))
+        // ── 手牌從玩家自己的探索牌組發 ──
+        //
+        // 對話用的牌和開寶箱用的牌是**同一種牌、同一副牌組** ——
+        // 所以牌組建構才會影響對話結果。
+        //
+        // ⚠️ 一定要先 SeedExploreDeck：F1 直接跳進來、或這場 run 還沒進過
+        // 任何探索房時，run.exploreDeck 可能還沒發過起始牌組。
+        // 沒有這一行的話手牌會是空的（或只有事件送的那一張）。
+        if (run != null)
+        {
+            var deckSrc = Object.FindFirstObjectByType<ExplorationDeck>(FindObjectsInactive.Include);
+            if (deckSrc != null) EldritchMile.Explore.ExploreStageController.SeedExploreDeck(run, deckSrc);
+        }
+
+        if (!session.Begin(data, new System.Random(seed), run != null ? run.exploreDeck : null))
         {
             // Begin 自己會報錯（規格 §11：不可以讓玩家卡在畫面上）
             Report();

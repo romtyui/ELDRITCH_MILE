@@ -741,13 +741,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed522956dc95b204ea706c8ce3889b7b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.ProbabilityDialogue.ProbabilityDialogueView
-  colors:
-  - colorId: orange
-    color: {r: 0.95, g: 0.55, b: 0.2, a: 1}
-  - colorId: blue
-    color: {r: 0.3, g: 0.6, b: 0.92, a: 1}
-  - colorId: green
-    color: {r: 0.42, g: 0.78, b: 0.46, a: 1}
+  attributeChart: {fileID: 11400000, guid: a3f1c9d24b8e07a4d8f2e61b57c0d934, type: 2}
   backgroundImage: {fileID: 5041091849164765777}
   npcPortrait: {fileID: 5153309556878623399}
   npcNameText: {fileID: 7287677296654950575}
@@ -773,4 +767,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProbabilityDialogueStageController
   view: {fileID: 7110822869174005160}
   defaultDialogue: {fileID: 11400000, guid: cdf0ca70c2a392f40bff0f56004aac82, type: 2}
-  endDelaySeconds: 1.6
+  endMinSeconds: 0.8
+  endAutoSeconds: 6

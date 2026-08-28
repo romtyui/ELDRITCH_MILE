@@ -17,8 +17,10 @@ namespace EldritchMile.Core.ProbabilityDialogue
     /// 所以規則全部在這一支、完全不碰 UI，UI 透過事件接通知。
     /// 好處是 **T01~T16 可以完全離線跑**，不用開場景、不用擺 UI。
     ///
-    /// ⚠️ 這是新機制，跟已驗收的探索打牌（`DialogueEncounterController`）**是兩套**，
-    /// 刻意不共用。詳見 <see cref="ProbabilityCardData"/> 的對照表。
+    /// ⚠️ **流程**跟已驗收的探索打牌（`DialogueEncounterController`）是兩套，刻意不共用
+    /// —— 改那一支會連帶弄壞探索打牌。
+    /// 但**牌是同一種牌**（`CardDataExplore`，手牌從玩家的探索牌組發）。
+    /// 兩者的差別見 <see cref="ProbabilityCardRules"/> 的對照表。
     /// </summary>
     public class ProbabilityDialogueSession
     {
@@ -64,10 +66,10 @@ namespace EldritchMile.Core.ProbabilityDialogue
         public string CurrentPrompt { get; private set; } = "";
 
         private readonly List<RuntimeOption> options = new List<RuntimeOption>();
-        private readonly List<ProbabilityCardData> hand = new List<ProbabilityCardData>();
+        private readonly List<CardDataExplore> hand = new List<CardDataExplore>();
 
         public IReadOnlyList<RuntimeOption> Options => options;
-        public IReadOnlyList<ProbabilityCardData> Hand => hand;
+        public IReadOnlyList<CardDataExplore> Hand => hand;
 
         public bool HasAvailableOption
         {
@@ -91,7 +93,7 @@ namespace EldritchMile.Core.ProbabilityDialogue
         // ==========================================
         public event Action OnStarted;
         /// (卡, 受影響的回答, 每個回答的 before, after)
-        public event Action<ProbabilityCardData, List<RuntimeOption>, List<int>, List<int>> OnCardPlayed;
+        public event Action<CardDataExplore, List<RuntimeOption>, List<int>, List<int>> OnCardPlayed;
         public event Action<RuntimeOption, int, bool> OnOptionResolved;   // (回答, roll, 成功)
         public event Action<RuntimeOption> OnOptionDisabled;
         public event Action<int, string> OnPromptChanged;                 // (failureCount, 新的問話)
@@ -102,7 +104,15 @@ namespace EldritchMile.Core.ProbabilityDialogue
         /// <summary>
         /// 開始一場。rng 一定要外面傳 —— 測試要能指定種子重現（規格 §14-6）。
         /// </summary>
-        public bool Begin(ProbabilityDialogueData data, System.Random random)
+        /// <param name="deckSource">
+        /// 從哪副牌組發手牌。**正常情況傳玩家的 `run.exploreDeck`** ——
+        /// 對話用的牌和開寶箱用的牌是同一種牌、同一副牌組。
+        ///
+        /// 傳 null 或空的話會退回 `data.fallbackCards`（離線測試、F1 直接跳關）。
+        /// 引擎本身不去讀 `GameFlowManager`，**這樣才能純離線跑規格測試**。
+        /// </param>
+        public bool Begin(ProbabilityDialogueData data, System.Random random,
+                          IList<CardDataExplore> deckSource = null)
         {
             // 規格 §11：Data 不完整時要在開始前顯示錯誤，**不可以讓玩家卡在畫面上**
             if (data == null)
@@ -133,8 +143,23 @@ namespace EldritchMile.Core.ProbabilityDialogue
             }
 
             hand.Clear();
-            if (data.cardPool != null && data.handSize > 0)
-                hand.AddRange(data.cardPool.Deal(data.handSize, rng));
+            if (data.handSize > 0)
+            {
+                // 玩家的牌組優先；拿不到才用資料上的備援清單。
+                // ⚠️ 順序不能反 —— 反過來的話玩家辛苦組的牌組永遠用不到
+                IList<CardDataExplore> src =
+                    (deckSource != null && deckSource.Count > 0) ? deckSource : data.fallbackCards;
+
+                hand.AddRange(ProbabilityCardRules.Deal(src, data.handSize, rng));
+
+                if (hand.Count == 0)
+                {
+                    Debug.LogWarning(
+                        $"[機率對話]「{data.name}」發不出手牌 —— 玩家牌組是空的，" +
+                        "而且 Fallback Cards 也沒填。\n" +
+                        "⚠️ 沒有手牌還是可以直接選回答（用基礎機率），不會卡死。", data);
+                }
+            }
 
             FailureCount = 0;
             CurrentPrompt = data.initialPrompt;
@@ -157,7 +182,7 @@ namespace EldritchMile.Core.ProbabilityDialogue
         /// <summary>
         /// 打出一張卡。**規格 §9.1 的順序：先改 Data，再通知 View。**
         /// </summary>
-        public bool PlayCard(ProbabilityCardData card)
+        public bool PlayCard(CardDataExplore card)
         {
             if (CurrentState != State.CardPhase) return false;   // 規格 §10：Resolving 禁止輸入
             if (card == null) return false;
@@ -165,7 +190,11 @@ namespace EldritchMile.Core.ProbabilityDialogue
             int idx = hand.IndexOf(card);
             if (idx < 0) return false;                            // 不在手牌裡
 
-            // 找出「同色 ＋ 還可用」的回答（規格 R4 / R6）
+            // ⚠️ 用 IndexOf 找的是**第一張同名卡**。牌組允許重複，
+            //    所以手上可能有兩張一樣的 —— 移掉哪一張都一樣，不影響結果
+            int value = ProbabilityCardRules.ValueOf(card);
+
+            // 找出「屬性相符 ＋ 還可用」的回答（規格 R4 / R6）
             var targets = new List<RuntimeOption>();
             var before = new List<int>();
             var after = new List<int>();
@@ -174,14 +203,13 @@ namespace EldritchMile.Core.ProbabilityDialogue
             {
                 RuntimeOption o = options[i];
                 if (!o.available) continue;
-                if (o.source.acceptedColorIds == null) continue;
-                if (!o.source.acceptedColorIds.Contains(card.colorId)) continue;
+                if (!ProbabilityCardRules.Affects(card, o.source.acceptedAttributes)) continue;
 
                 targets.Add(o);
                 before.Add(o.currentProbability);
 
                 // 規格 §4 Recommended：Clamp 0~cap
-                o.currentProbability = Mathf.Clamp(o.currentProbability + card.value, 0, Data.probabilityCap);
+                o.currentProbability = Mathf.Clamp(o.currentProbability + value, 0, Data.probabilityCap);
                 after.Add(o.currentProbability);
             }
 
@@ -193,7 +221,7 @@ namespace EldritchMile.Core.ProbabilityDialogue
             OnHandChanged?.Invoke();
 
             if (targets.Count == 0)
-                Debug.Log($"[機率對話] {card.cardId}（{card.colorId}）沒有可影響的同色回答 —— No Effect");
+                Debug.Log($"[機率對話] {card.cardId}（{card.attribute}）沒有可影響的回答 —— No Effect");
 
             return true;
         }

@@ -15,24 +15,16 @@ namespace EldritchMile.UI.ProbabilityDialogue
     /// ⚠️ **這一支只接結果，不做任何判斷**（規格 §8：EventView 不可記錄主要 State）。
     /// 機率怎麼算、成不成功，全部在 Session 裡；這裡只負責畫出來與收使用者的輸入。
     ///
-    /// 【顏色從哪來】規格用 colorId 字串串起卡牌與回答，但**畫面需要真的顏色**。
-    /// 對照表放在這裡（Inspector 可調）—— 不放在卡牌上是因為
-    /// 「橘色」應該整個事件一致，而不是每張卡各自宣告一次。
+    /// 【顏色從哪來】<see cref="AttributeChartData"/> —— **不在這裡另外維護一張對照表**。
+    /// 卡框的顏色（本我紅／超我藍／自我綠）是美術畫在圖裡的，
+    /// 回答的色點必須跟它一致；兩邊指向同一份資料才不會各自漂移。
     /// </summary>
     public class ProbabilityDialogueView : MonoBehaviour
     {
-        [System.Serializable]
-        public class ColorEntry
-        {
-            [Tooltip("跟卡牌的 Color Id、回答的 Accepted Color Ids 一模一樣")]
-            public string colorId = "";
-            public Color color = Color.white;
-        }
-
-        [Header("顏色對照")]
-        [Tooltip("colorId → 實際顏色。**沒登記的 id 會用白色並發警告** ——\n" +
-                 "打錯字是這套資料最容易出的錯，而且不吵的話畫面只會「顏色怪怪的」")]
-        public List<ColorEntry> colors = new List<ColorEntry>();
+        [Header("屬性顏色")]
+        [Tooltip("屬性 → 顏色／名稱的來源。**跟探索打牌用的是同一份**。\n" +
+                 "留空會退回一組寫死的預設色，並發一次警告")]
+        public AttributeChartData attributeChart;
 
         [Header("NPC")]
         public Image backgroundImage;
@@ -103,16 +95,32 @@ namespace EldritchMile.UI.ProbabilityDialogue
         }
 
         // ==========================================
-        public Color ColorOf(string colorId)
+        /// <summary>
+        /// 屬性的顯示顏色。**單一來源是 `AttributeChartData`** ——
+        /// 卡框圖的顏色就是照它畫的，這裡再定義一次就會有兩個真相。
+        /// </summary>
+        public Color ColorOf(EldritchMile.Core.ExploreAttribute attr)
         {
-            for (int i = 0; i < colors.Count; i++)
-                if (colors[i] != null && colors[i].colorId == colorId) return colors[i].color;
+            if (attributeChart != null) return attributeChart.ColorOf(attr);
 
-            Debug.LogWarning(
-                $"[機率對話] 顏色 id「{colorId}」沒有登記在 View 的顏色對照表裡，先用白色。\n" +
-                "⚠️ 這通常是資料打錯字 —— 卡牌與回答的 colorId 必須一模一樣。", this);
-            return Color.white;
+            if (!warnedNoChart)
+            {
+                warnedNoChart = true;   // 每場只吵一次，不然每個色點都印一行
+                Debug.LogWarning(
+                    "[機率對話] View 沒有指定 Attribute Chart，色點先用預設色。\n" +
+                    "⚠️ 這會讓色點跟卡框的顏色對不上 —— 把 AttributeChart 拉進來就好。", this);
+            }
+
+            switch (attr)
+            {
+                case EldritchMile.Core.ExploreAttribute.Id:       return new Color(0.86f, 0.34f, 0.32f);
+                case EldritchMile.Core.ExploreAttribute.Superego: return new Color(0.36f, 0.60f, 0.86f);
+                case EldritchMile.Core.ExploreAttribute.Ego:      return new Color(0.44f, 0.76f, 0.48f);
+                default:                                          return new Color(0.72f, 0.72f, 0.72f);
+            }
         }
+
+        private bool warnedNoChart;
 
         // ==========================================
         private void HandleStarted()
@@ -160,7 +168,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
             if (handRoot == null || cardPrefab == null || session == null) return;
 
-            foreach (ProbabilityCardData c in session.Hand)
+            foreach (CardDataExplore c in session.Hand)
             {
                 ProbabilityCardUI ui = Instantiate(cardPrefab, handRoot);
                 ui.Bind(c);
@@ -177,7 +185,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
             if (!session.PlayCard(ui.Data)) ui.ReturnHome();
         }
 
-        /// <summary>拖曳／指到卡片時，把同色且**還可用**的回答亮起來（規格 §3.1）。</summary>
+        /// <summary>拖曳／指到卡片時，把屬性相符且**還可用**的回答亮起來（規格 §3.1）。</summary>
         private void HandleCardAim(ProbabilityCardUI ui, bool aiming)
         {
             if (session == null) return;
@@ -186,17 +194,18 @@ namespace EldritchMile.UI.ProbabilityDialogue
             {
                 if (a == null || a.Bound == null) continue;
 
+                // 用 Session 同一支判定 —— 亮起來的和真的會加機率的必須是同一批，
+                // 各寫一次遲早會不一致
                 bool match = aiming
                              && a.Bound.available
-                             && a.Bound.source.acceptedColorIds != null
-                             && a.Bound.source.acceptedColorIds.Contains(ui.Data.colorId);
+                             && ProbabilityCardRules.Affects(ui.Data, a.Bound.source.acceptedAttributes);
 
                 a.SetHighlighted(match);
             }
         }
 
         private void HandleCardPlayed(
-            ProbabilityCardData card,
+            CardDataExplore card,
             List<ProbabilityDialogueSession.RuntimeOption> targets,
             List<int> before, List<int> after)
         {

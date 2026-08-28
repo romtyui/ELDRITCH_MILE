@@ -20,29 +20,43 @@ MonoBehaviour:
   - "\u300C\u5225\u8DDF\u6211\u515C\u5708\u5B50\u3002\u300D\n\u9580\u9582\u767C\u51FA\u4E00\u8072\u8F15\u97FF\u3002"
   - "\u300C\u6211\u6700\u5F8C\u554F\u4E00\u6B21\u3002\u300D\n\u4ED6\u5F80\u524D\u4E00\u6B65\uFF0C\u64CB\u4F4F\u4E86\u6574\u500B\u9580\u6846\u3002"
   finalFailureText: "\u4ED6\u4E0D\u518D\u8AAA\u8A71\u4E86\u3002\n\u9580\u5728\u4F60\u9762\u524D\u95DC\u4E0A\uFF0C\u843D\u9582\u7684\u8072\u97F3\u5F88\u6C89\u3002"
-  cardPool: {fileID: 11400000, guid: acf419227cdcc5c4cb35719102146689, type: 2}
   handSize: 5
+  fallbackCards:
+  - {fileID: 11400000, guid: 2faa908f610706e4f99316bc0261f050, type: 2}
+  - {fileID: 11400000, guid: 15d7923be9ad7c74cae4db179d16d86c, type: 2}
+  - {fileID: 11400000, guid: 9cf10e01924a3a942827358fdd9f44c5, type: 2}
+  - {fileID: 11400000, guid: a30896da214d0344c8f5b544a07fe7c1, type: 2}
+  - {fileID: 11400000, guid: 8313a3fde9fde6b4995d0402cd528f3b, type: 2}
+  - {fileID: 11400000, guid: 68812a871eb8673458b72925a297b1ed, type: 2}
+  - {fileID: 11400000, guid: 09ff33e0860e27e4a8b87a5aba481726, type: 2}
+  - {fileID: 11400000, guid: 60b0e24b29b872647bbd0ea2d7e83448, type: 2}
+  - {fileID: 11400000, guid: b75c2fb856e9fc1479ec3493ae8353bf, type: 2}
+  - {fileID: 11400000, guid: 33dcb4d97a3b32d4bb8e8774dbbf17a3, type: 2}
+  - {fileID: 11400000, guid: cd2a4686fc72c0744b247a0f7e29202a, type: 2}
+  - {fileID: 11400000, guid: f309416836cedc342a9a6e4b319bc50c, type: 2}
+  - {fileID: 11400000, guid: b2ffc8e4aa061614e9b8d37478989b98, type: 2}
+  - {fileID: 11400000, guid: adba106958b080744a82d29cfa8458a7, type: 2}
+  - {fileID: 11400000, guid: deb5f17059dd83848b7f6d1218ea08ca, type: 2}
+  - {fileID: 11400000, guid: 6acf0b05977feeb439315c5b759bd810, type: 2}
+  - {fileID: 11400000, guid: dac83f70887dcdb4cbc67a93cebd1f78, type: 2}
+  - {fileID: 11400000, guid: 1bf63432e86ea724d88fc3f444a33e18, type: 2}
   options:
   - optionId: beg
     text: "\u300C\u6211\u6C92\u6709\u5730\u65B9\u53EF\u4EE5\u53BB\u4E86\u3002\u300D"
     baseProbability: 25
-    acceptedColorIds:
-    - orange
+    acceptedAttributes: 0100000003000000
     successText: "\u4ED6\u770B\u4E86\u4F60\u5F88\u4E45\uFF0C\u7136\u5F8C\u8B93\u958B\u4E86\u3002"
     successOutcome: []
   - optionId: logic
     text: "\u300C\u4F60\u5011\u7684\u71C8\u9084\u4EAE\u8457\uFF0C\u4E0D\u662F\u55CE\u3002\u300D"
     baseProbability: 25
-    acceptedColorIds:
-    - blue
+    acceptedAttributes: 0200000003000000
     successText: "\u4ED6\u6123\u4E86\u4E00\u4E0B\uFF0C\u6C92\u6709\u53CD\u99C1\u3002"
     successOutcome: []
   - optionId: both
     text: "\u300C\u6211\u8A8D\u8B58\u4F60\u5973\u5152\u3002\u300D"
     baseProbability: 15
-    acceptedColorIds:
-    - orange
-    - blue
+    acceptedAttributes: 0100000002000000
     successText: "\u4ED6\u7684\u624B\u7D42\u65BC\u96E2\u958B\u4E86\u9580\u9582\u3002"
     successOutcome: []
   terminalFailureOutcome: []

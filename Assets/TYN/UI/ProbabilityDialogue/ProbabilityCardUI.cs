@@ -41,23 +41,55 @@ namespace EldritchMile.UI.ProbabilityDialogue
         /// 拖曳／hover 時通知外面「這張是什麼顏色」，用來亮同色回答
         public event Action<ProbabilityCardUI, bool> OnAimChanged;
 
-        public ProbabilityCardData Data { get; private set; }
+        public CardDataExplore Data { get; private set; }
 
         private Vector2 dragStart;
         private Vector3 homePosition;
         private bool dragging;
         private bool spent;
 
-        public void Bind(ProbabilityCardData card)
+        /// <summary>
+        /// 綁一張**探索牌**。機率對話沒有自己的牌型 —— 見 `ProbabilityCardRules`。
+        ///
+        /// 【牌面是兩層，不是一張圖】美術是這樣分的：
+        ///   · `artworkSprite`   —— 牌面（數字 0/20/40/…）。**0~100 的圖面都一樣**，
+        ///                          差別只在印的數字
+        ///   · `cardFrameSprite` —— 卡框，**屬性就體現在這裡**（本我紅／超我藍／自我綠）
+        ///
+        /// 所以框**不要染色** —— 顏色已經畫在圖裡了。染下去會把美術蓋掉。
+        /// </summary>
+        public void Bind(CardDataExplore card)
         {
             Data = card;
             spent = false;
 
-            if (artwork != null && card != null && card.visual != null) artwork.sprite = card.visual;
-            if (frame != null && card != null) frame.color = card.displayColor;
-            if (valueText != null && card != null) valueText.text = string.Format(valueFormat, card.value);
+            CardVisualDataExplore vis = card != null ? card.visualData : null;
+
+            if (artwork != null)
+            {
+                artwork.sprite = vis != null ? vis.artworkSprite : null;
+                artwork.enabled = artwork.sprite != null;
+            }
+
+            if (frame != null)
+            {
+                frame.sprite = vis != null ? vis.cardFrameSprite : null;
+
+                // ⚠️ **不要用 frame.enabled 控制顯示。**
+                //    frame 綁的是卡片根物件自己的 Image，也就是它的 raycastTarget ——
+                //    停用它整張牌就點不到也拖不動了。沒有卡框圖時走 alpha=0。
+                //
+                // ⚠️ 屬性色是**畫在卡框圖裡**的（本我紅／超我藍／自我綠），
+                //    不是用 tint 疊出來的 —— 所以 RGB 保持白色，染色會讓美術偏色
+                frame.enabled = true;
+                frame.color = new Color(1f, 1f, 1f, frame.sprite != null ? 1f : 0f);
+            }
+
+            if (valueText != null)
+                valueText.text = string.Format(valueFormat, ProbabilityCardRules.ValueOf(card));
+
             if (nameText != null && card != null)
-                nameText.text = string.IsNullOrEmpty(card.displayName) ? card.cardId : card.displayName;
+                nameText.text = string.IsNullOrEmpty(card.cardName) ? card.cardId : card.cardName;
 
             homePosition = transform.localPosition;
             SetAlpha(1f);

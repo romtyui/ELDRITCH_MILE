@@ -23,7 +23,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
         [Tooltip("目前成功機率。文字格式見 Probability Format")]
         public TextMeshProUGUI probabilityText;
 
-        [Tooltip("色點的容器。**色點會依 acceptedColorIds 動態生成**，\n" +
+        [Tooltip("色點的容器。**色點會依這個回答吃的屬性動態生成**，\n" +
                  "所以這裡放一個空的 Layout Group 就好，不用預先擺點")]
         public RectTransform colorDotRoot;
 
@@ -58,7 +58,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
         private bool interactable = true;
 
         // ==========================================
-        public void Bind(ProbabilityDialogueSession.RuntimeOption option, Func<string, Color> colorLookup)
+        public void Bind(ProbabilityDialogueSession.RuntimeOption option,
+                         Func<EldritchMile.Core.ExploreAttribute, Color> colorLookup)
         {
             Bound = option;
             interactable = option != null && option.available;
@@ -72,23 +73,26 @@ namespace EldritchMile.UI.ProbabilityDialogue
         }
 
         /// <summary>
-        /// 依 acceptedColorIds 生出色點。
+        /// 依這個回答吃的屬性生出色點。
         ///
-        /// 【為什麼動態生成】回答可以有一個或多個顏色（規格 §3.1），
+        /// 【為什麼動態生成】回答可以吃一個或多個屬性（規格 §3.1），
         /// 預先擺固定數量的點就得處理「多的要藏起來」，而且改資料還要回頭改 prefab。
+        ///
+        /// 【顏色從哪來】`AttributeChartData` —— 卡框的顏色也是同一份來源，
+        /// 所以**色點與卡框永遠對得上**，不會出現「這裡橘、那裡紅」。
         /// </summary>
-        private void BuildDots(ProbabilityDialogueSession.RuntimeOption option, Func<string, Color> colorLookup)
+        private void BuildDots(ProbabilityDialogueSession.RuntimeOption option,
+                               Func<EldritchMile.Core.ExploreAttribute, Color> colorLookup)
         {
             for (int i = 0; i < dots.Count; i++) if (dots[i] != null) Destroy(dots[i].gameObject);
             dots.Clear();
 
-            if (colorDotRoot == null || colorDotPrefab == null || option?.source?.acceptedColorIds == null) return;
+            if (colorDotRoot == null || colorDotPrefab == null || option?.source?.acceptedAttributes == null) return;
 
-            foreach (string colorId in option.source.acceptedColorIds)
+            foreach (EldritchMile.Core.ExploreAttribute attr in option.source.acceptedAttributes)
             {
-                if (string.IsNullOrEmpty(colorId)) continue;
                 Image dot = Instantiate(colorDotPrefab, colorDotRoot);
-                dot.color = colorLookup != null ? colorLookup(colorId) : Color.white;
+                dot.color = colorLookup != null ? colorLookup(attr) : Color.white;
                 dot.gameObject.SetActive(true);
                 dots.Add(dot);
             }

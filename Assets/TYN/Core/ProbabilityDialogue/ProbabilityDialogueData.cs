@@ -20,10 +20,12 @@ namespace EldritchMile.Core.ProbabilityDialogue
         [Tooltip("最初的成功機率（0~100）。卡牌只改 Runtime 的值，**不會改這裡**")]
         [Range(0, 100)] public int baseProbability = 30;
 
-        [Tooltip("可以被哪些顏色的卡影響。\n" +
-                 "**可以有多個** —— 規格 §3.1：多色回答先用多個色點。\n" +
-                 "⚠️ 字串要跟卡牌的 Color Id 一模一樣，打錯不會報錯，只會沒效果")]
-        public List<string> acceptedColorIds = new List<string>();
+        [Tooltip("這個回答吃哪些屬性的牌（本我／超我／自我）。\n" +
+                 "**可以有多個** —— 規格 §3.1：多屬性回答就顯示多個色點。\n\n" +
+                 "顏色不用在這裡填 —— 屬性的顏色由 AttributeChartData 決定，\n" +
+                 "卡框顏色也是同一份來源，兩邊永遠一致。\n\n" +
+                 "⚠️ 屬性「無」的黑白牌對任何回答都有效，不必列在這裡")]
+        public List<ExploreAttribute> acceptedAttributes = new List<ExploreAttribute>();
 
         [TextArea]
         [Tooltip("成功後 NPC 說的話")]
@@ -42,7 +44,8 @@ namespace EldritchMile.Core.ProbabilityDialogue
     ///   成功就結束；失敗就**移掉那個回答**、NPC 語氣更強，剩下的繼續
     ///   全部失敗 → 跑 terminalFailureOutcome
     ///
-    /// ⚠️ 這是新機制，跟現有的探索打牌是兩套。詳見 <see cref="ProbabilityCardData"/>。
+    /// ⚠️ **牌是同一種牌**，只有玩法不同 —— 詳見 <see cref="ProbabilityCardRules"/>。
+    /// 手牌從玩家自己的探索牌組發，所以牌組建構會影響對話結果。
     /// </summary>
     [CreateAssetMenu(fileName = "PDialogue_", menuName = "Eldritch/機率對話/對話事件")]
     public class ProbabilityDialogueData : ScriptableObject
@@ -73,10 +76,15 @@ namespace EldritchMile.Core.ProbabilityDialogue
         public string finalFailureText = "";
 
         [Header("卡牌")]
-        public ProbabilityCardPool cardPool;
-
         [Tooltip("開場發幾張手牌（規格 §7.1 handSize）。**不要 hardcode**")]
         [Min(0)] public int handSize = 5;
+
+        [Tooltip("⚠️ 正常情況**留空**。\n\n" +
+                 "手牌是從玩家自己的探索牌組發的 —— 對話用的牌和開寶箱用的牌\n" +
+                 "是同一種牌、同一副牌組，所以牌組建構才會影響對話。\n\n" +
+                 "這一欄只在「牌組拿不到」時當備援：離線測試、\n" +
+                 "以及 F1 直接跳進這個 Stage（那時 run 可能還沒發過牌）。")]
+        public List<CardDataExplore> fallbackCards = new List<CardDataExplore>();
 
         [Header("回答")]
         [Tooltip("目前目標是三個回答，但程式不限制數量")]
