@@ -34,6 +34,17 @@ namespace EldritchMile.Core
         /// 探索牌組。C18 的打牌環節從這裡抽手牌。
         public List<CardDataExplore> exploreDeck = new List<CardDataExplore>();
 
+        /// <summary>
+        /// 起始探索牌組**種進去了沒有**。
+        ///
+        /// ⚠️ 不可以用 `exploreDeck.Count == 0` 代替這個旗標。
+        /// 特殊事件（獲得神牌）會在第一次探索**之前**就 `exploreDeck.Add()` ——
+        /// 那時 Count 已經不是 0，種子邏輯就被跳過，
+        /// 結果整副起始牌組被那一張神牌取代掉。
+        /// 症狀是「開容器只發得出 1 張手牌」，而且完全看不出跟特殊事件有關。
+        /// </summary>
+        public bool exploreDeckSeeded;
+
         [Header("貨幣")]
         /// <summary>
         /// 商店用的錢。

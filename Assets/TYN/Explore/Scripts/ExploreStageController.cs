@@ -207,16 +207,10 @@ namespace EldritchMile.Explore
         {
             if (explorationDeck == null || run == null) return;
 
-            if (run.exploreDeck.Count == 0)
-            {
-                // run 還沒有牌組（第一次進探索）→ 用 prefab 上設定的起始牌組當種子
-                run.exploreDeck.AddRange(explorationDeck.startingDeck);
-            }
-            else
-            {
-                explorationDeck.startingDeck.Clear();
-                explorationDeck.startingDeck.AddRange(run.exploreDeck);
-            }
+            SeedExploreDeck(run, explorationDeck);
+
+            explorationDeck.startingDeck.Clear();
+            explorationDeck.startingDeck.AddRange(run.exploreDeck);
 
             explorationDeck.InitializeDeck();
             Debug.Log($"[探索] 牌組同步完成：{explorationDeck.startingDeck.Count} 張");
@@ -519,6 +513,41 @@ namespace EldritchMile.Explore
                     $"[打牌] ⚠️ 只發到 {roomHand.Count} 張，少於設定的 {cardsPerEncounter} 張。\n" +
                     "看上面那行：抽牌堆見底（牌組太小或沒回收），還是抽之前手裡就有牌？");
             }
+        }
+
+        /// <summary>
+        /// 第一次需要探索牌組時，把 prefab 上的起始牌組種進 `RunContext`。
+        /// **探索與對話兩個 Stage 共用這一支** —— 兩邊各寫一次就會有一邊忘了改。
+        ///
+        /// ────────────────────────────────────────────────────────
+        /// 【為什麼要一個旗標，不能用 `exploreDeck.Count == 0` 判斷】
+        ///
+        /// 這正是「開容器只發得出 1 張手牌」的成因：
+        /// `SpecialEventStageController` 會在第一次探索**之前**就
+        /// `run.exploreDeck.Add(神牌)`。那時 Count 已經不是 0，
+        /// 舊寫法就跳過種子、直接「從 run 讀回牌組」——
+        /// 於是整副 15 張的起始牌組被那一張神牌取代掉，而且**不會有任何錯誤訊息**。
+        ///
+        /// 【為什麼是合併不是覆蓋】先拿到的那張神牌是玩家已經獲得的東西，
+        /// 種子時直接覆蓋就等於把它吞掉了。
+        /// </summary>
+        public static void SeedExploreDeck(RunContext run, ExplorationDeck deck)
+        {
+            if (run == null || deck == null) return;
+            if (run.exploreDeckSeeded) return;
+
+            // 已經先拿到的卡（例如特殊事件給的神牌）要保留，接在起始牌組後面
+            var granted = new List<CardDataExplore>(run.exploreDeck);
+
+            run.exploreDeck.Clear();
+            run.exploreDeck.AddRange(deck.startingDeck);
+            run.exploreDeck.AddRange(granted);
+            run.exploreDeckSeeded = true;
+
+            Debug.Log(
+                $"[牌組] 種入起始探索牌組 {deck.startingDeck.Count} 張" +
+                (granted.Count > 0 ? $"，並保留先前獲得的 {granted.Count} 張" : "") +
+                $" → 共 {run.exploreDeck.Count} 張");
         }
 
         /// <summary>把這間房所有目標的衰減歸零。跟著「發新的一手牌」一起做。</summary>

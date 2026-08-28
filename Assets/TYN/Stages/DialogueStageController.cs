@@ -164,15 +164,12 @@ public class DialogueStageController : ChoiceStageController
     {
         if (explorationDeck == null || run == null) return;
 
-        if (run.exploreDeck.Count == 0)
-        {
-            run.exploreDeck.AddRange(explorationDeck.startingDeck);
-        }
-        else
-        {
-            explorationDeck.startingDeck.Clear();
-            explorationDeck.startingDeck.AddRange(run.exploreDeck);
-        }
+        // ⚠️ 種子邏輯與探索**共用同一支**。兩邊各寫一份的話，
+        //    修好一邊另一邊還是壞的 —— 這個 bug 原本就是兩邊各有一份
+        EldritchMile.Explore.ExploreStageController.SeedExploreDeck(run, explorationDeck);
+
+        explorationDeck.startingDeck.Clear();
+        explorationDeck.startingDeck.AddRange(run.exploreDeck);
 
         explorationDeck.InitializeDeck();
         Debug.Log($"[對話] 牌組同步完成：{explorationDeck.startingDeck.Count} 張");
