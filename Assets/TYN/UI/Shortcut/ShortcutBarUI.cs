@@ -20,13 +20,18 @@ namespace EldritchMile.UI.Shortcut
     ///   方案 4／5 —— hover 顯示文字。文字框在這裡，圖案突出在 ShortcutSlotUI。
     ///
     /// ────────────────────────────────────────────────────────
-    /// 【⚠️ 這一版只做「看得到」，不做「用得了」】
+    /// 【點下去會發生什麼】
     ///
-    /// 食物要能注射，需要「使用道具」這個動作 —— **那個動作目前不存在**，
-    /// 回多少 HP、扣多少 SAN 也還沒有數值。硬做只會做出一個按了會亂跳的假功能。
+    /// · **食物／補給**（`ItemData.IsUsable`）—— 直接使用：回 HP／SAN、消耗一個。
+    ///   走 `PlayerVitals`，所以**地圖上、探索中、戰鬥裡都能用**。
     ///
-    /// 所以 <see cref="OnItemUsed"/> 留在這裡當接口：等「使用道具」做好，
-    /// 接上去就會動，UI 不用重做。在那之前點下去只會發一則 Log。
+    /// · **收藏品／遺物** —— 點了不會有事，那是刻意的。
+    ///   Romtyui 的遺物設計是**戰鬥中被動觸發**（BattleStart／回合開始／出牌時），
+    ///   不是點來用的。戰鬥開始時由 `BattleStageController` 送進 `RelicsInventory`。
+    ///
+    /// ⚠️ 先前這裡寫著「使用道具那個動作不存在」——**那是錯的**。
+    /// Romtyui 的 `ItemInventory` / `ItemEffectData` 一直都在，只是需要
+    /// `BattleManager`，所以那一套只能在戰鬥裡跑；戰鬥外的簡易效果才走 PlayerVitals。
     /// </summary>
     public class ShortcutBarUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
@@ -224,15 +229,67 @@ namespace EldritchMile.UI.Shortcut
             if (tooltipRoot != null) tooltipRoot.SetActive(false);
         }
 
+        /// <summary>
+        /// 點一格 = 使用那件道具。
+        ///
+        /// 【為什麼走 PlayerVitals 而不是 Romtyui 的 ItemEffectData】
+        /// 那一套的 `ItemUseContext` 需要 `BattleManager` 與 `BattleUnit` ——
+        /// **只能在戰鬥裡跑**。但食物在地圖上、探索中也要能吃，
+        /// 所以簡易效果（回 HP／SAN）走 `PlayerVitals`，戰鬥內外都有效。
+        ///
+        /// 兩者不衝突：日後要做「只能在戰鬥裡用」的複雜道具，
+        /// 就在這裡多一條路由到 `ItemEffectData`，簡易效果照舊。
+        /// </summary>
         private void HandleSlotClicked(ShortcutSlotUI s)
         {
             if (s.Item == null) return;
 
-            // ⚠️ 目前沒有人訂閱 —— 「使用道具」那個動作還不存在。
-            //    這則 Log 是刻意的：讓測試的人知道「點到了，但功能還沒接」，
-            //    而不是以為自己點錯地方
-            Debug.Log($"[快捷欄] 點了「{s.Item.Label}」—— 使用道具的動作還沒做，這一版只顯示不執行");
-            OnItemUsed?.Invoke(s.Item);
+            ItemData d = s.Item;
+
+            if (!d.IsUsable)
+            {
+                // 收藏品／遺物就是這一類：它們有效果，但**不是點來用的** ——
+                // 是戰鬥開始時自動生效。講清楚，不然玩家會一直點
+                Debug.Log($"[快捷欄]「{d.Label}」不是消耗品" +
+                          (d.relicEffect != null ? " —— 它的效果在戰鬥中自動生效" : ""));
+                return;
+            }
+
+            RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+            if (run == null) return;
+
+            // ⚠️ 先確認真的還有這件東西再套效果。
+            //    反過來做的話，快速連點會在庫存只剩 1 個時回血兩次
+            if (d.consumeOnUse && !run.ConsumeItem(d.id, 1))
+            {
+                Debug.LogWarning($"[快捷欄]「{d.Label}」用不掉 —— 背包裡已經沒有了");
+                Refresh(false);
+                return;
+            }
+
+            if (d.hpRestore > 0) PlayerVitals.HealHp(d.hpRestore);
+            if (d.sanRestore > 0) PlayerVitals.RestoreSan(d.sanRestore);
+
+            Debug.Log($"[快捷欄] 使用「{d.Label}」"
+                      + (d.hpRestore > 0 ? $"　HP +{d.hpRestore}" : "")
+                      + (d.sanRestore > 0 ? $"　SAN +{d.sanRestore}" : "")
+                      + $"　→ HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}"
+                      + $"　SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}");
+
+            PopupService.Instance?.ShowInstant(UsedTextFor(d));
+
+            // 用完就重建 —— 數量要跟著變，用光了那一格要消失
+            Refresh(false);
+
+            OnItemUsed?.Invoke(d);
+        }
+
+        private static string UsedTextFor(ItemData d)
+        {
+            var bits = new List<string>();
+            if (d.hpRestore > 0) bits.Add($"HP +{d.hpRestore}");
+            if (d.sanRestore > 0) bits.Add($"SAN +{d.sanRestore}");
+            return $"{d.Label}　{string.Join("　", bits.ToArray())}";
         }
     }
 }

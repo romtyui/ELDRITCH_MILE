@@ -57,6 +57,33 @@ namespace EldritchMile.Core
                  "加牌走 `PlayerVitals.AddCardToDeck()`，不要自己去碰那個清單")]
         public CardData grantsCard;
 
+        [Header("使用效果（食物／補給）")]
+        [Tooltip("使用時回復的 HP。0 = 不回。\n\n" +
+                 "⚠️ 這一組是**戰鬥外也有效**的簡易效果，走 PlayerVitals。\n" +
+                 "戰鬥內的複雜效果（給力量、加護甲…）是 Romtyui 的 ItemEffectData，\n" +
+                 "那一套需要 BattleManager，只能在戰鬥裡跑")]
+        [Min(0)] public int hpRestore = 0;
+
+        [Tooltip("使用時回復的 SAN。0 = 不回")]
+        [Min(0)] public int sanRestore = 0;
+
+        [Tooltip("使用後是否消耗掉。取消勾選 = 可以重複使用（目前沒有這種道具）")]
+        public bool consumeOnUse = true;
+
+        [Header("遺物效果（戰鬥中被動觸發）")]
+        [Tooltip("這件收藏品在戰鬥裡的被動效果。\n\n" +
+                 "⚠️ 遺物**不是點來用的** —— Romtyui 的設計是在 BattleStart／\n" +
+                 "回合開始／回合結束／出牌時自動觸發（見 RelicsTriggerType）。\n" +
+                 "戰鬥開始時會由 BattleStageController 把身上的遺物送進 RelicsInventory。\n\n" +
+                 "留空 = 這件收藏品目前只是收藏品，沒有效果")]
+        public RelicsEffectData relicEffect;
+
+        /// <summary>
+        /// 這件道具點下去有沒有事會發生。
+        /// **快捷欄用它決定要不要讓那一格可以點** —— 點了沒反應比不能點更糟。
+        /// </summary>
+        public bool IsUsable => hpRestore > 0 || sanRestore > 0;
+
         /// <summary>顯示名沒填就退回 id —— 至少畫面上不會是一片空白。</summary>
         public string Label => string.IsNullOrEmpty(displayName) ? id : displayName;
 

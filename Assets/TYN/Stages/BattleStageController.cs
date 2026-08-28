@@ -161,6 +161,7 @@ public class BattleStageController : StageController
         BindCanvasCameras();
         BindBgmToOptionMenu();
         BindModifierSystem();
+        BindRelicsFromInventory();
         BindTutorial();
 
         // 場景擺設用**節點上的種子**，跟探索讀的是同一個 ——
@@ -292,6 +293,59 @@ public class BattleStageController : StageController
 
         ModifierSystem.Instance.RegisterProvider(boundRelicsRuntime);
         if (verboseBinding) Debug.Log("[戰鬥] RelicsRuntime 已登記進 ModifierSystem", this);
+    }
+
+    /// <summary>
+    /// 把玩家身上的收藏品（Curio）送進戰鬥的 <see cref="RelicsInventory"/>。
+    ///
+    /// ────────────────────────────────────────────────────────
+    /// 【為什麼需要這一步】
+    /// 我方的背包是 `RunContext.inventory`（字串 id，跨關卡、能存檔）；
+    /// 戰鬥的遺物清單是 `RelicsInventory`（ScriptableObject，戰鬥當下）。
+    /// **兩邊之前沒有任何東西連著** —— 所以玩家撿到的遺物在戰鬥裡完全沒作用，
+    /// 而且不會有錯誤訊息，只是「好像沒效果」。
+    ///
+    /// 【為什麼在這裡做而不是撿到時做】
+    /// `RelicsInventory` 活在 `Stage_Battle` 裡，戰鬥結束就跟著消失。
+    /// 真相留在 `RunContext`，每次開打再灌進去 —— 這樣存檔／讀檔也不會漏。
+    ///
+    /// ⚠️ 遺物**不是點來用的**，是 `RelicsRuntime` 在 BattleStart／回合開始／
+    /// 出牌時自動觸發。所以這裡只要「放進去」，不必也不該去呼叫它。
+    /// </summary>
+    private void BindRelicsFromInventory()
+    {
+        RelicsInventory inv = GetComponentInChildren<RelicsInventory>(true);
+        if (inv == null) return;
+
+        RunContext ctx = run;
+        ItemDatabase db = GameFlowManager.Instance != null ? GameFlowManager.Instance.itemDatabase : null;
+        if (ctx == null || db == null) return;
+
+        // 每場重灌 —— 不清空的話讀檔或重打同一場會愈疊愈多
+        inv.Clear();
+
+        int added = 0, skipped = 0;
+        for (int i = 0; i < ctx.inventory.Count; i++)
+        {
+            ItemStack st = ctx.inventory[i];
+            if (st == null || st.count <= 0) continue;
+
+            ItemData d = db.GetById(st.id);
+            if (d == null || d.relicEffect == null) { if (d != null && d.HasTag("Curio")) skipped++; continue; }
+
+            // 同一件收藏品拿了兩個就疊兩次 —— 這是 Romtyui 那邊的語意（清單，不是集合）
+            for (int n = 0; n < st.count; n++)
+            {
+                if (!inv.AddRelic(d.relicEffect)) break;   // 滿了就停，AddRelic 自己會說明
+                added++;
+            }
+        }
+
+        if (verboseBinding || skipped > 0)
+        {
+            Debug.Log($"[戰鬥] 遺物已灌入 {added} 件" +
+                      (skipped > 0 ? $"；另有 {skipped} 件收藏品還沒有效果資產（Relic Effect 是空的）" : ""), this);
+        }
     }
 
     /// <summary>
