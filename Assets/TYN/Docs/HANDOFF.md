@@ -1,239 +1,152 @@
-# ELDRITCH_MILE — 接手說明（先讀這份）
+# 交接：換帳號後從這裡接上
 
-> 給下一個接手 `Assets/TYN/` 的人／AI。
-> 本文只寫**其他文件沒寫、但不知道會踩坑**的事。架構、進度、待辦都在別的文件裡，這裡只給指路與慣例。
->
-> 最後更新：2026-08-14
-
----
-
-## 0. 一分鐘看懂這個專案
-
-2D Roguelike 卡牌遊戲（Unity 6000.4.1f1、URP）。玩家在地圖上選節點 → 進入探索房間 → 用**機率卡**跟寶箱／NPC 互動 → 打牌判定成功或失敗 → 回地圖。
-
-原本流程散在 5 個場景，正在整合成**單一 `EventScene`**。目前 Build Settings 只剩 1 個場景。
-
-**現在的進度**：Phase 0–3 完成（清場、Core 層、主選單、地圖覆蓋層），Phase 4 探索進行中，打牌環節第一批已可玩。
+> 建立 2026-08-29。**新對話第一句就說「讀 Assets/TYN/Docs/Handoff.md」。**
+> 這一份是「現在在哪、下一步做什麼」；四大工作流的來龍去脈看
+> [Sprint_0829.md](Sprint_0829.md)，全景看 [SystemsStatus.md](SystemsStatus.md)。
 
 ---
 
-## 1. 文件閱讀順序
+## 現在的狀態
 
-| 順序 | 文件 | 讀它做什麼 |
-|---|---|---|
-| 1 | **本文** | 慣例、工具、踩坑清單 |
-| 2 | [SystemsStatus.md](SystemsStatus.md) | **全景**：哪些系統做完了、待做的卡在什麼、**以及劇情大綱裡的內容需要哪些系統**（2026-08-15） |
-| 3 | [RoadmapNext.md](RoadmapNext.md) | 接下來要做什麼的**細節**與各項決策的來龍去脈 |
-| 4 | [EngineeringGuide.md](EngineeringGuide.md) | 命名空間、資料夾、架構原則 |
-| 5 | [SceneConsolidationPlan.md](SceneConsolidationPlan.md) | 架構為什麼長這樣、19 條企劃約束（C1–C19） |
-| 6 | `Phase*_*.md` | 各階段的**編輯器操作**步驟與驗收清單 |
-| 📺 | [DemoRoute.md](DemoRoute.md) | **要跑一次完整流程給人看**就讀這份（含目前哪些節點類型會斷） |
-| 7 | [Phase6_Dialogue.md](Phase6_Dialogue.md) | 對話／商店／特殊事件三個 Stage（2026-08-16，**尚未完整驗收**） |
-| ⚠️ | [Status.md](Status.md) | **已過時**（停在 2026-08-08），只當歷史快照看。全景改看 `SystemsStatus.md` |
+分支 `recovery-progress`，**領先遠端 58 個 commit（還沒 push）**。
+組員的 `origin/Scene`、`origin/damege_test` 都已經合進來了，沒有未合的東西。
 
-> **劇情／角色設定**在 `克蘇魯劇情大綱.docx`（不在 repo 內，向開發者索取）。
-> 它與工程的對照整理在 `SystemsStatus.md` §3 —— 那是唯一記錄
-> 「劇情裡寫的東西需要哪些系統」的地方。
+今天（8/29）做完的，由新到舊：
 
-> 提到「C7」「C18③」這種代號時，指的是 `SceneConsolidationPlan.md` §4.0 的企劃約束編號。那是所有設計決策的依據。
-
----
-
-## 2. 跟這位開發者合作的規矩
-
-這些是他明確講過的，不要重新提案：
-
-| 規矩 | 說明 |
+| commit | 做了什麼 |
 |---|---|
-| **只動 `Assets/TYN/`** | `Assets/Romtyui/` 是隊友的（戰鬥系統）。需要他那邊配合時**提出來讓開發者去談**，不要直接改 |
-| **封存，不刪除** | 淘汰的檔案連 `.meta` 一起移到 `Assets/TYN/_Archive/`。確認穩定後才由開發者決定真刪 |
-| **舊碼預設重寫，不逐行改造** | 他說過「代碼和設計上有太多大便」。遇到遺留程式，預設判斷是封存重寫，只有明確有用且與新架構相容的才保留 |
-| **先問清楚再動大刀** | 設計選擇（手感、流程）給建議與取捨，讓他決定；技術細節可以自己判斷 |
+| `fe4f7d0` | 快捷欄改點擊開關、修 hover 回不來、事件限定收藏品 |
+| `a311e0a` | 遺物與食物可以使用；戰鬥 tooltip 修好 |
+| `5b3c023` | 房間美術重建：對齊美術原場景的實際畫面 |
+| `b8de8df` | merge origin/Scene（美術的 b20fdb0） |
+| `a304d69` | 機率對話改用探索牌：刪掉多餘的第二套牌 |
+| `94155aa` | 快捷欄接上美術：食物＝針管、遺物＝卡冊格 |
 
 ---
 
-## 3. 最有用的一招：不開 Unity 也能驗證編譯
+## ⛔ 立刻要做的（交付前）
 
-**每次改完 C# 都用這個檢查，不要等 Unity 編譯。** 它會對 Unity 的真實組件編譯整個專案，秒級回饋。
-
-在暫存目錄建 `verify.csproj`：
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <LangVersion>9.0</LangVersion>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <NoWarn>CS0108;CS0114;CS0649;CS0169;CS0414;CS0067;CS0162;CS0219;CS0618;CS1591</NoWarn>
-    <ProjectRoot>C:\Users\greyl\OneDrive\文件\GitHub\ELDRITCH_MILE</ProjectRoot>
-    <UnityManaged>C:\Program Files\Unity\Hub\Editor\6000.4.1f1\Editor\Data\Managed</UnityManaged>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="$(ProjectRoot)\Assets\TYN\**\*.cs" />
-    <Compile Include="$(ProjectRoot)\Assets\Romtyui\**\*.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="$(UnityManaged)\UnityEngine\*.dll"><Private>false</Private></Reference>
-    <Reference Include="$(ProjectRoot)\Library\ScriptAssemblies\*.dll"
-               Exclude="$(ProjectRoot)\Library\ScriptAssemblies\*Editor*.dll;$(ProjectRoot)\Library\ScriptAssemblies\Assembly-CSharp.dll">
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
-</Project>
-```
-
-```bash
-dotnet build <path>/verify.csproj -v quiet --nologo
-```
-
-> `Library/ScriptAssemblies/` 要有東西（Unity 至少完整編譯過一次）。若暫存目錄被系統清掉，重建這個檔即可。
-
-**讀 Unity Console 不必開 Unity**：`%LOCALAPPDATA%\Unity\Editor\Editor.log` 有全部輸出，包含 Play 時的 `Debug.Log`。
+1. **`useDemoRoute` 要關掉** —— `Assets/TYN/Core/MapGenerationSettings.asset`
+   現在是 `1`。不關的話組員看到的地圖還是一條直線。
+   `demoRouteKinds` 插的戰鬥節點也要還原。
+   **這個檔案刻意沒有 commit**，是你自己的測試狀態。
+2. **五間房的 slot 對位** —— 需要人眼對著背景調，我做不了。
+   ⚠️ 背景取景在 `5b3c023` 有微幅改變（×1.037 並下移），所以現在做才不會白費。
+3. **商店的 `ShopSlotUI.iconImage` 要開 `preserveAspect`** ——
+   它只在場景裡、不在 prefab，而我當時 Unity 正在 Play 模式，
+   **Play 中改場景會在退出時被丟掉**，所以沒動。這是「貪婪的大口在商店變形」
+   還沒修完的那一半（快捷欄那半已經修好）。
 
 ---
 
-## 4. 這個專案反覆踩到的坑
+## 待辦（依重要性）
 
-前四個各踩過**兩次以上**，看到症狀先想這裡。
+### A. 機率對話的平衡 —— 需要你或 Romtyui 決定
 
-### 4.1 RectTransform 的「死值」
+牌組是 3 屬性 × 6 個數值（0/20/40/60/80/100），平均 50 點；
+手牌 5 張、基礎機率 25%。實測 **30 場裡有 30 場，最好的回答都到 100%**。
 
-從別的場景複製 UI 過來，物件會**看不見**：`Scale (0,0,0)`、寬高 0。
+因為出牌沒有代價，玩家一定把整手牌倒進同一個選項。
+三個方向（都只改資料）：`handSize` 5→2、基礎機率 25%→5~10%、
+或讓不完全相符的屬性只加一半（沿用現成的相剋表 0.5 倍）。
+**第三個最貼合原設計，但那算改機制，我沒有自己動。**
 
-原因：root Canvas 或 stretch 佈局的 RectTransform 值是被 Unity **即時驅動**的，序列化存的是無意義的 0。一旦換父層就不再被驅動，那些 0 就變成真的 0。
+### B. Dialog 版型 —— 我問了但還沒得到答案
 
-**症狀特別難查**：物件在 Hierarchy 看得到、`SetActive(true)` 也成功、沒有任何錯誤訊息，但畫面上完全不存在。
+你說「Dialog 外觀版型應該要沿用原先版本的模樣」。我不確定是指：
+- 舊的 `DialogueUI`（order 101，探索打牌在用的那套）要沿用，還是
+- 新的機率對話要長成它的樣子
 
-`StageHost` 與 `PopupService` 已加自動偵測會噴紅字。新做 UI 時記得手動確認 Scale 是 1。
+如果是後者，還要決定是**共用同一個 `DialogueUI` 物件**，
+還是**做一個外觀相同的新版型**。
 
-### 4.2 `using` 寫在 namespace 外面會綁到舊型別
+### C. 遺物效果 —— 7 件卡在 Romtyui
 
-`_Archive/` 在 `Assets/` 底下所以**照樣編譯**，裡面的舊型別仍佔用全域命名空間。
+8 件 `Item_relic_*` 的敘述裡本來就寫好效果設計了。
+「貪婪的大口＝HP 恢復量提升 10%」正好對上現有的
+`RelicEffect_HealingReceived_10Percent`，**已接上、可以動**。
 
-C# 名稱解析在同一層「宣告永遠贏過 using 匯入」，而檔案最上方的 `using` 註冊在**全域層**。所以與未封存的舊型別同名時會綁到舊的，而且**編譯得過**，只在型別轉換時才爆。
+其餘 7 件需要**新的 `RelicsEffectData` 子類別**，碰的是戰鬥內部：
 
-**解法**：`using` 寫在 `namespace` 內部（且要在所有型別宣告之前）。`Map/MapView.cs` 有註解範例。
-
-### 4.3 Unity Inspector 的 List `+` 會零填充
-
-用 Inspector 的 `+` 新增 `List<SerializableClass>` 元素時，**不會套用 C# 的欄位初始值**。`public float weight = 1f;` 會變成 `0`，然後條目被靜默跳過。
-
-`RoomLibrary` / `RoomContentData` 已加針對性警告。設計新的權重表時記得提醒使用者手動填。
-
-### 4.4 停用的 Graphic 收不到 raycast
-
-`image.enabled = false` 的 Image **完全不接收點擊**，而且不會有錯誤。
-
-「看不見」和「點不到」同時發生時先查這個。要保有可點區域但不顯示，用 **alpha 0** 而不是停用元件。
-
-### 4.6 UI 疊放與事件傳遞（2026-08-16 一天內踩了十二個）
-
-做對話選項與手牌動效那天連續撞到的，成因各不相同但都**不會報錯**：
-
-| 坑 | 症狀 | 為什麼 |
-|---|---|---|
-| **指標事件只往祖先傳，不傳兄弟** | hover 元件掛在感應區上，滑到卡片完全沒反應 | `IPointerEnter/Exit` 沿 hierarchy **往上**送。要掛在「感應區與內容的共同祖先」 |
-| **`SetParent` 是附加到最後** | 卡面只剩卡框，圖不見了 | 為了避開 `childCount` 變動而倒著迭代 → 整疊圖層翻過來。要先收集再依原序搬 |
-| **`RaycastAll` 會回傳被遮住的東西** | 卡片放在對話框中間也會打中後面的目標 | 掃全部命中物＝穿透。投放判定**只能認 `results[0]`** |
-| **兩個東西搶 `SetAsLastSibling`** | 拖曳中的卡片偶爾沉到對話框後 | 誰贏看執行順序。拖曳要用**專用圖層**，且每次取用都推回最上層 |
-| **hover 改變了被 hover 的東西** | 卡片在下緣瘋狂閃爍 | 上浮把卡片從游標底下抽走 → exit → 落下 → enter。**位移只動視覺子層，可點區域不動** |
-| **透明的全幅 Button 會吃掉所有點擊** | 選項點不到 | `Advance Button`（alpha 0、1760×344）壓在選項上。`Button` 會**消化**點擊不讓它冒泡 |
-| **子物件是空殼 Button** | 同上 | 拉預設 Button 留下的殘骸，alpha 0、零監聽，唯一作用是擋點擊 |
-| **覆蓋層是「滑出畫面」不是停用** | 靠 `OnDisable` 做的收尾一律失效 | `MapOverlayController` 改 `anchoredPosition`，子物件從頭到尾都是啟用的。用 `OnClosing()` hook |
-| **遲到的 `OnPointerExit` 會復活剛關掉的東西** | 地圖收起後 tooltip 又冒出來 | 滑走時節點離開游標 → exit → `Hide()` → 「閒置時保留框」又把它開起來。需要**總開關**讓關閉後的顯示要求一律失效 |
-| **用「自己的旗標」判斷「整區的狀態」** | 拖曳中經過別張卡，目標上的機率就消失 | 拖曳中的卡 `blocksRaycasts = false`，游標穿透到底下的卡，那些卡的 `IsDragging` 都是 false，於是它們去改了預覽。守衛要問「**整個手牌區**有沒有人在拖」 |
-| **`alpha = 0` 收得到點擊，`enabled = false` 收不到** | 隱形觸發區點了完全沒反應 | 一字之差。透明的 `Image` 只要 `raycastTarget = true` 就是正常的觸發區；停用的 `Graphic` 收不到任何 raycast **而且不報錯**。所以 `CharacterHitbox.Awake()` 自己設好這兩個值，不靠人記得 |
-| **Overlay 的 Canvas 換算要傳 `null` 相機** | 氣泡位置整個偏掉 | `RectTransformUtility` 那組 API，Screen Space Overlay 時要傳 `null` 而不是 `Camera.main`。傳錯不會有任何錯誤訊息，只是位置錯 |
-
-> **共同教訓**：這十二個沒有一個會噴錯誤訊息。查 UI 問題時先問三件事 ——
-> 「事件到得了嗎」「順序是誰決定的」「這個收尾真的會被呼叫嗎」。
->
-> 最後一個還多一條：**`blocksRaycasts = false` 會把事件送到不該處理它的物件上**，
-> 那些物件用自己的旗標判斷，當然判斷不出來。凡是「同類物件有多個」的 UI，
-> 狀態要記在管理者身上，不是各自記。
-
-### 4.5 其他
-
-| 坑 | 說明 |
+| 遺物 | 需要的效果 |
 |---|---|
-| **`OnEnable` 不會在初始 inactive 的物件上執行** | 預設隱藏的 UI 面板用 `OnEnable` 訂閱事件會漏掉。改用 `Start`（`SetActive(true)` 那一刻才跑）或掃描式註冊 |
-| **prefab ↔ 場景的引用是單向禁止的** | prefab 不能在 Inspector 引用場景物件，**場景物件也不能引用 prefab 內部的東西**。跨界一律用單例（專案慣例：`PopupService.Instance` 這種） |
-| **拖曳結束時 Unity 也會送 `OnPointerClick`** | 沒濾掉 `eventData.dragging` 的話，放開卡牌會順便把它選起來 |
-| **URP 沒有 `Clear Flags`** | 對應欄位是 Camera 的 **Environment → Background Type** |
-| **`System.Random` 用相近的小種子會產生幾乎一樣的序列** | 測戰利品時用 `new Random(s*31)`（31/62/93/124）跑四次，**四次結果一模一樣**，看起來像機率表壞了。實際上是 .NET 舊版 `Random` 的已知特性：種子相近時前幾個亂數也相近。**驗機率一定要用分散的種子或同一個 rng 連抽**。專案裡真正在用的種子都是 `runSeed ^ hashcode`（夠分散），不受影響 |
-| **綁 run 種子要看「玩家會不會拿它做決策」** | 商店賣什麼要能重現（離開再進來不能重骰），但**講哪一句台詞不用** —— 綁了的話同一場 run 每次進店都聽到同一句招呼，三句寒暄等於只有一句 |
-| **改欄位的預設值不會動到已存在的 prefab** | `public float x = 4f;` 只影響**之後**才建立的實例。已經存進 prefab 的還是舊值（而且舊值可能是零填充的 0）。改預設值時要順手把既有的 prefab 也設一遍 |
-| **`LoadPrefabContents` → `SaveAsPrefabAsset` 會弄丟「指向自己」的引用** | `SpeechBubbleUI.bubbleRoot` 指著自己那顆 GameObject 的 RectTransform，第一次建立時是好的，經過一次載入／存回的來回之後變成 null，**沒有任何警告**。改 prefab 之後要把自我引用的欄位驗一遍（用 `SerializedObject` 讀，不要直接讀屬性 —— 直接讀會丟 `UnassignedReferenceException`） |
-| **Stage prefab 裡的 UI 天生被對話框蓋住** | `Canvas_Stage` 的 sortingOrder 是 **100**，而 `DialogueUI` 自己是一個 sortingOrder **101** 的 Canvas。所以 Stage prefab 裡的按鈕預設就在對話框後面。解法是給那個物件自己一個 Canvas、`overrideSorting = true` 並拉高 order（事件的結束鍵用 150），**還要補一個 `GraphicRaycaster`**，否則看得到卻點不到 |
-| **`Canvas.overrideSorting` 用程式設會設不進去** | `c.overrideSorting = true` 在剛 `AddComponent` 之後常常不會存下來。要用 `SerializedObject` 寫 `m_OverrideSorting` / `m_SortingOrder` |
-| **訊息排隊時「對話框開著」就不會立刻播** | `PopupService.Enqueue` 只有在 `!IsAnyOpen` 時才 `Drain()`。在對話框還開著的時候排隊，玩家得**再點一下**才看得到 —— 但 `Debug.Log` 早就印了，看起來像「Console 有、畫面沒有」。要當下就換掉正文請用 `ShowInstant` |
-| **`OnAllClosed` 不是「文字播完了」** | 它是在 `Drain()` 發現佇列空掉時才發，而 `Drain()` 只有玩家**點擊推進**才會跑。想在「最後一句打完的當下」做事，用 `PopupService.IsIdle` 輪詢 |
-| **「沒帶圖」＝「把圖關掉」** | `DialogueBoxUI.ShowSpeech/ShowSystem` 是 `portraitRoot.SetActive(圖 != null)` —— 每一句**沒帶立繪的台詞都會主動關掉立繪**，連掛在立繪底下的點擊區一起弄死。要整段留著就用 `SetPersistentPortrait()`（`HoldPortrait`），而且**要在第一句台詞排隊之前設**，跟 `HoldOpen` 是同一個時序問題 |
-| **`OnValidate` 不會因為「程式改了清單」而觸發** | 只有 Inspector 編輯、Undo、匯入才會。用編輯器腳本 `items.Add(...)` 之後，靠 `OnValidate` 清掉的**查表快取還停在舊內容**，剛加進去的東西查不到而且**不報錯**。`ItemDatabase` / `CharacterDatabase` 現在會比對筆數自動重建，並提供 `Invalidate()`；**數量沒變的元素調換仍要自己呼叫** |
+| 染血釣竿 | 回合開始時 50% 抽一張【深淵】 |
+| 燒毀的樂譜 | 回合開始獲得一張【灰燼】Token |
+| 混沌撲克 | 回合開始隨機發動抽1／抽2／棄1 |
+| 人魚肉 | 戰鬥開始消耗 10 SAN、回復 25% HP |
+| 嶄新釣竿 | 回合開始抽一張【深淵】 |
+| 老舊釣竿 | 回合開始 25% 抽一張【深淵】 |
+| 螺湮御守 | 觸發【反擊】時額外發動一次 |
+
+⚠️ 附件 PDF 的版本跟資產敘述**有出入**（例如螺湮御守 PDF 寫「改為對全體敵人發動」、
+資產寫「額外發動一次」）。**以哪一份為準要先問清楚**，不然做完要重做。
+
+10 件 `Item_curio_*` 的敘述自己標著「佔位」，本來就還沒設計。
+
+### D. 附件裡有但專案還沒有的品項
+
+附件《收藏品》列了快艇鑰匙、魚叉、人魚的畫像、斷裂的釣竿、損壞的引擎、
+染血的魚叉、合照、誘惑的餌球、撲克牌、魔術帽、紅寶石、月之蟾蜍 ——
+**這些都還沒有 ItemData 資產**。
+《食物》列了乾麵包、瓶裝水、工業酒精、奇怪的魚、扭曲的觸手、蠕動的生蠔、
+謎之烤串、奢侈的血塊、幼小的果實、帶骨肉塊、生日蛋糕、仰望星空 ——
+現有的 6 件食物（人臉魚／怪魚／正常魚／肉乾／硬麵包／海藻）**名字對不上**。
+
+要不要照附件重做食物與收藏品清單，是一個決定，不是一件雜事。
 
 ---
 
-## 5. Unity MCP
+## 這個專案的三個反覆出現的坑
 
-已設定好，可直接讀 Hierarchy、Inspector 欄位、Console，比 parse `.unity` 的 YAML 快得多。
+**新對話接手的人一定要先讀這三條**，它們每一條都已經害我們踩過至少兩次。
 
-**三個已知問題**：
+### 坑 1：`frame` 綁的是根物件自己的 Image ＝ raycastTarget
 
-- 專案路徑含中文「文件」，必須設 `PYTHONUTF8=1`，否則永遠偵測到 0 個 instance
-- **專案在 OneDrive 底下，每個檔案都是雲端佔位（ReparsePoint）**。Unity 會把它誤判成
-  symbolic link，然後在 Console 洗一整排警告，最後說
-  「Disabling directory monitoring for current editor session」——
-  **從此這個 session 不會自動偵測外部檔案變動**，只能靠明確的 `refresh_unity`。
-  這不是誰弄壞的，是 OneDrive 隨選檔案的預設行為，新增檔案時就會冒出來。
-  想根治：在檔案總管對專案資料夾按右鍵 →「**一律保留在此裝置上**」
-- **`manage_asset` 的 `move` 會回報 `failed` 但其實成功了** —— 不要看回傳值，自己驗證檔案位置
+`ShortcutSlotUI` 與 `ProbabilityCardUI` 都是這樣。
+**用 `enabled = false` 讓它隱形，整個東西就點不到也拖不動。**
+要隱形就調 alpha=0：畫面上看不見，但事件照收。
+這個坑在專案裡出現過**三次**。
 
-`git mv` 對**未 commit 的新檔**會失敗（`bad source`），那種情況用一般 `mv`。
+### 坑 2：舊的 `UnityEngine.Input`
 
----
+專案已切到 Input System package。舊 API **編譯期完全看不出來**，
+仍然存在、仍然編得過，但執行時會洗版 `InvalidOperationException`。
+一律用 `Mouse.current` / `Keyboard.current`，而且要判 null
+（沒有滑鼠／鍵盤時是 null，不是錯誤）。
+`RunDebugPanel.cs` 開頭有完整說明。
 
-## 6. 動檔案前先確認 Unity 有沒有開
+### 坑 3：先確認組員有沒有做過了
 
-大批搬移（尤其含 `.meta`）時，Unity 邊 import 邊搬有機率讓 `.meta` 脫鉤、GUID 斷掉。
+我已經重複造過**兩套**輪子：
+- 機率對話另做了一套卡牌（其實跟探索牌是同一種）→ 已刪除
+- 快捷欄以為「使用道具」不存在（其實 Romtyui 早就有
+  `ItemInventory` / `ItemEffectData` / `RelicsInventory` / `RelicsRuntime`，
+  戰鬥 prefab 裡還有 15 個 `ItemSlotUI`）
 
-```powershell
-Get-Process Unity -ErrorAction SilentlyContinue | Select-Object MainWindowTitle
-```
-
-**視窗標題有 `*` 代表有未存檔變更** —— 這時絕對不要動檔案，先請開發者存檔關閉。
-
-單一檔案 + Unity 閒置時風險低，做過幾次沒事；但 20 個以上或含大型資產時務必請他關掉。
+**動手前先 grep `Assets/Romtyui/`。**
 
 ---
 
-## 7. 目前狀態速覽
+## 工具上的注意事項
 
-| 項目 | 現況 |
-|---|---|
-| 分支 | `recovery-progress` |
-| Build Settings | **1 個場景**（`EventScene`） |
-| 程式碼 | 54 個檔（Core 30 + Explore 14 + Map 3 + Menu 3 + UI 3 + Stages 1） |
-| Phase 4c | **✅ 四批全部驗收完成** —— 打牌判定、回合感、失敗結案與重試、屬性與相剋 |
-| Phase 6 | 🔶 **對話／商店／特殊事件已實作**，對話測到可出牌，其餘待驗收 |
-| ⚠️ 未提交 | **24 個修改 + 38 個新檔**，最新 commit 是 `28421c6 Phase4c4` |
-| 封存 | `_Archive/Scripts/` 25 個腳本、`_Archive/Scenes/` 4 個場景 |
-| 編譯 | 0 error 0 warning |
-
-**下一步請看 [SystemsStatus.md](SystemsStatus.md) §6「建議順序」**（全景與理由），
-細節再往 [RoadmapNext.md](RoadmapNext.md) §1 追。
-
-> ⚠️ 有三件事卡在 Romtyui，建議**一次談完**（見 `SystemsStatus.md` §2.1）：
-> 戰鬥結束事件、run 開始就初始化 HP／SAN、世界污染進度歸誰管。
+- **`read_console` 不可靠** —— 常常回傳 0 筆。真正的編譯錯誤要看
+  `C:\Users\greyl\AppData\Local\Unity\Editor\Editor.log`（`grep "error CS"`，
+  注意那份 log 是累積的，要看最後幾筆）。
+- **`execute_code` 用 CodeDom（C# 6）** —— 沒有區域函式、沒有 C# 7 以上語法。
+  而且 `foreach (var x in ...)` 的型別推斷會出事，**寫明確型別**。
+  跨命名空間的型別要寫全名（`EldritchMile.Explore.ExploreStageController`）。
+- **改完 C# 要 `refresh_unity` 之後再確認型別真的載入了**，
+  不然 `execute_code` 會對著舊組件編譯，錯誤訊息會很莫名其妙。
+- **Unity 在 Play 模式時不要改場景物件**，退出時會被丟掉。改 prefab 資產是安全的。
 
 ---
 
-## 8. 命名空間對照（最常搞混）
+## 驗證的做法（這個專案的習慣）
 
-| 命名空間 | 內容 | 為什麼要分 |
-|---|---|---|
-| `EldritchMile.Core` | 流程總管、資料層、判定、UI 服務 | 與 `_Archive/` 的全域舊型別撞名，必須隔離 |
-| `EldritchMile.Map` | 地圖繪製 | 同上（`MapData` / `RunNodeData` 撞名） |
-| `EldritchMile.Explore` | 探索房間、互動物件、卡牌 UI | 同上（`RoomController` 等撞名） |
-| （全域） | `Stages/MenuStageController`、保留的舊卡牌腳本 | 沒有撞名問題，且 Inspector 綁定少一層阻力 |
+不進 Play 模式，用 `execute_code` 跑統計驗證。已經這樣驗過的有：
+- 地圖 500 張的連通性與不交叉
+- 寶箱配額 1000 次分布
+- 機率對話規格 T01~T16（16/16）＋ 重構後回歸 17 項
+- 房間美術：28 個物件在兩台相機下的螢幕座標比對（最大誤差 0.00004）
 
-**跨命名空間引用時，`using` 記得寫在 `namespace` 裡面**（見 §4.2）。
+**能離線驗的就不要開 Play。**
