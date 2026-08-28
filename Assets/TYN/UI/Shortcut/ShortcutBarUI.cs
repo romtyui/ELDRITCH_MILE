@@ -44,6 +44,15 @@ namespace EldritchMile.UI.Shortcut
 
         public ShortcutSlotUI slotPrefab;
 
+        [Header("預設圖")]
+        [Tooltip("道具自己沒有 icon 時用這張。食物欄放針管、遺物欄放卡冊。\n\n" +
+                 "⚠️ 目前所有道具都還沒有自己的圖 —— 少了這張，整條欄會是一排空框，\n" +
+                 "看起來像壞掉。之後某個道具填了自己的 icon 就會自動蓋過這張")]
+        public Sprite fallbackIcon;
+
+        [Tooltip("格子外框。留空就用 SC_Slot prefab 上原本的")]
+        public Sprite slotFrame;
+
         [Header("說明框（hover 時）")]
         public GameObject tooltipRoot;
         public TextMeshProUGUI tooltipTitle;
@@ -109,7 +118,7 @@ namespace EldritchMile.UI.Shortcut
                 if (!string.IsNullOrEmpty(filterTag) && !d.HasTag(filterTag)) continue;
 
                 ShortcutSlotUI s = Instantiate(slotPrefab, expandedRoot);
-                s.Bind(d, stack.count);
+                s.Bind(d, stack.count, fallbackIcon, slotFrame);
                 s.OnHoverChanged += HandleSlotHover;
                 s.OnClicked += HandleSlotClicked;
                 slots.Add(s);

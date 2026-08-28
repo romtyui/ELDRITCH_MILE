@@ -2493,10 +2493,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 820275247}
     m_Modifications:
+    - target: {fileID: 3885461158437593735, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 2d5d9de43d3d7a0419eebadccd67dfd0, type: 3}
+    - target: {fileID: 3885461158437593735, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      propertyPath: m_PreserveAspect
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7660212439634715811, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
       propertyPath: m_Name
       value: ShortcutBar_Food
       objectReference: {fileID: 0}
+    - target: {fileID: 8289728590986607429, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      propertyPath: fallbackIcon
+      value: 
+      objectReference: {fileID: 21300000, guid: 2d5d9de43d3d7a0419eebadccd67dfd0, type: 3}
     - target: {fileID: 8964439401837790384, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
       propertyPath: m_Pivot.x
       value: 1
@@ -2601,6 +2613,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 820275247}
     m_Modifications:
+    - target: {fileID: 3885461158437593735, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 84adbb21d7c7c104696b57ee0fccaf66, type: 3}
+    - target: {fileID: 3885461158437593735, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      propertyPath: m_PreserveAspect
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7660212439634715811, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
       propertyPath: m_Name
       value: ShortcutBar_Relic
@@ -2609,6 +2629,10 @@ PrefabInstance:
       propertyPath: filterTag
       value: Curio
       objectReference: {fileID: 0}
+    - target: {fileID: 8289728590986607429, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      propertyPath: slotFrame
+      value: 
+      objectReference: {fileID: 21300000, guid: 4470358081bb8a34cb99ed5645e9e40b, type: 3}
     - target: {fileID: 8964439401837790384, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
       propertyPath: m_Pivot.x
       value: 1

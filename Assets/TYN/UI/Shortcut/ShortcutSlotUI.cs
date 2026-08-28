@@ -43,15 +43,38 @@ namespace EldritchMile.UI.Shortcut
         private Vector2 homePos;
         private Coroutine push;
 
-        public void Bind(ItemData item, int count)
+        /// <summary>這一格有沒有外框圖。沒有的話外框要保持透明但仍然收 raycast。</summary>
+        private bool frameVisible;
+
+        /// <param name="fallbackIcon">
+        /// 道具自己沒有圖時退而用這張。
+        ///
+        /// ⚠️ **目前 26 個道具沒有一個填了 icon**，而下面是 `icon.enabled = 有圖`——
+        /// 沒有這個退路的話整條欄就是一排看不見的空框，
+        /// 看起來會像「UI 壞了」而不是「道具還沒有圖」。
+        ///
+        /// 食物共用針管、遺物共用卡冊**本來就是美術稿的分類做法**，不是將就：
+        /// 那兩張圖畫的是「容器」，不是某一個特定道具。
+        /// </param>
+        /// <param name="frameSprite">格子外框。留空就沿用 prefab 上原本的。</param>
+        public void Bind(ItemData item, int count, Sprite fallbackIcon = null, Sprite frameSprite = null)
         {
             Item = item;
             Count = count;
 
+            // ⚠️ **不要用 frame.enabled = false 讓外框隱形。**
+            //
+            // `frame` 綁的是這一格**根物件自己的 Image**，而那個 Image 就是
+            // 這一格的 raycastTarget —— 停用它整格就點不到了（我們修過同一個坑）。
+            // 要隱形就把 alpha 調 0：畫面上看不見，但事件照收。
+            frameVisible = frameSprite != null;
+            if (frame != null) frame.sprite = frameSprite;
+
             if (icon != null)
             {
-                icon.sprite = item != null ? item.icon : null;
-                icon.enabled = icon.sprite != null;
+                Sprite s = item != null && item.icon != null ? item.icon : fallbackIcon;
+                icon.sprite = s;
+                icon.enabled = s != null;
             }
 
             if (countText != null)
@@ -61,7 +84,7 @@ namespace EldritchMile.UI.Shortcut
                 if (many) countText.text = count.ToString();
             }
 
-            if (frame != null) frame.color = normalTint;
+            ApplyTint(normalTint);
 
             homePos = ((RectTransform)transform).anchoredPosition;
             gameObject.SetActive(true);
@@ -71,7 +94,7 @@ namespace EldritchMile.UI.Shortcut
         public void OnPointerEnter(PointerEventData eventData)
         {
             IsHovered = true;
-            if (frame != null) frame.color = hoverTint;
+            ApplyTint(hoverTint);
             StartPush(hoverPushX);
             OnHoverChanged?.Invoke(this);
         }
@@ -79,9 +102,30 @@ namespace EldritchMile.UI.Shortcut
         public void OnPointerExit(PointerEventData eventData)
         {
             IsHovered = false;
-            if (frame != null) frame.color = normalTint;
+            ApplyTint(normalTint);
             StartPush(0f);
             OnHoverChanged?.Invoke(this);
+        }
+
+        /// <summary>
+        /// 套用 normal／hover 的染色。
+        ///
+        /// 【為什麼圖示也要染】原本只染外框 —— 那在沒有外框的欄（食物）
+        /// 等於 **hover 完全沒有視覺回饋**，只剩位移。
+        ///
+        /// 【為什麼外框要另外算 alpha】沒有外框圖的時候，根物件的 Image
+        /// 必須留著收 raycast（見 Bind 的說明），所以只能靠 alpha=0 隱形；
+        /// 但 tint 會整個蓋掉 color，不在這裡補就會又冒出白方塊。
+        /// </summary>
+        private void ApplyTint(Color tint)
+        {
+            if (icon != null) icon.color = tint;
+
+            if (frame == null) return;
+
+            Color c = tint;
+            if (!frameVisible) c.a = 0f;
+            frame.color = c;
         }
 
         public void OnPointerClick(PointerEventData eventData) => OnClicked?.Invoke(this);
