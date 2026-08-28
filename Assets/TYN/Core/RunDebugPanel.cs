@@ -140,20 +140,34 @@ namespace EldritchMile.Core
             GUILayout.Label("直接跳到（除錯用，跳過流程）", labelStyle);
 
             GUILayout.BeginHorizontal();
+            // ⚠️ 這裡要列**全部**能跳的 Stage。少列一個，那個 Stage 就等於沒有入口 ——
+            //    新做好的東西最常卡在「我要怎麼走到它」
+            int perRow = 0;
             foreach (StageType t in new[]
             {
                 StageType.ProbabilityDialogue,
+                StageType.SpecialEvent,
+                StageType.Event,
                 StageType.Dialogue,
                 StageType.Explore,
                 StageType.Shop,
                 StageType.Battle,
+                StageType.Menu,
             })
             {
+                if (perRow >= 4)   // 一排四顆，不然按鈕會被擠到看不見字
+                {
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    perRow = 0;
+                }
+
                 if (GUILayout.Button(t.ToString()))
                 {
                     Debug.Log($"[除錯] 直接跳到 {t}");
                     GameFlowManager.Instance.DebugJumpToStage(t);
                 }
+                perRow++;
             }
             GUILayout.EndHorizontal();
         }
