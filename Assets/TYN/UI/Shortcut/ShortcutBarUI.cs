@@ -33,7 +33,8 @@ namespace EldritchMile.UI.Shortcut
     /// Romtyui 的 `ItemInventory` / `ItemEffectData` 一直都在，只是需要
     /// `BattleManager`，所以那一套只能在戰鬥裡跑；戰鬥外的簡易效果才走 PlayerVitals。
     /// </summary>
-    public class ShortcutBarUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class ShortcutBarUI : MonoBehaviour,
+        IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         [Header("要顯示哪一類")]
         [Tooltip("道具標籤。Food＝食物（針筒）、Curio＝收藏品／遺物（卡冊）。\n" +
@@ -64,8 +65,10 @@ namespace EldritchMile.UI.Shortcut
         public TextMeshProUGUI tooltipBody;
 
         [Header("行為")]
-        [Tooltip("勾選＝滑鼠移上去就展開；取消＝要點一下（美術稿方案 3 的兩種）")]
-        public bool openOnHover = true;
+        [Tooltip("勾選＝滑鼠移上去就展開；取消＝**點一下開、再點一下關**（美術稿方案 3 的兩種）。\n\n" +
+                 "預設是點擊 —— hover 展開在這個位置很容易誤觸：\n" +
+                 "滑鼠只是要移到畫面右側就會整條彈開")]
+        public bool openOnHover = false;
 
         [Tooltip("每一格出現的間隔秒數。0 = 同時出現。\n" +
                  "**逐格出現比一次散開好看**，而且格數多的時候不會一片閃")]
@@ -203,6 +206,19 @@ namespace EldritchMile.UI.Shortcut
         public void OnPointerExit(PointerEventData eventData)
         {
             if (openOnHover) SetExpanded(false);
+        }
+
+        /// <summary>
+        /// 點一下開、再點一下關。
+        ///
+        /// ⚠️ 點在**某一格**上時不會走到這裡 —— `ShortcutSlotUI` 自己也實作了
+        /// `IPointerClickHandler`，Unity 只會送給往上找到的**第一個**處理者。
+        /// 所以「點格子＝使用道具」與「點空白＝開關」不會互相干擾。
+        /// </summary>
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (openOnHover) return;    // hover 模式下點擊不該再切換，會打架
+            Toggle();
         }
 
         // ==========================================

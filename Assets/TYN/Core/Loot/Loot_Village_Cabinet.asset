@@ -40,7 +40,8 @@ MonoBehaviour:
       itemId: 
       requireTags:
       - Curio
-      excludeTags: []
+      excludeTags:
+      - EventOnly
       table: {fileID: 0}
       weight: 20
       countMin: 1

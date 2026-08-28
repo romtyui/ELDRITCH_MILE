@@ -28,8 +28,9 @@ namespace EldritchMile.UI.Shortcut
         public Color hoverTint = Color.white;
 
         [Tooltip("hover 時往外推幾像素。0 = 不推。\n" +
+                 "⚠️ 快捷欄貼在畫面**右側**，所以往外＝往左＝**負值**。\n" +
                  "美術稿方案 5 是「圖案突出＋顯示文字」，這個值就是突出多少")]
-        public float hoverPushX = 10f;
+        public float hoverPushX = -14f;
 
         [Min(0f)] public float pushSeconds = 0.12f;
 
@@ -41,6 +42,7 @@ namespace EldritchMile.UI.Shortcut
         public bool IsHovered { get; private set; }
 
         private Vector2 homePos;
+        private bool homeCaptured;
         private Coroutine push;
 
         /// <summary>這一格有沒有外框圖。沒有的話外框要保持透明但仍然收 raycast。</summary>
@@ -86,13 +88,33 @@ namespace EldritchMile.UI.Shortcut
 
             ApplyTint(normalTint);
 
-            homePos = ((RectTransform)transform).anchoredPosition;
+            // ⚠️ **這裡不能抓 homePos。**
+            //
+            // 這一格住在 VerticalLayoutGroup 底下，而 Layout 是在**影格結尾**才排的 ——
+            // Bind() 當下抓到的還是 prefab 的原始值（通常是 0,0）。
+            // 拿那個值當「原位」，hover 離開時就會飛到容器頂端回不來。
+            //
+            // 改成第一次 hover 時才抓（那時排版一定跑完了），見 EnsureHome()。
+            homeCaptured = false;
+
             gameObject.SetActive(true);
+        }
+
+        /// <summary>
+        /// 記住「本來的位置」。**只在還沒被推出去的時候抓** ——
+        /// 推出去之後再抓就會把推出的位移當成原位，於是每次 hover 都往外跑一點。
+        /// </summary>
+        private void EnsureHome()
+        {
+            if (homeCaptured) return;
+            homePos = ((RectTransform)transform).anchoredPosition;
+            homeCaptured = true;
         }
 
         // ==========================================
         public void OnPointerEnter(PointerEventData eventData)
         {
+            EnsureHome();          // ⚠️ 一定要在推出去之前
             IsHovered = true;
             ApplyTint(hoverTint);
             StartPush(hoverPushX);
@@ -132,6 +154,8 @@ namespace EldritchMile.UI.Shortcut
 
         private void StartPush(float dx)
         {
+            EnsureHome();
+
             if (push != null) StopCoroutine(push);
             if (pushSeconds <= 0f)
             {

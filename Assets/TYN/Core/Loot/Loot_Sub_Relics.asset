@@ -25,7 +25,8 @@ MonoBehaviour:
       requireTags:
       - Curio
       - Common
-      excludeTags: []
+      excludeTags:
+      - EventOnly
       table: {fileID: 0}
       weight: 50
       countMin: 1
@@ -35,7 +36,8 @@ MonoBehaviour:
       requireTags:
       - Curio
       - Uncommon
-      excludeTags: []
+      excludeTags:
+      - EventOnly
       table: {fileID: 0}
       weight: 33
       countMin: 1
@@ -45,7 +47,8 @@ MonoBehaviour:
       requireTags:
       - Curio
       - Rare
-      excludeTags: []
+      excludeTags:
+      - EventOnly
       table: {fileID: 0}
       weight: 17
       countMin: 1
