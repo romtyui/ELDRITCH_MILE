@@ -78,8 +78,11 @@ namespace EldritchMile.UI.Shortcut
         private void OnEnable() => Refresh();
 
         // ==========================================
-        /// <summary>依目前身上的道具重建。道具變動時由外面呼叫。</summary>
-        public void Refresh()
+        /// <summary>依目前身上的道具重建。</summary>
+        /// <param name="collapseAfter">
+        /// 重建後要不要收合。展開途中重讀時要傳 false —— 傳 true 會把剛要展開的收掉。
+        /// </param>
+        public void Refresh(bool collapseAfter = true)
         {
             for (int i = 0; i < slots.Count; i++) if (slots[i] != null) Destroy(slots[i].gameObject);
             slots.Clear();
@@ -115,12 +118,28 @@ namespace EldritchMile.UI.Shortcut
             if (collapsedIcon != null)
                 collapsedIcon.SetActive(showWhenEmpty || slots.Count > 0);
 
-            SetExpanded(false, true);
+            // 空的時候要看得出「是真的沒有」，而不是「壞了」——
+            // 沒有這個提示的話，展開一個空欄跟功能失效長得一模一樣
+            if (slots.Count == 0)
+            {
+                Debug.Log($"[快捷欄] {name}：身上沒有標籤「{filterTag}」的道具，展開會是空的");
+            }
+
+            if (collapseAfter) SetExpanded(false, true);
         }
 
         // ==========================================
         public void SetExpanded(bool on, bool instant = false)
         {
+            // ⚠️ **展開前一定要重讀背包。**
+            //
+            // 原本只在 OnEnable 建一次格子 —— 那是場景載入的時候，背包還是空的，
+            // 所以永遠是 0 個格子，之後撿到東西也不會出現。
+            // 症狀是「看得到欄位但點不到」，因為根本沒有東西可以點。
+            //
+            // 放在展開的時機而不是每幀 —— 只有要看的時候才重建，代價可以忽略
+            if (on && !expanded) Refresh(false);
+
             expanded = on;
 
             if (reveal != null) { StopCoroutine(reveal); reveal = null; }
