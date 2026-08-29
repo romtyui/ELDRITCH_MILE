@@ -2536,6 +2536,10 @@ PrefabInstance:
       value: ShortcutBar_Food
       objectReference: {fileID: 0}
     - target: {fileID: 8289728590986607429, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      propertyPath: slotFrame
+      value: 
+      objectReference: {fileID: 21300000, guid: 4470358081bb8a34cb99ed5645e9e40b, type: 3}
+    - target: {fileID: 8289728590986607429, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
       propertyPath: openOnHover
       value: 0
       objectReference: {fileID: 0}
@@ -2674,6 +2678,10 @@ PrefabInstance:
       propertyPath: openOnHover
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8289728590986607429, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      propertyPath: fallbackIcon
+      value: 
+      objectReference: {fileID: 21300000, guid: 3dfd7166cef92b146af3e7e124662842, type: 3}
     - target: {fileID: 8964439401837790384, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
       propertyPath: m_Pivot.x
       value: 1
@@ -7165,7 +7173,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 10.96356, y: 23.710001}
+    oldSize: {x: 10.96, y: 23.727358}
     newSize: {x: 28.94, y: 40.931713}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
