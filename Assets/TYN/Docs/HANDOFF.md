@@ -30,6 +30,8 @@
 | 後製兩顆 Global Volume 補回 ＋ 相機打開 `renderPostProcessing` | 「渲染」的大宗，上一輪只補了燈 |
 | 「指定對手」改走 Formation，之前寫的那條沒人讀 | `BattleStageController.ReserveFormationFor` |
 | 戰鬥道具面板的接口補上（效果資產還缺） | `ItemData.battleItemEffect`、`BindItemsFromInventory` |
+| 背景自動對齊相機，祭壇不再露出上緣底色 | `Core/BackdropFit.cs`、`StageBackdrop.fitToCamera` |
+| 地圖改成畫出**所有**連線，走之前就看得到路網 | `MapView.lineDisplay = AllConnections` |
 
 ### 遺物的兩張圖
 
@@ -91,6 +93,53 @@
 
 ⚠️ 留空 `endButton` 會退回舊的「等一下、點一下或逾時就走」，
 `endMinSeconds` / `endAutoSeconds` 那兩格**只有那時才有作用**。
+
+### 背景對齊相機（2026-08-29 第八輪）
+
+祭壇上緣露出底色，就是交接文件早就量過的那個 **0.92 個單位**：
+
+```
+祭壇背景　y −6.12 ~ 5.08
+相機　　　y −4.00 ~ 6.00　（正交、size 5、位在 y = 1）
+          ↑ 上緣差 0.92（1080p 約 78px 的天空底色）
+          ↓ 下緣反而多出 2.12 —— 整張圖偏低
+```
+
+新元件 **`Core/BackdropFit.cs`**：量出背景的實際 bounds，把整組**位移到相機中心**；
+位移完還蓋不滿才放大（會在 Console 說一聲，因為放大等於裁掉美術的取景）。
+
+驗算（祭壇）：對齊後 y **−4.60 ~ 6.60**，上下各多 0.60、左右各多 1.07 → 蓋得住 ✓
+
+⚠️ **`background` 那一格要明確指定。** 留空會挑「面積最大的 SpriteRenderer」，
+但祭壇那組的**玻璃瓶比背景還寬**（21.79 vs 19.91）—— 猜出來的是玻璃瓶，
+照著它對齊只會更歪。猜的時候會在 Console 吵一聲。
+
+已套用：
+
+| | 怎麼掛 |
+|---|---|
+| 祭壇 `Stage_SpecialEvent` | 美術是 prefab 裡的固定物件 → `Art_Altar` 直接掛 `BackdropFit` |
+| 事件／機率對話 | 美術是執行時生成的 → `StageBackdrop.fitToCamera` 打勾 |
+| 地圖 | 同上 |
+
+`StageBackdrop.fitToCamera` 打開之後 **Offset 那一格就不重要了**（會被量出來的值蓋掉）。
+要照美術調好的取景擺就取消勾選，那時 Offset 才是真相。
+
+> 房間美術（`Room_Village_*`）是同一組數字，只是靠 prefab 根整個往上擺了 1
+> 才剛好蓋住。**換一張比例不同的圖，那個手調值就失效了** ——
+> 真的要治本，房間也掛同一支。
+
+### 地圖連線：改成畫出全部
+
+`MapView.lineDisplay` 之前是 **`VisitedPathOnly`**（只畫走過的），
+所以還沒走過的節點之間**一條線都沒有** —— 玩家沒辦法判斷
+「我往 1 走，之後能到 2 還是 3」。
+
+改成 **`AllConnections`**：整張路網一開始就看得到，可以提前規劃。
+
+> enum 的說明裡寫「代價是失去未知感」—— 那是當初的取捨，
+> 現在的決定是「可規劃」比「未知」重要（2026-08-29 使用者指示）。
+> 三種模式都還在，換一格就切得回去。
 
 ### 併場景時掉了什麼（2026-08-29 第七輪）
 

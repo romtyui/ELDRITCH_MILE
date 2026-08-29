@@ -44,6 +44,17 @@ namespace EldritchMile.Core
                  "所以美術自己畫的顏色差異會保留，不是整片塗成同一色。")]
         public Color tint = Color.white;
 
+        [Tooltip("生成之後**自動對齊相機**（見 `BackdropFit`）。\n\n" +
+                 "美術原稿的中心不一定在相機中心 —— 祭壇那張差 0.92 個單位，\n" +
+                 "1080p 換算上緣約 78px 的天空底色。\n\n" +
+                 "⚠️ 打開之後下面那個 Offset **就不重要了**（會被量出來的值蓋掉）。\n" +
+                 "要照美術調好的取景擺就取消勾選，那時 Offset 才是真相。")]
+        public bool fitToCamera = false;
+
+        [Tooltip("`fitToCamera` 打開時，拿哪一張當背景本體來量。\n" +
+                 "留空會自動挑面積最大的 —— 但前景小物件常常比背景還寬，會猜錯")]
+        public string backgroundChildName = "";
+
         [Tooltip("放好之後檢查有沒有蓋滿相機，沒蓋滿就在 Console 提醒。\n\n" +
                  "**只是提醒，不會自己動位置** —— 取景是美術調過的\n" +
                  "（見 commit「房間美術重建：對齊美術原場景的實際畫面」），\n" +
@@ -76,7 +87,8 @@ namespace EldritchMile.Core
 
             ApplyTint();
 
-            if (warnIfNotCovering) WarnIfNotCovering();
+            if (fitToCamera) FitSpawnedToCamera();
+            else if (warnIfNotCovering) WarnIfNotCovering();
         }
 
         /// <summary>
@@ -103,6 +115,43 @@ namespace EldritchMile.Core
                 Color c = all[i].color;
                 all[i].color = new Color(c.r * tint.r, c.g * tint.g, c.b * tint.b, c.a * tint.a);
             }
+        }
+
+        /// <summary>
+        /// 把生成出來的那一份對齊相機。**做法與 `BackdropFit` 是同一套**，
+        /// 只是這裡的對象是執行時生成的，掛不了元件在資產上。
+        /// </summary>
+        private void FitSpawnedToCamera()
+        {
+            if (spawned == null) return;
+
+            BackdropFit fit = spawned.GetComponent<BackdropFit>();
+            if (fit == null) fit = spawned.AddComponent<BackdropFit>();
+
+            if (!string.IsNullOrEmpty(backgroundChildName))
+            {
+                Transform t = FindDeep(spawned.transform, backgroundChildName);
+                if (t != null) fit.background = t.GetComponent<SpriteRenderer>();
+                else Debug.LogWarning(
+                    $"[背景] 在「{spawned.name}」底下找不到「{backgroundChildName}」，" +
+                    "改用自動挑（可能會挑到前景物件）。", this);
+            }
+
+            // AddComponent 的當下 OnEnable 已經跑過了（那時 background 還沒設），
+            // 所以這裡一定要再叫一次
+            fit.Fit();
+        }
+
+        private static Transform FindDeep(Transform root, string childName)
+        {
+            if (root.name == childName) return root;
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform found = FindDeep(root.GetChild(i), childName);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         /// <summary>離場時呼叫。**一定要呼叫** —— 不收的話背景會留到下一站。</summary>

@@ -122,10 +122,39 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8109907187099927432, guid: 4c0751ac2e304d24c840362c9172f1f1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 967644932197582188}
   m_SourcePrefab: {fileID: 100100000, guid: 4c0751ac2e304d24c840362c9172f1f1, type: 3}
 --- !u!4 &3680530339603353958 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 675554753125956602, guid: 4c0751ac2e304d24c840362c9172f1f1, type: 3}
   m_PrefabInstance: {fileID: 4211942760862526108}
   m_PrefabAsset: {fileID: 0}
+--- !u!212 &3849421945022912038 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 1087680320772390074, guid: 4c0751ac2e304d24c840362c9172f1f1, type: 3}
+  m_PrefabInstance: {fileID: 4211942760862526108}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5404317621502322964 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8109907187099927432, guid: 4c0751ac2e304d24c840362c9172f1f1, type: 3}
+  m_PrefabInstance: {fileID: 4211942760862526108}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &967644932197582188
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5404317621502322964}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ac81f60d2e94b7ca9e5f138cd240b71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.BackdropFit
+  background: {fileID: 3849421945022912038}
+  upscaleIfTooSmall: 1
+  upscalePadding: 1.01
+  verbose: 0
