@@ -59,6 +59,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2432005423631464005}
   - component: {fileID: 4562562698374438084}
+  - component: {fileID: 8564086833101903284}
   m_Layer: 0
   m_Name: Room_Altar
   m_TagString: Untagged
@@ -103,6 +104,22 @@ MonoBehaviour:
   slots: []
   entryText: "\u4E00\u822C\u5BB6\u5EAD\u751F\u6D3B\u7684\u6C11\u5B85\uFF0C\u8F03\u70BA\u7C21\u964B\u4F46\u7A31\u4E0D\u4E0A\u8CA7\u9178\u3002\u5730\u9762\u4E0A\u904D\u4F48\u8457\u4E00\u4E9B\u5947\u602A\u7684\u9B5A\u985E\u5C4D\u9AD4\u8DDF\u8840\u8DE1\u3002"
   clearText: "\u9019\u88E1\u6C92\u6709\u5225\u7684\u6771\u897F\u4E86\u3002"
+--- !u!114 &8564086833101903284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1540698438044157744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ac81f60d2e94b7ca9e5f138cd240b71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.BackdropFit
+  background: {fileID: 3556615565115543647}
+  upscaleIfTooSmall: 1
+  upscalePadding: 1.01
+  verbose: 0
 --- !u!1 &2467188439340747748
 GameObject:
   m_ObjectHideFlags: 0
@@ -356,6 +373,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4c0751ac2e304d24c840362c9172f1f1, type: 3}
+--- !u!212 &3556615565115543647 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 1087680320772390074, guid: 4c0751ac2e304d24c840362c9172f1f1, type: 3}
+  m_PrefabInstance: {fileID: 4486592924515331301}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &3973187562685749023 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 675554753125956602, guid: 4c0751ac2e304d24c840362c9172f1f1, type: 3}

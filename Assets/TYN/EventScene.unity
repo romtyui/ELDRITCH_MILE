@@ -8435,7 +8435,7 @@ MonoBehaviour:
   specialEventNodePrefab: {fileID: 0}
   linePrefab: {fileID: 6925335207397633122, guid: 242a4bdbbc53d6245b5123f605d5fb9a, type: 3}
   lineSize: {x: 5, y: 200}
-  lineDisplay: 1
+  lineDisplay: 0
   playerAvatar: {fileID: 1036434012}
   avatarOffset: {x: 40, y: -20}
   avatarMoveDuration: 0.8
@@ -8543,6 +8543,8 @@ MonoBehaviour:
   offset: {x: 0, y: 1, z: 0}
   scale: 0.5
   tint: {r: 0.42, g: 0.44, b: 0.52, a: 1}
+  fitToCamera: 1
+  backgroundChildName: Fishing village Outdoor area 1BG
   warnIfNotCovering: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

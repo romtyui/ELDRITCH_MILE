@@ -108,6 +108,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7013287522508956126}
   - component: {fileID: 6949544504022293931}
+  - component: {fileID: 1350274051008406532}
   m_Layer: 0
   m_Name: Room_Village_Small
   m_TagString: Untagged
@@ -152,6 +153,22 @@ MonoBehaviour:
   slots: []
   entryText: "\u4E00\u9593\u7C21\u964B\u7684\u6F01\u6751\u6728\u5C4B\uFF0C\u4F3C\u4E4E\u662F\u8CA7\u7AAE\u6F01\u6C11\u7684\u4F4F\u6240\u3002\u7531\u6728\u982D\u88FD\u6210\uFF0C\u770B\u4E0A\u53BB\u5341\u5206\u7834\u721B\u3002"
   clearText: "\u9019\u88E1\u6C92\u6709\u5225\u7684\u6771\u897F\u4E86\u3002"
+--- !u!114 &1350274051008406532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1891687337091006674}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ac81f60d2e94b7ca9e5f138cd240b71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.BackdropFit
+  background: {fileID: 2885913862957103979}
+  upscaleIfTooSmall: 1
+  upscalePadding: 1.01
+  verbose: 0
 --- !u!1 &2441980462648034701
 GameObject:
   m_ObjectHideFlags: 0
@@ -356,6 +373,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 480146850ac22894bb649e3cd6e9f8d8, type: 3}
+--- !u!212 &2885913862957103979 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 795941080578136651, guid: 480146850ac22894bb649e3cd6e9f8d8, type: 3}
+  m_PrefabInstance: {fileID: 2524007471411814688}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5497985083478610966 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8019740102203634998, guid: 480146850ac22894bb649e3cd6e9f8d8, type: 3}

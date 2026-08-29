@@ -248,6 +248,16 @@ namespace EldritchMile.Explore
             // 戰鬥那邊讀的是同一個，所以「從探索到戰鬥，背後是同一個地方」
             ApplyDressing(currentRoom, node);
 
+            // 背景對齊相機。**一定要在 ApplyDressing 之後** ——
+            // 擺設會切換子物件，切完才是這一間房真正的樣子。
+            //
+            // 【為什麼掛在房間的根、不是掛在美術上】slot 與美術是**兄弟**，
+            // 只移動美術的話兩者會脫鉤，畫上去的櫃子旁邊就會浮出一個寶箱。
+            // 移動整個房間根，美術與 slot 一起走，對位不受影響。
+            EldritchMile.Core.BackdropFit fit =
+                currentRoom.GetComponent<EldritchMile.Core.BackdropFit>();
+            if (fit != null) fit.Fit();
+
             room = currentRoom.GetComponent<RoomController>();
             if (room != null)
             {
