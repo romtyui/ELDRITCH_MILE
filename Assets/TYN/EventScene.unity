@@ -1503,6 +1503,7 @@ MonoBehaviour:
   staggerSeconds: 0
   showWhenEmpty: 1
   emptyText: "\uFF08\u6C92\u6709\uFF09"
+  pollSeconds: 0.2
 --- !u!114 &256099496
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3717,8 +3718,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 34.97, y: 66}
-  m_SizeDelta: {x: 100, y: 400}
+  m_AnchoredPosition: {x: 10.050537, y: -29.7024}
+  m_SizeDelta: {x: 100, y: 600}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &503236575
 MonoBehaviour:
@@ -3738,7 +3739,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 1
-  m_Spacing: -35
+  m_Spacing: -32
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
@@ -3838,6 +3839,7 @@ MonoBehaviour:
   staggerSeconds: 0.04
   showWhenEmpty: 1
   emptyText: "\uFF08\u6C92\u6709\uFF09"
+  pollSeconds: 0.2
 --- !u!114 &519271105
 MonoBehaviour:
   m_ObjectHideFlags: 0

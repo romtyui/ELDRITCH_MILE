@@ -112,6 +112,11 @@ MonoBehaviour:
   valueFormat: +{0}
   dragAlpha: 0.6
   playDistance: 90
+  playLaunchAnimation: 1
+  launchSeconds: 0.32
+  launchEndScale: 0.55
+  launchTargetOffset: {x: 0, y: 60}
+  launchArcHeight: 90
 --- !u!1 &4458396388190996576
 GameObject:
   m_ObjectHideFlags: 0
@@ -187,7 +192,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

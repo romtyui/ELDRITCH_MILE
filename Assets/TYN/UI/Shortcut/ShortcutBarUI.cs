@@ -369,8 +369,68 @@ namespace EldritchMile.UI.Shortcut
         /// 舊的 `UnityEngine.Input` 編得過但執行時會洗版例外（見 RunDebugPanel）。
         /// 沒有滑鼠時 `Mouse.current` 是 null，那不是錯誤。
         /// </summary>
+        /// 上一次看到的背包長相。變了就重建
+        private int inventorySignature = int.MinValue;
+
+        /// 距離上次檢查過了多久
+        private float pollTimer;
+
+        [Tooltip("多久檢查一次背包有沒有變（秒）。0 = 每一幀都查")]
+        [Min(0f)] public float pollSeconds = 0.2f;
+
+        /// <summary>
+        /// 背包變了就重建。
+        ///
+        /// 【為什麼是輪詢而不是訂事件】`RunContext` 沒有「背包變動」的事件，
+        /// 而會動背包的路有好幾條（事件的 GrantItem、寶箱的 LootService、
+        /// 商店、快捷欄自己用掉一個…）。要改成事件就得每一條都補通知，
+        /// 漏一條就是「撿到東西但欄位沒更新」——那正是這個 bug。
+        ///
+        /// 【為什麼原本沒事】舊的欄是**點開才展開**的，`SetExpanded(true)` 會先
+        /// `Refresh(false)`，等於每次要看的時候都重讀。食物欄改成常駐之後
+        /// 那個時機沒有了，於是只在 `OnEnable` 建一次 —— 之後撿什麼都不會變。
+        ///
+        /// 代價是每 0.2 秒掃一次背包（通常個位數個疊），可以忽略。
+        /// </summary>
+        private void PollInventory()
+        {
+            if (pollSeconds > 0f)
+            {
+                pollTimer += Time.unscaledDeltaTime;
+                if (pollTimer < pollSeconds) return;
+                pollTimer = 0f;
+            }
+
+            RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+
+            int sig = 17;
+            if (run != null)
+            {
+                for (int i = 0; i < run.inventory.Count; i++)
+                {
+                    ItemStack st = run.inventory[i];
+                    if (st == null) continue;
+                    sig = sig * 31 + (st.id != null ? st.id.GetHashCode() : 0);
+                    sig = sig * 31 + st.count;
+                }
+            }
+
+            if (sig == inventorySignature) return;
+
+            bool first = inventorySignature == int.MinValue;
+            inventorySignature = sig;
+
+            // 第一次不用喊 —— 那是正常的初始化，不是「背包變了」
+            if (!first)
+                Debug.Log($"[快捷欄] {name}：背包變了，重建格子");
+
+            Refresh(!expanded && !alwaysExpanded);
+        }
+
         private void Update()
         {
+            PollInventory();
+
             if (!expanded || openOnHover || alwaysExpanded) return;
 
             // ── 1. 滑鼠離開整條欄超過緩衝時間 ──
