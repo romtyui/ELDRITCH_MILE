@@ -57,6 +57,7 @@
 | 純敘述事件不再吞掉 `resultText`（結尾的謝謝測試） | `EventStageController.BuildResultBody` |
 | TYN 的貼圖依用途調 maxTextureSize（1015 → 187 MB） | 卡牌／地圖圖示 512、UI／立繪 1024、背景 2048 |
 | 戰後先看結算、按離開鍵才回地圖 | `BattleStageController.endButton` |
+| 修戰後卡死：離開鍵是根 Canvas，WorldSpace 跑到畫面外 | `EndButtonCanvas` 改 Overlay ＋ 加一道螢幕座標檢查 |
 
 ### 遺物的兩張圖
 
@@ -197,6 +198,53 @@ y −4.60 ~ 6.60　　x −9.96 ~ 9.96
 
 > 地圖用的是**戶外**那張、探索用的是**中屋**那張，所以畫面內容本來就不同；
 > 統一的是「怎麼擺」，不是「擺什麼」。
+
+### ⛔ 戰後卡死：離開鍵跑到世界座標去了（2026-08-30）
+
+**症狀**：結算出現了、點掉對話框之後**卡住，沒有出口**。
+
+**成因**：`StageHost` 不是每個 Stage 都掛在同一個地方 ——
+
+| Stage | 掛在哪 | 父層鏈上有 Canvas |
+|---|---|---|
+| Menu / Dialogue / Shop / **Event** / **ProbabilityDialogue** | `[UI_ROOT]/Canvas_Stage` | **有** |
+| **Explore / SpecialEvent / Battle** | `[STAGE_HOST]/WorldRoot` | **沒有** |
+
+Canvas 有沒有上層 Canvas，行為完全不同：
+
+- **巢狀** Canvas → `renderMode` 被忽略，跟著最上層走
+- **根** Canvas → `renderMode` **真的生效**
+
+我把離開鍵從 `Stage_Event` 複製到 `Stage_Battle`，它序列化的 `renderMode`
+是 **WorldSpace**。在事件那邊是巢狀所以沒事；到了戰鬥變成根 Canvas，
+整顆鈕就跑到世界座標 **(60, 424)** —— 相機只看得到 x −8.9~8.9、y −4~6，
+**永遠看不到，也點不到**。
+
+而 `WaitThenLeave` 在有 `endButton` 時是**不逾時**的（出口只有那顆鈕），
+所以就真的卡死了。
+
+#### 修法
+
+戰鬥的離開鍵改成**自己一層** `EndButtonCanvas`：
+`ScreenSpaceOverlay` ＋ `CanvasScaler`（1920×1080, match 0.5）＋ `GraphicRaycaster`，
+order 200（壓過戰鬥自己的 UI，最高 55）。鈕是它的子物件，
+所以 anchor／位置照常有意義（左下 60, 60）。
+
+`SetEndButtonVisible` 開關的是**鈕**，Canvas 常駐 ——
+關掉 Canvas 的話子物件的 layout 不會跑。
+
+#### 而且加了一道「不要再卡死一次」的檢查
+
+放出離開鍵的當下會量它的螢幕座標，只要**不是 Overlay 或不在畫面內**
+就印一行紅字說明原因。這種錯誤原本完全無聲 ——
+鈕「顯示」了、程式也認為一切正常，只有玩家卡在那裡。
+
+> ✅ 順帶查證：`Stage_Event` 與 `Stage_ProbabilityDialogue` 的離開鍵**沒有這個問題**，
+> 因為它們掛在 `Canvas_Stage` 底下（巢狀）。`SpecialEvent` 雖然也在 WorldRoot，
+> 但它沒有離開鍵（走 `BeginOutro` 自動結束）。
+
+⚠️ **以後在 Explore / SpecialEvent / Battle 這三個 Stage 裡加任何 UI 都要注意這件事** ——
+它們沒有父層 Canvas，所有 Canvas 都是根 Canvas。
 
 ### 戰後先看結算，按離開鍵才回地圖（2026-08-30）
 

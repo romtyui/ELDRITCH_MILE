@@ -905,6 +905,38 @@ public class BattleStageController : StageController
     {
         if (endButton == null) return;
         endButton.gameObject.SetActive(visible);
+
+        if (!visible) return;
+
+        // ⚠️ **這一段是為了不要再卡死一次。**
+        //
+        // 戰鬥這一站掛在 `WorldRoot`（不是 Canvas）底下，所以鈕上的 Canvas
+        // 會是**根 Canvas**，`renderMode` 才會真的生效 —— 從別的 Stage 複製
+        // 過來的鈕帶著 WorldSpace，整顆就跑到世界座標去了，畫面上完全看不到，
+        // 而玩家會卡在「結算播完但沒有出口」。
+        //
+        // 事件與機率對話沒事，是因為它們掛在 `Canvas_Stage` 底下（巢狀）。
+        // 光看 prefab 看不出這個差別 —— 所以在這裡量一次，出事就會有一行紅字。
+        var rt = endButton.transform as RectTransform;
+        if (rt == null) return;
+
+        var corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+
+        Canvas cv = endButton.GetComponentInParent<Canvas>();
+        bool overlay = cv != null && cv.renderMode == RenderMode.ScreenSpaceOverlay;
+        bool onScreen = corners[2].x > 0f && corners[2].y > 0f
+                     && corners[0].x < Screen.width && corners[0].y < Screen.height;
+
+        if (overlay && onScreen) return;
+
+        Debug.LogError(
+            "[戰鬥] 離開鍵放出來了，但**玩家看不到它** —— 這一站會卡死。\n" +
+            $"　Canvas renderMode = {(cv == null ? "沒有 Canvas" : cv.renderMode.ToString())}"
+            + $"（要 ScreenSpaceOverlay）、isRoot = {(cv != null && cv.isRootCanvas)}\n" +
+            $"　鈕的角落 {corners[0]} ~ {corners[2]}，螢幕 {Screen.width}x{Screen.height}\n" +
+            "　⚠️ Stage_Battle 掛在 WorldRoot 底下，所以鈕上的 Canvas 是**根 Canvas**，" +
+            "renderMode 會真的生效。從 Stage_Event 之類的地方複製鈕過來時要記得改。", this);
     }
 
     /// <summary>玩家按了離開。這是戰鬥勝利之後唯一的出口。</summary>
