@@ -41,7 +41,12 @@ public class MapBannerUI : MonoBehaviour
         messageText.text = title;
 
         yield return FadeTo(1f, fadeInDuration);
-        yield return new WaitForSeconds(mapTitleHoldTime);
+
+        // ⚠️ **不可以用 WaitForSeconds。** 這支現在也在轉場（全黑）期間跑，
+        //    而轉場中 timeScale 有可能是 0（暫停、戰鬥端把時間停住）——
+        //    用 scaled 的話會永遠卡在黑幕裡，而且不會有任何錯誤訊息。
+        yield return new WaitForSecondsRealtime(mapTitleHoldTime);
+
         yield return FadeTo(0f, fadeOutDuration);
         
         gameObject.SetActive(false);
@@ -101,7 +106,7 @@ public class MapBannerUI : MonoBehaviour
 
         while (timer < duration)
         {
-            timer += Time.deltaTime;
+            timer += Time.unscaledDeltaTime;   // 理由同 ShowMapTitle：轉場時 timeScale 可能是 0
             canvasGroup.alpha = Mathf.Lerp(startAlpha, targetAlpha, timer / duration);
             yield return null;
         }

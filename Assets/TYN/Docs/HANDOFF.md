@@ -215,19 +215,63 @@ y −4.60 ~ 6.60　　x −9.96 ~ 9.96
 
 > `ScreenFader.defaultDuration` 現在不再被用到，兩個秒數都從 GameFlowManager 傳進去。
 
-#### 2. 資訊：地點卡（未做）
+#### 2. 資訊：地點卡（已做）
 
 業界的標準答案是 **Title In / 地點卡** —— 淡入之前在黑幕上打出地名。
 RPG Maker 社群的說法很直白：**「這比單純淡入、然後把角色放在一個全新的地方好」**，
 因為它建立了「我到了某個地方」的感覺。Resident Evil Village、
 Resident Evil Requiem 都是這一套。
 
-**這個專案已經有零件了**：`MapBannerUI.ShowMapTitle(string)`
-（淡入 → 停留 → 淡出），現在只有 MapView 在用。要做的話是把它接到
-`SwitchStageInternal` 之後、`FadeIn` 之前。
+沿用專案原本就有的 `MapBannerUI.ShowMapTitle(string)`
+（淡入 → 停留 → 淡出）—— **跟開地圖時那句「地圖」是同一支元件、同一個字型**，
+所以兩張卡看起來是一套的。
 
-⚠️ **需要先決定文案** —— 探索節點要叫什麼？「漁村・空屋」？
-那是企劃決定，不是程式能替你選的。
+新物件 **`[SYSTEM]/StageTitleBanner`**：
+
+⚠️ **不能用地圖那一顆**（`[MAP_OVERLAY]/MapPanel/MapBanner`）——
+它跟著地圖一起滑出畫面，轉場時根本不在畫面上。
+
+⚠️ **Canvas order 要在黑幕之上**：黑幕是 9000，卡片是 **9500**。
+排在底下的話會被整片黑蓋掉，而且不會有任何錯誤訊息，只是看不見。
+
+⚠️ `MapBannerUI` 原本用 `WaitForSeconds` 與 `Time.deltaTime`（**受 timeScale 影響**）。
+它現在也在轉場期間跑，而轉場中 `timeScale` 有可能是 0 ——
+會**永遠卡在黑幕裡**。已改成 `WaitForSecondsRealtime` / `unscaledDeltaTime`。
+
+##### 有插播事件時會出現兩張卡
+
+```
+《暴食之深淵》 → 演事件 → 環境 → 房間
+```
+
+事件先報自己的名號、節點再報自己的 —— 那兩次換畫面就從
+「莫名其妙跳了兩下」變成「一段插曲，然後才到目的地」。
+事件卡用的是 `EventData.title`（現成的、本來就給玩家看的），
+格式在 `eventTitleFormat`（預設 `《{0}》`）。
+
+##### ⛔ 文案是佔位的
+
+`GameFlowManager.nodeTitles` 目前**沿用地圖 tooltip 既有的用詞**：
+
+| 節點 | 卡片 |
+|---|---|
+| Event（探索房） | 環境 |
+| Combat | 敵人 |
+| Boss | 首領 |
+| Shop | 商店 |
+| SpecialEvent | 特殊 |
+| Dialogue | 遭遇 |
+
+**那是佔位不是定案** —— 地點卡是玩家每一站都會看到的東西，
+值得給它真正的地名（「漁村・空屋」那種）。改 Inspector 那一格就好，不用動程式。
+留空的類型會自動退回純黑幕停頓。支援 rich text（可以像 `mapEnterText` 一樣上色）。
+
+##### 時間
+
+淡出 0.30 → 卡片 1.35（0.25 淡入 ＋ 0.85 停留 ＋ 0.25 淡出）→ 淡入 0.55
+＝ **一次轉場 2.20 秒**。嫌長就調 `StageTitleBanner` 上的 `mapTitleHoldTime`
+（地圖那顆是 2 秒，轉場這顆調成 0.85）。
+`showTitleCards` 取消勾選就整個關掉，退回只有黑幕停頓的版本。
 
 #### 3. 敘事：讓事件的收尾指向目的地（未做）
 

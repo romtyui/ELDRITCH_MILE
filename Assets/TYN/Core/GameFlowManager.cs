@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace EldritchMile.Core
@@ -148,27 +149,69 @@ namespace EldritchMile.Core
         }
 
         [Header("轉場節奏")]
-        [Tooltip("淡出（畫面 → 黑）幾秒。@@NL@@@@NL@@" +
-                 "**比淡入短是刻意的** —— 電影剪接的慣例：離開快、進入慢。@@NL@@" +
+        [Tooltip("淡出（畫面 → 黑）幾秒。\n\n" +
+                 "**比淡入短是刻意的** —— 電影剪接的慣例：離開快、進入慢。\n" +
                  "兩邊一樣長的話，轉場會像「畫面閃了一下」而不是「換了一個地方」。")]
         [Min(0f)] public float fadeOutSeconds = 0.3f;
 
         [Tooltip("淡入（黑 → 畫面）幾秒。比淡出長，讓新畫面有「浮出來」的感覺")]
         [Min(0f)] public float fadeInSeconds = 0.55f;
 
-        [Tooltip("**黑幕停留幾秒**（一般的轉場）。@@NL@@@@NL@@" +
-                 "0 就是切完立刻淡入 —— 那正是「突兀」的來源：@@NL@@" +
-                 "大腦需要一小段全黑才會把前後讀成「兩個地方」，@@NL@@" +
-                 "沒有那一拍就只是同一個畫面閃了一下。@@NL@@@@NL@@" +
+        [Tooltip("**黑幕停留幾秒**（一般的轉場）。\n\n" +
+                 "0 就是切完立刻淡入 —— 那正是「突兀」的來源：\n" +
+                 "大腦需要一小段全黑才會把前後讀成「兩個地方」，\n" +
+                 "沒有那一拍就只是同一個畫面閃了一下。\n\n" +
                  "⚠️ 太長會變成卡頓。0.2~0.4 之間是舒服的區間。")]
         [Min(0f)] public float holdBlackSeconds = 0.25f;
 
-        [Tooltip("**接續型轉場**的黑幕停留幾秒（事件 → 節點、事件安排的戰鬥 → 節點）。@@NL@@@@NL@@" +
-                 "這一種比一般轉場更需要停頓 —— 玩家沒有按任何「前往」的動作，@@NL@@" +
-                 "畫面卻換了地方。停久一點才讀得出「剛才那件事結束了，現在是別的地方」。@@NL@@@@NL@@" +
-                 "⚠️ 這只解決**時間感**。「我現在在哪」是另一件事 ——@@NL@@" +
+        [Tooltip("**接續型轉場**的黑幕停留幾秒（事件 → 節點、事件安排的戰鬥 → 節點）。\n\n" +
+                 "這一種比一般轉場更需要停頓 —— 玩家沒有按任何「前往」的動作，\n" +
+                 "畫面卻換了地方。停久一點才讀得出「剛才那件事結束了，現在是別的地方」。\n\n" +
+                 "⚠️ 這只解決**時間感**。「我現在在哪」是另一件事 ——\n" +
                  "那要靠地點卡（`MapBannerUI` 已經有這個能力）或事件收尾的文案去接。")]
         [Min(0f)] public float holdBlackAfterEventSeconds = 0.5f;
+
+        [Header("地點卡（轉場時在黑幕上打出地名）")]
+        [Tooltip("顯示地點卡的橫幅。**必須是排序在黑幕之上的那一個** ——\n" +
+                 "黑幕是 order 9000，卡片要蓋在黑幕上才看得見。\n\n" +
+                 "⚠️ 不要指到地圖那一顆（`[MAP_OVERLAY]/MapPanel/MapBanner`）——\n" +
+                 "它跟著地圖一起滑出畫面，轉場時根本不在畫面上。\n\n" +
+                 "留空 = 不顯示地點卡，退回單純的黑幕停頓")]
+        public MapBannerUI titleBanner;
+
+        [Tooltip("總開關。取消勾選就回到只有黑幕停頓的版本")]
+        public bool showTitleCards = true;
+
+        [Serializable]
+        public class NodeTitle
+        {
+            public MapNodeKind kind = MapNodeKind.Event;
+
+            [Tooltip("進這種節點時打在黑幕上的字。留空 = 這一種不顯示卡片")]
+            public string text = "";
+        }
+
+        [Tooltip("每一種節點的地點卡文案。\n\n" +
+                 "⚠️ 預設值是**沿用地圖 tooltip 既有的用詞**（環境／敵人／首領…），\n" +
+                 "那是佔位不是定案 —— 地點卡是玩家每一站都會看到的東西，\n" +
+                 "值得給它真正的地名（「漁村・空屋」那種）。改這一格就好，不用動程式。\n\n" +
+                 "支援 TMP 的 rich text，所以可以像 `mapEnterText` 那樣上色。")]
+        public List<NodeTitle> nodeTitles = new List<NodeTitle>
+        {
+            new NodeTitle { kind = MapNodeKind.Event,        text = "環境" },
+            new NodeTitle { kind = MapNodeKind.Combat,       text = "敵人" },
+            new NodeTitle { kind = MapNodeKind.Boss,         text = "首領" },
+            new NodeTitle { kind = MapNodeKind.Shop,         text = "商店" },
+            new NodeTitle { kind = MapNodeKind.SpecialEvent, text = "特殊" },
+            new NodeTitle { kind = MapNodeKind.Dialogue,     text = "遭遇" },
+        };
+
+        [Tooltip("事件插播時的卡片文案。{0} = 事件標題。\n\n" +
+                 "【為什麼事件也要一張】事件是**插在節點前面**的，\n" +
+                 "所以玩家會連續換兩次畫面。給事件一張自己的卡，\n" +
+                 "那兩次就從「莫名其妙跳了兩下」變成「一段插曲，然後才到目的地」。\n\n" +
+                 "留空 = 事件不顯示卡片")]
+        public string eventTitleFormat = "《{0}》";
 
         public event Action<StageType, StageType> OnStageChanged;
 
@@ -317,18 +360,24 @@ namespace EldritchMile.Core
             StageType nodeStage = StageTypeForNode(node);
             EventData ev = PickEventForNode();
 
+            string card;
+
             if (ev != null)
             {
                 PendingEvent = ev;
                 stageAfterEvent = nodeStage;
                 yield return SwitchStageInternal(StageType.Event);
+
+                // 事件先報自己的名號；節點的卡片等事件演完再打
+                card = TitleForEvent();
             }
             else
             {
                 yield return SwitchStageInternal(nodeStage);
+                card = TitleForNode();
             }
 
-            yield return HoldBlack(holdBlackSeconds);
+            yield return HoldBlackOrTitle(holdBlackSeconds, card);
             yield return FadeIn();
 
             IsTransitioning = false;
@@ -447,9 +496,10 @@ namespace EldritchMile.Core
                 yield return FadeOut();
                 yield return SwitchStageInternal(next);
 
-                // ⚠️ **這一跳最需要停頓。** 玩家沒有按任何「前往」的動作，
-                //    畫面卻換了地方 —— 不停一拍就會覺得「怎麼突然跳掉了」
-                yield return HoldBlack(holdBlackAfterEventSeconds);
+                // ⚠️ **這一跳最需要交代。** 玩家沒有按任何「前往」的動作，
+                //    畫面卻換了地方 —— 打一張地點卡出來，那一跳就從
+                //    「怎麼突然跳掉了」變成「插曲結束，到目的地了」
+                yield return HoldBlackOrTitle(holdBlackAfterEventSeconds, TitleForNode());
 
                 yield return FadeIn();
 
@@ -472,7 +522,7 @@ namespace EldritchMile.Core
 
                 yield return FadeOut();
                 yield return SwitchStageInternal(next);
-                yield return HoldBlack(holdBlackAfterEventSeconds);
+                yield return HoldBlackOrTitle(holdBlackAfterEventSeconds, TitleForNode());
                 yield return FadeIn();
 
                 IsTransitioning = false;
@@ -632,6 +682,52 @@ namespace EldritchMile.Core
         /// 【為什麼用 unscaled】轉場期間有可能 `Time.timeScale = 0`
         /// （暫停、或戰鬥端把時間停住）。用 scaled 的話會整個卡在黑幕裡。
         /// </summary>
+        /// <summary>
+        /// 在黑幕上打出地點卡，然後才淡入。**卡片本身就是那一拍停頓**，
+        /// 所以有卡片時不再另外 `HoldBlack`（不然會停兩次）。
+        ///
+        /// ────────────────────────────────────────────────────────
+        /// 【為什麼要有卡片】黑幕停頓只解決「時間感」（有沒有隔一段）；
+        /// **「我現在在哪」是另一件事**。業界的標準答案是 Title In ——
+        /// 淡入之前先在黑幕上打出地名，玩家才會有「到了某個地方」的感覺，
+        /// 而不是「畫面換掉了，我被放在一個新的地方」。
+        ///
+        /// 【為什麼卡片要在黑幕之上】黑幕是 order 9000。卡片排在它底下的話
+        /// 會被整片黑蓋掉 —— 而且不會有任何錯誤訊息，只是看不見。
+        /// </summary>
+        private IEnumerator HoldBlackOrTitle(float hold, string title)
+        {
+            if (showTitleCards && titleBanner != null && !string.IsNullOrEmpty(title))
+            {
+                yield return titleBanner.ShowMapTitle(title);
+                yield break;
+            }
+
+            yield return HoldBlack(hold);
+        }
+
+        /// <summary>這一站的地點卡要寫什麼。查不到就回空字串（＝不顯示卡片）。</summary>
+        private string TitleForNode()
+        {
+            RunNodeData node = Run != null ? Run.pendingNode : null;
+            if (node == null || nodeTitles == null) return "";
+
+            for (int i = 0; i < nodeTitles.Count; i++)
+            {
+                if (nodeTitles[i] != null && nodeTitles[i].kind == node.kind) return nodeTitles[i].text;
+            }
+            return "";
+        }
+
+        /// <summary>插播事件的卡片。用事件自己的標題 —— 那是現成的、而且本來就是給玩家看的。</summary>
+        private string TitleForEvent()
+        {
+            if (PendingEvent == null || string.IsNullOrEmpty(PendingEvent.title)) return "";
+            if (string.IsNullOrEmpty(eventTitleFormat)) return "";
+
+            return string.Format(eventTitleFormat, PendingEvent.title);
+        }
+
         private static IEnumerator HoldBlack(float seconds)
         {
             if (seconds <= 0f) yield break;
