@@ -53,11 +53,26 @@ namespace EldritchMile.Core
         [Tooltip("節點水平位置的隨機抖動範圍（百分比）")]
         [Range(0f, 15f)] public float horizontalJitter = 5f;
 
+        [Header("首排")]
+        [Tooltip("第 0 層固定放哪一種節點。\n\n" +
+                 "**預設 SpecialEvent ＝ 一開場就挑神牌**（`Stage_SpecialEvent`）——\n" +
+                 "神牌是主玩法，讓它在任何戰鬥之前拿到，測試才不會因為死在半路而卡住。\n\n" +
+                 "⚠️ 隨機生成與 DEMO 的分支路線**都吃這一格**。\n" +
+                 "改成 Event 就回到舊行為（開場是一間探索房）。")]
+        public MapNodeKind firstLayerKind = MapNodeKind.SpecialEvent;
+
         [Header("DEMO 路線")]
         [Tooltip("勾選後改用固定路線，忽略上方的隨機參數")]
         public bool useDemoRoute = false;
 
-        [Tooltip("DEMO 路線每一層的節點類型，由起點排到 Boss")]
+        [Tooltip("固定路線長什麼樣。\n\n" +
+                 "· **Straight** —— 一層一個節點的直線，讀 Demo Route Kinds。\n" +
+                 "　最省事，但**沒有選擇** —— 玩家不會用到地圖，也驗不到連線。\n" +
+                 "· **Branching** —— 一層可以有好幾個節點，讀 Demo Route Layers。\n" +
+                 "　連線由程式算（見 MapGenerator.ConnectLayers），保證每個節點都走得到。")]
+        public DemoRouteShape demoRouteShape = DemoRouteShape.Straight;
+
+        [Tooltip("**Straight 用**：每一層一個節點，由起點排到 Boss")]
         public List<MapNodeKind> demoRouteKinds = new List<MapNodeKind>
         {
             MapNodeKind.Combat,
@@ -65,5 +80,42 @@ namespace EldritchMile.Core
             MapNodeKind.Combat,
             MapNodeKind.Boss,
         };
+
+        [Tooltip("**Branching 用**：一列 ＝ 一層，由起點排到 Boss。\n\n" +
+                 "第 0 層會被 First Layer Kind 蓋掉（那一格才是「首排放什麼」的真相），\n" +
+                 "所以這裡第 0 層填什麼都行。\n\n" +
+                 "⚠️ **最後一層建議只放一個 Boss** —— 打完 Boss 這場 run 就結束了" +
+                 "（`MapData.IsFinalLayer`），放兩個的話另一個永遠走不到。")]
+        public List<DemoLayer> demoRouteLayers = new List<DemoLayer>();
+    }
+
+    /// <summary>
+    /// DEMO 路線的形狀。
+    ///
+    /// 【為什麼要有分支】直線路線驗不到地圖本身 ——
+    /// 只有一條路的時候「連線」「可前往／去不了」「選節點」全部沒有作用，
+    /// 而那些正是地圖這一層要測的東西。
+    /// </summary>
+    public enum DemoRouteShape
+    {
+        /// <summary>一層一個節點，前後相連。讀 `demoRouteKinds`。</summary>
+        Straight = 0,
+
+        /// <summary>一層可以有好幾個節點，玩家要選。讀 `demoRouteLayers`。</summary>
+        Branching = 1,
+    }
+
+    /// <summary>
+    /// DEMO 分支路線的一層。
+    ///
+    /// 【為什麼要包一層】Unity 序列化不了 `List&lt;List&lt;T&gt;&gt;` ——
+    /// 巢狀泛型不會出現在 Inspector 上，而且**不會報錯**，只會靜靜地是空的。
+    /// 包成一個 `[Serializable]` 的小類別是這個限制的標準解法。
+    /// </summary>
+    [System.Serializable]
+    public class DemoLayer
+    {
+        [Tooltip("這一層由左到右有哪些節點")]
+        public List<MapNodeKind> nodes = new List<MapNodeKind>();
     }
 }

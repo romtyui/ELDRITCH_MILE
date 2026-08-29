@@ -29,9 +29,71 @@ namespace EldritchMile.Core
 
             var rng = new System.Random(seed);
 
-            return settings.useDemoRoute
+            MapData map = settings.useDemoRoute
                 ? GenerateDemoRoute(settings, rng)
                 : GenerateProcedural(settings, rng);
+
+            WarnIfUnreachable(map);
+            return map;
+        }
+
+        /// <summary>
+        /// 檢查有沒有「走不到」或「走進去出不來」的節點，有就在 Console 說清楚。
+        ///
+        /// 【為什麼一定要有這一關】節點少一條線**不會有任何錯誤訊息** ——
+        /// 畫面上那個節點還在，只是永遠是暗的、點不下去。
+        /// 玩家（跟我們）會以為那是「還沒解鎖」，而不是「地圖漏了一條線」。
+        ///
+        /// 【只是警告，不自動補線】補線會改變關卡形狀，那是設計決定。
+        /// 這裡的職責是**讓問題現形**，不是替設計做主。
+        /// </summary>
+        private static void WarnIfUnreachable(MapData map)
+        {
+            if (map == null || map.allNodes.Count == 0) return;
+
+            // ── 從第 0 層做一次 BFS ──
+            var reached = new HashSet<string>();
+            var queue = new Queue<RunNodeData>();
+
+            for (int i = 0; i < map.allNodes.Count; i++)
+            {
+                if (map.allNodes[i].layer != 0) continue;
+                reached.Add(map.allNodes[i].nodeId);
+                queue.Enqueue(map.allNodes[i]);
+            }
+
+            while (queue.Count > 0)
+            {
+                RunNodeData n = queue.Dequeue();
+                for (int i = 0; i < n.nextNodeIds.Count; i++)
+                {
+                    RunNodeData next = map.GetNode(n.nextNodeIds[i]);
+                    if (next == null || !reached.Add(next.nodeId)) continue;
+                    queue.Enqueue(next);
+                }
+            }
+
+            var orphans = new List<string>();
+            var deadEnds = new List<string>();
+            int top = map.MaxLayer;
+
+            for (int i = 0; i < map.allNodes.Count; i++)
+            {
+                RunNodeData n = map.allNodes[i];
+
+                if (!reached.Contains(n.nodeId)) orphans.Add($"{n.nodeId}({n.kind})");
+
+                // 最後一層本來就沒有出邊，那不是死路
+                if (n.layer < top && n.nextNodeIds.Count == 0) deadEnds.Add($"{n.nodeId}({n.kind})");
+            }
+
+            if (orphans.Count == 0 && deadEnds.Count == 0) return;
+
+            Debug.LogWarning(
+                "[地圖生成] 這張圖有走不通的地方 —— 玩家會看到一個永遠是暗的節點。\n" +
+                (orphans.Count > 0 ? $"　從起點走不到（{orphans.Count}）：{string.Join("、", orphans.ToArray())}\n" : "") +
+                (deadEnds.Count > 0 ? $"　走進去出不來（{deadEnds.Count}）：{string.Join("、", deadEnds.ToArray())}\n" : "") +
+                "　DEMO 分支路線的話檢查 Demo Route Layers；隨機生成的話是 MapGenerator 的 bug。");
         }
 
         // ==========================================
@@ -215,8 +277,9 @@ namespace EldritchMile.Core
         {
             if (layer == layerCount - 1) return MapNodeKind.Boss;
 
-            // 起點層固定給一般事件，避免一開場就被迫戰鬥
-            if (layer == 0) return MapNodeKind.Event;
+            // 起點層固定 —— 避免一開場就被迫戰鬥。
+            // 放什麼由 `firstLayerKind` 決定（預設 SpecialEvent ＝ 開場就挑神牌）
+            if (layer == 0) return s.firstLayerKind;
 
             double roll = rng.NextDouble();
 
@@ -243,6 +306,108 @@ namespace EldritchMile.Core
         // DEMO 固定路線
         // ==========================================
         private static MapData GenerateDemoRoute(MapGenerationSettings s, System.Random rng)
+        {
+            return s.demoRouteShape == DemoRouteShape.Branching
+                ? GenerateDemoBranching(s, rng)
+                : GenerateDemoStraight(s, rng);
+        }
+
+        /// <summary>
+        /// 有分支的固定路線。一層可以有好幾個節點，玩家要選一個走。
+        ///
+        /// ────────────────────────────────────────────────────────
+        /// 【連線怎麼算】見 <see cref="ConnectLayers"/> —— 重點是
+        /// **每個節點都保證至少一條入邊與一條出邊**，不會出現走不到的節點。
+        ///
+        /// 【第 0 層為什麼被蓋掉】`firstLayerKind` 才是「首排放什麼」的單一真相
+        /// （隨機生成也讀同一格）。在兩個地方各寫一次的話，改了一邊忘了另一邊，
+        /// 症狀會是「隨機圖開場是神牌、DEMO 圖開場是探索房」，而且不會有錯誤訊息。
+        /// </summary>
+        private static MapData GenerateDemoBranching(MapGenerationSettings s, System.Random rng)
+        {
+            var map = new MapData();
+
+            List<DemoLayer> layers = s.demoRouteLayers;
+            if (layers == null || layers.Count == 0)
+            {
+                Debug.LogWarning(
+                    "[地圖生成] Demo Route Shape 是 Branching，但 Demo Route Layers 是空的。" +
+                    "改用直線那一份。");
+                return GenerateDemoStraight(s, rng);
+            }
+
+            var built = new List<List<RunNodeData>>();
+
+            for (int f = 0; f < layers.Count; f++)
+            {
+                List<MapNodeKind> row = layers[f] != null ? layers[f].nodes : null;
+                int count = row != null ? row.Count : 0;
+                if (count == 0) continue;
+
+                var made = new List<RunNodeData>(count);
+
+                for (int c = 0; c < count; c++)
+                {
+                    RunNodeData node = MakeNode(s, rng, f, c, count, layers.Count);
+                    node.nodeId = $"Node_{f}_{c}";
+
+                    // 第 0 層一律照 firstLayerKind，其餘照表填
+                    node.kind = f == 0 ? s.firstLayerKind : row[c];
+
+                    made.Add(node);
+                    map.allNodes.Add(node);
+                }
+
+                built.Add(made);
+            }
+
+            for (int i = 0; i + 1 < built.Count; i++) ConnectLayers(built[i], built[i + 1]);
+
+            return map;
+        }
+
+        /// <summary>
+        /// 把相鄰兩層連起來，**兩個方向的保證各跑一次**：
+        ///
+        ///   1. 每個下層節點都連到上層「相對位置最近」的那一個 → 沒有死路
+        ///   2. 每個上層節點都被下層「相對位置最近」的那一個連到 → 沒有孤兒
+        ///
+        /// 【為什麼要跑兩輪】只跑第 1 輪的話，上層比下層多時多出來的那些
+        /// 永遠沒有人連過去（3 個節點的下一層有 5 個，就會有 2 個是孤兒）；
+        /// 只跑第 2 輪則相反。兩輪都跑，兩種都不會發生。
+        ///
+        /// 【為什麼不會交叉】兩輪用的都是同一個**單調遞增**的對應
+        /// （`NearestIndex` 是 i 的遞增函數），所以線不會打結 ——
+        /// 這跟隨機生成那邊靠 `PickNextColumn` 擋交叉是同一個目的，
+        /// 只是這裡用「本來就不可能交叉的算法」達成，不必事後檢查。
+        ///
+        /// `Connect` 自己會去重，所以兩輪算到同一條線也不會連兩次。
+        /// </summary>
+        private static void ConnectLayers(List<RunNodeData> lower, List<RunNodeData> upper)
+        {
+            if (lower == null || upper == null || lower.Count == 0 || upper.Count == 0) return;
+
+            int n = lower.Count;
+            int m = upper.Count;
+
+            for (int i = 0; i < n; i++) Connect(lower[i], upper[NearestIndex(i, n, m)]);
+            for (int j = 0; j < m; j++) Connect(lower[NearestIndex(j, m, n)], upper[j]);
+        }
+
+        /// <summary>
+        /// 「一排 from 個裡的第 i 個」對應到「一排 to 個裡的第幾個」。
+        /// 兩排都攤平成 0~1 再對過去，所以節點數不同也對得起來。
+        ///
+        /// from 只有一個時回 0 —— 那時另一輪會把剩下的補齊（見 ConnectLayers）。
+        /// </summary>
+        private static int NearestIndex(int i, int from, int to)
+        {
+            if (to <= 1 || from <= 1) return 0;
+            return Mathf.Clamp(Mathf.RoundToInt(i * (to - 1f) / (from - 1f)), 0, to - 1);
+        }
+
+        /// <summary>一層一個節點的直線路線。舊的 DEMO 就是這個。</summary>
+        private static MapData GenerateDemoStraight(MapGenerationSettings s, System.Random rng)
         {
             var map = new MapData();
 

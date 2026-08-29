@@ -224,8 +224,15 @@ namespace EldritchMile.Core
                     // 戰鬥**插在**事件與這一站原本的內容之間，不是取代它 ——
                     // 理由見 GameFlowManager.InsertBattleBeforeNextStage()。
                     //
-                    // key 留空就交給戰鬥組自己抽怪。目前五個 EnemyData 的 enemyId
-                    // 都還是空字串，所以填了也指定不到 —— 那一格填了才會生效。
+                    // key 留空就交給戰鬥組自己抽怪。
+                    //
+                    // ⚠️ **填錯 id 跟留空的下場一樣**（查不到 → 交給戰鬥組抽），
+                    // 而且畫面上照樣打得起來，只是對手不是劇本寫的那一隻。
+                    // 《貪吃鬼》原本填 glutton，資料庫裡沒有這個 id，
+                    // 所以測試時打到的是半魚人祭司 —— 已改成 tua_khoo_tai（魚頭胖魚人）。
+                    //
+                    // 現有的 id：boss / coral_paguroidea / fish_priest / tua_khoo_tai / minnow
+                    // （BattleStageController 找不到時會把清單印出來）
                     if (GameFlowManager.Instance == null)
                     {
                         Debug.LogWarning("[事件] 想開始戰鬥但找不到 GameFlowManager，這次跳過");

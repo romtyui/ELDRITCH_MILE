@@ -437,8 +437,11 @@ public class BattleStageController : StageController
             if (e == null)
             {
                 Debug.LogWarning(
-                    $"[戰鬥] EnemyDatabase 裡找不到 enemyId =「{ids[i]}」。\n" +
-                    "⚠️ 目前五個敵人資產的 Enemy Id 都是空的 —— 要先填才查得到。");
+                    $"[戰鬥] EnemyDatabase 裡找不到 enemyId =「{ids[i]}」，\n" +
+                    "這一場會**交給戰鬥組自己抽**，所以畫面上出現的會是別隻怪。\n\n" +
+                    "⚠️ 這是最容易誤判的一種狀況 —— 打得起來、看起來正常，\n" +
+                    "只是對手不是劇本寫的那一隻（《貪吃鬼》寫 glutton 卻打到祭司就是這樣來的）。\n\n" +
+                    "目前資料庫裡有：" + KnownEnemyIds(rs));
                 continue;
             }
 
@@ -447,6 +450,27 @@ public class BattleStageController : StageController
         }
 
         if (enemies.Count > 0) rs.ReserveEncounterByEnemyData(enemies);
+    }
+
+    /// <summary>
+    /// 資料庫裡現有的 enemyId，接成一行給錯誤訊息用。
+    ///
+    /// 【為什麼值得多寫這一支】「找不到 xxx」這種訊息只講了一半 ——
+    /// 看到的人下一步一定是去翻「那有哪些？」。直接印出來就省掉那一趟。
+    /// </summary>
+    private static string KnownEnemyIds(RunStateManager rs)
+    {
+        if (rs == null || rs.enemyDatabase == null) return "（沒有 EnemyDatabase）";
+
+        var names = new List<string>();
+        EnemyData[] all = Resources.FindObjectsOfTypeAll<EnemyData>();
+        for (int i = 0; i < all.Length; i++)
+        {
+            if (all[i] != null && !string.IsNullOrEmpty(all[i].enemyId)) names.Add(all[i].enemyId);
+        }
+
+        names.Sort();
+        return names.Count > 0 ? string.Join("、", names.ToArray()) : "（一個都沒填）";
     }
 
     // ==========================================
