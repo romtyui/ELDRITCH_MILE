@@ -46,6 +46,12 @@ namespace EldritchMile.Explore
         /// 生成內容。由 ExploreStageController 在房間 Instantiate 之後呼叫。
         /// seed 來自 RunContext，保證同一場 run 重進同一節點看到的擺設一致。
         /// </summary>
+        [Tooltip("生成物**實際畫出來**大概多大（世界單位）。判定「會不會蓋到畫上去的家具」用的。\n" +
+                 "⚠️ 不能用 sprite 的 bounds —— 這批圖是 2048×1448 的畫布、\n" +
+                 "真正的寶箱只佔三成，用 bounds 算的話每一個都會「蓋住」每一個。\n" +
+                 "量出來：正面寶箱 3.64 × 2.22，碰撞框 3.74 × 2.19，兩者相符。")]
+        public Vector2 contentFootprint = new Vector2(3.7f, 2.2f);
+
         public void Populate(int seed)
         {
             if (slots.Count == 0)
@@ -103,6 +109,20 @@ namespace EldritchMile.Explore
                 SpawnInto(slot, entry, rng);
                 usedCount[entry] = usedCount.TryGetValue(entry, out int c1) ? c1 + 1 : 1;
             }
+
+            // ── 第零段之後：把被「畫上去的家具」佔住的位子擋掉 ──
+            //
+            // 【為什麼需要】美術把櫃子畫在牆上，但別的位子就在它前面 ——
+            // 隨機的寶箱會直接蓋上去，畫面變成「櫃子前面浮著一個寶箱」，
+            // 那正是交接文件 F 節在講的那個矛盾畫面。
+            //
+            // 【為什麼是擋掉而不是縮小寶箱】寶箱實際畫出來是 3.64 × 2.22，
+            // 相機看得到 17.78 × 10 —— 只佔畫面兩成，**它不算大**。
+            // 縮小的話會讓**每一間房**的寶箱都變小、點擊區也跟著縮水，
+            // 為了一面牆上的櫃子付全域的代價。這是位置問題，不是尺寸問題。
+            //
+            // 要把被擋掉的位子要回來，**把它們挪開就好** —— 這一段只擋重疊的。
+            BlockSlotsCoveringPaintedArt(shuffled);
 
             // ── 第一段：群組配額先佔位 ──
             //
@@ -210,6 +230,42 @@ namespace EldritchMile.Explore
             if (slot.artIsPainted) HideVisualsKeepRaycast(obj);
 
             slot.MarkOccupied();
+        }
+
+        /// <summary>
+        /// 把「會蓋到畫上去的家具」的位子標記成已佔用，這一輪就不會生東西。
+        ///
+        /// 判定用的是**生成物實際畫出來的大小**（`contentFootprint`），
+        /// 不是 sprite 的 bounds —— 這批圖是 2048×1448 的畫布、真正的寶箱只佔三成，
+        /// 用 bounds 算的話「每一個都蓋住每一個」，判不出東西來。
+        /// </summary>
+        private void BlockSlotsCoveringPaintedArt(List<SpawnSlot> all)
+        {
+            for (int i = 0; i < all.Count; i++)
+            {
+                SpawnSlot painted = all[i];
+                if (painted == null) continue;
+
+                Rect area = painted.ReservedArea;
+                if (area.width <= 0f) continue;
+
+                for (int j = 0; j < all.Count; j++)
+                {
+                    SpawnSlot other = all[j];
+                    if (other == null || other == painted || other.IsOccupied) continue;
+
+                    Vector3 c = other.transform.position;
+                    var foot = new Rect(c.x - contentFootprint.x * 0.5f,
+                                        c.y - contentFootprint.y * 0.5f,
+                                        contentFootprint.x, contentFootprint.y);
+
+                    if (!foot.Overlaps(area)) continue;
+
+                    other.MarkOccupied();   // 佔住但不生東西 ＝ 這一輪跳過
+                    Debug.Log($"[房間] {name} 的「{other.name}」會蓋到畫上去的家具，這一輪跳過。" +
+                              "要用回這個位子就把它挪開。", this);
+                }
+            }
         }
 
         /// <summary>

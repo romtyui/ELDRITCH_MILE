@@ -51,6 +51,29 @@ namespace EldritchMile.Explore
                  "玩家的回饋只剩戰利品播報。畫上去的家具本來就不會變，這是這個做法的極限。")]
         public bool artIsPainted = false;
 
+        [Tooltip("這一格**佔住多大一塊地**（世界單位，以位子為中心）。\n" +
+                 "0,0 ＝ 不佔地。\n\n" +
+                 "【要解決什麼】美術把櫃子畫在牆上，但別的位子就在它前面 ——\n" +
+                 "隨機生成的寶箱會直接蓋在那個櫃子上，畫面變成「櫃子前面浮著一個寶箱」。\n" +
+                 "填了尺寸之後，**footprint 跟這塊地重疊的位子會整格跳過**。\n\n" +
+                 "中屋那個矮櫃量出來是 4.59 × 3.40。\n\n" +
+                 "⚠️ 代價是那間房少一兩個位子。要把它們要回來就**把那些位子挪開**，\n" +
+                 "挪到不重疊的地方（見 HANDOFF 的安全區數字），這一格就不會擋到它們。")]
+        public Vector2 reserveSize = Vector2.zero;
+
+        /// <summary>這一格佔住的那塊地（世界座標）。沒填尺寸就回一個空的。</summary>
+        public Rect ReservedArea
+        {
+            get
+            {
+                if (reserveSize.x <= 0f || reserveSize.y <= 0f) return Rect.zero;
+
+                Vector3 c = transform.position;
+                return new Rect(c.x - reserveSize.x * 0.5f, c.y - reserveSize.y * 0.5f,
+                                reserveSize.x, reserveSize.y);
+            }
+        }
+
         [Header("機率")]
         [Tooltip("這個位子有東西的機率。1 = 一定有")]
         [Range(0f, 1f)] public float fillChance = 1f;

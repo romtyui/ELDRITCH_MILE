@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 685837333592083667}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.43, z: -1}
+  m_LocalPosition: {x: 2.9, y: 2.08, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -49,6 +49,7 @@ MonoBehaviour:
   rotationRange: {x: 0, y: 0}
   scaleRange: {x: 1, y: 1}
   artIsPainted: 0
+  reserveSize: {x: 0, y: 0}
   fillChance: 1
 --- !u!1 &1891687337091006674
 GameObject:
@@ -105,6 +106,7 @@ MonoBehaviour:
   slots: []
   entryText: 
   clearText: 
+  contentFootprint: {x: 3.7, y: 2.2}
 --- !u!114 &8092315648212560570
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -170,6 +172,7 @@ MonoBehaviour:
   rotationRange: {x: 0, y: 0}
   scaleRange: {x: 1, y: 1}
   artIsPainted: 1
+  reserveSize: {x: 4.59, y: 3.4}
   fillChance: 1
 --- !u!1 &2869238796097047044
 GameObject:
@@ -220,6 +223,7 @@ MonoBehaviour:
   rotationRange: {x: 0, y: 0}
   scaleRange: {x: 1, y: 1}
   artIsPainted: 0
+  reserveSize: {x: 0, y: 0}
   fillChance: 1
 --- !u!1 &6177006978407505049
 GameObject:
@@ -247,7 +251,7 @@ Transform:
   m_GameObject: {fileID: 6177006978407505049}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.19, y: 0, z: -1}
+  m_LocalPosition: {x: -6.5, y: -0.52, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -270,6 +274,7 @@ MonoBehaviour:
   rotationRange: {x: 0, y: 0}
   scaleRange: {x: 1, y: 1}
   artIsPainted: 0
+  reserveSize: {x: 0, y: 0}
   fillChance: 1
 --- !u!1 &6246314555863583882
 GameObject:
@@ -320,6 +325,7 @@ MonoBehaviour:
   rotationRange: {x: 0, y: 0}
   scaleRange: {x: 1, y: 1}
   artIsPainted: 0
+  reserveSize: {x: 0, y: 0}
   fillChance: 1
 --- !u!1001 &2012278677934053751
 PrefabInstance:
