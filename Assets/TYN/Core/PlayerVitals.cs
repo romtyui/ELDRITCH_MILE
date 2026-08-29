@@ -197,23 +197,53 @@ namespace EldritchMile.Core
             return true;
         }
 
-        /// <summary>補血。不會超過上限。漁獲那類道具用這支。</summary>
+        /// <summary>
+        /// 補血。不會超過上限。漁獲那類道具用這支。
+        ///
+        /// ⚠️ **還沒初始化時會吵一聲。** 原本是安靜 return ——
+        /// 症狀就是「吃了東西但 HP 沒動，而且 Console 一個字都沒有」，
+        /// 完全查不到方向。扣血那兩支本來就有警告，補血這兩支漏了。
+        /// </summary>
         public static void HealHp(int amount)
         {
-            if (amount <= 0 || !IsReady) return;
+            if (amount <= 0) return;
+
+            if (!IsReady) { WarnNotReady("回 HP"); return; }
 
             Rs.savedPlayerCurrentHp = Mathf.Min(Rs.savedPlayerCurrentHp + amount, Rs.savedPlayerMaxHp);
             Debug.Log($"[生命值] 回 HP {amount}（現在 {Hp}/{MaxHp}）");
         }
 
-        /// <summary>補 SAN。不會超過上限。</summary>
+        /// <summary>補 SAN。不會超過上限。理由同 <see cref="HealHp"/>。</summary>
         public static void RestoreSan(int amount)
         {
-            if (amount <= 0 || !IsReady) return;
+            if (amount <= 0) return;
+
+            if (!IsReady) { WarnNotReady("回 SAN"); return; }
 
             Rs.savedCurrentEnergy = Mathf.Min(Rs.savedCurrentEnergy + amount, Rs.savedMaxEnergy);
             Debug.Log($"[生命值] 回 SAN {amount}（現在 {San}/{MaxSan}）");
         }
+
+        /// <summary>
+        /// 「還沒初始化」時的統一說法。**每一種只吵一次** ——
+        /// 一次探索可能連吃好幾樣，洗版反而看不到重點。
+        /// </summary>
+        private static void WarnNotReady(string what)
+        {
+            if (warned.Contains(what)) return;
+            warned.Add(what);
+
+            Debug.LogWarning(
+                $"[生命值] 想「{what}」但這場 run 的 HP／SAN **還沒初始化**，這次什麼都沒發生。\n\n" +
+                "⚠️ 這正是「吃了東西但數值沒變」的成因。要初始化必須三個條件同時成立：\n" +
+                "　1. 場上有 RunStateManager\n" +
+                "　2. GameFlowManager 的 Starting Max Hp > 0\n" +
+                "　3. Starting Deck **不是空的**（空牌組會讓玩家帶著空牌進戰鬥，所以會擋下來）\n\n" +
+                "見 PlayerVitals.EnsureInitialized 的說明。");
+        }
+
+        private static readonly HashSet<string> warned = new HashSet<string>();
 
         // ==========================================
         // 戰鬥牌組

@@ -390,12 +390,31 @@ namespace EldritchMile.UI.Shortcut
                 return;
             }
 
+            // ⚠️ 記下**吃之前**的數值 —— 播報要講「實際發生了什麼」，
+            //    不是照抄道具上的帳面數字。滿血時吃蛋糕，帳面是 +35、實際是 +0；
+            //    寫帳面的話玩家會以為系統壞了（「明明說 +35 怎麼沒變」）。
+            int hp0 = PlayerVitals.Hp, san0 = PlayerVitals.San;
+
             // 先給再扣。反過來的話「回大量 HP、扣中等 SAN」那種食物
             // 會在 HP 很低時被自己的代價擋掉，而它本來就是要救命的
             if (d.hpRestore > 0) PlayerVitals.HealHp(d.hpRestore);
             if (d.sanRestore > 0) PlayerVitals.RestoreSan(d.sanRestore);
             if (d.hpCost > 0) PlayerVitals.SpendHp(d.hpCost);
             if (d.sanCost > 0) PlayerVitals.SpendSan(d.sanCost);
+
+            int dHp = PlayerVitals.Hp - hp0, dSan = PlayerVitals.San - san0;
+
+            if (dHp == 0 && dSan == 0)
+            {
+                // 道具沒白吃、數值卻沒動 —— 這是玩家最容易誤判成 bug 的情況，
+                // 所以講清楚是「滿了」還是「系統還沒初始化」
+                Debug.LogWarning(
+                    $"[快捷欄]「{d.Label}」吃下去了，但 HP／SAN 完全沒有變動。\n" +
+                    (PlayerVitals.IsReady
+                        ? $"　目前 HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}"
+                          + " —— 應該是已經滿了，或這件道具的回復值本來就是 0。"
+                        : "　⚠️ 這場 run 的 HP／SAN **還沒初始化**（見 PlayerVitals 的警告）。"));
+            }
 
             Debug.Log($"[快捷欄] 使用「{d.Label}」"
                       + (d.hpRestore > 0 ? $"　HP +{d.hpRestore}" : "")
@@ -405,7 +424,7 @@ namespace EldritchMile.UI.Shortcut
                       + $"　→ HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}"
                       + $"　SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}");
 
-            PopupService.Instance?.ShowInstant(UsedTextFor(d));
+            PopupService.Instance?.ShowInstant(UsedTextFor(d, dHp, dSan));
 
             // 用完就重建 —— 數量要跟著變，用光了那一格要消失
             Refresh(false);
@@ -430,14 +449,29 @@ namespace EldritchMile.UI.Shortcut
             return true;
         }
 
-        private static string UsedTextFor(ItemData d)
+        /// <summary>
+        /// 「吃了什麼、實際發生了什麼」。
+        ///
+        /// 【為什麼講實際值而不是道具上的數字】滿血時吃蛋糕，
+        /// 帳面是 +35、實際是 +0 —— 照抄帳面的話玩家會以為系統壞了。
+        /// 講「HP 100/100（已滿）」他就知道是自己已經滿了。
+        /// </summary>
+        private static string UsedTextFor(ItemData d, int dHp, int dSan)
         {
             var bits = new List<string>();
-            if (d.hpRestore > 0) bits.Add($"HP +{d.hpRestore}");
-            if (d.sanRestore > 0) bits.Add($"SAN +{d.sanRestore}");
-            if (d.hpCost > 0) bits.Add($"HP -{d.hpCost}");
-            if (d.sanCost > 0) bits.Add($"SAN -{d.sanCost}");
-            return $"{d.Label}　{string.Join("　", bits.ToArray())}";
+            if (dHp != 0) bits.Add($"HP {dHp:+#;-#;0}");
+            if (dSan != 0) bits.Add($"SAN {dSan:+#;-#;0}");
+
+            if (bits.Count == 0)
+            {
+                return PlayerVitals.IsReady
+                    ? $"{d.Label}　（HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、"
+                      + $"SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}，沒有變化）"
+                    : $"{d.Label}　（沒有變化）";
+            }
+
+            return $"{d.Label}　{string.Join("　", bits.ToArray())}"
+                 + $"　→　HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}　SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}";
         }
     }
 }
