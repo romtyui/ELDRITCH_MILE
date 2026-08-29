@@ -71,7 +71,23 @@ public class MapView : MapOverlayController
 
     [Header("連線")]
     public GameObject linePrefab;
-    public Vector2 lineSize = new Vector2(7f, 25f);
+
+    [Tooltip("連線的**粗細**（像素）。\n\n" +
+             "⚠️ **長度不在這裡設** —— 長度是照兩個節點的實際距離算的。\n" +
+             "舊版把長度也寫死（`lineSize` 的 y ＝ 200），但節點之間實測是 123~175，\n" +
+             "所以每一條都超出兩端、看起來像沒接上。那一格已經移除。")]
+    [Min(0.5f)] public float lineThickness = 5f;
+
+    [Tooltip("兩端各留多少空隙，讓線不要壓在節點圖示底下。\n\n" +
+             "節點是 70×70，留 28 左右會貼著圖示邊緣但不蓋住它。\n" +
+             "0 = 一路連到節點中心（線會被節點圖蓋掉一截，看起來也可以）。\n\n" +
+             "⚠️ 節點的縮放會隨狀態變（當前 1.2 / 可前往 1.0 / 去不了 0.8），\n" +
+             "所以這是一個折衷值，不可能三種狀態都剛好貼齊。")]
+    [Min(0f)] public float lineEndGap = 28f;
+
+    [Tooltip("扣掉兩端空隙之後至少要留多長。\n" +
+             "節點靠得很近時不留這個的話，線會變成 0 甚至負的（畫面上是一個小方塊）")]
+    [Min(1f)] public float lineMinLength = 8f;
 
     [Tooltip("連線顯示方式。所有線在建圖時就都生成好，這裡只控制哪些顯示")]
     public LineDisplayMode lineDisplay = LineDisplayMode.VisitedPlusReachable;
@@ -465,8 +481,19 @@ public class MapView : MapOverlayController
         Vector2 b = PercentToLocal(to.xPercent, to.yPercent);
         Vector2 dir = b - a;
 
+        // ⚠️ **長度要照實際距離算，不能寫死。**
+        //
+        // 舊版是 `rect.sizeDelta = lineSize`（固定 5 × 200），但節點之間的
+        // 實際距離是 123~175 —— 每一條都比該有的長，兩端各戳出去一截，
+        // 看起來就像「線沒接到節點上」。而且距離會隨層數、路徑數、
+        // 視窗比例改變，任何寫死的值遲早都會錯。
+        //
+        // 兩端各縮 `lineEndGap` 是為了不要壓在節點圖示底下；
+        // 因為兩端縮一樣多，中點不變，所以位置照舊。
+        float length = Mathf.Max(lineMinLength, dir.magnitude - lineEndGap * 2f);
+
         rect.anchoredPosition = (a + b) * 0.5f;
-        rect.sizeDelta = lineSize;
+        rect.sizeDelta = new Vector2(lineThickness, length);
         rect.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg + 90f);
         rect.localScale = Vector3.one;   // 改用淡入後，scale 一律維持 1
 
