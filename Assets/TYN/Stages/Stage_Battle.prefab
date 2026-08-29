@@ -2607,6 +2607,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleStageController
   battleManager: {fileID: 2081058324285023973}
   defaultEnemyIds: []
+  tierRewards:
+  - tier: 0
+    moneyMin: 10
+    moneyMax: 20
+  - tier: 1
+    moneyMin: 30
+    moneyMax: 50
+  - tier: 2
+    moneyMin: 80
+    moneyMax: 120
+  rewardLineFormat: "\u6230\u5229\u54C1\uFF1A\u91D1\u5E63 \xD7{0}"
+  formationOverrides:
+  - tier: 1
+    enemyId: fish_priest
+    formation: {fileID: 11400000, guid: 6ace41415e0789b43932ac40411c6ad3, type: 2}
   defeatFlagPrefix: killed_
   godCardAnimationCanvas: {fileID: 1905672796960363865}
   godCardAnimationLayerName: GodCardAnimation

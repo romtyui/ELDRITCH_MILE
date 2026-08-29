@@ -81,6 +81,30 @@ public class BattleStageController : StageController
     [Tooltip("戰後結算怎麼寫。{0} = 金幣數量。留空 = 不播報（錢照給）")]
     public string rewardLineFormat = "戰利品：金幣 ×{0}";
 
+    [System.Serializable]
+    public class FormationOverride
+    {
+        [Tooltip("哪一種階級才套用")]
+        public EldritchMile.Core.EncounterPool.Tier tier = EldritchMile.Core.EncounterPool.Tier.Elite;
+
+        [Tooltip("節點上排的是哪一隻")]
+        public string enemyId = "";
+
+        [Tooltip("那時候實際擺出來的整組陣容")]
+        public EnemyFormationData formation;
+    }
+
+    [Header("陣容指定")]
+    [Tooltip("**同一隻怪在不同階級要擺不同的陣容**時填這裡。\n\n" +
+             "【為什麼需要】節點上只存得下**一個** `enemyId`，\n" +
+             "但戰鬥端是照 `EnemyFormationData`（一整組）擺的。\n" +
+             "只靠 id 去配的話永遠只配得到「剛好一隻」的那一組 ——\n" +
+             "菁英的半魚人祭司因此變成孤零零一隻，少了兩隻雜魚。\n\n" +
+             "⚠️ **一定要連 tier 一起比對**：`fish_priest` 同時是雜兵池的一員（weight 10）\n" +
+             "又是保證出現的菁英。只看 id 的話，每一場遇到祭司都會變成三隻。\n\n" +
+             "沒有對應的條目就照舊：找成員完全吻合的現成陣容，再找不到才即時捏一組。")]
+    public List<FormationOverride> formationOverrides = new List<FormationOverride>();
+
     [Header("戰績")]
     [Tooltip("打倒敵人時立的旗標前綴。`killed_` ＋ 敵人 id。\n" +
              "《螺湮的祝福》等的是 killed_fish_priest")]
@@ -590,7 +614,7 @@ public class BattleStageController : StageController
         //    真正決定「這場打誰」的是下面那一行的 Formation。
         rs.ReserveEncounterByEnemyData(enemies);
 
-        ReserveFormationFor(enemies, rs);
+        ReserveFormationFor(enemies, rs, ids);
     }
 
     /// <summary>
@@ -614,9 +638,14 @@ public class BattleStageController : StageController
     /// 【誰負責清掉】`BattleManager` 在戰鬥結束時會 `ClearReservedFormation()`，
     /// 所以這裡只管預約，不用管善後 —— 不清的話下一場會重複同一組怪。
     /// </summary>
-    private void ReserveFormationFor(List<EnemyData> enemies, RunStateManager rs)
+    private void ReserveFormationFor(List<EnemyData> enemies, RunStateManager rs, List<string> ids)
     {
-        EnemyFormationData match = FindFormationFor(enemies);
+        // ① 先看有沒有「這個階級的這一隻要擺哪一組」的指定 ——
+        //    節點上只存得下一個 enemyId，整組陣容只能靠這張表補
+        EnemyFormationData match = FindOverride(ids);
+
+        // ② 沒有指定就找成員完全吻合的現成陣容
+        if (match == null) match = FindFormationFor(enemies);
 
         if (match == null)
         {
@@ -642,6 +671,51 @@ public class BattleStageController : StageController
         }
 
         rs.ReserveFormation(match);
+
+        // ⚠️ 勝利旗標要照**實際擺出來的那一組**立，不是照我們預約的 id。
+        //    菁英是「祭司 ＋ 兩隻雜魚」，只記祭司的話沒有錯，
+        //    但打完雜魚的旗標就漏了 —— 之後有事件要看那個旗標就會靜靜地不觸發。
+        if (match.enemies != null && match.enemies.Count > 0)
+        {
+            fightingEnemyIds.Clear();
+            for (int i = 0; i < match.enemies.Count; i++)
+            {
+                EnemyData e = match.enemies[i] != null ? match.enemies[i].enemyData : null;
+                if (e != null && !string.IsNullOrEmpty(e.enemyId)) fightingEnemyIds.Add(e.enemyId);
+            }
+        }
+
+        if (verboseBinding)
+        {
+            Debug.Log($"[戰鬥] 這一場擺「{match.name}」，共 {match.enemies.Count} 隻："
+                      + string.Join("、", fightingEnemyIds.ToArray()), this);
+        }
+    }
+
+    /// <summary>
+    /// 查「這個階級的這一隻」有沒有指定的整組陣容。
+    ///
+    /// 只在**剛好指定一隻**時才查 —— 事件指名多隻時那本來就是完整的組合，
+    /// 再去套一張表只會蓋掉劇本的意思。
+    /// </summary>
+    private EnemyFormationData FindOverride(List<string> ids)
+    {
+        if (formationOverrides == null || ids == null || ids.Count != 1) return null;
+
+        EldritchMile.Core.EncounterPool.Tier tier =
+            run != null && run.pendingNode != null
+                ? run.pendingNode.enemyTier
+                : EldritchMile.Core.EncounterPool.Tier.Minion;
+
+        for (int i = 0; i < formationOverrides.Count; i++)
+        {
+            FormationOverride o = formationOverrides[i];
+            if (o == null || o.formation == null) continue;
+            if (o.enemyId != ids[0] || o.tier != tier) continue;
+
+            return o.formation;
+        }
+        return null;
     }
 
     /// <summary>
