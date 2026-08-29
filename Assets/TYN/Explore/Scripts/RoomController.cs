@@ -73,6 +73,37 @@ namespace EldritchMile.Explore
             int filled = 0;
             int maxFill = contentData.maxFilled > 0 ? contentData.maxFilled : shuffled.Count;
 
+            // ── 第零段：對號入座的位子先填，而且**不算進 maxFill** ──
+            //
+            // 【為什麼要有這一段】有 contentTag 的位子是「這一格就是要放那個東西」，
+            // 典型是**畫在背景上的家具**（`artIsPainted`）——
+            // 那個櫃子本來就畫在牆上，玩家看得到它，卻不一定碰得到，
+            // 因為隨機那兩段可能先把 maxFill 用完就輪不到它了。
+            // 實測：小屋 5 個 seed 只有 1 次填得到。
+            //
+            // 【為什麼不算配額】它在畫面上**本來就存在**，不是額外多出來的一件東西。
+            // 算進去的話等於「這間房因為牆上有櫃子，就少一個寶箱」——那不合理。
+            //
+            // 【為什麼忽略 fillChance】同上：畫上去的家具沒有「這次不出現」這種選項。
+            foreach (SpawnSlot slot in shuffled)
+            {
+                if (slot == null || slot.IsOccupied) continue;
+                if (string.IsNullOrEmpty(slot.contentTag)) continue;
+
+                RoomContentData.Entry entry = contentData.PickFor(slot, rng, usedCount, null);
+                if (entry == null)
+                {
+                    Debug.LogWarning(
+                        $"[房間] {name} 的位子「{slot.name}」指定了 tag「{slot.contentTag}」，" +
+                        "但內容表裡沒有同 tag 的條目 —— 這一格會是空的。\n" +
+                        "畫在背景上的家具空著的話，玩家會看到一個碰不到的櫃子。", this);
+                    continue;
+                }
+
+                SpawnInto(slot, entry, rng);
+                usedCount[entry] = usedCount.TryGetValue(entry, out int c1) ? c1 + 1 : 1;
+            }
+
             // ── 第一段：群組配額先佔位 ──
             //
             // 【順序不能反】先讓家具把位子填滿的話，寶箱就沒地方站了。
@@ -175,7 +206,38 @@ namespace EldritchMile.Explore
                 it.ApplyRandomVariant(rng);
             }
 
+            // 美術已經把這件家具畫在背景上 —— 生成物只留碰撞框，圖隱形
+            if (slot.artIsPainted) HideVisualsKeepRaycast(obj);
+
             slot.MarkOccupied();
+        }
+
+        /// <summary>
+        /// 讓生成物**看不見但仍然碰得到**。
+        ///
+        /// ⚠️ **一定要調 alpha，不可以 `enabled = false`。**
+        /// 停用 Renderer 之後，靠 Collider 的 hover 雖然還在，
+        /// 但任何靠 `Image`／`SpriteRenderer` 收事件的東西會整個失效 ——
+        /// 這個專案在快捷欄踩過三次（交接文件「坑 1」）。
+        /// 而且 `InteractableBase.ApplyRandomVariant` 之後還會去寫那個 Renderer，
+        /// 停用的話那一段會安靜地沒有作用。
+        ///
+        /// 【為什麼不是把 prefab 上的圖拿掉】同一個 prefab 也會被擺在
+        /// 「沒有畫上去」的位子上，那時它得看得見。差別是**位子**，不是物件。
+        /// </summary>
+        private static void HideVisualsKeepRaycast(GameObject obj)
+        {
+            foreach (SpriteRenderer sr in obj.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                Color c = sr.color;
+                sr.color = new Color(c.r, c.g, c.b, 0f);
+            }
+
+            foreach (UnityEngine.UI.Graphic g in obj.GetComponentsInChildren<UnityEngine.UI.Graphic>(true))
+            {
+                Color c = g.color;
+                g.color = new Color(c.r, c.g, c.b, 0f);
+            }
         }
 
         // ==========================================

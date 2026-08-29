@@ -22,7 +22,13 @@ namespace EldritchMile.Explore
         [Header("位置屬性")]
         public Placement placement = Placement.Any;
 
-        [Tooltip("只有標記相同 tag 的內容才會放進這個位子。留空 = 不限")]
+        [Tooltip("這個位子與內容的**對號入座標記**。留空 = 不限。\n\n" +
+                 "⚠️ **是雙向的**：\n" +
+                 "　· 位子有 tag → 只收同 tag 的內容\n" +
+                 "　· 內容有 tag → 只進同 tag 的位子\n\n" +
+                 "只做單向（位子挑內容）的話沒有用 —— 沒有 tag 的位子照樣會把\n" +
+                 "那個內容抽走，專屬的位子就撲空了。「畫在背景上的櫃子」正是這種情況：\n" +
+                 "櫃子被隨機擺到別處，畫上去的那一格反而空著。")]
         public string contentTag = "";
 
         [Header("隨機角度（C6：以各種角度出現）")]
@@ -31,6 +37,19 @@ namespace EldritchMile.Explore
 
         [Tooltip("隨機縮放範圍。1,1 表示不縮放")]
         public Vector2 scaleRange = new Vector2(1f, 1f);
+
+        [Header("釘在美術上的位子")]
+        [Tooltip("**這一格的家具美術已經畫在背景上了**，生成物只當「碰得到的東西」。\n\n" +
+                 "生成之後會把它的圖**透明度調成 0** —— 畫面上看到的是美術原稿，\n" +
+                 "但碰撞框、hover、點擊全部照常。\n\n" +
+                 "⚠️ **是調 alpha，不是 `enabled = false`。**\n" +
+                 "停用 Renderer／Image 的話整個東西就點不到了 ——\n" +
+                 "這個專案在快捷欄踩過三次同一個坑（見交接文件「坑 1」）。\n\n" +
+                 "⚠️ 打開這一格時，`Rotation Range` 與 `Scale Range` 要歸零 ——\n" +
+                 "畫上去的櫃子不會歪，碰撞框歪了就對不上。\n\n" +
+                 "⚠️ 代價：`InteractableBase` 的「互動後換圖」看不見了（圖是透明的）。\n" +
+                 "玩家的回饋只剩戰利品播報。畫上去的家具本來就不會變，這是這個做法的極限。")]
+        public bool artIsPainted = false;
 
         [Header("機率")]
         [Tooltip("這個位子有東西的機率。1 = 一定有")]
@@ -50,7 +69,11 @@ namespace EldritchMile.Explore
                 return false;
             }
 
+            // 位子有 tag → 只收同 tag 的內容
             if (!string.IsNullOrEmpty(contentTag) && contentTag != tag) return false;
+
+            // 內容有 tag → 只進同 tag 的位子（**這一半以前沒有**，見 contentTag 的說明）
+            if (!string.IsNullOrEmpty(tag) && contentTag != tag) return false;
 
             return true;
         }

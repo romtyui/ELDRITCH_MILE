@@ -49,6 +49,12 @@ MonoBehaviour:
     tag: 
     maxPerRoom: 0
     group: chest
+  - prefab: {fileID: 8227302718710912474, guid: da7e60a184b12bb4dadc04fa74f408ba, type: 3}
+    weight: 1
+    placement: 0
+    tag: painted_cabinet
+    maxPerRoom: 1
+    group: 
   groupQuotas:
   - group: chest
     countWeights:

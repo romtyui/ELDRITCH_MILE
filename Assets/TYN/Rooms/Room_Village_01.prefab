@@ -48,6 +48,7 @@ MonoBehaviour:
   contentTag: 
   rotationRange: {x: 0, y: 0}
   scaleRange: {x: 1, y: 1}
+  artIsPainted: 0
   fillChance: 1
 --- !u!1 &1891687337091006674
 GameObject:
@@ -85,6 +86,7 @@ Transform:
   - {fileID: 4812594332391378140}
   - {fileID: 8041967965208344235}
   - {fileID: 5807657365566274420}
+  - {fileID: 6336884615327207064}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6949544504022293931
@@ -119,6 +121,56 @@ MonoBehaviour:
   upscaleIfTooSmall: 1
   upscalePadding: 1.01
   verbose: 0
+--- !u!1 &2187106343493848347
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6336884615327207064}
+  - component: {fileID: 8101817395198326909}
+  m_Layer: 0
+  m_Name: Slot_PaintedCabinet
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6336884615327207064
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2187106343493848347}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.95, y: 1.52, z: -1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7013287522508956126}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8101817395198326909
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2187106343493848347}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5356c8448d8b708458582ed36a317441, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Explore.SpawnSlot
+  placement: 1
+  contentTag: painted_cabinet
+  rotationRange: {x: 0, y: 0}
+  scaleRange: {x: 1, y: 1}
+  artIsPainted: 1
+  fillChance: 1
 --- !u!1 &2869238796097047044
 GameObject:
   m_ObjectHideFlags: 0
@@ -167,6 +219,7 @@ MonoBehaviour:
   contentTag: 
   rotationRange: {x: 0, y: 0}
   scaleRange: {x: 1, y: 1}
+  artIsPainted: 0
   fillChance: 1
 --- !u!1 &6177006978407505049
 GameObject:
@@ -216,6 +269,7 @@ MonoBehaviour:
   contentTag: 
   rotationRange: {x: 0, y: 0}
   scaleRange: {x: 1, y: 1}
+  artIsPainted: 0
   fillChance: 1
 --- !u!1 &6246314555863583882
 GameObject:
@@ -265,6 +319,7 @@ MonoBehaviour:
   contentTag: 
   rotationRange: {x: 0, y: 0}
   scaleRange: {x: 1, y: 1}
+  artIsPainted: 0
   fillChance: 1
 --- !u!1001 &2012278677934053751
 PrefabInstance:

@@ -44,6 +44,15 @@ namespace EldritchMile.Explore
         [Tooltip("可有可無的組件。**背景本身不要列進來** —— 背景關掉就穿幫了")]
         public List<Piece> pieces = new List<Piece>();
 
+        [Tooltip("**這一組全部固定顯示**，不參與隨機開關。\n\n" +
+                 "【什麼時候用】室內的房間 —— 那些「item」其實是牆上釘死的傢俱與裝潢，\n" +
+                 "隨機關掉會讓同一面牆一下有櫃子一下沒櫃子，看起來像破圖而不是變化。\n" +
+                 "戶外那張的 item 是路牌、垃圾桶、曬魚乾這類**擺設**，關掉才有意義。\n\n" +
+                 "（2026-08-30 組員指示：只有 outdoor 參與圖層開關，房間內部不用。）\n\n" +
+                 "⚠️ 這一格贏過每一件自己的 Chance，但**不會改動資料** ——\n" +
+                 "取消勾選就完全回到原本的隨機行為。")]
+        public bool alwaysShowAll = false;
+
         [Tooltip("把每次的擺設結果印到 Console")]
         public bool verbose = false;
 
@@ -61,7 +70,7 @@ namespace EldritchMile.Explore
                 if (p == null || p.target == null) continue;
 
                 total++;
-                bool show = p.always || rng.NextDouble() < p.chance;
+                bool show = alwaysShowAll || p.always || rng.NextDouble() < p.chance;
                 p.target.SetActive(show);
                 if (show) on++;
             }
