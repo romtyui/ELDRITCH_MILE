@@ -962,6 +962,7 @@ MonoBehaviour:
   askOnRoomCleared: 0
   explorationDeck: {fileID: 4677082942379712021}
   cardsPerEncounter: 5
+  outOfCardsText: "\u624B\u4E0A\u5DF2\u7D93\u6C92\u6709\u724C\u4E86\u3002\u9019\u9593\u5C4B\u5B50\u88E1\u80FD\u8A66\u7684\u90FD\u8A66\u904E\u4E86\u3002"
 --- !u!114 &4677082942379712021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1027,7 +1028,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 550, y: 0}
+  m_AnchoredPosition: {x: 350, y: 0}
   m_SizeDelta: {x: 150, y: 405}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &562032950186822789

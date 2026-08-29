@@ -1903,3 +1903,75 @@ Artwork 拉成滿版與卡框重合、兩層都開 `preserveAspect`。
 
 **能離線驗的就不要開 Play。**
 但**版面與位置驗不了** —— 那一類（房間 slot 對位、對話框版型）只能用眼睛看。
+
+
+---
+
+## 快捷欄：改用美術貼進場景的那一份（2026-08-30）
+
+**做法變了。** 前三次都在「照數字重做一個長得像的」，怎麼調都不對。
+這次是使用者**直接把 Romtyui 的 `Relics_Panel` / `Props_Panel` 複製貼進場景**，
+位置尺寸一次就對了，我只負責接功能。
+
+### 現在的結構
+
+```
+[UI_ROOT]/Canvas_HUD
+  ├─ Relics_Panel   (x 1435~1719, y 955~1080)  ShortcutBarUI  filterTag=Curio
+  │    ├─ Image            ← 收合圖示（遺物儲存區）
+  │    ├─ relics (關)      ← 格子模板，當 slotPrefab 用
+  │    ├─ ExpandedRoot     ← VerticalLayoutGroup, spacing -35
+  │    ├─ 動畫效果演示 (關) ← 美術分鏡稿，留著參考
+  │    └─ Tooltip (關)
+  └─ Props_Panel    (x 1778~1920, y 674~976)   ShortcutBarUI  filterTag=Food
+       ├─ Prop_1/2/3       ← 固定三格，常駐顯示
+       ├─ 動畫效果演示 (關)
+       └─ Tooltip (關)
+```
+
+### 兩條欄的互動方式**不一樣**（照分鏡稿）
+
+| | 分鏡稿依據 | 實作 |
+|---|---|---|
+| 食物 | `碰觸前(無食物)` 就三格全開；`有碰觸` 只把格子左移 41px | `alwaysExpanded = true` + `fixedSlots` |
+| 遺物 | `一般狀態` 一個圖示 →`點開` 五格往下排 | 舊的收合／展開，`slotPrefab = relics` |
+
+為此在 `ShortcutBarUI` 加了三個東西：
+* `fixedSlots` —— 用美術排好的格子，不生成、不交給 Layout Group
+* `alwaysExpanded` —— 沒有收合這件事
+* `emptySlotIcon` —— 空格子換成空針筒**而不是消失**（分鏡稿裡空著也看得到三支）
+
+`ShortcutSlotUI` 加了 `BindEmpty()`。
+
+### 踩到的坑（都排除了）
+
+1. **整組 `raycastTarget` 全是 `false`** —— 貼進來時完全點不到。
+   食物讓 `針筒` 收事件（它才畫在正確位置，根物件的 rect 反而偏左），
+   遺物讓 `Frame of remains` 收。
+2. **`Prop_N/Image` 是不透明紅色又沒有圖** —— 那是 Romtyui 標記
+   「還沒決定有道具時長怎樣」的佔位色。格子一打開就是三個紅方塊。
+   改成 alpha 0（**不是停用**，坑 1）。
+3. **`slot.frame` 不接食物的底圖** —— `Bind()` 會 `frame.sprite = slotFrame`，
+   接了就會把他的美術洗掉。遺物那邊有接，但 `slotFrame` 填回原本那張。
+4. **`SetParent` 搬 Tooltip 沒生效，物件跟著舊欄一起被刪** ——
+   當下有印出「搬好了」但我沒驗證父層。後來整個重建。
+   ⚠️ **改完一定要存檔後再從記憶體複查一次**，印出來的不等於存進去的。
+5. **改元件欄位只 `MarkSceneDirty` 不夠**，要 `EditorUtility.SetDirty(元件)`，
+   不然 `SaveOpenScenes` 不會把那個欄位寫進去（第 4 點就是這樣掉的）。
+
+### 命名注意
+
+`ItemSlotUI` 的對應是 `empty = 針管_未使用_0`、`filled = 針管_已使用_0`。
+「未使用 / 已使用」讀起來跟直覺相反，但**照他的資料走**，不要自己對調。
+
+### 分站顯示
+
+兩個面板的 `UIPanel.visibleInStages` =
+`None / Explore / Shop / Dialogue / ProbabilityDialogue / Event / SpecialEvent`。
+**Battle 與 Menu 不在裡面** —— 戰鬥中不能吃東西是確認過的需求。
+
+### 還沒做
+
+* 分鏡稿的「點開 → 滑動」轉場，目前仍是 `staggerSeconds` 逐格淡入
+* 遺物超過 5 個時的排版（VerticalLayoutGroup 會繼續往下長，但會超出畫面）
+* 空格子的 hover 目前沒有回饋（`BindEmpty` 之後 `Item` 是 null）

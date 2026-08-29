@@ -101,6 +101,33 @@ namespace EldritchMile.UI.Shortcut
         }
 
         /// <summary>
+        /// 這一格是空的。**格子留在畫面上**，只是換成「空」的樣子。
+        ///
+        /// 【為什麼不直接關掉】Romtyui 的分鏡稿「碰觸前(無食物)」裡，
+        /// 三支針筒是**看得到的空針筒**，不是消失。格子憑空不見會讓玩家
+        /// 以為 UI 壞了，也看不出「我最多能帶三個」這件事。
+        /// </summary>
+        public void BindEmpty(Sprite emptyIcon)
+        {
+            Item = null;
+            Count = 0;
+
+            if (icon != null)
+            {
+                icon.sprite = emptyIcon;
+                icon.enabled = emptyIcon != null;
+            }
+
+            if (countText != null) countText.gameObject.SetActive(false);
+
+            frameVisible = false;
+            ApplyTint(normalTint);
+
+            homeCaptured = false;
+            gameObject.SetActive(true);
+        }
+
+        /// <summary>
         /// 記住「本來的位置」。**只在還沒被推出去的時候抓** ——
         /// 推出去之後再抓就會把推出的位移當成原位，於是每次 hover 都往外跑一點。
         /// </summary>

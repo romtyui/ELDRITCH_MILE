@@ -54,6 +54,20 @@ namespace EldritchMile.UI.Shortcut
 
         public ShortcutSlotUI slotPrefab;
 
+        [Header("美術已經排好位置的格子")]
+        [Tooltip("不留空的話，就**不生成新格子**，而是把道具填進這些已經存在的格子。\n\n"
+                 + "【什麼時候用】美術把位置一格一格排好了的時候（食物那三支針筒）。\n"
+                 + "交給 Layout Group 排的話，那份手調的間距就沒了。\n\n"
+                 + "道具比格子多的時候，多出來的**不會顯示** —— 這是刻意的，\n"
+                 + "格數是美術定的（Romtyui 的 ItemInventory.maxItemCount 也是 3）。")]
+        public List<ShortcutSlotUI> fixedSlots = new List<ShortcutSlotUI>();
+
+        [Tooltip("勾選 = 這條欄**一直是展開的**，沒有收合這件事。\n\n"
+                 + "食物那一條就是這種 —— 美術分鏡稿的「碰觸前」已經三格全開，\n"
+                 + "「有碰觸」只是把格子往外推，不是彈出來。\n\n"
+                 + "⚙ 勾了之後 collapsedIcon / 自動收起那三條全部不作用。")]
+        public bool alwaysExpanded = false;
+
         [Header("預設圖")]
         [Tooltip("道具自己沒有 icon 時用這張。食物欄放針管、遺物欄放卡冊。\n\n" +
                  "⚠️ 目前所有道具都還沒有自己的圖 —— 少了這張，整條欄會是一排空框，\n" +
@@ -62,6 +76,12 @@ namespace EldritchMile.UI.Shortcut
 
         [Tooltip("格子外框。留空就用 SC_Slot prefab 上原本的")]
         public Sprite slotFrame;
+
+        [Tooltip("**固定格子專用**：這一格沒有道具時顯示的圖（空針筒）。\n\n"
+                 + "留空 = 空格子直接關掉。\n"
+                 + "填了 = 格子留著、換成這張 —— 分鏡稿「碰觸前(無食物)」就是這樣，\n"
+                 + "玩家看得出「我最多帶三個、現在還有空位」。")]
+        public Sprite emptySlotIcon;
 
         [Header("說明框（hover 時）")]
         public GameObject tooltipRoot;
@@ -110,6 +130,9 @@ namespace EldritchMile.UI.Shortcut
 
         private readonly List<ShortcutSlotUI> slots = new List<ShortcutSlotUI>();
         private bool expanded;
+
+        /// Refresh 正在跑。防止 alwaysExpanded 時 Refresh → SetExpanded → Refresh 繞回來
+        private bool refreshing;
         private Coroutine reveal;
 
         private void OnEnable() => Refresh();
@@ -121,36 +144,35 @@ namespace EldritchMile.UI.Shortcut
         /// </param>
         public void Refresh(bool collapseAfter = true)
         {
-            for (int i = 0; i < slots.Count; i++) if (slots[i] != null) Destroy(slots[i].gameObject);
-            slots.Clear();
-
-            RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+            // alwaysExpanded 時，收尾的 SetExpanded(true) 會再打一次 Refresh ——
+            // 這個旗標把那一圈擋掉（見 SetExpanded）
+            refreshing = true;
+            // ── 先把「這一條欄該顯示哪些道具」算出來 ──
+            //    兩種擺法（生成 / 用美術排好的格子）共用同一份結果
+            List<ItemStack> shown = new List<ItemStack>();
             ItemDatabase db = GameFlowManager.Instance != null ? GameFlowManager.Instance.itemDatabase : null;
+            RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
 
-            if (run == null || db == null || expandedRoot == null || slotPrefab == null)
+            if (run != null && db != null)
             {
-                if (collapsedIcon != null) collapsedIcon.SetActive(showWhenEmpty);
-                return;
+                foreach (ItemStack stack in run.inventory)
+                {
+                    if (stack == null || stack.count <= 0) continue;
+
+                    ItemData d = db.GetById(stack.id);
+
+                    // 沒登記的道具（查不到 ItemData）在**有指定標籤**時跳過 ——
+                    // 不知道它是不是食物，硬塞進食物欄會誤導。
+                    // 但它不會消失：F1 除錯面板會把它標成「沒登記」，那才是抓這種錯的地方
+                    if (d == null) continue;
+                    if (!string.IsNullOrEmpty(filterTag) && !d.HasTag(filterTag)) continue;
+
+                    shown.Add(stack);
+                }
             }
 
-            foreach (ItemStack stack in run.inventory)
-            {
-                if (stack == null || stack.count <= 0) continue;
-
-                ItemData d = db.GetById(stack.id);
-
-                // 沒登記的道具（查不到 ItemData）在**有指定標籤**時跳過 ——
-                // 不知道它是不是食物，硬塞進食物欄會誤導。
-                // 但它不會消失：F1 除錯面板會把它標成「沒登記」，那才是抓這種錯的地方
-                if (d == null) continue;
-                if (!string.IsNullOrEmpty(filterTag) && !d.HasTag(filterTag)) continue;
-
-                ShortcutSlotUI s = Instantiate(slotPrefab, expandedRoot);
-                s.Bind(d, stack.count, fallbackIcon, slotFrame);
-                s.OnHoverChanged += HandleSlotHover;
-                s.OnClicked += HandleSlotClicked;
-                slots.Add(s);
-            }
+            if (UsingFixedSlots) RefreshFixed(shown, db);
+            else RefreshSpawned(shown, db, run);
 
             if (collapsedIcon != null)
                 collapsedIcon.SetActive(showWhenEmpty || slots.Count > 0);
@@ -158,11 +180,93 @@ namespace EldritchMile.UI.Shortcut
             // 空的時候要看得出「是真的沒有」，而不是「壞了」——
             // 沒有這個提示的話，展開一個空欄跟功能失效長得一模一樣
             if (slots.Count == 0)
-            {
                 Debug.Log($"[快捷欄] {name}：身上沒有標籤「{filterTag}」的道具，展開會是空的");
+
+            refreshing = false;
+            if (collapseAfter) SetExpanded(alwaysExpanded, true);
+        }
+
+        /// <summary>
+        /// 這條欄用的是美術排好的固定格子嗎。
+        /// <see cref="fixedSlots"/> 有東西就是。
+        /// </summary>
+        public bool UsingFixedSlots
+        {
+            get { return fixedSlots != null && fixedSlots.Count > 0; }
+        }
+
+        /// <summary>
+        /// 【美術排好的固定格子】把道具填進去，多出來的格子關掉。
+        ///
+        /// ⚠️ **這裡絕對不能 Destroy 格子。** 它們是場景裡的物件、位置是美術手調的，
+        /// 砍掉就回不來了（而且下一次 Refresh 會變成空欄）。
+        /// 生成出來的那條路才需要砍，見 <see cref="RefreshSpawned"/>。
+        /// </summary>
+        private void RefreshFixed(List<ItemStack> shown, ItemDatabase db)
+        {
+            DetachHandlers();
+            slots.Clear();
+
+            for (int i = 0; i < fixedSlots.Count; i++)
+            {
+                ShortcutSlotUI s = fixedSlots[i];
+                if (s == null) continue;
+
+                if (i >= shown.Count)
+                {
+                    // 這一格沒東西可放 —— 有空圖就換成空的樣子，沒有才整格關掉
+                    if (emptySlotIcon != null) s.BindEmpty(emptySlotIcon);
+                    else s.gameObject.SetActive(false);
+                    continue;
+                }
+
+                ItemStack stack = shown[i];
+                s.Bind(db.GetById(stack.id), stack.count, fallbackIcon, slotFrame);
+                s.OnHoverChanged += HandleSlotHover;
+                s.OnClicked += HandleSlotClicked;
+                slots.Add(s);
             }
 
-            if (collapseAfter) SetExpanded(false, true);
+            if (shown.Count > fixedSlots.Count)
+            {
+                Debug.LogWarning(
+                    $"[快捷欄] {name}：有 {shown.Count} 件「{filterTag}」但只有 " +
+                    $"{fixedSlots.Count} 格，多的 {shown.Count - fixedSlots.Count} 件看不到。\n" +
+                    "　格數是美術定的 —— 要顯示更多就得請美術多排幾格，程式不該自己長出來。");
+            }
+        }
+
+        /// <summary>【生成】舊的做法：依道具數量生格子，交給 Layout Group 排。</summary>
+        private void RefreshSpawned(List<ItemStack> shown, ItemDatabase db, RunContext run)
+        {
+            for (int i = 0; i < slots.Count; i++) if (slots[i] != null) Destroy(slots[i].gameObject);
+            slots.Clear();
+
+            if (run == null || db == null || expandedRoot == null || slotPrefab == null) return;
+
+            for (int i = 0; i < shown.Count; i++)
+            {
+                ShortcutSlotUI s = Instantiate(slotPrefab, expandedRoot);
+                s.Bind(db.GetById(shown[i].id), shown[i].count, fallbackIcon, slotFrame);
+                s.OnHoverChanged += HandleSlotHover;
+                s.OnClicked += HandleSlotClicked;
+                slots.Add(s);
+            }
+        }
+
+        /// <summary>
+        /// 解掉事件訂閱。**固定格子專用** ——
+        /// 生成出來的格子連物件一起砍，訂閱自然消失；固定格子活得比訂閱久，
+        /// 不解的話每次 Refresh 都會多疊一層，點一下會使用好幾次道具。
+        /// </summary>
+        private void DetachHandlers()
+        {
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i] == null) continue;
+                slots[i].OnHoverChanged -= HandleSlotHover;
+                slots[i].OnClicked -= HandleSlotClicked;
+            }
         }
 
         // ==========================================
@@ -175,7 +279,10 @@ namespace EldritchMile.UI.Shortcut
             // 症狀是「看得到欄位但點不到」，因為根本沒有東西可以點。
             //
             // 放在展開的時機而不是每幀 —— 只有要看的時候才重建，代價可以忽略
-            if (on && !expanded) Refresh(false);
+            // 常駐的欄沒有「收起來」這件事 —— 任何要求收合的呼叫都當成展開
+            if (alwaysExpanded) on = true;
+
+            if (on && !expanded && !refreshing) Refresh(false);
 
             expanded = on;
 
@@ -264,7 +371,7 @@ namespace EldritchMile.UI.Shortcut
         /// </summary>
         private void Update()
         {
-            if (!expanded || openOnHover) return;
+            if (!expanded || openOnHover || alwaysExpanded) return;
 
             // ── 1. 滑鼠離開整條欄超過緩衝時間 ──
             if (!pointerInside)
@@ -303,6 +410,7 @@ namespace EldritchMile.UI.Shortcut
         public void OnPointerClick(PointerEventData eventData)
         {
             if (openOnHover) return;    // hover 模式下點擊不該再切換，會打架
+            if (alwaysExpanded) return; // 常駐的欄沒有開關可切
 
             // **關著才開。** 開著時點空白處不收 ——
             // 收起來交給那三條（離開、閒置、點外面）。
