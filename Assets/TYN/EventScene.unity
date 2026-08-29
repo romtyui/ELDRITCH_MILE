@@ -8505,13 +8505,13 @@ MonoBehaviour:
   nodeTooltip: {fileID: 1037407249}
   nodeTooltipTexts:
   - kind: 0
-    title: "\u4E8B\u4EF6"
+    title: "\u74B0\u5883"
     body: 
   - kind: 1
-    title: "\u9047\u6575"
+    title: "\u6575\u4EBA"
     body: 
   - kind: 2
-    title: "\u982D\u76EE"
+    title: "\u9996\u9818"
     body: 
   - kind: 3
     title: "\u5546\u5E97"
@@ -8519,9 +8519,12 @@ MonoBehaviour:
   - kind: 4
     title: "\u7279\u6B8A"
     body: 
+  - kind: 5
+    title: "\u906D\u9047"
+    body: 
   tooltipTierMinion: 
-  tooltipTierElite: "<color=#FF9B6A>\u25C6 \u83C1\u82F1 \u2014\u2014 \u9019\u4E00\u7AD9\u4E0D\u597D\u60F9\u3002</color>"
-  tooltipTierBoss: "<color=#FF6A6A>\u25C6\u25C6 \u9996\u9818\u3002</color>"
+  tooltipTierElite: "<color=#FF9B6A>\u25C6 \u83C1\u82F1</color>"
+  tooltipTierBoss: "<color=#FF6A6A>\u25C6\u25C6 BOSS</color>"
   tooltipStateCurrent: "<color=#FFD98A>\u4F60\u5728\u9019\u88E1\u3002</color>"
   tooltipStateSelectable: "<color=#9BE39B>\u53EF\u4EE5\u524D\u5F80\u3002</color>"
   tooltipStateVisited: "<color=#8A8A8A>\u5DF2\u7D93\u53BB\u904E\u4E86\u3002</color>"

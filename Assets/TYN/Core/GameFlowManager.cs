@@ -147,6 +147,29 @@ namespace EldritchMile.Core
             return db != null ? db.GetById(id) : null;
         }
 
+        [Header("轉場節奏")]
+        [Tooltip("淡出（畫面 → 黑）幾秒。@@NL@@@@NL@@" +
+                 "**比淡入短是刻意的** —— 電影剪接的慣例：離開快、進入慢。@@NL@@" +
+                 "兩邊一樣長的話，轉場會像「畫面閃了一下」而不是「換了一個地方」。")]
+        [Min(0f)] public float fadeOutSeconds = 0.3f;
+
+        [Tooltip("淡入（黑 → 畫面）幾秒。比淡出長，讓新畫面有「浮出來」的感覺")]
+        [Min(0f)] public float fadeInSeconds = 0.55f;
+
+        [Tooltip("**黑幕停留幾秒**（一般的轉場）。@@NL@@@@NL@@" +
+                 "0 就是切完立刻淡入 —— 那正是「突兀」的來源：@@NL@@" +
+                 "大腦需要一小段全黑才會把前後讀成「兩個地方」，@@NL@@" +
+                 "沒有那一拍就只是同一個畫面閃了一下。@@NL@@@@NL@@" +
+                 "⚠️ 太長會變成卡頓。0.2~0.4 之間是舒服的區間。")]
+        [Min(0f)] public float holdBlackSeconds = 0.25f;
+
+        [Tooltip("**接續型轉場**的黑幕停留幾秒（事件 → 節點、事件安排的戰鬥 → 節點）。@@NL@@@@NL@@" +
+                 "這一種比一般轉場更需要停頓 —— 玩家沒有按任何「前往」的動作，@@NL@@" +
+                 "畫面卻換了地方。停久一點才讀得出「剛才那件事結束了，現在是別的地方」。@@NL@@@@NL@@" +
+                 "⚠️ 這只解決**時間感**。「我現在在哪」是另一件事 ——@@NL@@" +
+                 "那要靠地點卡（`MapBannerUI` 已經有這個能力）或事件收尾的文案去接。")]
+        [Min(0f)] public float holdBlackAfterEventSeconds = 0.5f;
+
         public event Action<StageType, StageType> OnStageChanged;
 
         private void Awake()
@@ -305,6 +328,7 @@ namespace EldritchMile.Core
                 yield return SwitchStageInternal(nodeStage);
             }
 
+            yield return HoldBlack(holdBlackSeconds);
             yield return FadeIn();
 
             IsTransitioning = false;
@@ -422,6 +446,11 @@ namespace EldritchMile.Core
 
                 yield return FadeOut();
                 yield return SwitchStageInternal(next);
+
+                // ⚠️ **這一跳最需要停頓。** 玩家沒有按任何「前往」的動作，
+                //    畫面卻換了地方 —— 不停一拍就會覺得「怎麼突然跳掉了」
+                yield return HoldBlack(holdBlackAfterEventSeconds);
+
                 yield return FadeIn();
 
                 IsTransitioning = false;
@@ -443,6 +472,7 @@ namespace EldritchMile.Core
 
                 yield return FadeOut();
                 yield return SwitchStageInternal(next);
+                yield return HoldBlack(holdBlackAfterEventSeconds);
                 yield return FadeIn();
 
                 IsTransitioning = false;
@@ -480,6 +510,7 @@ namespace EldritchMile.Core
             // 一般情況：卸掉 Stage，地圖自動下拉（C1/C2）
             yield return FadeOut();
             yield return SwitchStageInternal(StageType.None);
+            yield return HoldBlack(holdBlackSeconds);
             yield return FadeIn();
 
             IsTransitioning = false;
@@ -509,6 +540,7 @@ namespace EldritchMile.Core
             IsTransitioning = true;
 
             yield return SwitchStageInternal(next);
+            yield return HoldBlack(holdBlackSeconds);
             yield return FadeIn();
 
             IsTransitioning = false;
@@ -568,7 +600,7 @@ namespace EldritchMile.Core
         {
             if (ScreenFader.Instance != null)
             {
-                yield return ScreenFader.Instance.FadeFromBlack();
+                yield return ScreenFader.Instance.FadeFromBlack(fadeInSeconds);
             }
 
             if (stageHost != null && stageHost.Current != null)
@@ -581,7 +613,34 @@ namespace EldritchMile.Core
         {
             if (ScreenFader.Instance != null)
             {
-                yield return ScreenFader.Instance.FadeToBlack();
+                yield return ScreenFader.Instance.FadeToBlack(fadeOutSeconds);
+            }
+        }
+
+        /// <summary>
+        /// 在全黑的狀態下停一拍。
+        ///
+        /// ────────────────────────────────────────────────────────
+        /// 【為什麼需要這一拍】原本是「淡出 0.4 → 立刻切 → 淡入 0.4」，
+        /// 中間**一格全黑都沒有**。人眼會把那讀成「同一個畫面閃了一下」，
+        /// 而不是「換了一個地方」—— 那正是「突兀」的來源，
+        /// 跟資產、跟載入速度都無關，純粹是剪接節奏。
+        ///
+        /// 這是電影剪接的老規矩：**淡出快、黑幕停一拍、淡入慢**。
+        /// 停頓的長短就是「這兩個場景之間隔了多遠」。
+        ///
+        /// 【為什麼用 unscaled】轉場期間有可能 `Time.timeScale = 0`
+        /// （暫停、或戰鬥端把時間停住）。用 scaled 的話會整個卡在黑幕裡。
+        /// </summary>
+        private static IEnumerator HoldBlack(float seconds)
+        {
+            if (seconds <= 0f) yield break;
+
+            float t = 0f;
+            while (t < seconds)
+            {
+                t += Time.unscaledDeltaTime;
+                yield return null;
             }
         }
 
