@@ -40,6 +40,9 @@
 | 轉場地點卡（沿用開地圖那支 banner） | `[SYSTEM]/StageTitleBanner`、`nodeTitles` |
 | 神牌動畫的 Canvas 補上 Scale With Screen Size | `AnimCanvas` 是全專案唯一漏掉的一個 |
 | Build 設定：事件密度 1 → 0.35、關掉 verbose | 開場那一站另外保證有事件 |
+| 判定的「成功／失敗」動效補回來（變暗之前） | `ProbabilityAnswerUI.PlayResultFlash` |
+| 容器會給金幣，空箱保底；商店加金幣圖示 | `ChestInteractable.moneyMin/Max`、`MoneyIcon` |
+| 打完 Boss 演一段結局，然後回主選單 | `runFinishedEvent`、`Event_run_finished` |
 
 ### 遺物的兩張圖
 
@@ -180,6 +183,61 @@ y −4.60 ~ 6.60　　x −9.96 ~ 9.96
 
 > 地圖用的是**戶外**那張、探索用的是**中屋**那張，所以畫面內容本來就不同；
 > 統一的是「怎麼擺」，不是「擺什麼」。
+
+### 第十二輪（2026-08-29）
+
+#### 判定動效補回來了
+
+原本是「按下去 → 選項直接變暗」，玩家看不到判定那一刻。
+舊版探索打牌的 `DialogueOptionUI.PlayResultFlash` 本來就有這一下，
+換成 `ProbabilityAnswerUI` 之後掉了 —— 現在照同一套補回去：
+**底色壓暗 → 字換成「成功／失敗」→ 淡回來 → 才變暗**。
+
+⚠️ **兩個順序問題比動畫本身難**：
+
+1. `SetDisabled()` 在動效跑的時候**不會立刻變暗**，會排到動效結束。
+   Session 是「判定 → 立刻停用」同一幀連著發的，照做的話那一下閃光
+   會打在已經半透明的格子上，效果整個弱掉。
+   （**可不可以點是當下就鎖的**，只有「看起來變暗」被延後。）
+2. `HandleOptionResolved` 原本立刻 `SetPlayVisible(false)` ——
+   那會把整排回答的 alpha 打成 0，**動效照跑但玩家一格都看不到**。
+   現在改成等動效跑完才收、才播 successText。失敗那條（`HandlePromptChanged`）同理。
+
+`playResultFlash` 取消勾選就回到直接變暗。
+
+#### 金幣
+
+- 素材接上了：商店的金幣數字左邊加了 `MoneyIcon`（`ART/資源/金幣.png`），
+  `moneyFormat` 從 `金幣 {0}` 改成 `{0}`（字讓給圖示）。
+- **所有容器都會給錢**（8 個 prefab 都掛 `ChestInteractable`，一次全中）：
+  `moneyMin/Max` 預設 **3~8**。
+- ⛔ **空箱保底**：`emptyBonusMoneyMin/Max` 預設 **5~12**，
+  在「道具一件都沒掉」時**額外**加上去。
+  開到完全空的箱子是最掃興的結果 —— 玩家花了牌、花了時間換到「什麼都沒有」。
+
+【為什麼金幣不做進 LootTable】戰利品表產出的是 `ItemStack`，
+而金幣在 `RunContext.money` 不在背包裡 —— 硬塞會讓「金幣」變成一件背包道具。
+所以錢是容器自己的欄位，跟道具分開算（種子也錯開 `^ 31`，
+不然換一張戰利品表連金額都會跟著變）。
+
+#### 打完 Boss 的結局
+
+`GameFlowManager.runFinishedEvent` → **`Event_run_finished`**（文本出自《文本.md》）。
+借用事件模組，因為它已經有這一段需要的全部東西：一句一句播、名字框、
+結果文字、專屬的結束鍵 —— 另外寫一個「結局 Stage」等於把那些再做一次。
+
+流程：打完 Boss → `RunFinished` → 遺產結算 → **演結局事件** → 主選單。
+
+⚠️ **三個雷**：
+
+1. `weight = 0` —— 不然它會跑進隨機事件池，玩家第三站就看到結局獨白了。
+2. `currentStage != Event` 的防迴圈 —— 結局本身是事件 Stage，
+   它演完也回報 `RunFinished`，不擋就會一直重播自己。
+3. `once = false` —— 每一輪打完都要播。
+
+收尾那句「謝謝測試！／如果可以，請幫我們填寫問卷。」放在 `options[0].resultText`，
+**沒有說話者 → 走旁白公版**，跟劇中人的台詞分開。
+⚠️ 那是**測試版限定**，正式版要拿掉；問卷連結還沒有，有了補在同一格。
 
 ### Build 前的設定（2026-08-29 第十一輪）
 

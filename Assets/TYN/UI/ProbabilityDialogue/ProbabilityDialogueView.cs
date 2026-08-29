@@ -623,6 +623,39 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
         private void HandleOptionResolved(ProbabilityDialogueSession.RuntimeOption o, int roll, bool success)
         {
+            // ── 判定的那一下：先在被選的那一格閃「成功／失敗」 ──
+            //
+            // ⚠️ **這一段一定要在「收起回答列」之前。**
+            //    原本是判定完立刻 `SetPlayVisible(false)`，那會把整排回答的 alpha 打成 0 ——
+            //    動效照跑，但玩家一格都看不到。
+            ProbabilityAnswerUI ui = FindUI(o);
+            float flash = 0f;
+
+            if (ui != null)
+            {
+                ui.PlayResultFlash(success);
+                flash = ui.TotalFlashSeconds;
+            }
+
+            // 判定反饋的氣泡。**與對話框的文字是兩件事** ——
+            // 框裡是劇本寫好的 successText，氣泡是角色自己的口頭禪
+            CharacterData who = Speaker;
+            if (who != null) Say(success ? who.PickSuccessLine(lineRng) : who.PickFailureLine(lineRng));
+
+            StartCoroutine(AfterResolve(o, success, flash));
+        }
+
+        /// <summary>
+        /// 等判定動效跑完，才收起回答列、才把 successText 播出去。
+        ///
+        /// 【為什麼要等】那一下閃光是「判定發生了」的唯一視覺回饋。
+        /// 不等就收起來的話，玩家只會看到選項瞬間消失、然後開始講話 ——
+        /// 中間那個「成了沒有」的瞬間整個被吃掉。
+        /// </summary>
+        private IEnumerator AfterResolve(ProbabilityDialogueSession.RuntimeOption o, bool success, float flash)
+        {
+            if (flash > 0f) yield return new WaitForSecondsRealtime(flash);
+
             // ⚠️ **成功時要把 successText 畫出來**（規格 §9.2 第 4 步）。
             //
             // 失敗那條路是 Session 換 CurrentPrompt、透過 OnPromptChanged 通知，
@@ -642,16 +675,6 @@ namespace EldritchMile.UI.ProbabilityDialogue
                 }
             }
 
-            // 判定反饋的氣泡。**與對話框的文字是兩件事** ——
-            // 框裡是劇本寫好的 successText，氣泡是角色自己的口頭禪
-            CharacterData who = Speaker;
-            if (who != null) Say(success ? who.PickSuccessLine(lineRng) : who.PickFailureLine(lineRng));
-
-            StartCoroutine(UnlockAfterDisplay());
-        }
-
-        private IEnumerator UnlockAfterDisplay()
-        {
             yield return new WaitForSecondsRealtime(resolveDisplaySeconds);
             inputLocked = false;
         }
@@ -672,8 +695,25 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
             // 失敗後 NPC 會再說一段。**說話期間一樣先收起手牌** ——
             // 不收的話玩家會在對話跑到一半時繼續出牌，畫面上兩件事在搶注意力
-            SetPlayVisible(false);
+            //
+            // ⚠️ 但要**等判定動效跑完**再收 —— 這一支是在 SelectOption 的同一幀
+            //    被叫到的（判定 → 換問話），立刻收的話那一下閃光就看不到了
             inputLocked = true;
+            StartCoroutine(SpeakAfterFlash(prompt));
+        }
+
+        /// <summary>等被選中那一格的判定動效跑完，再收起回答列並講下一段問話。</summary>
+        private IEnumerator SpeakAfterFlash(string prompt)
+        {
+            float wait = 0f;
+            for (int i = 0; i < answerUIs.Count; i++)
+            {
+                if (answerUIs[i] != null) wait = Mathf.Max(wait, answerUIs[i].TotalFlashSeconds);
+            }
+
+            if (wait > 0f) yield return new WaitForSecondsRealtime(wait);
+
+            SetPlayVisible(false);
             Speak(prompt);
         }
 

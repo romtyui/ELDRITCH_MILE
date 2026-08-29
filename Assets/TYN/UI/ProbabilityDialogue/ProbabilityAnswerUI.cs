@@ -64,6 +64,35 @@ namespace EldritchMile.UI.ProbabilityDialogue
         [Tooltip("失敗後不可再選（規格 §6：整體變暗）")]
         public Color disabledTint = new Color(0.42f, 0.42f, 0.45f);
 
+        [Header("判定動效（成功／失敗那一下）")]
+        [Tooltip("判定之後、變暗之前，先在這一格上閃一下並打出「成功／失敗」。\n\n" +
+                 "【為什麼要有】原本是「按下去 → 選項直接變暗」——\n" +
+                 "玩家看不到判定的那一刻，只看到結果，會覺得系統擅自決定了什麼。\n" +
+                 "舊版的探索打牌（`DialogueOptionUI.PlayResultFlash`）本來就有這一下，\n" +
+                 "機率對話換了新的 UI 之後掉了，這裡是補回來。\n\n" +
+                 "取消勾選 = 回到直接變暗")]
+        public bool playResultFlash = true;
+
+        [Min(0.05f)] public float flashInSeconds = 0.28f;
+        [Min(0f)] public float flashHoldSeconds = 0.7f;
+        [Min(0.05f)] public float flashOutSeconds = 0.34f;
+
+        [Tooltip("閃的時候底色壓到什麼顏色。深色才襯得出上面那兩個字")]
+        public Color flashColor = new Color(0.06f, 0.05f, 0.06f, 1f);
+
+        [Tooltip("成功那兩個字的顏色")]
+        public Color successColor = new Color(0.55f, 0.90f, 0.60f);
+
+        [Tooltip("失敗那兩個字的顏色")]
+        public Color failureColor = new Color(0.92f, 0.45f, 0.42f);
+
+        public string successWord = "成功";
+        public string failureWord = "失敗";
+
+        /// <summary>整段動效要跑多久。呼叫端要等它跑完再往下走。</summary>
+        public float TotalFlashSeconds =>
+            playResultFlash ? flashInSeconds + flashHoldSeconds + flashOutSeconds : 0f;
+
         [Header("機率變化")]
         [Tooltip("數字跑動的秒數。0 = 直接跳到新數字")]
         [Min(0f)] public float countUpSeconds = 0.35f;
@@ -201,11 +230,96 @@ namespace EldritchMile.UI.ProbabilityDialogue
                 normalTint.a);
         }
 
-        /// <summary>失敗後變暗且不可再點（規格 §6）。</summary>
+        /// <summary>
+        /// 失敗後變暗且不可再點（規格 §6）。
+        ///
+        /// ⚠️ **動效還在跑的時候不會馬上變暗** —— 排到動效結束再變。
+        /// Session 是「判定 → 立刻停用」同一幀連著發的，照做的話那一下閃光
+        /// 會打在已經半透明的格子上，整個效果就弱掉了
+        /// （舊版 `DialogueOptionUI.FlashRoutine` 的結尾也是同一個理由）。
+        ///
+        /// 判定的當下就鎖住點擊 —— 只有「看起來變暗」被延後，可不可以點沒有。
+        /// </summary>
         public void SetDisabled()
         {
             interactable = false;
+
+            if (flashRoutine != null) { dimAfterFlash = true; return; }
+
             ApplyTint(disabledTint);
+        }
+
+        /// <summary>
+        /// 判定的那一下：底色壓暗、字換成「成功／失敗」、再淡回來。
+        ///
+        /// 【為什麼是換字不是另外疊一個標籤】疊標籤要處理位置、層級、
+        /// 多行文字撐開的情況；換字則一定對得準，因為那本來就是這一格的文字。
+        /// 舊版就是這樣做的。
+        /// </summary>
+        public void PlayResultFlash(bool success)
+        {
+            if (!playResultFlash || !isActiveAndEnabled) return;
+
+            if (flashRoutine != null) StopCoroutine(flashRoutine);
+            flashRoutine = StartCoroutine(FlashRoutine(success));
+        }
+
+        private Coroutine flashRoutine;
+        private bool dimAfterFlash;
+
+        private System.Collections.IEnumerator FlashRoutine(bool success)
+        {
+            string word = success ? successWord : failureWord;
+            Color tone = success ? successColor : failureColor;
+            string resultText = $"<color=#{ColorUtility.ToHtmlStringRGB(tone)}>{word}</color>";
+
+            string back = labelText != null ? labelText.text : "";
+
+            // 起點用**當下的顏色**，不是 normalTint ——
+            // 這一格可能正被瞄準著（highlight），動效結束要回到那個狀態
+            Color from = background != null ? background.color : Color.white;
+
+            yield return FlashPhase(flashInSeconds, from, flashColor, resultText);
+
+            if (flashHoldSeconds > 0f) yield return new WaitForSecondsRealtime(flashHoldSeconds);
+
+            yield return FlashPhase(flashOutSeconds, flashColor, from, back);
+
+            flashRoutine = null;
+
+            // ⚠️ 變暗放在動效**之後**（見 SetDisabled 的說明）
+            if (dimAfterFlash)
+            {
+                dimAfterFlash = false;
+                ApplyTint(disabledTint);
+            }
+        }
+
+        /// <summary>底色 a → b，文字在中點淡出、換字、再淡入。</summary>
+        private System.Collections.IEnumerator FlashPhase(float seconds, Color a, Color b, string newText)
+        {
+            float t = 0f;
+            bool swapped = false;
+
+            while (t < 1f)
+            {
+                t += Time.unscaledDeltaTime / Mathf.Max(0.01f, seconds);
+                float k = Mathf.Clamp01(t);
+
+                if (background != null) background.color = Color.Lerp(a, b, k);
+
+                if (labelText != null)
+                {
+                    labelText.alpha = k < 0.5f ? 1f - k * 2f : (k - 0.5f) * 2f;
+
+                    if (!swapped && k >= 0.5f) { labelText.text = newText; swapped = true; }
+                }
+
+                yield return null;
+            }
+
+            if (background != null) background.color = b;
+            if (labelText != null) { labelText.text = newText; labelText.alpha = 1f; }
         }
 
         private void ApplyTint(Color c)

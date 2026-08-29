@@ -72,6 +72,26 @@ namespace EldritchMile.Explore
                  "寶箱這支程式一個字都不用改。留空則只給上面那排固定道具")]
         public LootTable lootTable;
 
+        [Header("金幣")]
+        [Tooltip("這個容器會給多少金幣（含）。兩格都填 0 ＝ 這個容器不給錢。\n\n" +
+                 "【為什麼放在容器上而不是戰利品表】戰利品表產出的是 `ItemStack`，\n" +
+                 "金幣不是道具（它在 `RunContext.money`，不在背包裡）——\n" +
+                 "硬塞進去會讓「金幣」變成一件背包道具，那是另一種麻煩。\n\n" +
+                 "⚠️ 場景裡的錢幾乎只從這裡來，全部留 0 的話玩家會沒錢逛商店。")]
+        [Min(0)] public int moneyMin = 3;
+        [Min(0)] public int moneyMax = 8;
+
+        [Tooltip("**抽不到任何東西時**額外再給的金幣（含）。\n\n" +
+                 "【為什麼要有】開了一個完全空的箱子是最掃興的結果 ——\n" +
+                 "玩家花了牌、花了時間，得到一個「什麼都沒有」。\n" +
+                 "保底一點小錢至少讓那一次互動有交代。\n\n" +
+                 "這是**額外加上去**的，不是取代 Money Min/Max。")]
+        [Min(0)] public int emptyBonusMoneyMin = 5;
+        [Min(0)] public int emptyBonusMoneyMax = 12;
+
+        [Tooltip("金幣在戰利品清單上怎麼寫。{0} = 數量")]
+        public string moneyLineFormat = "金幣 ×{0}";
+
         [Header("屬性判定 (C17/C18，僅 RequiresCheck 時使用)")]
         public ExploreAttribute attribute = ExploreAttribute.None;
 
@@ -459,6 +479,37 @@ namespace EldritchMile.Explore
             return lines;
         }
 
+        /// <summary>
+        /// 給錢。回傳要顯示在戰利品清單上的那一行；沒給就回空字串。
+        ///
+        /// 【為什麼種子跟道具那邊分開（^ 31）】用同一個的話，
+        /// 「抽到什麼道具」與「給多少錢」會綁在一起 ——
+        /// 換一張戰利品表就連金額也一起變，那不是我們要的關聯。
+        /// </summary>
+        /// <param name="wasEmpty">前面的道具一件都沒掉。true 時再加上保底那一段。</param>
+        private string RollMoney(RunContext run, bool wasEmpty)
+        {
+            var rng = new System.Random((run.runSeed ^ GetInstanceID()) ^ 31);
+
+            int amount = RandomBetween(rng, moneyMin, moneyMax);
+            if (wasEmpty) amount += RandomBetween(rng, emptyBonusMoneyMin, emptyBonusMoneyMax);
+
+            if (amount <= 0) return "";
+
+            run.AddMoney(amount);
+            return string.Format(moneyLineFormat, amount);
+        }
+
+        /// <summary>min~max（含）。**填反了也不會壞** —— 大小自己會對調。</summary>
+        private static int RandomBetween(System.Random rng, int min, int max)
+        {
+            int lo = Mathf.Min(min, max);
+            int hi = Mathf.Max(min, max);
+            if (hi <= 0) return 0;
+
+            return rng.Next(lo, hi + 1);
+        }
+
         private void Open()
         {
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
@@ -471,6 +522,10 @@ namespace EldritchMile.Explore
                 foreach (string id in grantedItemIds) run.AddItem(id);
 
                 foreach (string line in RollLoot(run)) reported.Add(line);
+
+                // ⚠️ **金幣要在道具之後算** —— 保底那一段要看「前面到底有沒有掉東西」
+                string coins = RollMoney(run, reported.Count == 0);
+                if (!string.IsNullOrEmpty(coins)) reported.Add(coins);
             }
 
             // 但「獲得了什麼」的**播報**要等打牌環節結束。

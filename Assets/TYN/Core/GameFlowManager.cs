@@ -40,6 +40,15 @@ namespace EldritchMile.Core
         public ItemDatabase itemDatabase;
 
         [Header("事件")]
+        [Tooltip("**打完 Boss 之後演的那一段**（第一輪體驗結束的獨白）。\n\n" +
+                 "留空 = 打完 Boss 直接回主選單（舊行為）。\n\n" +
+                 "【為什麼借用事件模組】它已經有的東西正好是這一段需要的：\n" +
+                 "一句一句播、名字框、結果文字、專屬的結束鍵。\n" +
+                 "另外寫一個「結局 Stage」等於把那些再做一次。\n\n" +
+                 "⚠️ 這一筆的 `weight` 要是 **0** —— 不然它會跑進隨機事件池，\n" +
+                 "玩家在第三站就會看到結局獨白。它只由這裡指名播放。")]
+        public EventData runFinishedEvent;
+
         [Tooltip("隨機事件庫。留空則永遠不會觸發事件（不會壞，只是沒有事件）")]
         public EventLibrary eventLibrary;
 
@@ -511,6 +520,11 @@ namespace EldritchMile.Core
                 StageType next = stageAfterEvent;
                 stageAfterEvent = StageType.None;
 
+                // 接回主選單 ＝ 這場 run 結束了（結局那一段演完就是這條路）。
+                // ⚠️ 遺產結算（ContributeToMeta）在進結局事件**之前**就做過了，
+                //    這裡只負責把 run 丟掉
+                if (next == StageType.Menu) Run = null;
+
                 yield return FadeOut();
                 yield return SwitchStageInternal(next);
 
@@ -555,6 +569,27 @@ namespace EldritchMile.Core
             if (result == StageResult.PlayerDied || result == StageResult.RunFinished)
             {
                 Run?.ContributeToMeta(Meta, result);
+
+                // ── 打完 Boss：先演結局那一段，再回主選單 ──
+                //
+                // ⚠️ `currentStage != Event` 是防無限迴圈的 ——
+                //    結局本身就是一個事件 Stage，它演完也會回報 RunFinished，
+                //    不擋的話會一直重播自己。
+                if (result == StageResult.RunFinished
+                    && runFinishedEvent != null
+                    && currentStage != StageType.Event)
+                {
+                    PendingEvent = runFinishedEvent;
+                    stageAfterEvent = StageType.Menu;   // 演完接回主選單（走事件那條既有的路）
+
+                    yield return FadeOut();
+                    yield return SwitchStageInternal(StageType.Event);
+                    yield return HoldBlackOrTitle(holdBlackAfterEventSeconds, TitleForEvent());
+                    yield return FadeIn();
+
+                    IsTransitioning = false;
+                    yield break;
+                }
 
                 yield return FadeOut();
                 yield return SwitchStageInternal(StageType.Menu);
