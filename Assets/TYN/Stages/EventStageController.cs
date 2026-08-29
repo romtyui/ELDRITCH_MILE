@@ -147,9 +147,14 @@ public class EventStageController : ChoiceStageController
 
         if (data.options.Count == 1 && string.IsNullOrEmpty(data.options[0].label))
         {
-            // ⚠️ 這裡以前把 ApplyOption 的回傳值丟掉了，所以
-            //    「（獲得 老舊釣竿、【深淵】的侵蝕度 +5%）」永遠不會出現。
-            ShowResult(ApplyOption(data.options[0]));
+            // ⚠️ 這裡以前只丟 `ApplyOption` 的回傳值（＝效果提示），
+            //    **把 `resultText` 整段吞掉了** —— 純敘述的事件（沒有選項可選的那種）
+            //    因此永遠看不到自己的結果文字。
+            //    《第一輪體驗結束》的「謝謝測試」就是這樣消失的。
+            //
+            //    多選項那條（HandleChosen）本來就是「結果文字 ＋ 效果提示」，
+            //    兩條各寫一次才會走歪 —— 現在共用 BuildResultBody()。
+            ShowResult(BuildResultBody(data.options[0]));
             return;
         }
 
@@ -192,17 +197,29 @@ public class EventStageController : ChoiceStageController
 
         Options?.HideAll();
 
-        string notes = ApplyOption(picked);
-        string body = picked.resultText ?? "";
+        ShowResult(BuildResultBody(picked));
+    }
 
-        // 效果提示是**自動生成的**，不必在文案裡手寫「（【深淵】的侵蝕度+5%）」——
-        // 那樣數字改了兩邊會不同步
-        if (!string.IsNullOrEmpty(notes))
-        {
-            body += string.Format(effectLineFormat, notes);
-        }
+    /// <summary>
+    /// 套用效果，並把「結果文字 ＋ 效果提示」接成要播的那一段。
+    ///
+    /// ⚠️ **兩條路都要走這一支**（有選項的、沒選項的）。
+    /// 以前沒選項那條只丟效果提示、把 `resultText` 整段吞掉 ——
+    /// 純敘述的事件因此永遠看不到自己的結果文字，而且不會有任何錯誤訊息。
+    ///
+    /// 效果提示是**自動生成的**，不必在文案裡手寫「（【深淵】的侵蝕度+5%）」——
+    /// 那樣數字改了兩邊會不同步。
+    /// </summary>
+    private string BuildResultBody(EventData.Option option)
+    {
+        if (option == null) return "";
 
-        ShowResult(body);
+        string notes = ApplyOption(option);
+        string body = option.resultText ?? "";
+
+        if (!string.IsNullOrEmpty(notes)) body += string.Format(effectLineFormat, notes);
+
+        return body;
     }
 
     /// <summary>
