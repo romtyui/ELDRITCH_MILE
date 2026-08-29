@@ -15,6 +15,11 @@ namespace EldritchMile.Core
     ///
     /// 大綱兩種都有：整體是「**有概率**觸發事件」，而《螺湮的祝福》另外寫了
     /// 「打倒半魚人祭司后 **30% 概率**」。壓成一層的話就表達不出後者。
+    ///
+    /// 【挑的順序】條件 → **優先序** → 權重 → 事件自己的機率。
+    /// 優先序是「哪一批先輪到」，權重是「同一批之內誰被抽到」——
+    /// 只用權重做不出「一定先出」（權重再高也只是機率高），
+    /// 而《暴食之深淵》那種開場介紹被壓到第三站才出現就失去意義了。
     /// </summary>
     [CreateAssetMenu(fileName = "EventLibrary", menuName = "Eldritch/Event Library")]
     public class EventLibrary : ScriptableObject
@@ -77,7 +82,6 @@ namespace EldritchMile.Core
                 if (e.weight <= 0f) continue;
 
                 candidates.Add(e);
-                total += e.weight;
             }
 
             if (candidates.Count == 0)
@@ -85,6 +89,28 @@ namespace EldritchMile.Core
                 if (verbose) Debug.Log("[事件] 沒有任何合格的事件");
                 return null;
             }
+
+            // ── 只留優先序最高的那一批 ──
+            //
+            // 【為什麼要分批，而不是把 priority 折進權重】
+            // 折進權重的話「一定先出」就變成「很可能先出」——
+            // 開場介紹被壓到第三站才出現，那就沒有意義了。
+            //
+            // 【為什麼是「最高的那一批」而不是「最高的那一個」】
+            // 同一個 priority 可以有好幾個事件，那時還是要隨機 ——
+            // 不然就變成一張固定的播放清單，那不是這個系統要的東西。
+            int top = int.MinValue;
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                if (candidates[i].priority > top) top = candidates[i].priority;
+            }
+
+            for (int i = candidates.Count - 1; i >= 0; i--)
+            {
+                if (candidates[i].priority < top) candidates.RemoveAt(i);
+            }
+
+            for (int i = 0; i < candidates.Count; i++) total += candidates[i].weight;
 
             // 依權重挑一個
             double roll = rng.NextDouble() * total;
@@ -104,7 +130,9 @@ namespace EldritchMile.Core
                 return null;
             }
 
-            if (verbose) Debug.Log($"[事件] 觸發：{picked.title}（{candidates.Count} 個合格）");
+            if (verbose)
+                Debug.Log($"[事件] 觸發：{picked.title}" +
+                          $"（優先序 {picked.priority} 這一批有 {candidates.Count} 個）");
             return picked;
         }
 

@@ -42,6 +42,19 @@ public abstract class ChoiceStageController : StageController
     [Tooltip("選完之後播這幾句，播完回地圖。可留空")]
     public List<Line> outroLines = new List<Line>();
 
+    /// <summary>
+    /// **收尾台詞之後**還要再播的東西。子類別在呼叫 `BeginOutro()` 之前塞進來。
+    ///
+    /// 【給誰用的】結算 —— 「獲得了什麼」應該是玩家離開前**看到的最後一件事**，
+    /// 不是夾在中間。祭壇那一段的順序就是：
+    /// 　　你跪了下來…（劇情）→ 祭壇仍然是塌的（收尾）→ 牌進了牌庫（結算）
+    ///
+    /// 【為什麼不是直接改 `outroLines`】那是序列化的資料。
+    /// 執行時往裡面塞東西，看起來會像「這個 prefab 本來就有那一句」——
+    /// 而且如果哪天 Stage 改成重複使用而不是每次 Instantiate，就會愈疊愈多。
+    /// </summary>
+    protected readonly List<Line> outroTailLines = new List<Line>();
+
     [Tooltip("選項顯示時，對話框正文要留著哪一句。\n" +
              "留空則沿用開場白的最後一句（通常就是那個問句，這樣最自然）。\n\n" +
              "⚠️ 這句不能沒有 —— **選項是對話框的子物件**，框關掉的話選項活著也看不見")]
@@ -206,15 +219,14 @@ public abstract class ChoiceStageController : StageController
         // 選項收掉之後對話框才可以關 —— 在那之前要一直開著撐住版面
         if (Box != null) Box.HoldOpen = false;
 
-        if (!QueueLines(outroLines))
-        {
-            // 沒有收尾台詞的話，等目前這則播完就收
-            PopupService.Instance?.CloseWhenDrained();
-        }
-        else
-        {
-            PopupService.Instance?.CloseWhenDrained();
-        }
+        QueueLines(outroLines);
+
+        // ⚠️ **順序有意義**：結算排在收尾之後，所以它是玩家看到的最後一頁。
+        //    要放前面的話直接用 outroLines 就好，不必用這一條。
+        QueueLines(outroTailLines);
+
+        // 有沒有排到東西都一樣：等佇列播完就收
+        PopupService.Instance?.CloseWhenDrained();
     }
 
     protected void Finish()

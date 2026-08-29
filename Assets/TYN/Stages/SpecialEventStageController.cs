@@ -45,6 +45,16 @@ public class SpecialEventStageController : ChoiceStageController
     [TextArea(2, 3)]
     public string defaultTakenFormat = "「{0}」進了你的牌組。";
 
+    [Tooltip("把 Taken Text 的**最後一段**當成結算，挪到收尾台詞之後才播。\n\n" +
+             "「獲得了什麼」應該是玩家離開前看到的**最後一件事**，不是夾在中間。\n" +
+             "順序會變成：\n" +
+             "　你跪了下來…（劇情）→ 祭壇仍然是塌的（收尾）→ 牌進了牌庫（結算）\n\n" +
+             "【怎麼切】**空行 ＝ 分段**，跟對話框的分頁規則同一套 ——\n" +
+             "所以文案照原本那樣寫就好，不必為了這個功能改成兩欄。\n\n" +
+             "整段沒有空行時，整段都當結算（那通常就是 Default Taken Format 那種一句話）。\n\n" +
+             "取消勾選 = 回到舊行為（整段在選完的當下一次播完）")]
+    public bool settlementLast = true;
+
     private RunContext run;
 
     protected override void OnPrepare(RunContext context)
@@ -120,9 +130,55 @@ public class SpecialEventStageController : ChoiceStageController
             ? o.takenText
             : string.Format(defaultTakenFormat, CardNameOf(o));
 
-        PopupService.Instance?.ShowInstant(text);
+        string body, settlement;
+        SplitSettlement(text, out body, out settlement);
+
+        // ⚠️ 前半段要用 ShowInstant，不可以排隊。
+        //    這一刻對話框還開著（正顯示那個問句），排進去的東西會卡在佇列裡，
+        //    玩家要再點一下才看得到 —— 事件那邊踩過同一個坑
+        if (!string.IsNullOrEmpty(body)) PopupService.Instance?.ShowInstant(body);
+
+        outroTailLines.Clear();
+        if (!string.IsNullOrEmpty(settlement))
+        {
+            // 沒有前半段的話（整段都是結算），收尾之前總得先講一句，
+            // 不然玩家點下去會有一拍完全沒有反應
+            if (string.IsNullOrEmpty(body)) PopupService.Instance?.ShowInstant(settlement);
+            else outroTailLines.Add(new Line { text = settlement });
+        }
 
         BeginOutro();
+    }
+
+    /// <summary>
+    /// 把「劇情」與「結算」拆開。**空行 ＝ 分段**，跟對話框的分頁規則同一套。
+    ///
+    /// 最後一段當結算（「【深淵】的牌進了你的牌庫。」），前面全部是劇情。
+    /// 整段沒有空行時 body 是空的、整段都是結算 ——
+    /// 那通常就是 `defaultTakenFormat` 那種一句話的情況。
+    ///
+    /// `settlementLast` 取消勾選就整段都當劇情，回到舊行為。
+    /// </summary>
+    private void SplitSettlement(string text, out string body, out string settlement)
+    {
+        body = text;
+        settlement = "";
+
+        if (!settlementLast || string.IsNullOrEmpty(text)) return;
+
+        string norm = text.Replace("\r\n", "\n");
+        int cut = norm.LastIndexOf("\n\n");
+
+        if (cut < 0)
+        {
+            // 沒有空行 —— 整段都是結算
+            body = "";
+            settlement = norm.Trim();
+            return;
+        }
+
+        body = norm.Substring(0, cut).Trim();
+        settlement = norm.Substring(cut + 2).Trim();
     }
 
     /// <summary>選項上顯示的卡名。戰鬥牌優先 —— 神牌事件給的就是它。</summary>
