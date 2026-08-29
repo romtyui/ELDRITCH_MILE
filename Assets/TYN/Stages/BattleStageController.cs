@@ -55,6 +55,32 @@ public class BattleStageController : StageController
              "留空則沿用戰鬥組自己的抽怪邏輯")]
     public List<string> defaultEnemyIds = new List<string>();
 
+    [System.Serializable]
+    public class TierReward
+    {
+        public EldritchMile.Core.EncounterPool.Tier tier = EldritchMile.Core.EncounterPool.Tier.Minion;
+
+        [Tooltip("這一級的敵人打贏給多少金幣（含）")]
+        [Min(0)] public int moneyMin = 10;
+        [Min(0)] public int moneyMax = 20;
+    }
+
+    [Header("戰後獎勵")]
+    [Tooltip("打贏之後照**敵人的階級**給錢，金額在範圍內隨機。\n\n" +
+             "階級從**節點**上讀（`RunNodeData.enemyTier`，地圖生成時由 EncounterPlanner 排的）——\n" +
+             "所以「這一站給多少」在走進去之前就決定了，不是現場看打了誰。\n\n" +
+             "⚠️ 事件插播的戰鬥（《貪吃鬼》）沒有節點階級，會用清單裡的第一筆。\n\n" +
+             "道具與選卡**這一版先不做**（2026-08-30 使用者定案：先給錢就好）。")]
+    public List<TierReward> tierRewards = new List<TierReward>
+    {
+        new TierReward { tier = EldritchMile.Core.EncounterPool.Tier.Minion, moneyMin = 10, moneyMax = 20 },
+        new TierReward { tier = EldritchMile.Core.EncounterPool.Tier.Elite,  moneyMin = 30, moneyMax = 50 },
+        new TierReward { tier = EldritchMile.Core.EncounterPool.Tier.Boss,   moneyMin = 80, moneyMax = 120 },
+    };
+
+    [Tooltip("戰後結算怎麼寫。{0} = 金幣數量。留空 = 不播報（錢照給）")]
+    public string rewardLineFormat = "戰利品：金幣 ×{0}";
+
     [Header("戰績")]
     [Tooltip("打倒敵人時立的旗標前綴。`killed_` ＋ 敵人 id。\n" +
              "《螺湮的祝福》等的是 killed_fish_priest")]
@@ -692,10 +718,58 @@ public class BattleStageController : StageController
             run?.SetFlag(defeatFlagPrefix + fightingEnemyIds[i]);
         }
 
+        GrantBattleReward();
+
         Debug.Log($"[戰鬥] 勝利。HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、" +
                   $"SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}、牌組 {PlayerVitals.DeckCount} 張");
 
         Report(StageResult.Completed);
+    }
+
+    /// <summary>
+    /// 打贏之後給錢。**階級決定範圍，範圍之內隨機。**
+    ///
+    /// 【為什麼階級從節點上讀】`RunNodeData.enemyTier` 是地圖生成時
+    /// 由 `EncounterPlanner` 排好的 —— 所以「這一站值多少」在玩家走進去**之前**
+    /// 就決定了。現場看「打了哪幾隻」的話，同一個節點重進可能給不一樣的錢。
+    ///
+    /// 【為什麼不走戰利品表】道具的分法還沒定（2026-08-30 使用者：先給錢就好）。
+    /// 之後要加的話，這裡多一個 LootTable 欄位就好，流程不用動。
+    /// </summary>
+    private void GrantBattleReward()
+    {
+        if (run == null || tierRewards == null || tierRewards.Count == 0) return;
+
+        EldritchMile.Core.EncounterPool.Tier tier =
+            run.pendingNode != null ? run.pendingNode.enemyTier : EldritchMile.Core.EncounterPool.Tier.Minion;
+
+        TierReward reward = null;
+        for (int i = 0; i < tierRewards.Count; i++)
+        {
+            if (tierRewards[i] != null && tierRewards[i].tier == tier) { reward = tierRewards[i]; break; }
+        }
+
+        // 事件插播的戰鬥沒有節點階級可讀 —— 退回第一筆，不要靜靜地不給錢
+        if (reward == null) reward = tierRewards[0];
+        if (reward == null) return;
+
+        int lo = Mathf.Min(reward.moneyMin, reward.moneyMax);
+        int hi = Mathf.Max(reward.moneyMin, reward.moneyMax);
+        if (hi <= 0) return;
+
+        // 亂數綁 run 種子 ＋ 節點 —— 同一個節點重打不會刷出不同的錢
+        string nodeId = run.pendingNode != null ? run.pendingNode.nodeId : "";
+        var rng = new System.Random(run.runSeed ^ (nodeId != null ? nodeId.GetHashCode() : 0) ^ 977);
+
+        int amount = rng.Next(lo, hi + 1);
+        run.AddMoney(amount);
+
+        Debug.Log($"[戰鬥] 戰後獎勵：{tier} → 金幣 {amount}（{lo}~{hi}）");
+
+        if (!string.IsNullOrEmpty(rewardLineFormat))
+        {
+            PopupService.Instance?.ShowText(string.Format(rewardLineFormat, amount));
+        }
     }
 
     private void OnLost()

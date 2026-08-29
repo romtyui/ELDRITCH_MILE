@@ -94,8 +94,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2991276017111457536}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.06, y: 0.15}
-  m_AnchorMax: {x: 0.94, y: 0.85}
+  m_AnchorMin: {x: 0.03, y: 0.38}
+  m_AnchorMax: {x: 0.97, y: 0.95}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -231,8 +231,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 2991276017111457536}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.7, y: -0.05}
-  m_AnchorMax: {x: 1, y: 0.42}
+  m_AnchorMin: {x: 0.5, y: 0.02}
+  m_AnchorMax: {x: 0.97, y: 0.38}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -291,8 +291,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 29
-  m_fontSizeBase: 29
+  m_fontSize: 58
+  m_fontSizeBase: 58
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -308,7 +308,7 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_TextWrappingMode: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
@@ -435,5 +435,17 @@ MonoBehaviour:
   probabilityFormat: '{0}%'
   normalTint: {r: 1, g: 1, b: 1, a: 1}
   highlightTint: {r: 1, g: 0.94, b: 0.72, a: 1}
+  tintHighlightByAttribute: 1
+  highlightBlend: 0.5
+  highlightBoost: 1.12
   disabledTint: {r: 0.42, g: 0.42, b: 0.45, a: 1}
+  playResultFlash: 1
+  flashInSeconds: 0.28
+  flashHoldSeconds: 0.7
+  flashOutSeconds: 0.34
+  flashColor: {r: 0.06, g: 0.05, b: 0.06, a: 1}
+  successColor: {r: 0.55, g: 0.9, b: 0.6, a: 1}
+  failureColor: {r: 0.92, g: 0.45, b: 0.42, a: 1}
+  successWord: "\u6210\u529F"
+  failureWord: "\u5931\u6557"
   countUpSeconds: 0.35

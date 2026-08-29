@@ -476,11 +476,32 @@ namespace EldritchMile.UI.ProbabilityDialogue
             ui.valueText = null;
             ui.nameText = null;
 
+            // ⚠️ **共用卡面 prefab 上有兩個沒人管的舊文字，要關掉。**
+            //
+            // 「消耗」（左上角，寫死的黑色 `3`）與「效果描述」（黑色「造成傷害」）——
+            // `CardViewUIExplore` 的 `costText` / `descriptionText` 兩個欄位**都是空的**，
+            // 所以從來沒有人去更新它們，畫面上就是那兩個固定的黑字。
+            // 機率牌的數字與效果都畫在美術裡，不需要它們。
+            //
+            // 只關**這一份複製品**，不動 prefab —— 探索打牌是已驗收的流程，
+            // 那邊也有同一個問題，但要不要一起關是另一個決定。
+            HideStrayLabel(go.transform, "消耗");
+            HideStrayLabel(go.transform, "效果描述");
+
             CanvasGroup cg = go.GetComponent<CanvasGroup>();
             if (cg == null) cg = go.AddComponent<CanvasGroup>();
             ui.canvasGroup = cg;
 
             return ui;
+        }
+
+        /// <summary>
+        /// 關掉卡面上某一個沒人維護的舊文字。找不到就算了（美術改名不該讓遊戲壞掉）。
+        /// </summary>
+        private static void HideStrayLabel(Transform root, string childName)
+        {
+            Transform t = root.Find(childName);
+            if (t != null) t.gameObject.SetActive(false);
         }
 
         /// <summary>

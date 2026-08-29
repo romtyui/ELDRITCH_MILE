@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -205,7 +206,97 @@ namespace EldritchMile.UI.ProbabilityDialogue
         {
             if (spent) return;
             spent = true;                      // 規格 R7：一張牌只能用一次
+
+            // ⚠️ **先發事件再播動畫。** 反過來的話機率數字要等動畫跑完才動，
+            //    玩家會覺得「出了牌但沒反應」—— 那比沒有動畫更糟。
+            //    事件處理裡若被拒絕（`ReturnHome`），下面的動畫會被那支停掉。
             OnPlayRequested?.Invoke(this);
+
+            if (!playLaunchAnimation || !isActiveAndEnabled) return;
+            if (!spent) return;                // 被 ReturnHome 退回來了，不要飛走
+
+            if (launchRoutine != null) StopCoroutine(launchRoutine);
+            launchRoutine = StartCoroutine(LaunchRoutine());
+        }
+
+        // ==========================================
+        // 出牌動效：往畫面中央「射」出去，邊縮邊淡掉
+        // ==========================================
+        //
+        // 【為什麼要有】點一下牌就消失，玩家看不到「這張牌去了哪裡、對誰起作用」——
+        // 因果斷了，就會覺得是系統擅自把牌吃掉。
+        //
+        // 【為什麼是往畫面中央】那裡是這一刻的視線焦點（回答列與機率數字都在那一帶）。
+        // 牌飛過去、在焦點上散掉，玩家的視線正好被帶到「數字要開始跳了」的位置。
+        //
+        // ⚠️ **這是純視覺，不影響邏輯。** `OnPlayRequested` 在動畫**開始時**就發了 ——
+        // 等動畫跑完才發的話，機率數字會慢半拍，那反而更斷。
+        // 動畫只負責把玩家的視線送到數字那裡，剛好接上 `AnimateProbability` 的 countUp。
+
+        [Header("出牌動效")]
+        [Tooltip("出牌時往畫面中央飛出去再淡掉。取消勾選 = 點了就直接消失")]
+        public bool playLaunchAnimation = true;
+
+        [Min(0.05f)] public float launchSeconds = 0.32f;
+
+        [Tooltip("飛到終點時縮到原本的幾倍。小於 1 ＝ 一邊飛一邊變小，像被吸進去")]
+        [Range(0.1f, 1.5f)] public float launchEndScale = 0.55f;
+
+        [Tooltip("終點相對畫面中央再偏移多少（像素）。\n" +
+                 "回答列在畫面中下方，往上偏一點會更靠近機率數字")]
+        public Vector2 launchTargetOffset = new Vector2(0f, 60f);
+
+        [Tooltip("飛行路徑往上拱多少（像素）。0 ＝ 直線。\n" +
+                 "拱一點會像「拋出去」而不是「被拖過去」，手感差很多")]
+        public float launchArcHeight = 90f;
+
+        private Coroutine launchRoutine;
+
+        /// <summary>出牌的飛出動畫。跑完把自己收掉。</summary>
+        private IEnumerator LaunchRoutine()
+        {
+            RectTransform rt = transform as RectTransform;
+            RectTransform parent = rt != null ? rt.parent as RectTransform : null;
+            if (rt == null || parent == null) { gameObject.SetActive(false); yield break; }
+
+            Vector2 from = rt.anchoredPosition;
+
+            // 畫面中央換算成「手牌容器的座標」——
+            // 直接用 Vector2.zero 的話那是容器的中心，不是畫面的中心
+            Vector3 worldCentre = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
+            Canvas canvas = parent.GetComponentInParent<Canvas>();
+            Camera cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera : null;
+
+            Vector2 to;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, worldCentre, cam, out to);
+            to += launchTargetOffset;
+
+            Vector3 scale0 = rt.localScale;
+            float t = 0f;
+
+            while (t < 1f)
+            {
+                t += Time.unscaledDeltaTime / Mathf.Max(0.01f, launchSeconds);
+                float k = Mathf.Clamp01(t);
+
+                // 前段快、後段緩 —— 「射出去然後散掉」，不是等速滑過去
+                float e = 1f - (1f - k) * (1f - k);
+
+                Vector2 pos = Vector2.Lerp(from, to, e);
+                pos.y += Mathf.Sin(e * Mathf.PI) * launchArcHeight;   // 拋物線的拱
+                rt.anchoredPosition = pos;
+
+                rt.localScale = Vector3.Lerp(scale0, scale0 * launchEndScale, e);
+
+                // 到後半段才開始淡 —— 一開始就淡的話會像「牌壞掉了」而不是「射出去」
+                SetAlpha(k < 0.5f ? 1f : 1f - (k - 0.5f) * 2f);
+
+                yield return null;
+            }
+
+            launchRoutine = null;
+            gameObject.SetActive(false);
         }
 
         private void SetAlpha(float a)
@@ -216,8 +307,13 @@ namespace EldritchMile.UI.ProbabilityDialogue
         /// <summary>出牌被拒絕（例如已經在 Resolving）時退回原位。</summary>
         public void ReturnHome()
         {
+            // 出牌被拒絕時，飛出去的動畫也要一起收掉 —— 不收的話牌會一邊飛走一邊「回到原位」
+            if (launchRoutine != null) { StopCoroutine(launchRoutine); launchRoutine = null; }
+
             spent = false;
             dragging = false;
+            gameObject.SetActive(true);
+            transform.localScale = Vector3.one;
             EnsureHome();
             transform.localPosition = homePosition;
             SetAlpha(1f);

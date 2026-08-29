@@ -49,6 +49,14 @@ namespace EldritchMile.Core
                  "玩家在第三站就會看到結局獨白。它只由這裡指名播放。")]
         public EventData runFinishedEvent;
 
+        [Tooltip("**中途死掉**時演的那一段。留空 = 沿用上面那一筆。\n\n" +
+                 "【為什麼可以共用】《文本.md》那段獨白本來就寫得兩邊都成立 ——\n" +
+                 "「恭喜你，決定了世界的末路／恭喜你，迎向了人生的終點」\n" +
+                 "說的既是通關也是死亡，而「再一次...開始你的旅途吧」正是輪迴的入口。\n\n" +
+                 "要讓死亡有自己的說法時再另外填一筆，程式不用動。\n\n" +
+                 "⚠️ 兩筆的 `weight` 都要是 0，理由同上。")]
+        public EventData runFailedEvent;
+
         [Tooltip("隨機事件庫。留空則永遠不會觸發事件（不會壞，只是沒有事件）")]
         public EventLibrary eventLibrary;
 
@@ -570,16 +578,18 @@ namespace EldritchMile.Core
             {
                 Run?.ContributeToMeta(Meta, result);
 
-                // ── 打完 Boss：先演結局那一段，再回主選單 ──
+                // ── 結局：打完 Boss 或中途死掉，都先演一段再回主選單 ──
                 //
                 // ⚠️ `currentStage != Event` 是防無限迴圈的 ——
-                //    結局本身就是一個事件 Stage，它演完也會回報 RunFinished，
+                //    結局本身就是一個事件 Stage，它演完也會回報結束，
                 //    不擋的話會一直重播自己。
-                if (result == StageResult.RunFinished
-                    && runFinishedEvent != null
-                    && currentStage != StageType.Event)
+                EventData ending = result == StageResult.RunFinished
+                    ? runFinishedEvent
+                    : (runFailedEvent != null ? runFailedEvent : runFinishedEvent);
+
+                if (ending != null && currentStage != StageType.Event)
                 {
-                    PendingEvent = runFinishedEvent;
+                    PendingEvent = ending;
                     stageAfterEvent = StageType.Menu;   // 演完接回主選單（走事件那條既有的路）
 
                     yield return FadeOut();
