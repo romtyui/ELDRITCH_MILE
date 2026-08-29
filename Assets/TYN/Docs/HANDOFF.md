@@ -56,6 +56,7 @@
 | 菁英補回三隻（祭司＋兩隻雜魚） | `BattleStageController.formationOverrides` |
 | 純敘述事件不再吞掉 `resultText`（結尾的謝謝測試） | `EventStageController.BuildResultBody` |
 | TYN 的貼圖依用途調 maxTextureSize（1015 → 187 MB） | 卡牌／地圖圖示 512、UI／立繪 1024、背景 2048 |
+| **WebGL 出包成功，下載量約 68 MB**（可以上 itch） | `C:\Build\WebGL_v0.1.0` |
 | 戰後先看結算、按離開鍵才回地圖 | `BattleStageController.endButton` |
 | 修戰後卡死：離開鍵是根 Canvas，WorldSpace 跑到畫面外 | `EndButtonCanvas` 改 Overlay ＋ 加一道螢幕座標檢查 |
 | 三顆離開鍵改成抄 `EndEncounterButton`（(794,0) 280×120） | ⚠️ 與快捷欄重疊，見那一節 |
@@ -200,6 +201,46 @@ y −4.60 ~ 6.60　　x −9.96 ~ 9.96
 
 > 地圖用的是**戶外**那張、探索用的是**中屋**那張，所以畫面內容本來就不同；
 > 統一的是「怎麼擺」，不是「擺什麼」。
+
+### ✅ WebGL 出包成功（2026-08-30）
+
+`C:\Build\WebGL_v0.1.0`
+
+| 檔 | 大小 |
+|---|---|
+| `.data.unityweb` | **59.1 MB** |
+| `.wasm.unityweb` | 8.5 MB |
+| framework / loader | 0.2 MB |
+| **合計下載量** | **約 68 MB** |
+
+**這個大小放 itch 沒問題**（單檔上限 1 GB，瀏覽器遊戲 68 MB 偏大但可以接受）。
+
+⚠️ 我先前估「200~350 MB」是**估錯了**，因為漏算三件事：
+1. **只有被場景引用到的資產才會打包** —— 專案裡 1 GB 的貼圖大部分沒被引用
+2. **Brotli 壓得很兇**
+3. WebGL 的貼圖格式與 Standalone 不同
+
+→ **所以 `Assets/Romtyui` 那 1023 MB 不再是出包的阻礙**，
+要不要調是「載入速度」與「記憶體」的取捨，不是「能不能上架」。
+
+#### 上 itch 的做法
+
+1. 把 `WebGL_v0.1.0` **整個資料夾壓成 zip**（`index.html` 要在 zip 的**根目錄**）
+2. 上傳後勾 **「This file will be played in the browser」**
+3. 視窗尺寸填 **1920 × 1080**（專案的參考解析度）
+
+⚠️ **`decompressionFallback` 一定要維持 `true`** ——
+itch 是靜態檔案伺服、不會送 `Content-Encoding: br`，
+沒有那個 fallback 的話 Brotli 檔在瀏覽器直接載不起來（白畫面，而且看不出原因）。
+
+#### 兩個踩過的坑
+
+1. **Scripts Only Build 勾著** → build 只跑 872 毫秒、資料夾是空的。
+   那是 Build Settings 裡的 checkbox，跟程式無關。
+2. **從 MCP 直接呼叫 `BuildPipeline.BuildPlayer` 會炸**
+   （`TypeInitializationException: 'Styles'` —— 建置進度 UI 在非 GUI 情境初始化 `GUIStyle`），
+   而且**還是回報 `Succeeded`**，只是什麼都沒產出。
+   要嘛排進 `EditorApplication.delayCall`，要嘛直接在編輯器裡按 Build。
 
 ### 離開鍵改成抄打牌那顆（2026-08-30）
 
