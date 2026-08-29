@@ -170,6 +170,26 @@ public class BattleStageController : StageController
     //    房間美術、地圖、對話立繪會跟著一起變黑。放在 Stage prefab 裡
     //    才會「只有戰鬥的時候黑」—— StageHost 是 Instantiate / Destroy，
     //    所以這一站結束燈也跟著消失。
+    //
+    // ==========================================
+    // ⚠️ 後製（Post Processing）也是同一個故事，而且**它才是「渲染」的大宗**
+    // ==========================================
+    //
+    // `SampleScene` 有**兩顆 Global Volume**：
+    //   · `SampleSceneProfile`　　　Tonemapping ＋ Bloom ＋ Vignette
+    //   · `Global Volume (1) Profile`　ColorAdjustments ＋ Bloom
+    //
+    // 併進 EventScene 時兩顆都沒跟過來（EventScene 原本 Volume 數 = 0），
+    // 而且宿主的 Main Camera `renderPostProcessing` 是**關的** ——
+    // 兩個條件缺一，後製就整個不會跑。
+    //
+    // 現在：兩顆 Volume 放進 `Stage_Battle.prefab`（只有戰鬥時存在）、
+    // 場景的 Main Camera 打開 `renderPostProcessing`。
+    // 相機那個開關**是全域的**（URP 只有 per-camera 這一顆），
+    // 但 Volume 在 prefab 裡，所以其他環節沒有 Volume 就等於沒有後製。
+    //
+    // 要讓整個遊戲都吃同一組後製，就把那兩顆 Volume 從 prefab 拖到場景根 ——
+    // **那是美術決定，不是順手改**（房間美術是照沒有後製的畫面對過位的）。
 
     /// <summary>
     /// `Stage_Battle` 是 prefab，**prefab 存不了場景引用**。
@@ -185,6 +205,7 @@ public class BattleStageController : StageController
         BindBgmToOptionMenu();
         BindModifierSystem();
         BindRelicsFromInventory();
+        BindItemsFromInventory();
         BindTutorial();
 
         // 場景擺設用**節點上的種子**，跟探索讀的是同一個 ——
@@ -335,6 +356,69 @@ public class BattleStageController : StageController
     /// ⚠️ 遺物**不是點來用的**，是 `RelicsRuntime` 在 BattleStart／回合開始／
     /// 出牌時自動觸發。所以這裡只要「放進去」，不必也不該去呼叫它。
     /// </summary>
+    /// <summary>
+    /// 把身上的道具送進戰鬥的道具面板（`Props_Panel` 上的 `ItemInventory`）。
+    /// **與 <see cref="BindRelicsFromInventory"/> 完全對稱**，只是換一個 Inventory。
+    ///
+    /// ────────────────────────────────────────────────────────
+    /// ⛔ **目前這一支一定會灌 0 件。** 不是它壞了 ——
+    /// `ItemEffectData` 是個 abstract 類別，全專案**一個子類別、一個資產都沒有**，
+    /// 所以 `ItemData.battleItemEffect` 不可能填得起來。
+    /// 症狀就是「戰鬥裡叫不出食物」：面板打得開，但裡面是空的。
+    ///
+    /// 【誰該補】效果資產與子類別是戰鬥端（Romtyui）的東西，
+    /// 我方這一支是接口 —— 他們把效果做出來、資料填進 `battleItemEffect`，
+    /// 這裡就會自己開始運作，不用再改程式。
+    ///
+    /// 【這跟快捷欄無關】右邊那條食物快捷欄走的是 `hpRestore` / `sanRestore`，
+    /// 戰鬥內外都有效，不經過這裡。**戰鬥中要吃東西現在就吃得到**，
+    /// 只是走的是快捷欄不是戰鬥自己的面板。
+    /// </summary>
+    private void BindItemsFromInventory()
+    {
+        ItemInventory inv = GetComponentInChildren<ItemInventory>(true);
+        if (inv == null) return;
+
+        RunContext ctx = run;
+        ItemDatabase db = GameFlowManager.Instance != null ? GameFlowManager.Instance.itemDatabase : null;
+        if (ctx == null || db == null) return;
+
+        inv.Clear();
+
+        int added = 0, skipped = 0;
+
+        for (int i = 0; i < ctx.inventory.Count; i++)
+        {
+            ItemStack st = ctx.inventory[i];
+            if (st == null || st.count <= 0) continue;
+
+            ItemData d = db.GetById(st.id);
+            if (d == null) continue;
+
+            if (d.battleItemEffect == null)
+            {
+                // 食物與補給才值得算 —— 收藏品本來就走遺物那一條
+                if (d.HasTag("Food") || d.HasTag("Supply")) skipped++;
+                continue;
+            }
+
+            for (int n = 0; n < st.count; n++)
+            {
+                if (!inv.AddItem(d.battleItemEffect)) break;   // 滿了就停
+                added++;
+            }
+        }
+
+        if (verboseBinding || skipped > 0)
+        {
+            Debug.Log($"[戰鬥] 道具已灌入 {added} 件" +
+                      (skipped > 0
+                          ? $"；另有 {skipped} 件食物／補給還沒有戰鬥效果資產"
+                            + "（Battle Item Effect 是空的 —— ItemEffectData 目前整個專案都還沒有子類別）"
+                          : ""), this);
+        }
+    }
+
     private void BindRelicsFromInventory()
     {
         RelicsInventory inv = GetComponentInChildren<RelicsInventory>(true);
@@ -472,7 +556,102 @@ public class BattleStageController : StageController
             fightingEnemyIds.Add(ids[i]);
         }
 
-        if (enemies.Count > 0) rs.ReserveEncounterByEnemyData(enemies);
+        if (enemies.Count == 0) return;
+
+        // ⚠️ **這一行不是重點，但要留著。**
+        //    `ReserveEncounterByEnemyData` 會把 id 寫進 PlayerPrefs（斷線重進用），
+        //    但**目前沒有任何程式讀它**（`TryGetReservedEncounter` 一個呼叫端都沒有）。
+        //    真正決定「這場打誰」的是下面那一行的 Formation。
+        rs.ReserveEncounterByEnemyData(enemies);
+
+        ReserveFormationFor(enemies, rs);
+    }
+
+    /// <summary>
+    /// 真正讓「指定對手」生效的一步。
+    ///
+    /// ────────────────────────────────────────────────────────
+    /// 【為什麼原本沒有效】`EnemyFormationSpawner.SpawnRandomFormation()` 只認
+    /// **`RunStateManager.TryGetReservedFormation`**（Formation），
+    /// 而我們一直呼叫的是 `ReserveEncounterByEnemyData`（一串 enemyId）——
+    /// 那一組**寫得進去、但沒有任何人讀**。
+    ///
+    /// 所以症狀是：填對 id 也沒用，照樣跑 `encounterPool.GetRandomFormation()`
+    /// 隨機抽一組 —— 「叫出來的怪跟名字對不上」就是這麼來的。
+    /// 而且不會有錯誤訊息，因為兩邊各自都「成功」了。
+    ///
+    /// 【挑哪一組】先找一組**成員完全吻合**的現成 Formation（`test 1` ＝ 祭司、
+    /// `tuā-khoo-tai` ＝ 胖魚人…），用它才會沿用美術排好的站位。
+    /// 找不到才即時捏一個 —— 那條路保證「指定什麼就打什麼」，
+    /// 不必為了每一種組合都先在專案裡建資產。
+    ///
+    /// 【誰負責清掉】`BattleManager` 在戰鬥結束時會 `ClearReservedFormation()`，
+    /// 所以這裡只管預約，不用管善後 —— 不清的話下一場會重複同一組怪。
+    /// </summary>
+    private void ReserveFormationFor(List<EnemyData> enemies, RunStateManager rs)
+    {
+        EnemyFormationData match = FindFormationFor(enemies);
+
+        if (match == null)
+        {
+            // 即時捏一組。**不寫成資產**（那會在專案裡長出一堆垃圾檔），
+            // 只活在這場戰鬥裡；`ClearReservedFormation` 之後就會被回收
+            match = ScriptableObject.CreateInstance<EnemyFormationData>();
+            match.name = "Runtime_" + string.Join("_", fightingEnemyIds.ToArray());
+            match.formationName = match.name;
+
+            for (int i = 0; i < enemies.Count && i < 3; i++)
+            {
+                var entry = new EnemySpawnEntry();
+                // 一隻的時候擺中間（index 1）—— 現成的單隻 Formation 都是這樣擺的
+                entry.spawnIndex = enemies.Count == 1 ? 1 : i;
+                entry.enemyData = enemies[i];
+                match.enemies.Add(entry);
+            }
+
+            if (verboseBinding)
+            {
+                Debug.Log($"[戰鬥] 沒有現成的 Formation 對得上，即時捏了一組：{match.name}", this);
+            }
+        }
+
+        rs.ReserveFormation(match);
+    }
+
+    /// <summary>
+    /// 找一組成員**完全吻合**的現成 Formation。順序不算，數量要一樣。
+    ///
+    /// 【為什麼要「完全吻合」而不是「包含」】`test` 那一組是
+    /// 雜魚＋祭司＋雜魚。只要「包含祭司」的話，指定打祭司會變成打三隻 ——
+    /// 那不是指定，那是猜。
+    /// </summary>
+    private static EnemyFormationData FindFormationFor(List<EnemyData> enemies)
+    {
+        EnemyFormationData[] all = Resources.FindObjectsOfTypeAll<EnemyFormationData>();
+
+        for (int i = 0; i < all.Length; i++)
+        {
+            EnemyFormationData f = all[i];
+            if (f == null || f.enemies == null || f.enemies.Count != enemies.Count) continue;
+
+            // 逐一配對，配到就劃掉 —— 這樣「兩隻雜魚」不會被一隻雜魚滿足
+            var pool = new List<EnemyData>(enemies);
+            bool ok = true;
+
+            for (int j = 0; j < f.enemies.Count && ok; j++)
+            {
+                EnemyData want = f.enemies[j] != null ? f.enemies[j].enemyData : null;
+                if (want == null) { ok = false; break; }
+
+                int at = pool.IndexOf(want);
+                if (at < 0) { ok = false; break; }
+                pool.RemoveAt(at);
+            }
+
+            if (ok && pool.Count == 0) return f;
+        }
+
+        return null;
     }
 
     /// <summary>

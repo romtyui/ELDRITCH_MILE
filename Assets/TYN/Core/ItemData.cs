@@ -100,6 +100,20 @@ namespace EldritchMile.Core
         [Tooltip("使用後是否消耗掉。取消勾選 = 可以重複使用（目前沒有這種道具）")]
         public bool consumeOnUse = true;
 
+        [Header("戰鬥道具效果（戰鬥中主動使用）")]
+        [Tooltip("這件道具在**戰鬥裡**的效果（Romtyui 的 `ItemEffectData`）。\n\n" +
+                 "戰鬥開始時會由 `BattleStageController` 把身上的道具送進 `ItemInventory`，\n" +
+                 "也就是戰鬥畫面左邊那個道具面板（`Props_Panel`）——\n" +
+                 "跟遺物走 `RelicsInventory` 是完全對稱的一套。\n\n" +
+                 "⛔ **目前全專案一個 `ItemEffectData` 資產都沒有**（那個類別是 abstract，\n" +
+                 "還沒有人寫子類別），所以這一欄現在一定是空的，\n" +
+                 "戰鬥裡的道具面板也因此永遠是空的。\n\n" +
+                 "⚠️ 這跟「快捷欄能不能吃東西」是**兩件事** ——\n" +
+                 "快捷欄走的是 `hpRestore` / `sanRestore` 那一組，戰鬥內外都有效，\n" +
+                 "不需要這一欄。這一欄是給「只有戰鬥裡才有意義」的效果用的\n" +
+                 "（給力量、加護甲、抽牌…那些需要 BattleManager 才跑得動）。")]
+        public ItemEffectData battleItemEffect;
+
         [Header("遺物效果（戰鬥中被動觸發）")]
         [Tooltip("這件收藏品在戰鬥裡的被動效果。\n\n" +
                  "⚠️ 遺物**不是點來用的** —— Romtyui 的設計是在 BattleStart／\n" +

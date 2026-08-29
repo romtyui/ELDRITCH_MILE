@@ -7225,7 +7225,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -7365,6 +7365,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.RunDebugPanel
   toggleKey: 94
   openOnStart: 0
+  quickBattleEnemyIds:
+  - boss
+  - fish_priest
+  - tua_khoo_tai
+  - coral_paguroidea
+  - minnow
   width: 420
   fontSize: 13
 --- !u!1 &1785196182

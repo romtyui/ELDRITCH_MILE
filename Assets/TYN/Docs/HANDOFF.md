@@ -27,6 +27,9 @@
 | 中段節點改隨機，補上對話節點與「一定會有」的保證 | `dialogueChance`、`guaranteedKinds` |
 | F1 面板加「指定對手開打」，Boss 終於驗得到 | `RunDebugPanel.quickBattleEnemyIds` |
 | 戰鬥的 `Global Light 2D` 補回 `Stage_Battle.prefab` | 併場景時漏掉的那顆黑色 Multiply 光 |
+| 後製兩顆 Global Volume 補回 ＋ 相機打開 `renderPostProcessing` | 「渲染」的大宗，上一輪只補了燈 |
+| 「指定對手」改走 Formation，之前寫的那條沒人讀 | `BattleStageController.ReserveFormationFor` |
+| 戰鬥道具面板的接口補上（效果資產還缺） | `ItemData.battleItemEffect`、`BindItemsFromInventory` |
 
 ### 遺物的兩張圖
 
@@ -88,6 +91,101 @@
 
 ⚠️ 留空 `endButton` 會退回舊的「等一下、點一下或逾時就走」，
 `endMinSeconds` / `endAutoSeconds` 那兩格**只有那時才有作用**。
+
+### 併場景時掉了什麼（2026-08-29 第七輪）
+
+把 `SampleScene` 併進 `EventScene` 時，**三樣東西沒跟過來**。
+三樣都不會報錯，所以都是「看起來像壞掉，但查不到錯誤」的那種。
+
+#### ⛔ 一、後製整組不見了 —— 這才是「渲染」的大宗
+
+| | SampleScene | EventScene（修之前） |
+|---|---|---|
+| Global Volume | **2 顆** | **0 顆** |
+| Main Camera `renderPostProcessing` | **True** | **False** |
+
+兩顆 Volume 的內容：
+
+- `SampleSceneProfile` —— Tonemapping ＋ Bloom ＋ Vignette
+- `Global Volume (1) Profile` —— ColorAdjustments ＋ Bloom
+
+**兩個條件缺一，後製就整個不會跑。**
+上一輪只補了燈（下面那條），但燈只負責明暗；
+戰鬥那個味道有一大半是 Bloom 與 ColorAdjustments —— 所以上一輪修完還是「沒有渲染」。
+
+**修法**：兩顆 Volume 放進 `Stage_Battle.prefab`、Main Camera 打開 `renderPostProcessing`。
+
+⚠️ 相機那顆開關**是全域的**（URP 只有 per-camera 這一個），
+但 Volume 在 prefab 裡，所以其他環節沒有 Volume ＝ 等於沒有後製。
+**要讓整個遊戲吃同一組後製，就把那兩顆 Volume 從 prefab 拖到場景根** ——
+那是美術決定，不是順手改（房間美術是照沒有後製的畫面對過位的）。
+
+#### 二、`Global Light 2D`（上一輪補的）
+
+URP 用的是 2D Renderer、Blend Style 0 ＝ Multiply。
+`Global`（黑、Multiply）把畫面乘黑、`Freeform` 開一個看得見的區域。
+Freeform 在 `BattleSystemPrefab` 裡所以跟著走了，Global 是場景根物件所以漏掉。
+一樣放進 `Stage_Battle.prefab`。
+
+> ✅ 順手查過了：`monsterCanvas` / `SceneCanvas` / `AnimCanvas` 的
+> **`m_RenderMode` 一直都是 ScreenSpaceCamera，沒有掉**。
+> 用 C# 讀 `canvas.renderMode` 會看到 Overlay，那是因為 `worldCamera` 是 null 時
+> **getter 回報的是「實際生效的模式」而不是設定值** —— 別被它騙了，
+> 要看真相請讀序列化欄位 `m_RenderMode`。相機由 `BindCanvasCameras` 在執行時補。
+
+#### ⛔ 三、「指定對手」從來沒有生效過
+
+**`ReserveEncounterByEnemyData` 寫得進去，但沒有任何程式讀它**
+（`TryGetReservedEncounter` 一個呼叫端都沒有）。
+
+真正決定「這場打誰」的是 `EnemyFormationSpawner.SpawnRandomFormation()`，
+它只認 **`RunStateManager.TryGetReservedFormation`（Formation）**。
+沒有預約 Formation 就走 `encounterPool.GetRandomFormation()` 隨機抽 ——
+**所以填對 id 也沒用，照樣隨機**。這就是「叫出來的怪跟名字對不上」。
+
+而且兩邊各自都「成功」了，所以一個錯誤訊息都沒有。
+
+**修法**：`BattleStageController.ReserveFormationFor()`
+
+1. 先找一組**成員完全吻合**的現成 Formation（用它才會沿用美術排好的站位）
+2. 找不到才即時 `CreateInstance<EnemyFormationData>()` 捏一組（不寫成資產）
+
+現成的對照（驗過）：
+
+| enemyId | Formation |
+|---|---|
+| `boss` | `Bosss` |
+| `fish_priest` | `test 1` |
+| `tua_khoo_tai` | `tuā-khoo-tai` |
+| `coral_paguroidea` | `Paguroidea` |
+| `minnow` | 沒有單隻的 → 即時捏一組 |
+
+⚠️ 比對用「完全吻合」不是「包含」：`test` 那組是雜魚＋祭司＋雜魚，
+用「包含」的話指定打祭司會變成打三隻。
+
+善後不用管 —— `BattleManager` 結束戰鬥時會 `ClearReservedFormation()`。
+
+### 戰鬥裡叫不出食物
+
+**兩件事，先分清楚：**
+
+1. **右邊那條食物快捷欄，戰鬥中本來就能用**（`UIPanel.visibleInStages` 有 Battle，
+   走的是 `hpRestore` / `sanRestore`，不經過戰鬥系統）。這一條沒壞。
+2. **戰鬥自己的道具面板（`Props_Panel` 上的 `ItemInventory`）永遠是空的** ——
+   那才是「叫不出來」。
+
+原因有兩層，而且**第二層卡死了**：
+
+| | 狀況 |
+|---|---|
+| 沒有人把背包灌進 `ItemInventory` | 我方的缺口 —— **已補** `BindItemsFromInventory()`，與遺物那條完全對稱 |
+| ⛔ 全專案**一個 `ItemEffectData` 資產都沒有** | `ItemEffectData` 是 abstract、**沒有任何子類別**。所以 `ItemData.battleItemEffect` 現在填不了 |
+
+`ItemData` 已經補上 `battleItemEffect` 欄位（跟 `relicEffect` 對稱）。
+**Romtyui 把 `ItemEffectData` 的子類別與資產做出來、填進那一欄，
+戰鬥的道具面板就會自己開始有東西，不用再改程式。**
+
+在那之前，戰鬥中要吃東西請用右邊的快捷欄。
 
 ### 中段節點改回隨機（2026-08-29 第六輪）
 
