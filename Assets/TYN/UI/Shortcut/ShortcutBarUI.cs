@@ -227,13 +227,41 @@ namespace EldritchMile.UI.Shortcut
                 slots.Add(s);
             }
 
-            if (shown.Count > fixedSlots.Count)
-            {
-                Debug.LogWarning(
-                    $"[快捷欄] {name}：有 {shown.Count} 件「{filterTag}」但只有 " +
-                    $"{fixedSlots.Count} 格，多的 {shown.Count - fixedSlots.Count} 件看不到。\n" +
-                    "　格數是美術定的 —— 要顯示更多就得請美術多排幾格，程式不該自己長出來。");
-            }
+            NotifyOverflow(shown.Count - fixedSlots.Count);
+        }
+
+        /// 上一次有幾件塞不下。用來判斷「是不是又多了一件」
+        private int lastOverflow;
+
+        [Header("放不下的時候")]
+        [Tooltip("超過格數時跳給玩家看的提示。{0} = 塞不下幾件。\n\n"
+                 + "留空 = 只寫到 Console，不打擾玩家")]
+        public string overflowMessage = "快捷欄只放得下 {0} 格　多出來的要先用掉一件才拿得到";
+
+        /// <summary>
+        /// 身上的東西比格子多。
+        ///
+        /// ⚠️ **只在「又變多了」的時候才提示。** Refresh 會在每次背包變動、
+        /// 每次換環節時跑；每次都喊的話，玩家一路上會被同一句話洗版，
+        /// 而那句話在第二次之後就不帶新資訊了。
+        ///
+        /// 東西變少（用掉了、塞得下了）時把計數歸零 ——
+        /// 下次再滿出來要重新提醒一次，那時它又是新資訊了。
+        /// </summary>
+        private void NotifyOverflow(int overflow)
+        {
+            if (overflow <= 0) { lastOverflow = 0; return; }
+
+            bool worse = overflow > lastOverflow;
+            lastOverflow = overflow;
+
+            Debug.LogWarning(
+                $"[快捷欄] {name}：有 {overflow} 件「{filterTag}」放不下（只有 {fixedSlots.Count} 格）。\n" +
+                "　東西還在背包裡，只是點不到 —— 先用掉一件就會遞補上來。");
+
+            if (!worse || string.IsNullOrEmpty(overflowMessage)) return;
+
+            PopupService.Instance?.ShowInstant(string.Format(overflowMessage, fixedSlots.Count));
         }
 
         /// <summary>【生成】舊的做法：依道具數量生格子，交給 Layout Group 排。</summary>
