@@ -37,6 +37,8 @@
 | 神牌的結算移到收尾之後（離開前的最後一頁） | `outroTailLines`、`settlementLast` |
 | 事件有優先序，暴食之深淵一定先出 | `EventData.priority` |
 | 轉場加上「黑幕停一拍」＋ 非對稱淡入淡出 | `holdBlackSeconds` / `holdBlackAfterEventSeconds` |
+| 轉場地點卡（沿用開地圖那支 banner） | `[SYSTEM]/StageTitleBanner`、`nodeTitles` |
+| 神牌動畫的 Canvas 補上 Scale With Screen Size | `AnimCanvas` 是全專案唯一漏掉的一個 |
 
 ### 遺物的兩張圖
 
@@ -177,6 +179,42 @@ y −4.60 ~ 6.60　　x −9.96 ~ 9.96
 
 > 地圖用的是**戶外**那張、探索用的是**中屋**那張，所以畫面內容本來就不同；
 > 統一的是「怎麼擺」，不是「擺什麼」。
+
+### ⛔ 神牌動畫在 build 裡會走鐘：`AnimCanvas` 是唯一沒開 Scale With Screen Size 的
+
+**是的，它沒有設。** 全專案 12 個 Canvas 只有它一個不一樣：
+
+| Canvas | Scaler |
+|---|---|
+| `AnimCanvas`（神牌動畫） | ⛔ **ConstantPixelSize，ref 800×600** |
+| 其餘全部（HUD／地圖／對話／戰鬥的另外三個…） | ScaleWithScreenSize **1920×1080** |
+
+`ConstantPixelSize` ＝ **不隨解析度縮放**，scaleFactor 永遠是 1。
+
+| 解析度 | Constant | ScaleWithScreen | 差多少 |
+|---|---|---|---|
+| 1280×720 | 1.000 | 0.667 | −33% |
+| **1920×1080** | 1.000 | 1.000 | **一樣** |
+| 2560×1440 | 1.000 | 1.333 | +33% |
+| 3840×2160 | 1.000 | 2.000 | +100% |
+
+⚠️ **所以在編輯器裡永遠看不出來** —— Game View 就是 1920×1080，兩種模式完全相同。
+而 Player Settings 是 `FullScreenMode = FullScreenWindow`，
+**build 出來是跑桌面的原生解析度**，不是 1920×1080 ——
+在 1440p／4K 螢幕上神牌動畫就會比其他 UI 小一大截。
+
+> 這**不是**併場景弄壞的：`SampleScene` 原本就是 ConstantPixelSize 800×600。
+> 是原本就在的設定，只是以前沒有 build 過所以沒人看到。
+
+**已改成** ScaleWithScreenSize 1920×1080 match 0.5，跟同一個 prefab 裡另外三個一致。
+**1080p 下是零變化**（兩種模式數值相同），其他解析度才會有差 —— 所以這個改動很安全。
+
+#### 順帶：`match` 值不一致（沒動）
+
+專案裡有些 Canvas 是 `match = 0`（只看寬度）、有些是 `0.5`（寬高幾何平均）。
+**16:9 之下三種 match 算出來完全一樣**，所以現在看不出差別；
+螢幕不是 16:9（16:10、21:9）時各 Canvas 才會縮得不一樣。
+要不要統一是視覺決定，先不動。
 
 ### 「事件接回節點」很突兀 —— 三個原因，先修了第一個
 
