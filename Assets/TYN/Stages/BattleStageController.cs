@@ -81,6 +81,18 @@ public class BattleStageController : StageController
     [Tooltip("戰後結算怎麼寫。{0} = 金幣數量。留空 = 不播報（錢照給）")]
     public string rewardLineFormat = "戰利品：金幣 ×{0}";
 
+    [Tooltip("戰後專屬的離開鍵。**結算播完才會出現**，按了才回地圖。\n\n" +
+             "【為什麼要有】原本是「給錢 → 立刻回報完成」——\n" +
+             "`ShowText` 只是把結算排進佇列，而回報會立刻觸發轉場，\n" +
+             "所以那一行字根本來不及被讀到（甚至根本沒顯示）。\n\n" +
+             "留空 = 退回舊行為（給完錢直接回地圖）。\n" +
+             "跟事件、機率對話的離開鍵是同一套做法。")]
+    public UnityEngine.UI.Button endButton;
+
+    [Tooltip("**只在沒有 End Button 時**才用到：結算播完再等幾秒才回地圖。\n" +
+             "0 = 不等（那就等於看不到結算）")]
+    [Min(0f)] public float rewardAutoSeconds = 2f;
+
     [System.Serializable]
     public class FormationOverride
     {
@@ -154,6 +166,13 @@ public class BattleStageController : StageController
         reported = false;
         fightingEnemyIds.Clear();
 
+        SetEndButtonVisible(false);
+        if (endButton != null)
+        {
+            endButton.onClick.RemoveListener(LeaveBattle);
+            endButton.onClick.AddListener(LeaveBattle);
+        }
+
         if (battleManager == null) battleManager = GetComponentInChildren<BattleManager>(true);
 
         // 接上宿主場景的東西。**一定要在 StartBattle 之前** ——
@@ -191,6 +210,10 @@ public class BattleStageController : StageController
     public override IEnumerator OnStageExit()
     {
         TutorialEventBus.OnSignalRaised -= HandleSignal;
+
+        if (endButton != null) endButton.onClick.RemoveListener(LeaveBattle);
+        SetEndButtonVisible(false);
+
         UnbindFromHostScene();
         yield break;
     }
@@ -797,7 +820,9 @@ public class BattleStageController : StageController
         Debug.Log($"[戰鬥] 勝利。HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、" +
                   $"SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}、牌組 {PlayerVitals.DeckCount} 張");
 
-        Report(StageResult.Completed);
+        // ⚠️ **不要立刻回報。** 回報會觸發轉場，結算那一行字來不及被讀到。
+        //    交給下面那支等結算播完、玩家按了離開鍵才走
+        StartCoroutine(WaitThenLeave());
     }
 
     /// <summary>
@@ -845,6 +870,45 @@ public class BattleStageController : StageController
             PopupService.Instance?.ShowText(string.Format(rewardLineFormat, amount));
         }
     }
+
+    /// <summary>
+    /// 等結算播完，把離開鍵放出來；按了才回地圖。
+    ///
+    /// ────────────────────────────────────────────────────────
+    /// 【為什麼要等 `PopupService.IsIdle`】結算是排進佇列的，
+    /// 而且戰鬥端在勝利當下還有自己的收尾（死亡動畫、存檔）。
+    /// 用固定秒數等的話快的機器會太久、慢的機器會太短。
+    ///
+    /// 【為什麼是輪詢而不是訂 `OnAllClosed`】那個事件要玩家**點擊推進**、
+    /// 而且佇列剛好空掉時才發 —— 用它的話離開鍵要多點一下才出現。
+    /// 事件那邊也是同一個理由用輪詢。
+    ///
+    /// 沒有離開鍵時退回「等幾秒就走」，那是給還沒接鈕的過渡期用的。
+    /// </summary>
+    private IEnumerator WaitThenLeave()
+    {
+        while (PopupService.Instance != null && !PopupService.Instance.IsIdle) yield return null;
+
+        if (endButton != null)
+        {
+            SetEndButtonVisible(true);
+            yield break;      // 出口只有那顆鈕
+        }
+
+        float t = 0f;
+        while (t < rewardAutoSeconds) { t += Time.unscaledDeltaTime; yield return null; }
+
+        Report(StageResult.Completed);
+    }
+
+    private void SetEndButtonVisible(bool visible)
+    {
+        if (endButton == null) return;
+        endButton.gameObject.SetActive(visible);
+    }
+
+    /// <summary>玩家按了離開。這是戰鬥勝利之後唯一的出口。</summary>
+    private void LeaveBattle() => Report(StageResult.Completed);
 
     private void OnLost()
     {
