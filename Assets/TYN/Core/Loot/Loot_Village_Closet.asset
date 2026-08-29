@@ -22,8 +22,9 @@ MonoBehaviour:
     - kind: 1
       itemId: 
       requireTags:
-      - Supply
-      excludeTags: []
+      - Food
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 60
       countMin: 1
@@ -40,7 +41,8 @@ MonoBehaviour:
       itemId: 
       requireTags:
       - Weapon
-      excludeTags: []
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 15
       countMin: 1

@@ -305,6 +305,13 @@ namespace EldritchMile.Core
         [Tooltip("事件的圖（CG）。可留空")]
         public Sprite image;
 
+        [Tooltip("這個事件裡會**開口說話**的角色名。\n\n" +
+                 "內文與結果文字裡「半魚人：餓...好餓」這種開頭的段落，\n" +
+                 "會改用**有名字框**的對話樣式播；其餘走旁白的公版。\n\n" +
+                 "⚠️ 一定要在這裡列名字 —— 只看「有沒有冒號」的話，\n" +
+                 "旁白裡的冒號會被誤判成人名，名字框就會冒出奇怪的東西。")]
+        public List<string> speakerNames = new List<string>();
+
         [Header("新手教學")]
         [Tooltip("這個事件**開始播的時候**要發哪個教學訊號。留空 = 不發。\n\n" +
                  "《損壞的祭壇》填 AltarOpened —— 教學序列在等這一步。\n" +

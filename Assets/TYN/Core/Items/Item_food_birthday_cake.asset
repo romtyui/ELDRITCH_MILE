@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_food_birthday_cake
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: food_birthday_cake
+  displayName: "\u751F\u65E5\u86CB\u7CD5"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u6062\u5FA9\uFF08\u5927\u91CF\uFF09HP \uFF06 \u6062\u5FA9\uFF08\u5C0F\u91CF\u6216\u4E2D\u7B49\uFF09SAN\u3002"
+  fullDescription: "\u5B69\u7AE5\u7684\u61A7\u61AC\uFF0C\u5728\u672B\u4E16\u8A31\u4E0B\u7684\u5FAE\u5C0F\u9858\u671B\u3002\n\u96D6\u8AAA\u5473\u9053\u6BD4\u8D85\u5E02\u8CE3\u7684\u5EC9\u50F9\u86CB\u7CD5\u9084\u8981\u7CDF\u7CD5\uFF0C\u4F46\u6B64\u6642\u537B\u80FD\u7D66\u4F60\u5E36\u4F86\u4E9B\u8A31\u6170\u85C9\u3002"
+  price: 55
+  tags:
+  - Consumable
+  - Food
+  - Rare
+  grantsCard: {fileID: 0}
+  hpRestore: 35
+  sanRestore: 15
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u9644\u4EF6\u5BEB\u300C\u6062\u5FA9\uFF08\u5927\u91CF\uFF09HP\uFF06\uFF08\u5C0F\u91CF\u6216\u4E2D\u7B49\uFF09SAN\u300D\uFF0C\u6C92\u5BEB\u662F\u56DE\u9084\u662F\u6263\uFF1B\n\u3000 \u4F9D\u6558\u8FF0\uFF08\u6170\u85C9\uFF09\u53D6\u300C\u6062\u5FA9\u300D\u3001\u53D6\u4E2D\u9593\u503C 15\u3002"

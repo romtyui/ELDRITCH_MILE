@@ -25,6 +25,7 @@ MonoBehaviour:
       - Food
       excludeTags:
       - SeaFood
+      - NoEffect
       table: {fileID: 0}
       weight: 70
       countMin: 1
@@ -33,7 +34,8 @@ MonoBehaviour:
       itemId: 
       requireTags:
       - SeaFood
-      excludeTags: []
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 30
       countMin: 1

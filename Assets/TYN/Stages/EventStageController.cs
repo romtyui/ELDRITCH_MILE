@@ -37,6 +37,12 @@ public class EventStageController : ChoiceStageController
     [Tooltip("多個效果之間用什麼隔開")]
     public string effectSeparator = "、";
 
+    [Header("背景")]
+    [Tooltip("進場時墊在後面的場景美術。留空會在自己底下找。\n\n" +
+             "**先用戶外那張** —— 事件沒有自己的場景，不墊東西的話\n" +
+             "會直接看到相機的天空底色")]
+    public StageBackdrop backdrop;
+
     /// <summary>這一站要演的事件。由總管在轉場時放好。</summary>
     private EventData data;
 
@@ -47,6 +53,10 @@ public class EventStageController : ChoiceStageController
     {
         data = GameFlowManager.Instance != null ? GameFlowManager.Instance.PendingEvent : null;
         awaitingEnd = false;
+
+        // 事件沒有自己的場景，不墊背景的話會直接看到相機的天空底色
+        if (backdrop == null) backdrop = GetComponentInChildren<StageBackdrop>(true);
+        backdrop?.Spawn();
 
         // ⚠️ 事件沒有打牌環節，手牌區整組都不該出現。
         //
@@ -84,7 +94,12 @@ public class EventStageController : ChoiceStageController
         // 而且失去「一句一句揭露」的節奏感 —— 那正是這種事件的味道所在。
         foreach (string para in SplitParagraphs(data.bodyText))
         {
-            introLines.Add(new Line { speaker = "", text = para, portrait = data.image });
+            // 「半魚人：餓...好餓」這種開頭的段落改用**有名字框**的樣式播。
+            // 認得的名字列在 EventData.speakerNames —— 見 SpeakerLine 的說明
+            string who, line;
+            EldritchMile.Core.SpeakerLine.TrySplit(para, data.speakerNames, out who, out line);
+
+            introLines.Add(new Line { speaker = who, text = line, portrait = data.image });
         }
 
         Debug.Log($"[事件] 開始演出：{data.title}（{introLines.Count} 段）");
@@ -163,6 +178,9 @@ public class EventStageController : ChoiceStageController
     {
         if (Options != null) Options.OnOptionClicked -= HandleChosen;
         if (endButton != null) endButton.onClick.RemoveListener(EndEvent);
+
+        // 背景是生成出來的，離開時要收掉 —— 不收的話會一路留到下一站
+        backdrop?.Despawn();
     }
 
     private void HandleChosen(DialogueOptionUI option)
@@ -203,18 +221,29 @@ public class EventStageController : ChoiceStageController
         var lines = SplitParagraphs(body);
         if (lines.Count == 0) return;   // 沒有結果文字 → Update 會直接讓結束鍵出現
 
+        System.Collections.Generic.List<string> names =
+            data != null ? data.speakerNames : null;
+
         // ⚠️ 第一段一定要用 ShowInstant，不可以排隊。
         //
         // `PopupService.Enqueue` 只有在**對話框沒開著**時才會立刻播；
         // 這一刻框還開著（正顯示最後一句內文），所以排進去的東西會卡在佇列裡，
         // 玩家要「再點一下」才看得到結算 —— 但 Console 早就印出來了，
         // 看起來就像結算掉了一拍。
-        PopupService.Instance.ShowInstant(lines[0]);
+        string who0, line0;
+        if (EldritchMile.Core.SpeakerLine.TrySplit(lines[0], names, out who0, out line0))
+            PopupService.Instance.ShowSpeechInstant(who0, line0);
+        else
+            PopupService.Instance.ShowInstant(lines[0]);
 
         // 其餘的照常排隊，玩家一句一句點過去
         for (int i = 1; i < lines.Count; i++)
         {
-            PopupService.Instance.ShowSystemWithCloseUp(lines[i], data != null ? data.image : null);
+            string who, line;
+            if (EldritchMile.Core.SpeakerLine.TrySplit(lines[i], names, out who, out line))
+                PopupService.Instance.ShowSpeech(who, line);
+            else
+                PopupService.Instance.ShowSystemWithCloseUp(lines[i], data != null ? data.image : null);
         }
     }
 

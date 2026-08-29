@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_relic_mermaid_portrait
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: relic_mermaid_portrait
+  displayName: "\u4EBA\u9B5A\u7684\u756B\u50CF"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u98DF\u7269\u7684 HP \u6062\u5FA9\u91CF\u589E\u52A0 10%\u3002"
+  fullDescription: "\u4ECA\u5929\u7684\u796D\u5178\u771F\u958B\u5FC3\uFF01\u96D6\u7136\u53EA\u5206\u5230\u4E86\u4E00\u9EDE\u9EDE\uFF0C\u4F46\u8089\u771F\u7684\u5F88\u597D\u5403\uFF01\n\u5ABD\u5ABD\u8AAA\uFF0C\u53EA\u8981\u737B\u4E0A\u796D\u54C1\u7684\u8A71\uFF0C\u795E\u660E\u5927\u4EBA\u5C31\u4E00\u5B9A\u6703\u5E6B\u52A9\u6211\u5011\u7684\uFF01\n\u6240\u4EE5\u6211\u6703\u52AA\u529B\u7948\u79B1\u7684\uFF0C\u5E0C\u671B\u56DE\u5230\u6D77\u91CC\u7684\u4EBA\u9B5A\u59D0\u59D0\uFF0C\u80FD\u5920\u65E9\u9EDE\u9047\u5230\u795E\u660E\u5927\u4EBA\uFF01"
+  price: 30
+  tags:
+  - Curio
+  - Common
+  - Abyss
+  grantsCard: {fileID: 0}
+  hpRestore: 0
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 11400000, guid: dbb6b8b508589c541a50cbae19daebee, type: 2}
+  notes: "\u203B \u5DF2\u63A5\u4E0A\u73FE\u6210\u7684 RelicEffect_HealingReceived_10Percent \u2014\u2014 \u9019\u500B\u6548\u679C\u539F\u672C\u639B\u5728\u300C\u8CAA\u5A6A\u7684\u5927\u53E3\u300D\u4E0A\uFF0C\u9644\u4EF6\u628A\u5B83\u6539\u7D66\u4E86\u9019\u4E00\u4EF6\u3002"

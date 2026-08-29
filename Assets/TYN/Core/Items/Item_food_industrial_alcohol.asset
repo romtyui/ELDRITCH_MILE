@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_food_industrial_alcohol
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: food_industrial_alcohol
+  displayName: "\u5DE5\u696D\u9152\u7CBE"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u6062\u5FA9\uFF08\u5C0F\u91CF\uFF09HP \uFF06 \u6062\u5FA9\uFF08\u5C0F\u91CF\uFF09SAN \uFF06 \u4E0B\u56DE\u5408\u958B\u59CB\u6642\u62BD\u53D6\u7684\u624B\u724C -1\u3002"
+  fullDescription: "\u74F6\u8EAB\u7684\u6A19\u7C64\u65E9\u5DF2\u8B8A\u5F97\u6A21\u7CCA\u4E0D\u6E05\uFF0C\u5149\u662F\u98F2\u4E0B\u4E00\u53E3\u5589\u56A8\u4FBF\u5982\u88AB\u706B\u7130\u707C\u71D2\u4E00\u822C\uFF0C\u524E\u90A3\u9593\u6240\u6709\u7684\u6050\u6016\u548C\u4E0D\u5B89\u90FD\u7159\u6D88\u96F2\u6563\u3002"
+  price: 14
+  tags:
+  - Consumable
+  - Food
+  - Common
+  grantsCard: {fileID: 0}
+  hpRestore: 10
+  sanRestore: 10
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u300C\u4E0B\u56DE\u5408\u62BD\u724C -1\u300D\u9700\u8981 Romtyui \u7684 ItemEffectData\u3002"

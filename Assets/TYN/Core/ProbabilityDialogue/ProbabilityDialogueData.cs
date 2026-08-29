@@ -5,6 +5,44 @@ using UnityEngine;
 namespace EldritchMile.Core.ProbabilityDialogue
 {
     /// <summary>
+    /// 出牌怎麼把機率往上推。
+    ///
+    /// ────────────────────────────────────────────────────────
+    /// 【為什麼有兩種】規格書原本寫的是加法，但實測與模擬都指出加法會壞掉：
+    /// 牌面那些 20~100 的數字是為**探索**設計的（60 的牌 ＝ 這張牌有 60% 開得開箱子），
+    /// 直接當百分點加上去太大 —— 一張 100 的牌自己就填滿一個回答。
+    ///
+    /// 20000 手模擬（`Tools/spec_rebuild/sim_dialogue.py`，回答各收一種屬性）：
+    ///
+    /// | | 平均 | 中位 | 能推到 100% |
+    /// |---|---|---|---|
+    /// | 加法 | 85.6% | 100% | **66.1%** |
+    /// | 乘法 | 56.7% | 50% | 9.2% |
+    ///
+    /// 乘法之後才出現取捨：全押想要的獎勵約 57%，
+    /// 分散押注「至少拿到一個」約 83% 但拿到哪個由不得你。
+    /// </summary>
+    public enum ProbabilityGrowth
+    {
+        /// <summary>
+        /// `P += 牌面值`。規格書原本的寫法。
+        /// **留著是為了規格書的 T01~T16 還跑得動**，新內容不建議用。
+        /// </summary>
+        Additive = 0,
+
+        /// <summary>
+        /// `P ×= (1 + 牌面值/100)`。2026-08-29 定案。
+        ///
+        /// 　25% 用一張 100 → 25 × 2.0 ＝ 50%
+        /// 　50% 用一張 80  → 50 × 1.8 ＝ 90%
+        ///
+        /// ⚠️ **P = 0 時任何牌都推不動**（0 乘任何數還是 0）。
+        /// 所以 `baseProbability` 不要填 0 —— Begin() 會擋下來並警告。
+        /// </summary>
+        Multiplicative = 1,
+    }
+
+    /// <summary>
     /// 一個回答選項。**規格書 §7.2 AnswerOption。**
     /// </summary>
     [Serializable]
@@ -95,6 +133,13 @@ namespace EldritchMile.Core.ProbabilityDialogue
         public List<EventEffect> terminalFailureOutcome = new List<EventEffect>();
 
         [Header("規則")]
+        [Tooltip("出牌怎麼把機率往上推。\n\n" +
+                 "· Multiplicative（預設）P ×= (1 + 牌面值/100)　25% 用 100 的牌 → 50%\n" +
+                 "· Additive　　　　　　　P += 牌面值　　　　　　規格書原本的寫法\n\n" +
+                 "⚠️ 用乘法時 Base Probability **不可以是 0** —— 0 乘不動。\n" +
+                 "詳細的模擬數據見 ProbabilityGrowth 的說明")]
+        public ProbabilityGrowth growth = ProbabilityGrowth.Multiplicative;
+
         [Tooltip("機率上限。規格 §4 的 Recommended 是 Clamp 0~100。\n" +
                  "留這個欄位是因為規格說**不要 hardcode**，未來可能允許超過")]
         [Range(1, 999)] public int probabilityCap = 100;

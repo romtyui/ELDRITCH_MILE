@@ -45,6 +45,27 @@ namespace EldritchMile.Core.ProbabilityDialogue
         }
 
         /// <summary>
+        /// 把一張牌套到某個回答的目前機率上，回傳新的機率。
+        ///
+        /// ⚠️ **兩種成長公式只在這裡分岔** —— Session 不自己算，
+        /// 不然「模擬用的算法」與「遊戲裡的算法」遲早會不一樣，
+        /// 而那種不一致查起來非常痛苦（畫面上的數字對，實際判定卻不對）。
+        ///
+        /// 乘法會四捨五入到整數。**每一張牌各自進位一次**，不是最後才進 ——
+        /// 玩家看得到每張牌打完的數字，累到最後才進位的話畫面與真值會對不上。
+        /// </summary>
+        public static int Apply(ProbabilityGrowth growth, int current, CardDataExplore card, int cap)
+        {
+            int value = ValueOf(card);
+
+            int next = growth == ProbabilityGrowth.Multiplicative
+                ? Mathf.RoundToInt(current * (1f + value / 100f))
+                : current + value;
+
+            return Mathf.Clamp(next, 0, cap);
+        }
+
+        /// <summary>
         /// 這張牌對這個回答有沒有效。
         ///
         /// `None`（黑白牌）對誰都有效 —— 那是 <see cref="ExploreAttribute.None"/>

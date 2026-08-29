@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_relic_moon_toad
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: relic_moon_toad
+  displayName: "\u6708\u4E4B\u87FE\u870D"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u5546\u5E97\u7684\u6240\u6709\u5546\u54C1\u50F9\u683C\u964D\u4F4E 20%\u3002"
+  fullDescription: "\u4E2D\u570B\u795E\u8A71\u4E2D\u7684\u6708\u4EAE\u4E0A\u8C8C\u4F3C\u5C45\u4F4F\u7740\u67D0\u7A2E\u87FE\u870D\uFF0C\u7136\u800C\u5B83\u548C\u4F60\u5370\u8C61\u4E2D\u7684\u87FE\u870D\u597D\u50CF\u6709\u4E00\u9EDE\u4E0D\u4E00\u6A23...\uFF1F"
+  price: 90
+  tags:
+  - Curio
+  - Rare
+  - General
+  - NoEffect
+  grantsCard: {fileID: 0}
+  hpRestore: 0
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u672A\u63A5\uFF1A\u9700\u8981\u5546\u5E97\u5B9A\u50F9\u6642\u7684\u9264\u5B50\uFF08ShopStageController \u7B97\u50F9\u7684\u5730\u65B9\uFF09\u3002"

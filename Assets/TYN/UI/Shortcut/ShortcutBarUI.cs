@@ -5,6 +5,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+// ⚠️ 專案切到 Input System package。舊的 UnityEngine.Input 執行時會丟
+// InvalidOperationException，而且編譯期完全看不出來。見 RunDebugPanel 的說明。
+using UnityEngine.InputSystem;
+
 namespace EldritchMile.UI.Shortcut
 {
     using EldritchMile.Core;
@@ -69,6 +73,22 @@ namespace EldritchMile.UI.Shortcut
                  "預設是點擊 —— hover 展開在這個位置很容易誤觸：\n" +
                  "滑鼠只是要移到畫面右側就會整條彈開")]
         public bool openOnHover = false;
+
+        [Header("自動收起（點擊展開時）")]
+        [Tooltip("滑鼠離開整條欄之後，過多久收起來（秒）。0 = 離開就立刻收。\n\n" +
+                 "**留一點緩衝是必要的** —— 游標從一格移到另一格的途中可能\n" +
+                 "掠過欄位外面幾個影格，0 的話欄位會在你正要點的瞬間關掉")]
+        [Min(0f)] public float closeAfterExitSeconds = 0.4f;
+
+        [Tooltip("展開後完全沒有互動就自動收起（秒）。0 = 不自動收。\n\n" +
+                 "這是上面那條的保險：用鍵盤開的、或游標根本沒進來過的情況，\n" +
+                 "`OnPointerExit` 永遠不會來，只靠它的話欄位會一直開著")]
+        [Min(0f)] public float idleCloseSeconds = 6f;
+
+        [Tooltip("點擊快捷欄以外的任何地方就收起來。\n\n" +
+                 "⚠️ 這是用**輪詢滑鼠**做的，不是蓋一塊全螢幕的攔截層 ——\n" +
+                 "蓋一塊的話底下的東西（商店貨架、對話選項）全都點不到")]
+        public bool closeOnClickOutside = true;
 
         [Tooltip("每一格出現的間隔秒數。0 = 同時出現。\n" +
                  "**逐格出現比一次散開好看**，而且格數多的時候不會一片閃")]
@@ -159,6 +179,11 @@ namespace EldritchMile.UI.Shortcut
 
             expanded = on;
 
+            // 每次開闔都把自動收起的計時歸零 ——
+            // 不然上一輪殘留的秒數會在剛展開的瞬間立刻把它關掉
+            idleTimer = 0f;
+            exitTimer = 0f;
+
             if (reveal != null) { StopCoroutine(reveal); reveal = null; }
 
             if (!on)
@@ -200,12 +225,72 @@ namespace EldritchMile.UI.Shortcut
         /// </summary>
         public void OnPointerEnter(PointerEventData eventData)
         {
+            pointerInside = true;
+            idleTimer = 0f;
+            exitTimer = 0f;
+
             if (openOnHover) SetExpanded(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            pointerInside = false;
+            exitTimer = 0f;
+
             if (openOnHover) SetExpanded(false);
+        }
+
+        /// 滑鼠現在在不在整條欄上面
+        private bool pointerInside;
+
+        /// 展開後沒有任何互動累積了多久
+        private float idleTimer;
+
+        /// 滑鼠離開之後累積了多久
+        private float exitTimer;
+
+        /// <summary>
+        /// 自動收起的三條路。**只在「點擊展開」模式下管**
+        /// （hover 模式本來就靠 `OnPointerExit` 收）。
+        ///
+        /// 【為什麼「點擊外面」是用輪詢的】
+        /// 常見做法是在底下鋪一塊全螢幕的透明攔截層，但那會把商店貨架、
+        /// 對話選項全部擋掉 —— 玩家會覺得「畫面卡住了」。
+        /// 輪詢只讀滑鼠狀態，不擋任何東西。
+        ///
+        /// ⚠️ 一定要走 Input System 的 `Mouse.current`，而且要判 null ——
+        /// 舊的 `UnityEngine.Input` 編得過但執行時會洗版例外（見 RunDebugPanel）。
+        /// 沒有滑鼠時 `Mouse.current` 是 null，那不是錯誤。
+        /// </summary>
+        private void Update()
+        {
+            if (!expanded || openOnHover) return;
+
+            // ── 1. 滑鼠離開整條欄超過緩衝時間 ──
+            if (!pointerInside)
+            {
+                exitTimer += Time.unscaledDeltaTime;
+                if (exitTimer >= closeAfterExitSeconds) { SetExpanded(false); return; }
+            }
+
+            // ── 2. 一陣子完全沒有互動 ──
+            //    滑鼠在上面就算互動中，計時歸零
+            if (idleCloseSeconds > 0f)
+            {
+                if (pointerInside) idleTimer = 0f;
+                else idleTimer += Time.unscaledDeltaTime;
+
+                if (idleTimer >= idleCloseSeconds) { SetExpanded(false); return; }
+            }
+
+            // ── 3. 點在快捷欄以外的地方 ──
+            if (!closeOnClickOutside) return;
+
+            Mouse mouse = Mouse.current;
+            if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
+
+            // 點在欄上的話 pointerInside 會是 true（enter 早一步到），不收
+            if (!pointerInside) SetExpanded(false);
         }
 
         /// <summary>
@@ -218,7 +303,12 @@ namespace EldritchMile.UI.Shortcut
         public void OnPointerClick(PointerEventData eventData)
         {
             if (openOnHover) return;    // hover 模式下點擊不該再切換，會打架
-            Toggle();
+
+            // **關著才開。** 開著時點空白處不收 ——
+            // 收起來交給那三條（離開、閒置、點外面）。
+            // 不然玩家想點某一格卻點偏了一點，整條就關掉了
+            idleTimer = 0f;
+            if (!expanded) SetExpanded(true);
         }
 
         // ==========================================
@@ -274,6 +364,23 @@ namespace EldritchMile.UI.Shortcut
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
             if (run == null) return;
 
+            // ── 有代價的食物：付不起就**整個不發生** ──
+            //
+            // 【為什麼要在消耗之前檢查】`PlayerVitals.SpendHp` 付不起時會安靜地回 false，
+            // 但那時道具已經被 ConsumeItem 吃掉了 —— 玩家會看到「奢侈的血塊消失了、
+            // 什麼都沒發生」。順序反過來就沒有這個洞。
+            //
+            // 「付不起」的定義跟 PlayerVitals 一致：**扣到 0 或以下**。
+            // 吃東西不該把自己吃死。
+            if (!CanAffordCost(d))
+            {
+                Debug.Log($"[快捷欄]「{d.Label}」現在用不起 —— " +
+                          $"代價 HP -{d.hpCost}／SAN -{d.sanCost}，" +
+                          $"目前 HP {PlayerVitals.Hp}、SAN {PlayerVitals.San}");
+                PopupService.Instance?.ShowInstant($"{d.Label}　現在承受不起");
+                return;
+            }
+
             // ⚠️ 先確認真的還有這件東西再套效果。
             //    反過來做的話，快速連點會在庫存只剩 1 個時回血兩次
             if (d.consumeOnUse && !run.ConsumeItem(d.id, 1))
@@ -283,12 +390,18 @@ namespace EldritchMile.UI.Shortcut
                 return;
             }
 
+            // 先給再扣。反過來的話「回大量 HP、扣中等 SAN」那種食物
+            // 會在 HP 很低時被自己的代價擋掉，而它本來就是要救命的
             if (d.hpRestore > 0) PlayerVitals.HealHp(d.hpRestore);
             if (d.sanRestore > 0) PlayerVitals.RestoreSan(d.sanRestore);
+            if (d.hpCost > 0) PlayerVitals.SpendHp(d.hpCost);
+            if (d.sanCost > 0) PlayerVitals.SpendSan(d.sanCost);
 
             Debug.Log($"[快捷欄] 使用「{d.Label}」"
                       + (d.hpRestore > 0 ? $"　HP +{d.hpRestore}" : "")
                       + (d.sanRestore > 0 ? $"　SAN +{d.sanRestore}" : "")
+                      + (d.hpCost > 0 ? $"　HP -{d.hpCost}" : "")
+                      + (d.sanCost > 0 ? $"　SAN -{d.sanCost}" : "")
                       + $"　→ HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}"
                       + $"　SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}");
 
@@ -300,11 +413,30 @@ namespace EldritchMile.UI.Shortcut
             OnItemUsed?.Invoke(d);
         }
 
+        /// <summary>
+        /// 代價付得起嗎。**扣到 0 或以下就算付不起** —— 與
+        /// <see cref="PlayerVitals.SpendHp"/> 用同一條規矩，兩邊不能各判各的。
+        /// </summary>
+        private static bool CanAffordCost(ItemData d)
+        {
+            if (d.hpCost <= 0 && d.sanCost <= 0) return true;
+
+            // 還沒進過戰鬥時 HP／SAN 尚未初始化。那時扣不動，也不該讓玩家白白用掉
+            if (!PlayerVitals.IsReady) return false;
+
+            if (d.hpCost > 0 && PlayerVitals.Hp - d.hpCost <= 0) return false;
+            if (d.sanCost > 0 && PlayerVitals.San - d.sanCost <= 0) return false;
+
+            return true;
+        }
+
         private static string UsedTextFor(ItemData d)
         {
             var bits = new List<string>();
             if (d.hpRestore > 0) bits.Add($"HP +{d.hpRestore}");
             if (d.sanRestore > 0) bits.Add($"SAN +{d.sanRestore}");
+            if (d.hpCost > 0) bits.Add($"HP -{d.hpCost}");
+            if (d.sanCost > 0) bits.Add($"SAN -{d.sanCost}");
             return $"{d.Label}　{string.Join("　", bits.ToArray())}";
         }
     }

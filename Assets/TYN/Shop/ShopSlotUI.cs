@@ -105,9 +105,13 @@ namespace EldritchMile.Shop
 
             if (iconImage != null)
             {
-                if (data != null && data.icon != null)
+                // ⚠️ 貨架用的是**彩色**那一張（ShelfIcon），不是持有欄的白色剪影。
+                //    沒有彩色版時 ShelfIcon 自己會退回 icon，這裡不必再判一次
+                Sprite shelf = data != null ? data.ShelfIcon : null;
+
+                if (shelf != null)
                 {
-                    iconImage.sprite = data.icon;
+                    iconImage.sprite = shelf;
                     iconImage.color = Color.white;
                 }
                 else

@@ -22,8 +22,9 @@ MonoBehaviour:
     - kind: 1
       itemId: 
       requireTags:
-      - Supply
-      excludeTags: []
+      - Food
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 55
       countMin: 1
@@ -32,7 +33,8 @@ MonoBehaviour:
       itemId: 
       requireTags:
       - Food
-      excludeTags: []
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 30
       countMin: 1
@@ -42,7 +44,8 @@ MonoBehaviour:
       requireTags:
       - Curio
       - Common
-      excludeTags: []
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 15
       countMin: 1

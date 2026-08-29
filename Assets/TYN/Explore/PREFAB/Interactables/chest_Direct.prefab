@@ -171,13 +171,9 @@ MonoBehaviour:
   lockedText: "\u9396\u4F4F\u4E86\u3002\u5F97\u5148\u627E\u5230\u9470\u5319\u3002"
   consumeKey: 0
   checkPromptText: "\u4E0A\u4E86\u9396\u3002\u4E5F\u8A31\u80FD\u7528\u9EDE\u624B\u6BB5\u64AC\u958B\u3002"
-  lootItems:
-  - "\u9470\u5319B"
-  - "\u64AC\u68CD"
-  grantedItemIds:
-  - key_warehouse
-  - lockpick
-  lootTable: {fileID: 0}
+  lootItems: []
+  grantedItemIds: []
+  lootTable: {fileID: 11400000, guid: d246421b323f3c246adb0a8349390f79, type: 2}
   attribute: 0
   retryPolicy: 0
   tier: 0

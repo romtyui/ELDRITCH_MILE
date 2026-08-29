@@ -233,43 +233,13 @@ namespace EldritchMile.Explore
         /// 【搬完之後】根物件保留 Image（可點區域）與 CanvasGroup，位置永遠固定；
         /// 上浮只動這一層，游標就不會被抽走。
         /// </summary>
+        /// <summary>
+        /// 插視覺層。**實作在共用的 <see cref="EldritchMile.UI.HandFanLayout"/>** ——
+        /// 機率對話那邊也要插一模一樣的一層。
+        /// </summary>
         private RectTransform BuildVisualRoot(RectTransform cardRoot)
         {
-            if (cardRoot == null) return null;
-
-            // 重建卡片時是全新的實例，理論上不會有；但保險起見不重複插層
-            Transform existing = cardRoot.Find("__Visual");
-            if (existing != null) return existing as RectTransform;
-
-            var go = new GameObject("__Visual", typeof(RectTransform));
-            var visual = go.GetComponent<RectTransform>();
-
-            visual.SetParent(cardRoot, false);
-            visual.anchorMin = Vector2.zero;
-            visual.anchorMax = Vector2.one;
-            visual.offsetMin = Vector2.zero;
-            visual.offsetMax = Vector2.zero;
-            visual.localScale = Vector3.one;
-
-            // ⚠️ 順序必須保住。UI 的疊放靠 sibling 順序，而 `SetParent` 是**附加到最後** ——
-            //    倒著迭代（避開 childCount 變動的反射動作）會把整疊圖層翻過來，
-            //    結果卡框從最底跑到最上，把圖面整個蓋掉。
-            //    所以先收集、再依原順序搬。
-            var children = new List<Transform>();
-            for (int i = 0; i < cardRoot.childCount; i++)
-            {
-                Transform child = cardRoot.GetChild(i);
-                if (child != visual) children.Add(child);
-            }
-
-            for (int i = 0; i < children.Count; i++)
-            {
-                // worldPositionStays: false —— 保留相對於卡片的排版，不是保留世界座標
-                children[i].SetParent(visual, false);
-            }
-
-            visual.SetAsFirstSibling();
-            return visual;
+            return EldritchMile.UI.HandFanLayout.BuildVisualRoot(cardRoot);
         }
 
         private void Clear()
@@ -282,49 +252,36 @@ namespace EldritchMile.Explore
             hovered = null;
         }
 
-        /// <summary>水平置中排列。手牌多時自動壓縮間距，避免超出畫面。</summary>
+        /// <summary>
+        /// 水平置中排列。**排版規則走共用的 <see cref="EldritchMile.UI.HandFanLayout"/>** ——
+        /// 機率對話的手牌用的是同一支，兩邊才不會又長得不一樣。
+        ///
+        /// 這裡只留「哪一張要浮多高」，因為那是這個環節自己的狀態
+        /// （選取優先於 hover —— 選取是持續狀態，hover 只是滑過）。
+        /// </summary>
         private void Layout()
         {
             int n = spawned.Count;
             if (n == 0) return;
 
-            float spacing = cardSpacing;
-            if (spacing * (n - 1) > maxHandWidth && n > 1)
+            var rects = new List<RectTransform>(n);
+            for (int i = 0; i < n; i++)
             {
-                spacing = maxHandWidth / (n - 1);
+                rects.Add(spawned[i] != null ? spawned[i].GetComponent<RectTransform>() : null);
             }
 
-            float startX = -spacing * (n - 1) * 0.5f;
+            EldritchMile.UI.HandFanLayout.Arrange(rects, cardSpacing, maxHandWidth);
 
             for (int i = 0; i < n; i++)
             {
-                var rt = spawned[i].GetComponent<RectTransform>();
-                if (rt == null) continue;
+                if (spawned[i] == null) continue;
 
-                // 選取優先於 hover —— 選取是持續狀態，hover 只是滑過
                 float lift = 0f;
                 if (spawned[i] == SelectedCard) lift = selectedLift;
                 else if (spawned[i] == hovered) lift = hoverLift;
 
-                // ⚠️ 根物件（可點區域）永遠在 y=0，上浮只動視覺層。
-                //    把根物件往上移的話，游標會被從卡片底下抽走 → exit → 落下 → enter，
-                //    在卡片下緣會瘋狂閃爍。
-                rt.anchoredPosition = new Vector2(startX + spacing * i, 0f);
                 spawned[i].SetLift(lift);
-
-                // 疊放順序**永遠**是左→右（右側在上），不隨 hover／選取改變
-                rt.SetSiblingIndex(i);
             }
-
-            // ⚠️ 這裡刻意**不**把 hover／選取的卡提到最上層。
-            //
-            // 提到最上層會讓左邊的牌突然蓋住右邊的牌 —— 整排手牌的前後關係在滑鼠
-            // 掃過去的時候會一直重排，看起來像在跳。固定成「右側永遠在上」之後，
-            // 那一排的結構是穩定的，狀態變化只由**高度**表達。
-            //
-            // 代價是被 hover 的牌右半邊仍會被鄰居壓著，只露出上緣。
-            // 那正好是實體手牌攤開來的樣子，而且上浮距離（hoverLift/selectedLift）
-            // 就是在調「露出多少」—— 覺得看不清楚就把那兩個值調大。
         }
 
         // ==========================================

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_food_mystery_skewer
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: food_mystery_skewer
+  displayName: "\u8B0E\u4E4B\u70E4\u4E32"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u7372\u5F97 1 \u5C64\u3010\u71C3\u71D2\u3011\uFF06 \u7372\u5F97\u4E00\u5F35\u3010\u7070\u71FC\u3011\uFF08TOKEN\uFF09\u3002"
+  fullDescription: "\u4E0A\u9762\u71C3\u71D2\u7684\u706B\u7130\u5F77\u5F7F\u6C38\u9060\u4E0D\u6703\u7184\u6EC5\uFF0C\u5982\u540C\u7126\u70AD\u4E00\u822C\u7684\u8089\u584A\u53EA\u6709\u653E\u5165\u53E3\u4E2D\u4E4B\u6642\u624D\u80FD\u77E5\u66C9\u5176\u771F\u9762\u76EE...\u662F\u68C9\u82B1\u7CD6\u554A\u3002"
+  price: 12
+  tags:
+  - Consumable
+  - Food
+  - Theater
+  - Common
+  - NoEffect
+  grantsCard: {fileID: 0}
+  hpRestore: 0
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u9019\u4EF6\u98DF\u7269**\u5B8C\u5168\u6C92\u6709\u6230\u9B25\u5916\u6548\u679C**\uFF0C\u63A5\u4E0A\u4E4B\u524D\u5403\u4E86\u4E0D\u6703\u6709\u4E8B\u767C\u751F\u3002\n\u203B \u5730\u5340\uFF1A\u5287\u9662\uFF08\u9644\u4EF6\u6A19\u300C\u672A\u78BA\u5B9A\u300D\uFF09\u3002\n\u203B \u7F8E\u8853\uFF1A\u4E00\u4E32\u4E0D\u660E\u9ED1\u8272\u7269\u9AD4\uFF0C\u88AB\u706B\u7130\u5305\u88F9\u8457\u770B\u4E0D\u898B\u771F\u8EAB\u3002"

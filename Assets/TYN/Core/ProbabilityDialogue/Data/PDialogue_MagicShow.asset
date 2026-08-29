@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5eefcc2f0eae6cc4dadaad3b5321a5f3, type: 3}
+  m_Name: PDialogue_MagicShow
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ProbabilityDialogue.ProbabilityDialogueData
+  eventId: village_magic_show
+  npcId: campbell
+  background: {fileID: 0}
+  initialPrompt: "\u574E\u8C9D\u723E\uFF1A\u300C\u597D\uFF0C\u4F86\u8868\u6F14\u9B54\u8853\u5427\uFF01\u300D\n\n\u574E\u8C9D\u723E\uFF1A\u300C\u5225\u4E00\u526F\u300E\u9019\u7A2E\u6642\u5019\uFF1F\u300F\u7684\u8868\u60C5\u561B\uFF01\u5076\u723E\u4E5F\u5F97\u4F86\u9EDE\u5A1B\u6A02\u6D3B\u52D5\u5427\uFF1F\n\u800C\u4E14\uFF0C\u6211\u9084\u70BA\u52AA\u529B\u7684\u4F60\u6E96\u5099\u4E86\u734E\u52F5\u54E6\uFF01\u8981\u662F\u62FF\u5230\u7684\u8A71\u4E0D\u662F\u5F88\u958B\u5FC3\u55CE\uFF1F\u300D\n\n\u574E\u8C9D\u723E\uFF1A\u300C\u90A3\u9EBC\uFF0C\u554F\u984C\uFF5E\uFF01\n\u9019\u500B\u770B\u4F3C\u5E73\u5E73\u7121\u5947\uFF0C\u4F46\u5176\u5BE6\u6697\u85CF\u7384\u6A5F\u7684\u5E3D\u5B50\u4E2D\u5230\u5E95\u85CF\u4E86\u4EC0\u9EBC\u5462\uFF1F\u300D\n\n\u574E\u8C9D\u723E\uFF1A\u300C\u5E3D\u5B50\u4E2D\u53EF\u8B02\u662F\u6DF7\u6C8C\uFF01\u5728\u770B\u5230\u4E4B\u524D\uFF0C\u90FD\u7121\u6CD5\u78BA\u5B9A\u88E1\u9762\u96B1\u85CF\u4E86\u4EC0\u9EBC\u3002\n\u4F86\u5427\uFF01\u9019\u7A2E\u672A\u77E5\u7684\u611F\u89BA\u4E5F\u662F\u4E00\u7A2E\u523A\u6FC0\uFF01\u300D"
+  failurePrompts:
+  - "\u574E\u8C9D\u723E\uFF1A\u300C\u5514\u2014\u2014\u5DEE\u4E00\u9EDE\u9EDE\uFF01\u300D\n\u4ED6\u628A\u5E3D\u5B50\u5F80\u4F60\u9762\u524D\u53C8\u9001\u4E86\u9001\u3002\u300C\u518D\u60F3\u60F3\uFF1F\u5E3D\u5B50\u9084\u5728\u9019\u88E1\u5462\u3002\u300D"
+  - "\u574E\u8C9D\u723E\uFF1A\u300C\u6700\u5F8C\u4E00\u6B21\u6A5F\u6703\u56C9\u3002\u300D\n\u7B11\u5BB9\u6C92\u6709\u8B8A\uFF0C\u4F46\u4ED6\u7684\u624B\u6307\u5728\u5E3D\u6CBF\u4E0A\u6572\u5F97\u6BD4\u525B\u624D\u5FEB\u4E86\u4E00\u4E9B\u3002"
+  finalFailureText: "\u574E\u8C9D\u723E\uFF1A\u300C\u5509\u5440\uFF0C\u9019\u6B21\u662F\u6211\u8D0F\u4E86\u3002\u300D\n\u4ED6\u628A\u5E3D\u5B50\u6263\u56DE\u982D\u4E0A\uFF0C\u5230\u6700\u5F8C\u4E5F\u6C92\u8B93\u4F60\u770B\u898B\u88E1\u9762\u6709\u4EC0\u9EBC\u3002"
+  handSize: 5
+  fallbackCards:
+  - {fileID: 11400000, guid: 2faa908f610706e4f99316bc0261f050, type: 2}
+  - {fileID: 11400000, guid: 15d7923be9ad7c74cae4db179d16d86c, type: 2}
+  - {fileID: 11400000, guid: 9cf10e01924a3a942827358fdd9f44c5, type: 2}
+  - {fileID: 11400000, guid: a30896da214d0344c8f5b544a07fe7c1, type: 2}
+  - {fileID: 11400000, guid: 8313a3fde9fde6b4995d0402cd528f3b, type: 2}
+  - {fileID: 11400000, guid: 68812a871eb8673458b72925a297b1ed, type: 2}
+  - {fileID: 11400000, guid: 09ff33e0860e27e4a8b87a5aba481726, type: 2}
+  - {fileID: 11400000, guid: 60b0e24b29b872647bbd0ea2d7e83448, type: 2}
+  - {fileID: 11400000, guid: b75c2fb856e9fc1479ec3493ae8353bf, type: 2}
+  - {fileID: 11400000, guid: 33dcb4d97a3b32d4bb8e8774dbbf17a3, type: 2}
+  - {fileID: 11400000, guid: cd2a4686fc72c0744b247a0f7e29202a, type: 2}
+  - {fileID: 11400000, guid: f309416836cedc342a9a6e4b319bc50c, type: 2}
+  - {fileID: 11400000, guid: b2ffc8e4aa061614e9b8d37478989b98, type: 2}
+  - {fileID: 11400000, guid: adba106958b080744a82d29cfa8458a7, type: 2}
+  - {fileID: 11400000, guid: deb5f17059dd83848b7f6d1218ea08ca, type: 2}
+  - {fileID: 11400000, guid: 6acf0b05977feeb439315c5b759bd810, type: 2}
+  - {fileID: 11400000, guid: dac83f70887dcdb4cbc67a93cebd1f78, type: 2}
+  - {fileID: 11400000, guid: 1bf63432e86ea724d88fc3f444a33e18, type: 2}
+  options:
+  - optionId: food
+    text: "\u300C\u88E1\u9762\u662F\u98DF\u7269\u3002\u300D"
+    baseProbability: 25
+    acceptedAttributes: 01000000
+    successText: "\u574E\u8C9D\u723E\uFF1A\u300C\u6B63\u78BA\uFF0C\u4F60\u9084\u771F\u662F\u500B\u8CAA\u5403\u9B3C\u5462\uFF01\n\u524D\u9762\u7684\u8DEF\u9084\u6709\u5F88\u9577\uFF0C\u591A\u5403\u9EDE\u6771\u897F\u88DC\u5145\u9AD4\u529B\u5427\uFF01\u300D"
+    successOutcome:
+    - kind: 8
+      key: 
+      amount: 1
+      table: {fileID: 11400000, guid: 990b3bfdd43d4888f90b6aff29a2aed6, type: 2}
+  - optionId: weapon
+    text: "\u300C\u88E1\u9762\u662F\u6B66\u5668\u3002\u300D"
+    baseProbability: 25
+    acceptedAttributes: 02000000
+    successText: "\u574E\u8C9D\u723E\uFF1A\u300C\u7B54\u5C0D\u4E86\uFF01\u6709\u80FD\u4FDD\u8B77\u81EA\u5DF1\u7684\u529B\u91CF\u6BD4\u4EC0\u9EBC\u90FD\u9084\u8981\u91CD\u8981\uFF01\n\u8981\u662F\u89BA\u5F97\u5BB3\u6015\u7684\u8A71\u5C31\u60F3\u60F3\u5728\u4F60\u8EAB\u908A\u7684\u6211\u5427\uFF01\u300D"
+    successOutcome:
+    - kind: 8
+      key: 
+      amount: 1
+      table: {fileID: 11400000, guid: dddbf38c09fe28c4190fa2474558c70e, type: 2}
+  - optionId: curio
+    text: "\u300C\u88E1\u9762\u662F\u525B\u624D\u8DEF\u908A\u64BF\u5230\u7684\u6771\u897F\u3002\u300D"
+    baseProbability: 25
+    acceptedAttributes: 03000000
+    successText: "\u574E\u8C9D\u723E\uFF1A\u300C\u8A92\u4F60\u770B\u5230\u4E86\uFF1F\u554A\uFF0C\u4E0D\u5C0D\u5566\uFF01\n\u5C31\u7B97\u770B\u8D77\u4F86\u50CF\u5783\u573E\uFF0C\u4E5F\u662F\u6709\u7528\u7684\u6536\u85CF\u54C1\u54E6\uFF01\u62FF\u5728\u624B\u4E0A\u7E3D\u6703\u6709\u597D\u4E8B\u7684\uFF01\u300D"
+    successOutcome:
+    - kind: 8
+      key: 
+      amount: 1
+      table: {fileID: 11400000, guid: d25a1bbb3291ef4ec958116deebabbaf, type: 2}
+  terminalFailureOutcome: []
+  growth: 1
+  probabilityCap: 100

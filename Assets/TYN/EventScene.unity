@@ -631,9 +631,9 @@ MonoBehaviour:
   cardPrefab: {fileID: 7990279869557354020, guid: 4d147a9ce70ad5143b6010ed4e86973c, type: 3}
   handRoot: {fileID: 872975765}
   root: {fileID: 0}
-  cardSpacing: 140
-  maxHandWidth: 900
-  hoverLift: 55
+  cardSpacing: 130
+  maxHandWidth: 760
+  hoverLift: 40
   selectedLift: 155
   ineffectiveAlpha: 0.35
 --- !u!225 &212650081
@@ -1288,8 +1288,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -290, y: 0}
-  m_SizeDelta: {x: 1035, y: 140}
+  m_AnchoredPosition: {x: -253, y: 0}
+  m_SizeDelta: {x: 1100, y: 140}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &358534871
 MonoBehaviour:
@@ -2506,6 +2506,10 @@ PrefabInstance:
       value: ShortcutBar_Food
       objectReference: {fileID: 0}
     - target: {fileID: 8289728590986607429, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      propertyPath: openOnHover
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8289728590986607429, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
       propertyPath: fallbackIcon
       value: 
       objectReference: {fileID: 21300000, guid: 2d5d9de43d3d7a0419eebadccd67dfd0, type: 3}
@@ -2633,6 +2637,10 @@ PrefabInstance:
       propertyPath: slotFrame
       value: 
       objectReference: {fileID: 21300000, guid: 4470358081bb8a34cb99ed5645e9e40b, type: 3}
+    - target: {fileID: 8289728590986607429, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      propertyPath: openOnHover
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8964439401837790384, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
       propertyPath: m_Pivot.x
       value: 1
@@ -4280,6 +4288,7 @@ MonoBehaviour:
   startingDeck: {fileID: 11400000, guid: 62ea6c15f92595b4f98ffee8d3ecdfbd, type: 2}
   startingMaxHp: 100
   startingMaxSan: 100
+  dialogueNodeStage: 9
   currentStage: 0
 --- !u!1 &1032895041
 GameObject:
@@ -7810,7 +7819,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1000, y: 135}
+  m_SizeDelta: {x: 1100, y: 135}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2031421463
 CanvasRenderer:
@@ -7867,8 +7876,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 32
+  m_fontSizeBase: 32
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -8208,6 +8217,7 @@ GameObject:
   - component: {fileID: 2110897646}
   - component: {fileID: 2110897645}
   - component: {fileID: 2110897648}
+  - component: {fileID: 2110897649}
   m_Layer: 0
   m_Name: '[MAP_OVERLAY]'
   m_TagString: Untagged
@@ -8341,9 +8351,11 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   canvasGroup: {fileID: 891389807}
+  backdrop: {fileID: 2110897649}
   mapContainer: {fileID: 306944637}
   eventNodePrefab: {fileID: 3923217800643303358, guid: d4356650074a68a43b82b26297c80726, type: 3}
   combatNodePrefab: {fileID: 1120211446510883631, guid: 1f1ac8cb933929641ab9e37dd2e4d845, type: 3}
+  eliteNodePrefab: {fileID: 1120211446510883631, guid: 84e52c87646943c48cc78db92faae653, type: 3}
   bossNodePrefab: {fileID: 8298223590885645829, guid: 370a1460a5a509d4b9f6f1715cd5f366, type: 3}
   shopNodePrefab: {fileID: 0}
   specialEventNodePrefab: {fileID: 0}
@@ -8440,6 +8452,23 @@ MonoBehaviour:
   tooltipStateUnreachable: "<color=#8A8A8A>\u5F9E\u9019\u88E1\u904E\u4E0D\u53BB\u3002</color>"
   mapBannerUI: {fileID: 224495840}
   mapEnterText: "<color=#FFFFFF>\u5730\u5716</color>"
+--- !u!114 &2110897649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2110897642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fe60cdd762de6a488a0b7f84b71df1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.StageBackdrop
+  prefab: {fileID: 1683223685573105826, guid: 8a909472b431f9847b2bb438387a451c, type: 3}
+  parentName: WorldRoot
+  offset: {x: 0, y: 1, z: 0}
+  scale: 0.5
+  warnIfNotCovering: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

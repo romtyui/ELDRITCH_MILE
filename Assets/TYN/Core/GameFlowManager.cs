@@ -74,6 +74,15 @@ namespace EldritchMile.Core
                  "0 = 沿用戰鬥端原本的值")]
         [Min(0)] public int startingMaxSan = 0;
 
+        [Header("對話節點")]
+        [Tooltip("地圖上的**對話節點**要走哪一個 Stage。專案裡有兩套刻意並存的對話：\n\n" +
+                 "· ProbabilityDialogue —— 資料驅動（一個事件一個資產），\n" +
+                 "  出完牌才選回答、失敗就移掉那個回答。附件《對話》的兩段寫在這一套。\n" +
+                 "· Dialogue —— 把牌打在選項上、逐次衰減、可以蓄意失敗。\n" +
+                 "  內容寫死在 Stage_Dialogue prefab 上，一次只能有一段。\n\n" +
+                 "⚠️ 改這一格就能整套換回去，不必改程式。")]
+        public StageType dialogueNodeStage = StageType.ProbabilityDialogue;
+
         [Header("狀態 (唯讀)")]
         [SerializeField] private StageType currentStage = StageType.None;
 
@@ -591,7 +600,7 @@ namespace EldritchMile.Core
                     return StageType.SpecialEvent;
 
                 case MapNodeKind.Dialogue:
-                    return StageType.Dialogue;
+                    return dialogueNodeStage;
 
                 case MapNodeKind.Event:
                 default:

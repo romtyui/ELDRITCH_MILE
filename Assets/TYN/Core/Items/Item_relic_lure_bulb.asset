@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_relic_lure_bulb
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: relic_lure_bulb
+  displayName: "\u8A98\u60D1\u7684\u990C\u7403"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u89F8\u767C\u3010\u53CD\u64CA\u3011\u6642\uFF0C\u7372\u5F97 3 \u5C64\u3010\u8B77\u76FE\u3011\u3002"
+  fullDescription: "\u6211\u4E0D\u77E5\u9053 \u6211\u4E0D\u60F3\u77E5\u9053\n\u6211\u77E5\u66C9\u4E86\u771F\u76F8 \u77E5\u66C9\u90A3\u6700\u4EE4\u4EBA\u4F5C\u5614 \u96E3\u4EE5\u4E0B\u56A5\u7684 \u73FE\u5BE6\n\u96D9\u624B\u5728\u986B\u6296 \u80C3\u9178\u5728\u7FFB\u9A30 \u6211\u7121\u6CD5\u76F4\u8996 \u90A3\u4E9B\u8840\u8089\u6A21\u7CCA\u7684\u626D\u66F2\u602A\u7269\n\n\u554A\u554A \u6211\u6700\u53AD\u60E1\u7684\u795E\u660E \u4F60\u8981\u662F\u771F\u7684\u5B58\u5728\u7684\u8A71 \u5C31\u8B93\u6211\u518D\u4E5F\u7121\u6CD5\u601D\u8003\u9019\u4E00\u5207\u5427\n\u2014\u2014\u6F01\u592B\u7684\u8A18\u61B6 8"
+  price: 90
+  tags:
+  - Curio
+  - Rare
+  - Abyss
+  - NoEffect
+  grantsCard: {fileID: 0}
+  hpRestore: 0
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u9644\u4EF6\u5BEB\u300C3\uFF08\u6216\u66F4\u591A\uFF1F\uFF09\u5C64\u300D\uFF0C\u66AB\u5B9A 3\u3002\n\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u9700\u8981\u65B0\u7684 RelicsEffectData \u5B50\u985E\u5225\u3002\n\u203B \u7F8E\u8853\uFF1A\u71C8\u7C60\u9B5A\u982D\u4E0A\u90A3\u500B\u6771\u897F\u3002"

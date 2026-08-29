@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_relic_group_photo
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: relic_group_photo
+  displayName: "\u5408\u7167"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u89F8\u767C\u3010\u53CD\u64CA\u3011\u6642\uFF0C\u4F7F\u5176\u984D\u5916\u767C\u52D5\u5169\u6B21\u3002"
+  fullDescription: "...\u4E0D\uFF0C\u4E0D\u53EF\u80FD\u3002\n\u4E0D\u4E45\u524D\u9084\u5728\u8DDF\u6211\u8AAA\u96FB\u8A71\u7684\u5979\u7D55\u4E0D\u6703...\uFF01\n\u800C\u4E14\uFF0C\u5728\u6FC3\u9727\u7684\u76E1\u982D\uFF0C\u6211\u770B\u5230\u4E86\u3002\n\u90A3\u500B\u5DE8\u5927\u7684\u5F71\u5B50\uFF0C\u90A3\u5C31\u662F\u4E00\u5207\u7684\u798D\u6839\u55CE\uFF1F\n\u6211\u5FC5\u9808\u5F97\u77E5\u9053\u771F\u76F8\u3002\n\u2014\u2014\u6F01\u592B\u7684\u8A18\u61B6 7"
+  price: 55
+  tags:
+  - Curio
+  - Uncommon
+  - Abyss
+  - NoEffect
+  grantsCard: {fileID: 0}
+  hpRestore: 0
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u9700\u8981\u65B0\u7684 RelicsEffectData \u5B50\u985E\u5225\u3002\n\u203B \u7F8E\u8853\uFF1A\u653E\u6709\u5144\u59B9\u5E74\u5E7C\u5408\u7167\u7684\u76F8\u6846\u3002"

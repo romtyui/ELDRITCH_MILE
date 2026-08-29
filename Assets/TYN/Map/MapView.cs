@@ -55,6 +55,14 @@ public class MapView : MapOverlayController
     [Header("節點 Prefab")]
     public GameObject eventNodePrefab;
     public GameObject combatNodePrefab;
+
+    [Tooltip("菁英戰的節點。留空則沿用 combatNodePrefab。\n\n" +
+             "美術是 `地圖物件_菁英怪物節點` —— 一般怪與菁英在地圖上長得不一樣，\n" +
+             "玩家才能在**還沒點下去之前**就決定要不要繞路。\n\n" +
+             "⚠️ 菁英不是一種 `MapNodeKind`，是 Combat 節點的 `enemyTier` ——\n" +
+             "所以挑 prefab 要看整筆 RunNodeData，不能只看 kind")]
+    public GameObject eliteNodePrefab;
+
     public GameObject bossNodePrefab;
     [Tooltip("留空則沿用 eventNodePrefab")]
     public GameObject shopNodePrefab;
@@ -391,10 +399,10 @@ public class MapView : MapOverlayController
 
     private void SpawnNode(RunNodeData data)
     {
-        GameObject prefab = PrefabFor(data.kind);
+        GameObject prefab = PrefabFor(data);
         if (prefab == null)
         {
-            Debug.LogWarning($"[地圖] {data.kind} 沒有指定 prefab，跳過節點 {data.nodeId}");
+            Debug.LogWarning($"[地圖] {data.kind}／{data.enemyTier} 沒有指定 prefab，跳過節點 {data.nodeId}");
             return;
         }
 
@@ -417,11 +425,23 @@ public class MapView : MapOverlayController
         spawnedNodes[data.nodeId] = nodeUI;
     }
 
-    private GameObject PrefabFor(MapNodeKind kind)
+    /// <summary>
+    /// 這個節點要用哪一個 prefab。
+    ///
+    /// 【為什麼吃整筆 data 而不是只吃 kind】菁英**不是**一種 MapNodeKind ——
+    /// 它是 Combat 節點加上 `enemyTier = Elite`（EncounterPlanner 決定的）。
+    /// 只看 kind 的話菁英與雜兵會長得一模一樣，而 tooltip 早就分得出來了
+    /// （`tooltipTierElite`），圖示卻分不出來，那是不一致。
+    /// </summary>
+    private GameObject PrefabFor(RunNodeData data)
     {
-        switch (kind)
+        switch (data.kind)
         {
-            case MapNodeKind.Combat: return combatNodePrefab;
+            case MapNodeKind.Combat:
+                return data.enemyTier == EncounterPool.Tier.Elite && eliteNodePrefab != null
+                    ? eliteNodePrefab
+                    : combatNodePrefab;
+
             case MapNodeKind.Boss: return bossNodePrefab;
             case MapNodeKind.Shop: return shopNodePrefab != null ? shopNodePrefab : eventNodePrefab;
             case MapNodeKind.SpecialEvent: return specialEventNodePrefab != null ? specialEventNodePrefab : eventNodePrefab;

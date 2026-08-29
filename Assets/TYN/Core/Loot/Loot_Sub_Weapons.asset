@@ -23,7 +23,8 @@ MonoBehaviour:
       itemId: 
       requireTags:
       - Weapon
-      excludeTags: []
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 100
       countMin: 1

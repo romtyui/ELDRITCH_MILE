@@ -36,12 +36,21 @@ namespace EldritchMile.Core
         [Tooltip("收起時關閉 raycast，避免玩家在 Stage 進行中還能點到節點")]
         public CanvasGroup canvasGroup;
 
+        [Header("背景")]
+        [Tooltip("地圖下拉時墊在後面的場景美術。留空會在自己底下找。\n\n" +
+                 "**先用戶外那張**（`Art_Village_Outdoor`）——\n" +
+                 "地圖是在 `SwitchStageInternal(StageType.None)` 之後才下拉的，\n" +
+                 "那時場上一個 Stage 都沒有，不墊東西就直接看到相機的天空底色。\n" +
+                 "對話與事件用的是同一支 `StageBackdrop`。")]
+        public StageBackdrop backdrop;
+
         public bool IsOpen { get; private set; }
 
         private void Awake()
         {
             if (panel == null) panel = GetComponent<RectTransform>();
             if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
+            if (backdrop == null) backdrop = GetComponentInChildren<StageBackdrop>(true);
 
             SetOpenImmediate(false);
         }
@@ -51,6 +60,9 @@ namespace EldritchMile.Core
             if (!open) OnClosing();
 
             IsOpen = open;
+
+            if (open) backdrop?.Spawn();
+            else backdrop?.Despawn();
 
             if (panel != null)
             {
@@ -79,6 +91,10 @@ namespace EldritchMile.Core
         {
             if (IsOpen) yield break;
 
+            // ⚠️ 要在**滑下來之前**生成 —— 晚一步的話玩家會看到地圖在藍色天空底色上
+            //    掉下來、落定之後背景才「啪」地出現
+            backdrop?.Spawn();
+
             yield return Slide(hiddenY, shownY);
 
             IsOpen = true;
@@ -101,6 +117,10 @@ namespace EldritchMile.Core
             yield return Slide(shownY, hiddenY);
 
             IsOpen = false;
+
+            // ⚠️ 要在**滑完之後**才收 —— 這一站的背景是生成出來的，
+            //    不收的話它會一路留到下一站，壓在房間美術上
+            backdrop?.Despawn();
 
             TutorialSignal.MapClosed();
         }

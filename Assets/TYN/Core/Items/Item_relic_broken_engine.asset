@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_relic_broken_engine
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: relic_broken_engine
+  displayName: "\u640D\u58DE\u7684\u5F15\u64CE"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u6230\u9B25\u958B\u59CB\u6642\uFF0C\u7372\u5F97 10 \u5C64\u3010\u8B77\u76FE\u3011\u3002"
+  fullDescription: "\u5728\u90A3\u4E4B\u5F8C\u4E0D\u77E5\u904E\u4E86\u591A\u4E45\uFF0C\u6211\u7D42\u7A76\u9084\u662F\u5728\u8239\u4E0A\u5931\u53BB\u4E86\u610F\u8B58\u3002\n\u672C\u4EE5\u70BA\u6703\u6B7B\u5728\u9019\u88E1\uFF0C\u4F46\u7B49\u6062\u5FA9\u610F\u8B58\u7684\u6642\u5019\uFF0C\u8239\u96BB\u5C31\u64F1\u6DFA\u5728\u5CF6\u4E0A\u7684\u6C99\u7058\u4E86\u3002\n\u662F\u6D77\u6D6A\u628A\u6211\u5E36\u5230\u9019\u88E1\u4F86\u7684\u55CE\uFF1F\u672C\u60F3\u8AAA\u9084\u771F\u662F\u5E78\u904B...\u7136\u800C\uFF0C\u5BE6\u969B\u4E0A\u537B\u7CDF\u900F\u4E86\u3002\n\u2014\u2014\u6F01\u592B\u7684\u8A18\u61B6 4"
+  price: 55
+  tags:
+  - Curio
+  - Uncommon
+  - Abyss
+  - NoEffect
+  grantsCard: {fileID: 0}
+  hpRestore: 0
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u9700\u8981\u65B0\u7684 RelicsEffectData \u5B50\u985E\u5225\u3002"

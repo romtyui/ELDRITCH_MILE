@@ -29,12 +29,32 @@ namespace EldritchMile.Core
         [Tooltip("玩家看到的名字。**這個可以隨時改**，不影響任何存檔或引用")]
         public string displayName = "";
 
-        [Tooltip("背包／商店用的圖示。目前還沒有 UI 會用到，先留著")]
+        [Tooltip("**持有中**的樣子 —— 快捷欄（持有遺物 UI）用的就是這一張。\n\n" +
+                 "遺物的美術是**白色**那一張（例：`魚頭遺物白色_方形裁切`）——\n" +
+                 "「貪婪的大口」就是這樣掛的，其餘遺物照它。\n\n" +
+                 "⚠️ 商店貨架上不是用這一張，是下面的 Shelf Icon（彩色）")]
         public Sprite icon;
 
+        [Tooltip("**商店貨架上**的樣子。彩色那一張（例：`快艇鑰匙`、`釣竿`、`魚叉`）。\n\n" +
+                 "留空 = 退回上面的 Icon —— 只有一張圖的道具不必兩欄都填。\n\n" +
+                 "【為什麼分兩張】貨架是「商品陳列」，要看得出是什麼東西，所以是彩色；\n" +
+                 "持有欄是「我身上有這個」，一整排彩色圖會跟畫面搶注意力，所以是白色剪影。\n" +
+                 "這是美術給的兩套素材，不是同一張圖調色調出來的")]
+        public Sprite shelfIcon;
+
         [TextArea(2, 4)]
-        [Tooltip("道具說明。同樣是給日後的背包／商店用")]
+        [Tooltip("**效果文字**。快捷欄 hover 的說明框只顯示這一欄。\n\n" +
+                 "hover 的當下玩家要的是「這個吃下去會怎樣」，不是讀故事 ——\n" +
+                 "所以故事文本請寫到下面的 Full Description。\n\n" +
+                 "⚠️ 製作備註（美術待補、效果還沒接…）寫到 Notes，兩邊都不要寫。")]
         public string description = "";
+
+        [TextArea(3, 10)]
+        [Tooltip("**故事文本**。給日後的圖鑑／收藏冊用，目前沒有 UI 會顯示。\n\n" +
+                 "附件《食物》《收藏品》「敘述」欄的那一段就是放這裡。\n" +
+                 "要顯示完整內容時用 <see cref=\"FullText\"/>，**不要把效果再抄一份進來** ——\n" +
+                 "抄兩份就會有兩個真相，改一邊忘了另一邊是遲早的事。")]
+        public string fullDescription = "";
 
         [Header("商店")]
         [Tooltip("基礎售價。實際售價由商店決定（可能有折扣／加價），這裡是定價")]
@@ -67,6 +87,16 @@ namespace EldritchMile.Core
         [Tooltip("使用時回復的 SAN。0 = 不回")]
         [Min(0)] public int sanRestore = 0;
 
+        [Tooltip("使用時**扣掉**的 HP。0 = 不扣。\n\n" +
+                 "附件《食物》裡有幾樣東西是有代價的（奢侈的血塊「減少（中等）HP」）——\n" +
+                 "沒有這一欄的話那種食物只能寫在敘述裡、實際上不會發生任何事。")]
+        [Min(0)] public int hpCost = 0;
+
+        [Tooltip("使用時**扣掉**的 SAN。0 = 不扣。\n\n" +
+                 "奇怪的魚／蠕動的生蠔／仰望星空都是「回 HP 但減 SAN」——\n" +
+                 "那是這個世界吃東西的代價，不是錯字。")]
+        [Min(0)] public int sanCost = 0;
+
         [Tooltip("使用後是否消耗掉。取消勾選 = 可以重複使用（目前沒有這種道具）")]
         public bool consumeOnUse = true;
 
@@ -78,14 +108,48 @@ namespace EldritchMile.Core
                  "留空 = 這件收藏品目前只是收藏品，沒有效果")]
         public RelicsEffectData relicEffect;
 
+        [Header("製作備註（玩家看不到）")]
+        [TextArea(2, 8)]
+        [Tooltip("給團隊看的：美術還沒畫、效果還沒接、附件與專案的出入、暫定值的理由…\n\n" +
+                 "**沒有任何 UI 會讀這一欄**，寫多長都不影響玩家看到的畫面。\n" +
+                 "跟 <see cref=\"description\"/> 分開，是因為那一欄會直接出現在快捷欄的說明框裡。")]
+        public string notes = "";
+
         /// <summary>
         /// 這件道具點下去有沒有事會發生。
         /// **快捷欄用它決定要不要讓那一格可以點** —— 點了沒反應比不能點更糟。
         /// </summary>
-        public bool IsUsable => hpRestore > 0 || sanRestore > 0;
+        public bool IsUsable => hpRestore > 0 || sanRestore > 0 || hpCost > 0 || sanCost > 0;
 
         /// <summary>顯示名沒填就退回 id —— 至少畫面上不會是一片空白。</summary>
         public string Label => string.IsNullOrEmpty(displayName) ? id : displayName;
+
+        /// <summary>
+        /// 商店貨架上要顯示哪一張。**沒填彩色版就退回持有版**，
+        /// 不會變成一個空框 —— 只有一張圖的道具（食物）本來就只填 icon。
+        /// </summary>
+        public Sprite ShelfIcon => shelfIcon != null ? shelfIcon : icon;
+
+        /// <summary>
+        /// 故事 ＋ 效果，接起來的完整說明。**圖鑑那類「要看全部」的畫面用這個。**
+        ///
+        /// 【為什麼是接起來而不是另存一欄】效果文字只該有一份。
+        /// 圖鑑再存一份完整版的話，改了效果就得記得同步兩個地方 ——
+        /// 而那種同步遲早會漏，漏了也不會有任何錯誤訊息。
+        ///
+        /// 兩欄都空就回空字串；只有一欄有東西就只回那一欄，不會留下多餘的空行。
+        /// </summary>
+        public string FullText
+        {
+            get
+            {
+                bool hasStory = !string.IsNullOrEmpty(fullDescription);
+                bool hasEffect = !string.IsNullOrEmpty(description);
+
+                if (hasStory && hasEffect) return fullDescription + "\n\n" + description;
+                return hasStory ? fullDescription : (hasEffect ? description : "");
+            }
+        }
 
         /// <summary>標籤比對。大小寫不敏感 —— 手打標籤很容易大小寫不一致。</summary>
         public bool HasTag(string tag)

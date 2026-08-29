@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 561859799a7153440bfd8ba4f08c9da2, type: 3}
+  m_Name: Loot_Sub_Food_Common
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.LootTable
+  pools:
+  - note: "\u54C1\u8CEA\u3010\u666E\u901A\u3011\u7684\u98DF\u7269\u3002\u300A\u9B54\u8853\u79C0\u300B\u7684\u300C\u88E1\u9762\u662F\u98DF\u7269\u300D\u7528\u9019\u5F35"
+    chance: 1
+    rollsMin: 1
+    rollsMax: 1
+    distinct: 1
+    entries:
+    - kind: 1
+      itemId: 
+      requireTags:
+      - Food
+      - Common
+      excludeTags:
+      - NoEffect
+      table: {fileID: 0}
+      weight: 100
+      countMin: 1
+      countMax: 1

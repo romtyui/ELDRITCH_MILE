@@ -311,6 +311,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7118356387479741239}
   - component: {fileID: 460168593490137280}
+  - component: {fileID: 3416964718089836958}
   m_Layer: 0
   m_Name: Stage_Event
   m_TagString: Untagged
@@ -356,3 +357,21 @@ MonoBehaviour:
   endButton: {fileID: 6077760383861038916}
   effectLineFormat: "\n\n\uFF08{0}\uFF09"
   effectSeparator: "\u3001"
+  backdrop: {fileID: 3416964718089836958}
+--- !u!114 &3416964718089836958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6450695220657823247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fe60cdd762de6a488a0b7f84b71df1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.StageBackdrop
+  prefab: {fileID: 1683223685573105826, guid: 8a909472b431f9847b2bb438387a451c, type: 3}
+  parentName: WorldRoot
+  offset: {x: 0, y: 1, z: 0}
+  scale: 0.5
+  warnIfNotCovering: 1

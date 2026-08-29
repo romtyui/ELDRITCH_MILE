@@ -88,6 +88,22 @@ namespace EldritchMile.Core.ProbabilityDialogue
         public int LastRoll { get; private set; } = -1;
         public string LastSelectedOptionId { get; private set; } = "";
 
+        /// <summary>
+        /// 這一場結束時**真的發生了什麼**，接成一句給玩家看的話
+        /// （「獲得 老舊釣竿、【深淵】的侵蝕度 +5%」）。沒有效果就是空字串。
+        ///
+        /// 【為什麼要留著】`EventEffect.Apply` 的回傳值就是那句提示，
+        /// 之前這裡把它丟掉了 —— 於是對話成功拿到東西，畫面上完全沒有結算，
+        /// 玩家只能自己去翻背包。事件那一頭（`EventStageController.ApplyOption`）
+        /// 早就在用同一個回傳值了，這裡只是補上同一件事。
+        ///
+        /// ⚠️ **在 `OnEnded` 之前就填好** —— UI 是在那個事件裡讀它的。
+        /// </summary>
+        public string LastOutcomeNotes { get; private set; } = "";
+
+        /// <summary>多個效果之間用什麼隔開。跟事件那邊同一個寫法。</summary>
+        public string outcomeSeparator = "、";
+
         // ==========================================
         // 事件（UI 只接這些，不主動讀寫狀態）
         // ==========================================
@@ -134,10 +150,23 @@ namespace EldritchMile.Core.ProbabilityDialogue
             for (int i = 0; i < data.options.Count; i++)
             {
                 if (data.options[i] == null) continue;
+
+                int p0 = Mathf.Clamp(data.options[i].baseProbability, 0, data.probabilityCap);
+
+                // ⚠️ 乘法的死角：0 乘任何數還是 0 —— 那個回答會**永遠推不動**，
+                //    而且畫面上只會安靜地一直顯示 0%，看不出是設定錯了
+                if (p0 <= 0 && data.growth == ProbabilityGrowth.Multiplicative)
+                {
+                    Debug.LogWarning(
+                        $"[機率對話]「{data.name}」的回答「{data.options[i].optionId}」" +
+                        "Base Probability 是 0，但成長公式是乘法 —— 這個回答永遠推不動。\n" +
+                        "把基礎機率改成大於 0，或把 Growth 改成 Additive。", data);
+                }
+
                 options.Add(new RuntimeOption
                 {
                     source = data.options[i],
-                    currentProbability = Mathf.Clamp(data.options[i].baseProbability, 0, data.probabilityCap),
+                    currentProbability = p0,
                     available = true,
                 });
             }
@@ -192,9 +221,13 @@ namespace EldritchMile.Core.ProbabilityDialogue
 
             // ⚠️ 用 IndexOf 找的是**第一張同名卡**。牌組允許重複，
             //    所以手上可能有兩張一樣的 —— 移掉哪一張都一樣，不影響結果
-            int value = ProbabilityCardRules.ValueOf(card);
 
-            // 找出「屬性相符 ＋ 還可用」的回答（規格 R4 / R6）
+            // 找出「屬性相符 ＋ 還可用」的回答（規格 R4 / R6）。
+            //
+            // ⚠️ **一張牌會同時作用在所有相符的回答上**，不是只挑一個。
+            //    這是規格書 R4 的原意，也是色點存在的理由 ——
+            //    玩家看得到「這張紅牌會推動哪幾個回答」。
+            //    已經判定失敗的回答不再被推動（R6）。
             var targets = new List<RuntimeOption>();
             var before = new List<int>();
             var after = new List<int>();
@@ -208,8 +241,9 @@ namespace EldritchMile.Core.ProbabilityDialogue
                 targets.Add(o);
                 before.Add(o.currentProbability);
 
-                // 規格 §4 Recommended：Clamp 0~cap
-                o.currentProbability = Mathf.Clamp(o.currentProbability + value, 0, Data.probabilityCap);
+                // 成長公式與 Clamp 都在 ProbabilityCardRules.Apply 裡，這裡不自己算
+                o.currentProbability =
+                    ProbabilityCardRules.Apply(Data.growth, o.currentProbability, card, Data.probabilityCap);
                 after.Add(o.currentProbability);
             }
 
@@ -311,8 +345,16 @@ namespace EldritchMile.Core.ProbabilityDialogue
         }
 
         // ==========================================
+        /// <summary>
+        /// 跑一組效果，並把它們回報的提示存進 <see cref="LastOutcomeNotes"/>。
+        ///
+        /// ⚠️ **一定要在 `OnEnded` 之前呼叫** —— UI 是在那個事件裡讀結算文字的。
+        /// 兩處呼叫端（成功、全部失敗）目前都是這個順序，改的時候不要換過去。
+        /// </summary>
         private void RunOutcome(List<EventEffect> effects)
         {
+            LastOutcomeNotes = "";
+
             if (effects == null || effects.Count == 0) return;
 
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
@@ -322,7 +364,18 @@ namespace EldritchMile.Core.ProbabilityDialogue
                 return;
             }
 
-            for (int i = 0; i < effects.Count; i++) effects[i]?.Apply(run);
+            var notes = new List<string>();
+
+            for (int i = 0; i < effects.Count; i++)
+            {
+                if (effects[i] == null) continue;
+
+                // ⚠️ 回傳值就是給玩家看的那句話。丟掉的話結算永遠不會出現
+                string note = effects[i].Apply(run);
+                if (!string.IsNullOrEmpty(note)) notes.Add(note);
+            }
+
+            LastOutcomeNotes = string.Join(outcomeSeparator, notes.ToArray());
         }
     }
 }

@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_food_blood_curd
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: food_blood_curd
+  displayName: "\u5962\u4F88\u7684\u8840\u584A"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u6E1B\u5C11\uFF08\u4E2D\u7B49\uFF09HP \uFF06 \u4E0B\u6B21\u653B\u64CA\u6642\u6062\u5FA9\u8207\u50B7\u5BB3\u7B49\u91CF\u7684 HP\u3002"
+  fullDescription: "\u5C07\u8840\u6DB2\u51DD\u56FA\u6210\u584A\u5F8C\u88FD\u4F5C\u800C\u6210\uFF0C\u64DA\u8AAA\u53D7\u5230\u67D0\u4E9B\u7279\u5B9A\u7684\u5438\u8840\u7737\u5C6C\u7684\u559C\u611B\u3002\n\u300C\u5340\u5340\u4EBA\u985E\u600E\u9EBC\u6703\u7406\u89E3\u9019\u9053\u4F73\u991A\u7684\u7F8E\u5473\u5462...\u7B49\u7B49\uFF1F\u300D"
+  price: 28
+  tags:
+  - Consumable
+  - Food
+  - Castle
+  - Uncommon
+  - NoEffect
+  grantsCard: {fileID: 0}
+  hpRestore: 0
+  sanRestore: 0
+  hpCost: 20
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u300C\u4E0B\u6B21\u653B\u64CA\u5438\u8840\u300D\u9700\u8981 Romtyui \u7684 ItemEffectData\u3002\n\u203B \u5730\u5340\uFF1A\u57CE\u5821\uFF08\u9644\u4EF6\u6A19\u300C\u672A\u78BA\u5B9A\u300D\uFF09\u3002\n\u203B \u7F8E\u8853\uFF1A\u985E\u4F3C\u7C73\u8840\u6216\u9D28\u8840\u7684\u7D05\u8272\u65B9\u584A\u72C0\u98DF\u7269\uFF0C\u64FA\u76E4\u50CF\u67D0\u7A2E\u9AD8\u7D1A\u6CD5\u5F0F\u6599\u7406\uFF0C\u65C1\u908A\u6709\u9999\u6599\u9EDE\u7DB4\u3002"

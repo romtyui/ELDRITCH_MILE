@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_relic_playing_cards
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: relic_playing_cards
+  displayName: "\u64B2\u514B\u724C"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u6BCF\u5834\u6230\u9B25\u958B\u59CB\u6642\uFF0C\u984D\u5916\u62BD\u53D6 1 \u5F35\u624B\u724C\u3002"
+  fullDescription: "\uFF08\u9644\u4EF6\u672A\u586B\u6558\u8FF0\uFF09"
+  price: 55
+  tags:
+  - Curio
+  - Uncommon
+  - Chaos
+  - NoEffect
+  grantsCard: {fileID: 0}
+  hpRestore: 0
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u9700\u8981\u65B0\u7684 RelicsEffectData \u5B50\u985E\u5225\u3002"

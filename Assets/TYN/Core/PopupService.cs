@@ -164,6 +164,22 @@ namespace EldritchMile.Core
             dialogueBox.ShowSystem(content);
         }
 
+        /// <summary>
+        /// 即時替換，但**帶說話者**（有名字框）。
+        /// 事件的結果文字裡「半魚人：…」那種段落用這一支。
+        /// </summary>
+        public void ShowSpeechInstant(string speaker, string content)
+        {
+            if (dialogueBox == null)
+            {
+                Warn(content);
+                return;
+            }
+
+            pending.Clear();
+            dialogueBox.ShowSpeech(speaker, content);
+        }
+
         public void CloseAll()
         {
             pending.Clear();

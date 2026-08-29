@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_food_stargazy_pie
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: food_stargazy_pie
+  displayName: "\u4EF0\u671B\u661F\u7A7A"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u6062\u5FA9\uFF08\u5927\u91CF\uFF09HP \uFF06 \u89E3\u9664\u6240\u6709\u7570\u5E38\u72C0\u614B \uFF06 \u6E1B\u5C11\uFF08\u4E2D\u7B49\uFF09SAN\u3002"
+  fullDescription: "\u5728\u6D3E\u4E2D\u5FC3\u532F\u96C6\u7684\u662F\u4F86\u81EA\u9059\u9060\u5F7C\u65B9\u7684\u6B98\u97FF\uFF0C\u6C92\u6709\u4EBA\u77E5\u9053\u70E4\u88FD\u9019\u500B\u6D3E\u7684\u662F\u4EC0\u9EBC\u4EBA\uFF0C\u53C8\u662F\u70BA\u4E86\u4EC0\u9EBC\u76EE\u7684...\u81F3\u5C11\u5473\u9053\u5F88\u4E0D\u932F\u3002"
+  price: 60
+  tags:
+  - Consumable
+  - Food
+  - Rare
+  grantsCard: {fileID: 0}
+  hpRestore: 35
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 20
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u300C\u89E3\u9664\u6240\u6709\u7570\u5E38\u72C0\u614B\u300D\u9700\u8981 Romtyui \u7684 ItemEffectData\u3002\n\u203B \u7F8E\u8853\uFF1A\u6D3E\u7684\u4E0A\u5C64\u984F\u8272\u662F\u985E\u4F3C\u5B87\u5B99\u7684\u90A3\u7A2E\u6DF7\u6C8C\u611F\u3002"

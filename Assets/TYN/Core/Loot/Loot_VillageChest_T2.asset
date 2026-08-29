@@ -19,10 +19,13 @@ MonoBehaviour:
     rollsMax: 1
     distinct: 1
     entries:
-    - kind: 0
-      itemId: lockpick
-      requireTags: []
-      excludeTags: []
+    - kind: 1
+      itemId: 
+      requireTags:
+      - Curio
+      excludeTags:
+      - EventOnly
+      - NoEffect
       table: {fileID: 0}
       weight: 45
       countMin: 1
@@ -30,8 +33,10 @@ MonoBehaviour:
     - kind: 1
       itemId: 
       requireTags:
-      - Unsettling
-      excludeTags: []
+      - Food
+      - Uncommon
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 35
       countMin: 1
@@ -39,8 +44,9 @@ MonoBehaviour:
     - kind: 1
       itemId: 
       requireTags:
-      - Supply
-      excludeTags: []
+      - Food
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 20
       countMin: 1
@@ -55,7 +61,8 @@ MonoBehaviour:
       itemId: 
       requireTags:
       - SeaFood
-      excludeTags: []
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 70
       countMin: 1
@@ -63,8 +70,9 @@ MonoBehaviour:
     - kind: 1
       itemId: 
       requireTags:
-      - Supply
-      excludeTags: []
+      - Food
+      excludeTags:
+      - NoEffect
       table: {fileID: 0}
       weight: 30
       countMin: 1

@@ -15,8 +15,19 @@ MonoBehaviour:
   id: relic_burnt_score
   displayName: "\u71D2\u6BC0\u7684\u6A02\u8B5C"
   icon: {fileID: 0}
-  description: "\uFF08\u5927\u7DB1\u672A\u586B\u6558\u8FF0\uFF09\n\n\u3010\u6548\u679C\u3011\u56DE\u5408\u958B\u59CB\u6642\u7372\u5F97\u4E00\u5F35\u3010\u7070\u71FC\uFF08Token\uFF09\u3011\u3002"
+  description: "\u3010\u6548\u679C\u3011\u56DE\u5408\u958B\u59CB\u6642\u7372\u5F97\u4E00\u5F35\u3010\u7070\u71FC\uFF08Token\uFF09\u3011\u3002"
+  fullDescription: "\uFF08\u9644\u4EF6\u672A\u586B\u6558\u8FF0\uFF09"
   price: 30
   tags:
   - Curio
   - Common
+  - BlazingSong
+  - NoEffect
+  grantsCard: {fileID: 0}
+  hpRestore: 0
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u9700\u8981\u65B0\u7684 RelicsEffectData \u5B50\u985E\u5225\u3002"

@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_food_strange_fish
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: food_strange_fish
+  displayName: "\u5947\u602A\u7684\u9B5A"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u6062\u5FA9\uFF08\u4E2D\u7B49\uFF09HP \uFF06 \u6E1B\u5C11\uFF08\u5C0F\u91CF\uFF09SAN\u3002"
+  fullDescription: "\u90A3\u662F\u5426\u80FD\u7A31\u4F5C\u70BA\u300C\u9B5A\u300D\u5462\uFF1F\u9177\u4F3C\u4EBA\u985E\u7684\u5634\u4E2D\u5076\u723E\u6703\u767C\u51FA\u4E0D\u77E5\u540D\u7684\u5462\u5583\u3002"
+  price: 16
+  tags:
+  - Consumable
+  - Food
+  - SeaFood
+  - Common
+  grantsCard: {fileID: 0}
+  hpRestore: 20
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 10
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: 

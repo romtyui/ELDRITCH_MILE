@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_food_infant_fruit
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: food_infant_fruit
+  displayName: "\u5E7C\u5C0F\u7684\u679C\u5BE6"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u6062\u5FA9\uFF08\u5C0F\u91CF\uFF09HP \uFF06 \u7372\u5F97 1 \u5F35\u3010\u7F8A\u7F94\u3011\uFF08TOKEN\uFF09\u3002"
+  fullDescription: "\u9577\u76F8\u5B9B\u5982\u5B30\u5152\u822C\u7684\u6C34\u679C\uFF0C\u8C8C\u4F3C\u6703\u767C\u51FA\u557C\u54ED\u8072\uFF0C\u5473\u9053\u537B\u7570\u5E38\u751C\u7F8E\u3002\n...\u5728\u90A3\u90E8\u540D\u4F5C\u597D\u50CF\u4E5F\u51FA\u73FE\u904E\u985E\u4F3C\u7684\u6771\u897F\u3002"
+  price: 12
+  tags:
+  - Consumable
+  - Food
+  - Forest
+  - Common
+  grantsCard: {fileID: 0}
+  hpRestore: 10
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u3010\u7F8A\u7F94\u3011Token \u9700\u8981 Romtyui \u7684 ItemEffectData\u3002\n\u203B \u5730\u5340\uFF1A\u68EE\u6797\uFF08\u9644\u4EF6\u6A19\u300C\u672A\u78BA\u5B9A\u300D\uFF09\u3002\n\u203B \u7F8E\u8853\uFF1A\u9577\u5F97\u50CF\u5B30\u5152\u7684\u9EC3\u8272\u679C\u5BE6\uFF0C\u4E0A\u9762\u5E36\u6709\u8840\u7D72\u3002"

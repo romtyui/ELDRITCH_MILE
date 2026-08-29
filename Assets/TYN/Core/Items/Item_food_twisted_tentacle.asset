@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_food_twisted_tentacle
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: food_twisted_tentacle
+  displayName: "\u626D\u66F2\u7684\u89F8\u624B"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u6062\u5FA9\uFF08\u4E2D\u7B49\uFF09HP \uFF06 \u7372\u5F97 1 \u5C64\u3010\u53CD\u64CA\u3011\u3002"
+  fullDescription: "\u6751\u4E2D\u4E0D\u5141\u8A31\u98DF\u7528\u8207\u4E45\u90FD\u7559\u5E03\u795E\u5F62\u8C61\u76F8\u8FD1\u7684\u300C\u90A3\u500B\u300D\uFF0C\u7136\u800C\u5728\u96E3\u8010\u7684\u98E2\u9913\u4E2D\uFF0C\u9019\u500B\u898F\u5B9A\u6BEB\u7121\u610F\u7FA9...\u4E0D\u77E5\u70BA\u4F55\uFF0C\u7121\u8AD6\u5403\u4E0B\u591A\u5C11\u6B21\u90FD\u6703\u518D\u751F\uFF0C\u9019\u4E00\u5B9A\u662F\u795E\u660E\u7684\u6069\u60E0\u3002"
+  price: 26
+  tags:
+  - Consumable
+  - Food
+  - SeaFood
+  - Uncommon
+  grantsCard: {fileID: 0}
+  hpRestore: 20
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u3010\u53CD\u64CA\u3011\u5C64\u6578\u9700\u8981 Romtyui \u7684 ItemEffectData\u3002\n\u203B \u7F8E\u8853\uFF1A\u6DF1\u85CD\u8272\u6216\u7D2B\u8272\u7684\u7AE0\u9B5A\u89F8\u624B\uFF0C\u4E0B\u65B9\u6709\u4E00\u7247\u626D\u66F2\u8815\u52D5\u7684\u7D50\u679C\u5F77\u5F7F\u9084\u6703\u518D\u751F\u3002"

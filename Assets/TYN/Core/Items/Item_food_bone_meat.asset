@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Name: Item_food_bone_meat
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  id: food_bone_meat
+  displayName: "\u5E36\u9AA8\u8089\u584A"
+  icon: {fileID: 0}
+  description: "\u3010\u6548\u679C\u3011\u6062\u5FA9\uFF08\u4E2D\u7B49\uFF09HP\u3002\u6BCF\u7D93\u904E 3 \u500B\u7BC0\u9EDE\uFF0C\u5C07\u8EAB\u4E0A\u96A8\u6A5F\u4E00\u500B\u98DF\u7269\u8F49\u5316\u70BA\u9019\u500B\u98DF\u7269\u3002"
+  fullDescription: "\u770B\u4F3C\u67D0\u7A2E\u751F\u7269\u7684\u8089\uFF0C\u4E0A\u9762\u6563\u767C\u8457\u5E36\u6709\u5947\u602A\u984F\u8272\u7684\u78F7\u5149\u3002\n\u5403\u8D77\u4F86\u5473\u9053\u5C31\u50CF\u666E\u901A\u7684\u70E4\u8089...\u53EA\u662F\u5728\u4E0D\u77E5\u4E0D\u89BA\u9593\uFF0C\u8EAB\u4E0A\u7684\u9019\u7A2E\u8089\u597D\u50CF\u8D8A\u4F86\u8D8A\u591A\u4E86\uFF1F"
+  price: 45
+  tags:
+  - Consumable
+  - Food
+  - Ranch
+  - Rare
+  grantsCard: {fileID: 0}
+  hpRestore: 20
+  sanRestore: 0
+  hpCost: 0
+  sanCost: 0
+  consumeOnUse: 1
+  relicEffect: {fileID: 0}
+  notes: "\u203B \u672A\u63A5\uFF1A\u300C\u6BCF 3 \u500B\u7BC0\u9EDE\u8F49\u5316\u300D\u9700\u8981\u4E00\u500B\u8DE8\u7BC0\u9EDE\u7684\u6301\u6709\u7269\u9264\u5B50\uFF0C\u76EE\u524D\u6C92\u6709\u9019\u7A2E\u6A5F\u5236\u3002\n\u3000 \u9644\u4EF6\u4F5C\u8005\u81EA\u5DF1\u4E5F\u8A3B\u660E\u300C\u4E0D\u77E5\u9053\u80FD\u4E0D\u80FD\u505A\u51FA\u4F86\u9019\u500B\u6548\u679C\u4F46\u6211\u5148\u5BEB\u300D\u3002\n\u203B \u5730\u5340\uFF1A\u7267\u5834\uFF08\u9644\u4EF6\u6A19\u300C\u672A\u78BA\u5B9A\u300D\uFF09\u3002\n\u203B \u7F8E\u8853\uFF1A\u985E\u4F3C\u5361\u901A\u5F62\u8C61\u7684\u8089\uFF0C\u8868\u9762\u6709\u5F69\u8272\u7684\u5149\u6FA4\u3002"
