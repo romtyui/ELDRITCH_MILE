@@ -171,6 +171,21 @@ namespace EldritchMile.Core
                  "那要靠地點卡（`MapBannerUI` 已經有這個能力）或事件收尾的文案去接。")]
         [Min(0f)] public float holdBlackAfterEventSeconds = 0.5f;
 
+        [Header("事件")]
+        [Tooltip("**開場那一站（第 0 層）保證會有事件**，不受 `EventLibrary.globalChance` 影響。\n\n" +
+                 "【為什麼需要這一格】`globalChance` 調低（0.35）之後，\n" +
+                 "《暴食之深淵》那種**開場介紹**有 65% 的機率不會在開場出現 ——\n" +
+                 "它的 `priority = 100` 保證的是「輪到事件時它先出」，\n" +
+                 "但**保證不了「這一站有沒有事件」**，那一關在更前面。\n\n" +
+                 "兩件事各管各的：\n" +
+                 "　· globalChance　　　這一站到底要不要有事件\n" +
+                 "　· priority　　　　　要有的話先輪到誰\n" +
+                 "少了這一格，介紹會晃到第三、四站才冒出來，那就不是介紹了。\n\n" +
+                 "⚠️ 只跳過「要不要有事件」那一關 ——\n" +
+                 "條件、優先序、事件自己的機率**全部照跑**。\n" +
+                 "所以第 0 層沒有任何合格的事件時，它就是安靜地不觸發，不會卡住。")]
+        public bool guaranteeEventOnFirstNode = true;
+
         [Header("地點卡（轉場時在黑幕上打出地名）")]
         [Tooltip("顯示地點卡的橫幅。**必須是排序在黑幕之上的那一個** ——\n" +
                  "黑幕是 order 9000，卡片要蓋在黑幕上才看得見。\n\n" +
@@ -473,7 +488,10 @@ namespace EldritchMile.Core
             int seed = Run.runSeed ^ (node != null && !string.IsNullOrEmpty(node.nodeId)
                 ? node.nodeId.GetHashCode() : 0);
 
-            return eventLibrary.Pick(Run, new System.Random(seed), itemDatabase);
+            // 開場那一站不擲「要不要有事件」—— 見 guaranteeEventOnFirstNode
+            bool first = guaranteeEventOnFirstNode && node != null && node.layer == 0;
+
+            return eventLibrary.Pick(Run, new System.Random(seed), itemDatabase, first);
         }
 
         private IEnumerator StageCompleteRoutine(StageResult result)

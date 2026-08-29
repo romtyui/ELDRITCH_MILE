@@ -39,6 +39,7 @@
 | 轉場加上「黑幕停一拍」＋ 非對稱淡入淡出 | `holdBlackSeconds` / `holdBlackAfterEventSeconds` |
 | 轉場地點卡（沿用開地圖那支 banner） | `[SYSTEM]/StageTitleBanner`、`nodeTitles` |
 | 神牌動畫的 Canvas 補上 Scale With Screen Size | `AnimCanvas` 是全專案唯一漏掉的一個 |
+| Build 設定：事件密度 1 → 0.35、關掉 verbose | 開場那一站另外保證有事件 |
 
 ### 遺物的兩張圖
 
@@ -179,6 +180,49 @@ y −4.60 ~ 6.60　　x −9.96 ~ 9.96
 
 > 地圖用的是**戶外**那張、探索用的是**中屋**那張，所以畫面內容本來就不同；
 > 統一的是「怎麼擺」，不是「擺什麼」。
+
+### Build 前的設定（2026-08-29 第十一輪）
+
+| | 之前 | 現在 | 為什麼 |
+|---|---|---|---|
+| `EventLibrary.globalChance` | 1（測試值） | **0.35** | 1 ＝ 每一站都插事件，那是測試用的密度 |
+| `EventLibrary.verbose` | true | **false** | 每一站印一串判定 log，給人試玩不需要 |
+| `guaranteeEventOnFirstNode` | （新增） | **true** | 見下 |
+
+實測 300 場（走一條路到底）：一場遇到 **1~7 個事件、平均 3.4**，
+沒有任何一場是 0 個。（globalChance=1 時是一場 8~20 個。）
+
+#### ⚠️ 調低 globalChance 會打壞「開場介紹」—— 所以補了一格
+
+`priority = 100` 保證的是「**輪到事件時**它先出」，
+但**保證不了「這一站有沒有事件」**—— 那一關（`globalChance`）在更前面。
+
+所以 0.35 之下，《暴食之深淵》有 **65% 的機率不會在開場出現**，
+會晃到第三、四站才冒出來 —— 那就不是介紹了。
+
+`GameFlowManager.guaranteeEventOnFirstNode`（預設 on）：
+**第 0 層不擲那一關**，直接進候選。
+
+兩件事各管各的，這樣才對得起來：
+
+| | 管什麼 |
+|---|---|
+| `globalChance` | 這一站到底**要不要**有事件 |
+| `priority` | 要有的話**先輪到誰** |
+
+⚠️ 只跳過「要不要有事件」那一關 —— **條件、優先序、事件自己的機率全部照跑**。
+第 0 層沒有任何合格的事件時就是安靜地不觸發，不會卡住。
+
+驗過：**300/300 場第一站都有事件** ✓
+
+#### Build 前的其他確認
+
+| | |
+|---|---|
+| Build 場景清單 | 只有 `EventScene` 勾著（其餘 6 個取消勾選，4 個指向 `_Archive`） |
+| 目標平台 | StandaloneWindows64、`0.1.0` |
+| Development Build | **關** → F1 除錯面板不會進 build（`#if UNITY_EDITOR \|\| DEVELOPMENT_BUILD`） |
+| `FullScreenMode` | `FullScreenWindow` ＝ **跑桌面原生解析度**，不是 1920×1080（見下一節） |
 
 ### ⛔ 神牌動畫在 build 裡會走鐘：`AnimCanvas` 是唯一沒開 Scale With Screen Size 的
 

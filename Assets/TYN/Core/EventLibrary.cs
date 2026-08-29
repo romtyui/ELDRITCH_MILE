@@ -41,11 +41,17 @@ namespace EldritchMile.Core
         /// 「標記成觸發過」是事件真的播完之後的事（見 <see cref="MarkTriggered"/>），
         /// 否則玩家中途離開，那個事件就再也不會出現了。
         /// </summary>
-        public EventData Pick(RunContext run, System.Random rng, ItemDatabase db = null)
+        /// <param name="ignoreGlobalChance">
+        /// true ＝ 跳過「這一站到底要不要有事件」那一關，直接進候選。
+        /// **開場那一站用它** —— 理由見 `GameFlowManager.guaranteeEventOnFirstNode`。
+        /// 條件、優先序、事件自己的機率**都還是照跑**，只跳過這一關。
+        /// </param>
+        public EventData Pick(RunContext run, System.Random rng, ItemDatabase db = null,
+                              bool ignoreGlobalChance = false)
         {
             if (run == null || rng == null) return null;
 
-            if (globalChance < 1f && rng.NextDouble() > globalChance)
+            if (!ignoreGlobalChance && globalChance < 1f && rng.NextDouble() > globalChance)
             {
                 if (verbose) Debug.Log("[事件] 這一站沒抽中「要有事件」");
                 return null;
