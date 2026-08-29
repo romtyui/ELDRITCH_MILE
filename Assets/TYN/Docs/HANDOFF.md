@@ -18,6 +18,9 @@
 | 對話的高亮改成**照屬性上色**，雙屬性回答亮混色 | `ProbabilityAnswerUI`、`ProbabilityDialogueView` |
 | 對話結束有「（獲得 XXX）」的結算 | `ProbabilityDialogueSession.LastOutcomeNotes` |
 | 對話有自己的**離開鍵**，話全講完才出現 | `ProbabilityDialogueStageController.endButton` |
+| 地圖背景可調暗（只套在地圖上） | `StageBackdrop.tint` |
+| 快捷欄 Menu 不出現、感應區 307px → 67px | `UIPanel`、`EdgeRevealUI.triggerZone` |
+| 事件盤點：關掉三個效果沒接的、暴食權重歸位 | `EventLibrary.asset` |
 
 ### 遺物的兩張圖
 
@@ -79,6 +82,86 @@
 
 ⚠️ 留空 `endButton` 會退回舊的「等一下、點一下或逾時就走」，
 `endMinSeconds` / `endAutoSeconds` 那兩格**只有那時才有作用**。
+
+### 測試配置（2026-08-29 第四輪）
+
+#### 地圖的背景調暗 —— 只有地圖
+
+`StageBackdrop` 多一欄 `tint`（**白色 ＝ 原樣**，預設不變）。
+地圖那一顆設成 **(0.42, 0.44, 0.52)**；對話與事件的維持白色 ——
+那兩個環節的背景就是場景本身，調暗會變成另一件事。
+
+是**相乘**不是覆蓋（`color *= tint`），所以美術自己畫的層次留著，
+不會整片塗成同一個顏色。改的是 `Instantiate` 出來那一份，動不到 prefab 資產。
+
+#### 快捷欄：Menu 不出現、感應區收窄
+
+| | 之前 | 現在 |
+|---|---|---|
+| 感應區 `EdgeRevealUI.triggerZone` | 0.16（1920 寬 **≈ 307px**） | **0.035（≈ 67px）** |
+| 展開後的容忍 `stickyMultiplier` | 1.6（≈ 491px） | **3.0（≈ 202px）** |
+| Menu 時 | 一直在 | **收掉** |
+
+⚠️ **sticky 要放大到 3.0 是有原因的** —— 欄位本身就有 120 寬，
+容忍範圍比欄位窄的話，滑鼠移到最左邊那一格上就會觸發收起。
+67 × 3.0 = 202px 剛好蓋得住整條欄位再多一點。
+
+「Menu 不出現」**沒有寫新元件** —— 專案早就有 `UIDirector` ＋ `UIPanel`
+那一套（面板自己宣告「我屬於哪些環節」，切 Stage 時統一套用）。
+兩條欄位各加一個 `UIPanel`，`visibleInStages` 列了除 Menu／Intro 以外的全部
+（含 `None` —— 看地圖的時候也要能吃東西）。
+
+> 這是交接文件「坑 3」的同一件事：**動手前先確認有沒有做過了。**
+> 我第一版寫了一支新的 `StageVisibility`，發現 `UIPanel` 就是這個東西之後整支刪掉。
+
+⚠️ `useFadeIfAvailable` 要**取消勾選** —— 淡入淡出歸 `EdgeRevealUI` 管，
+兩支同時寫 `CanvasGroup.alpha` 會互相蓋掉。
+
+### 事件盤點（2026-08-29 第四輪）
+
+`weight = 0` 就是這個系統的「關掉」（`EventLibrary.Pick` 有 `if (e.weight <= 0f) continue;`）。
+關掉的理由一律寫進該事件的 **Notes**。
+
+| 事件 | 現況 | 為什麼 |
+|---|---|---|
+| 無人的小船 | **開** | 效果都接得上（釣竿 ＋ 侵蝕 5%） |
+| 海市蜃樓 | **開** | 條件 `abyss ≥ 50`，一輪內幾乎不會出，不必額外關 |
+| 損壞的祭壇 | ⛔ **關** | `GrantGodCard` 沒接，而且 `Stage_SpecialEvent` **就是同一場祭壇戲**、而且真的會給牌 —— 兩份重複，留著的那一份是壞的 |
+| 喂米可吃飯 | ⛔ **關** | `DestroyWeaponCard` 沒接，條件「持有 20 張武器牌」測試一輪也達不到 |
+| 暴食之深淵 | **開**，權重 100 → **1** | 100 會壓掉其他所有事件，第一個事件幾乎必定是它 |
+| 好餓好餓的貪吃鬼 | **開** | 完整可玩（`StartBattle` 是**有接**的），而且是拿到「貪婪的大口」的唯一路 |
+| 螺湮的祝福 | **開** | 條件 `killed_fish_priest` ＋ 30%，打贏菁英才有 |
+| 門扉 | ⛔ **關** | `TeleportRandomNode` 沒接，開門之後什麼都不會發生 |
+
+`globalChance` **維持 1**（每一站都會插一個事件）—— 那是測試值。
+關掉三個之後，前幾站實際上只會從「無人的小船／暴食之深淵」兩個裡抽，
+兩個都 `once`，抽完就沒有了，後面的節點會乾乾淨淨。要恢復隨機感就調回 0.35。
+
+### 神牌一定拿得到嗎 —— 是，而且在任何戰鬥之前
+
+⚠️ **神牌不是從事件給的。** 它走 `MapNodeKind.SpecialEvent` →
+`Stage_SpecialEvent`（玩家挑一張，`PlayerVitals.AddCardToDeck` 進
+`RunStateManager.savedDeck`）。事件裡那個 `GrantGodCard` 是死路，已經關掉。
+
+demo 路線（`useDemoRoute = True`）：
+
+```
+0 Dialogue → 1 Event → 2 Shop → 3 SpecialEvent → 4 Combat → … → 9 Boss
+```
+
+**神牌在第 3 站，第一場戰鬥在第 4 站** —— 拿到神牌之前不會有任何戰鬥，
+所以「打輸了就拿不到」這條路不存在。兩個選項（祈禱／無視）
+都會給一張進戰鬥牌庫（螺湮 `octopus_god` ／ 戈厄忒 `goat_god`），選哪個都拿得到。
+
+前置條件也確認過：`startingMaxHp = 100`、`startingDeck = StartingDeck_Default`，
+所以 `PlayerVitals.IsReady` 成立，`AddCardToDeck` 不會被擋下來。
+
+**唯一剩下的風險**：第 0~2 站被插播的事件如果抽到《好餓好餓的貪吃鬼》
+且玩家選「不給他吃的」，會插一場戰鬥進來（那個效果是有接的），
+打輸就走不到第 3 站。要完全排除的話就把貪吃鬼也關掉 —— 但那樣就拿不到貪婪的大口。
+
+⚠️ **給 Romtyui**：`octopus_god` 的 `isGodCard` 沒有打勾（只有 `goat_god` 有）。
+目前**全專案沒有任何程式讀這個欄位**，所以不影響玩，但兩張神牌的資料不一致。
 
 ### 地圖的背景與菁英節點
 

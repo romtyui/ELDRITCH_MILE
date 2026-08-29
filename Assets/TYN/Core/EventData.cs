@@ -238,8 +238,13 @@ namespace EldritchMile.Core
                 default:
                     Debug.LogWarning(
                         $"[事件] 效果 {kind} **尚未接上**，這次跳過。\n" +
-                        "它需要的系統還不存在（牌組編輯／地圖跳轉／神牌）。\n" +
-                        "文案可以照寫，等系統做好補上對應的 case 就會生效。");
+                        "· DestroyWeaponCard：需要牌組編輯，戰鬥端還沒有這個入口\n" +
+                        "· TeleportRandomNode：需要地圖跳轉\n" +
+                        "· GrantGodCard：神牌**不是從事件給的** —— 走的是\n" +
+                        "  StageType.SpecialEvent（Stage_SpecialEvent 讓玩家挑一張，\n" +
+                        "  進 RunStateManager.savedDeck）。要在事件裡給神牌得另外接。\n\n" +
+                        "⚠️ 玩家會讀到「你獲得了…」卻什麼都沒拿到 ——\n" +
+                        "掛著這種效果的事件請把 weight 設 0 關掉，不要留在池子裡。");
                     return "";
             }
         }

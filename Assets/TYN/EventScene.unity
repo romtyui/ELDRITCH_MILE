@@ -2603,6 +2603,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7660212439634715811, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1526680457}
+    - targetCorrespondingSourceObject: {fileID: 7660212439634715811, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1526680459}
   m_SourcePrefab: {fileID: 100100000, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
 --- !u!224 &623036055 stripped
 RectTransform:
@@ -2731,6 +2734,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7660212439634715811, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1434183938}
+    - targetCorrespondingSourceObject: {fileID: 7660212439634715811, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1434183940}
   m_SourcePrefab: {fileID: 100100000, guid: 594d790a41695d84a91cef7f55cef728, type: 3}
 --- !u!224 &689887214 stripped
 RectTransform:
@@ -5459,8 +5465,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.Shortcut.EdgeRevealUI
   edge: 0
-  triggerZone: 0.16
-  stickyMultiplier: 1.6
+  triggerZone: 0.035
+  stickyMultiplier: 3
   hiddenAlpha: 0
   shownAlpha: 1
   fadeSeconds: 0.18
@@ -5477,6 +5483,22 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1434183940
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1434183934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91d37d050f319d949aadb5d8e3a39b83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.UIPanel
+  kind: 0
+  visibleInStages: 0000000003000000040000000500000006000000090000000800000007000000
+  alwaysVisible: 0
+  useFadeIfAvailable: 0
 --- !u!1 &1452461965
 GameObject:
   m_ObjectHideFlags: 0
@@ -5928,8 +5950,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.Shortcut.EdgeRevealUI
   edge: 0
-  triggerZone: 0.16
-  stickyMultiplier: 1.6
+  triggerZone: 0.035
+  stickyMultiplier: 3
   hiddenAlpha: 0
   shownAlpha: 1
   fadeSeconds: 0.18
@@ -5946,6 +5968,22 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1526680459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1526680453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91d37d050f319d949aadb5d8e3a39b83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.UIPanel
+  kind: 0
+  visibleInStages: 0000000003000000040000000500000006000000090000000800000007000000
+  alwaysVisible: 0
+  useFadeIfAvailable: 0
 --- !u!1 &1534935124
 GameObject:
   m_ObjectHideFlags: 0
@@ -8468,6 +8506,7 @@ MonoBehaviour:
   parentName: WorldRoot
   offset: {x: 0, y: 1, z: 0}
   scale: 0.5
+  tint: {r: 0.42, g: 0.44, b: 0.52, a: 1}
   warnIfNotCovering: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

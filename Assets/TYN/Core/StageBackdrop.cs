@@ -36,6 +36,14 @@ namespace EldritchMile.Core
         [Tooltip("縮放。房間 prefab 裡的美術都是 0.5")]
         [Min(0.01f)] public float scale = 0.5f;
 
+        [Tooltip("整張背景的染色。**白色 ＝ 原樣**，調暗就往灰／深色拉。\n\n" +
+                 "【給誰用的】地圖那一層 —— 地圖是覆蓋在背景上的，\n" +
+                 "背景太亮會跟節點、連線搶注意力。對話與事件的背景**維持白色**，\n" +
+                 "那兩個環節的背景就是場景本身，調暗會變成另一件事。\n\n" +
+                 "⚠️ 是**逐一乘上去**的（`SpriteRenderer.color *= tint`），\n" +
+                 "所以美術自己畫的顏色差異會保留，不是整片塗成同一色。")]
+        public Color tint = Color.white;
+
         [Tooltip("放好之後檢查有沒有蓋滿相機，沒蓋滿就在 Console 提醒。\n\n" +
                  "**只是提醒，不會自己動位置** —— 取景是美術調過的\n" +
                  "（見 commit「房間美術重建：對齊美術原場景的實際畫面」），\n" +
@@ -66,7 +74,35 @@ namespace EldritchMile.Core
             spawned.transform.localRotation = Quaternion.identity;
             spawned.transform.localScale = new Vector3(scale, scale, 1f);
 
+            ApplyTint();
+
             if (warnIfNotCovering) WarnIfNotCovering();
+        }
+
+        /// <summary>
+        /// 把 <see cref="tint"/> 乘到生成出來那一份的每個 SpriteRenderer 上。
+        ///
+        /// 【為什麼是乘不是覆蓋】背景 prefab 底下的小物件本來就各有各的顏色
+        /// （有些是半透明的前景）。直接指定成同一個顏色會把美術的層次抹平，
+        /// 變成一片色塊；相乘則是「整張一起壓暗」，層次留著。
+        ///
+        /// 【為什麼改的是生成出來那一份】`Instantiate` 出來的是副本，
+        /// 改它不會動到 prefab 資產 —— 直接改 prefab 的話，
+        /// 對話與事件用同一張背景時也會跟著變暗。
+        /// </summary>
+        private void ApplyTint()
+        {
+            if (spawned == null) return;
+            if (tint == Color.white) return;   // 白色 ＝ 原樣，連跑都不用跑
+
+            SpriteRenderer[] all = spawned.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (all[i] == null) continue;
+
+                Color c = all[i].color;
+                all[i].color = new Color(c.r * tint.r, c.g * tint.g, c.b * tint.b, c.a * tint.a);
+            }
         }
 
         /// <summary>離場時呼叫。**一定要呼叫** —— 不收的話背景會留到下一站。</summary>
