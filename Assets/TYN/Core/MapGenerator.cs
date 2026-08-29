@@ -33,8 +33,71 @@ namespace EldritchMile.Core
                 ? GenerateDemoRoute(settings, rng)
                 : GenerateProcedural(settings, rng);
 
+            EnsureGuaranteedKinds(map, settings, rng);
             WarnIfUnreachable(map);
             return map;
+        }
+
+        /// <summary>
+        /// 清單裡的節點類型如果一個都沒抽到，就挑一個**中段的探索節點改成它**。
+        ///
+        /// ────────────────────────────────────────────────────────
+        /// 【為什麼需要】純機率會漏。實測 200 張圖：
+        /// **13% 完全沒有商店、6.5% 完全沒有對話**。
+        /// 測試的人抽到那種圖就整個環節驗不到，而且會以為是功能壞了而不是運氣。
+        ///
+        /// 【為什麼是「改類型」而不是「插一個節點」】
+        /// 插節點要重算連線，那會動到關卡形狀；改類型**完全不碰 `nextNodeIds`**，
+        /// 所以連通性、交叉、層數全部不受影響 —— 這是最小的介入。
+        ///
+        /// 【為什麼只挑探索節點】探索房是「其餘機率歸它」的那一類，
+        /// 本來就是填充用的，少一間最不痛。挑不到探索節點就放棄（不硬換戰鬥），
+        /// 那種圖小到連填充節點都沒有，硬塞只會讓它更奇怪。
+        ///
+        /// 【為什麼不含首排與 Boss 層】那兩層的類型是**固定**的
+        /// （`firstLayerKind` / `Boss`），改掉就破壞了「首排一定拿得到神牌」的保證。
+        /// </summary>
+        private static void EnsureGuaranteedKinds(MapData map, MapGenerationSettings s, System.Random rng)
+        {
+            if (map == null || s == null || s.guaranteedKinds == null || s.guaranteedKinds.Count == 0) return;
+
+            int top = map.MaxLayer;
+
+            for (int k = 0; k < s.guaranteedKinds.Count; k++)
+            {
+                MapNodeKind want = s.guaranteedKinds[k];
+
+                bool present = false;
+                for (int i = 0; i < map.allNodes.Count && !present; i++)
+                {
+                    if (map.allNodes[i].kind == want) present = true;
+                }
+                if (present) continue;
+
+                // 候選：中段（不含首排與 Boss 層）的探索節點
+                var candidates = new List<RunNodeData>();
+                for (int i = 0; i < map.allNodes.Count; i++)
+                {
+                    RunNodeData n = map.allNodes[i];
+                    if (n.layer <= 0 || n.layer >= top) continue;
+                    if (n.kind != MapNodeKind.Event) continue;
+                    candidates.Add(n);
+                }
+
+                if (candidates.Count == 0)
+                {
+                    Debug.LogWarning(
+                        $"[地圖生成] 這張圖保證不了「{want}」—— 中段沒有可以讓出來的探索節點。\n" +
+                        "地圖太小（層數或路徑數太少）。要嘛調大 Map Layers／Path Count，\n" +
+                        "要嘛把這一項從 Guaranteed Kinds 拿掉。");
+                    continue;
+                }
+
+                RunNodeData chosen = candidates[rng.Next(candidates.Count)];
+                chosen.kind = want;
+
+                Debug.Log($"[地圖生成] 補上保證的「{want}」：{chosen.nodeId} 由探索改成它（連線沒動）");
+            }
         }
 
         /// <summary>
@@ -290,6 +353,12 @@ namespace EldritchMile.Core
             roll -= s.shopChance;
 
             if (roll < s.specialEventChance) return MapNodeKind.SpecialEvent;
+            roll -= s.specialEventChance;
+
+            // ⚠️ 對話節點以前**不在這個表裡** —— 隨機地圖因此從來不會長出對話，
+            //    只有 DEMO 的固定路線寫死了幾個。換成隨機生成就整個環節測不到，
+            //    而且不會報錯，只會「怎麼玩都沒遇到對話」
+            if (roll < s.dialogueChance) return MapNodeKind.Dialogue;
 
             return MapNodeKind.Event;
         }

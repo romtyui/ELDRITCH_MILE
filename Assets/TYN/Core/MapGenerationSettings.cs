@@ -39,9 +39,31 @@ namespace EldritchMile.Core
         [Header("節點類型機率（中間層）")]
         [Range(0f, 1f)] public float combatChance = 0.55f;
         [Range(0f, 1f)] public float shopChance = 0.15f;
-        [Tooltip("C16：特殊事件，獲得神牌")]
-        [Range(0f, 1f)] public float specialEventChance = 0.10f;
+        [Tooltip("C16：特殊事件，獲得神牌。\n\n" +
+                 "⚠️ **首排已經由 First Layer Kind 保證有一次了**，這一格是「中段還會不會再長」。\n" +
+                 "目前設 0 —— `Stage_SpecialEvent` 只有一份、兩張牌固定、也沒有 once 保護，\n" +
+                 "再長出來玩家就是重看同一場祭壇戲。神牌內容變多了再調回來。")]
+        [Range(0f, 1f)] public float specialEventChance = 0f;
+
+        [Tooltip("與同行角色的機率卡牌對話（`dialogueNodeStage`）。\n\n" +
+                 "⚠️ **這一格以前不存在，所以隨機地圖從來不會長出對話節點** ——\n" +
+                 "只有 DEMO 的固定路線寫死了幾個，換成隨機生成就整個環節測不到了。\n" +
+                 "那種漏法不會報錯，只會「怎麼玩都沒遇到對話」。")]
+        [Range(0f, 1f)] public float dialogueChance = 0.15f;
         // 其餘機率歸 Event
+
+        [Tooltip("**一定要出現至少一次**的節點類型。\n\n" +
+                 "純機率的話 200 張圖裡會有 13% 完全沒有商店、6.5% 完全沒有對話 ——\n" +
+                 "測試的人抽到那種圖就整個環節驗不到，而且不會知道是運氣問題。\n\n" +
+                 "缺的話會挑一個**中段的探索節點改成它**：\n" +
+                 "只改類型、不動任何連線，所以連通性不受影響。\n\n" +
+                 "⚠️ 不必列 Boss 與神牌 —— 那兩個由層數固定，本來就一定有。\n" +
+                 "要純隨機就把這個清單清空。")]
+        public List<MapNodeKind> guaranteedKinds = new List<MapNodeKind>
+        {
+            MapNodeKind.Shop,
+            MapNodeKind.Dialogue,
+        };
 
         [Header("版面")]
         [Tooltip("第一層與最後一層距離上下邊界的百分比")]

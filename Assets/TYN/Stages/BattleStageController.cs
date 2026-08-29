@@ -148,6 +148,29 @@ public class BattleStageController : StageController
     // ==========================================
     // 接上宿主場景
     // ==========================================
+    // ==========================================
+    // ⚠️ 戰鬥的 2D 燈光是**兩顆一組**，缺一顆就是「看起來沒壞，但氣氛整個不見」
+    // ==========================================
+    //
+    // 專案的 URP 用的是 **2D Renderer**（`test'_Renderer` ＝ Renderer2DData），
+    // Blend Style 0 是 **Multiply**。戰鬥那個「一片黑、只有怪被打光」的畫面
+    // 是兩顆 Light2D 合出來的，兩顆都在 `Stage_Battle.prefab` 裡：
+    //
+    //   · `Global Light 2D`　　 Global、**黑色**、intensity 2.48、Multiply
+    //     → 把 Default／sceneUI 這兩個 sorting layer 整個乘成黑的
+    //   · `Freeform Light 2D`　 Freeform、偏藍、intensity 5.01、order 48
+    //     → 在那片黑上開一個看得見的區域（`PSBMonsterLightReveal` 靠它做明暗切換）
+    //
+    // ⚠️ **少了 Global 那顆不會有任何錯誤訊息** —— Multiply 沒有光源時
+    //    光照貼圖是白的，乘上去等於沒乘，所以畫面會是「全部亮著」而不是「黑畫面」。
+    //    症狀是「渲染掉了 / 沒氣氛」，而不是「東西不見了」，非常難聯想到燈。
+    //    （這顆原本是 `SampleScene` 的**場景根物件**，併進 EventScene 時漏掉了。）
+    //
+    // ⚠️ **不要把它搬回場景根**。它是 Multiply 的黑光，常駐的話
+    //    房間美術、地圖、對話立繪會跟著一起變黑。放在 Stage prefab 裡
+    //    才會「只有戰鬥的時候黑」—— StageHost 是 Instantiate / Destroy，
+    //    所以這一站結束燈也跟著消失。
+
     /// <summary>
     /// `Stage_Battle` 是 prefab，**prefab 存不了場景引用**。
     /// 戰鬥那一組原本在 `SampleScene` 裡靠 Inspector 指著場景物件（相機、BGM、

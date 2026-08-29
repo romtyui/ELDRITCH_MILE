@@ -24,6 +24,9 @@
 | 地圖多一種**有分支**的固定路線，首排固定神牌 | `DemoRouteShape.Branching`、`firstLayerKind` |
 | 生成完會檢查有沒有走不到／出不來的節點 | `MapGenerator.WarnIfUnreachable` |
 | 貪吃鬼那場戰鬥打到祭司 → 改成 `tua_khoo_tai` | `Event_hungry_glutton` |
+| 中段節點改隨機，補上對話節點與「一定會有」的保證 | `dialogueChance`、`guaranteedKinds` |
+| F1 面板加「指定對手開打」，Boss 終於驗得到 | `RunDebugPanel.quickBattleEnemyIds` |
+| 戰鬥的 `Global Light 2D` 補回 `Stage_Battle.prefab` | 併場景時漏掉的那顆黑色 Multiply 光 |
 
 ### 遺物的兩張圖
 
@@ -85,6 +88,83 @@
 
 ⚠️ 留空 `endButton` 會退回舊的「等一下、點一下或逾時就走」，
 `endMinSeconds` / `endAutoSeconds` 那兩格**只有那時才有作用**。
+
+### 中段節點改回隨機（2026-08-29 第六輪）
+
+`useDemoRoute` 關掉 → 走隨機生成。**固定的只有兩頭**：
+
+| | 誰決定 |
+|---|---|
+| 首排 ＝ 神牌 | `firstLayerKind`（層數固定，不是機率） |
+| 最後一層 ＝ Boss | `PickKind` 的第一行（層數固定） |
+| 中間全部 | `combatChance` / `shopChance` / `dialogueChance`，其餘歸探索 |
+
+現在的機率：戰鬥 0.45、商店 0.12、對話 0.15、神牌 **0**、其餘 0.28 歸探索。
+
+#### ⛔ 對話節點以前**根本不會出現在隨機地圖上**
+
+`PickKind` 的機率表裡從來沒有 `Dialogue` —— 只有 DEMO 的固定路線寫死了幾個。
+所以「換成隨機生成」等於**整個對話環節測不到**，
+而且不會報錯，只會「怎麼玩都沒遇到對話」。已補上 `dialogueChance`。
+
+#### 純機率會漏 —— `guaranteedKinds`
+
+實測 200 張圖：**13% 完全沒有商店、6.5% 完全沒有對話**。
+測試的人抽到那種圖會以為是功能壞了，而不是運氣。
+
+`MapGenerationSettings.guaranteedKinds`（預設 `Shop` + `Dialogue`）：
+缺的話挑一個**中段的探索節點改成它**。
+
+- **只改 `kind`，完全不碰 `nextNodeIds`** —— 所以連通性、交叉、層數都不受影響。
+  插一個新節點才要重算連線，那會動到關卡形狀。
+- 只挑**探索**節點下手（那類本來就是「其餘機率歸它」的填充），挑不到就放棄並警告。
+- 不含首排與 Boss 層 —— 動了就破壞「首排一定拿得到神牌」。
+
+**300 張圖驗過**：沒有商店 0、沒有對話 0、首排不是神牌 0、
+Boss 不是剛好一個 0、孤兒 0、死路 0。
+
+> DEMO 的分支路線沒有刪，`useDemoRoute` 打開就切回去。
+
+### Boss 的 F1 快捷
+
+F1 面板多一排「指定對手開打」。**Boss 只能從這裡驗** ——
+它在地圖最後一層，正常要打到它得先走完整張圖。
+
+跟上面那顆 `Battle` 按鈕的差別：那顆打的是「當下被預約的對手」（多半是雜魚）；
+這一排是先塞 `BattleStageController.PendingEnemyId` 再跳，
+**跟《貪吃鬼》事件叫戰鬥的是同一條路** —— 所以這裡驗得過的，事件那邊也會對。
+
+按鈕清單在 `RunDebugPanel.quickBattleEnemyIds`（預設五隻全列）。
+
+### ⛔ 戰鬥的燈掉了：`Global Light 2D` 沒跟著併進來
+
+**症狀**：戰鬥畫面「渲染掉了 / 沒氣氛」，但東西都在、也打得起來。
+
+**成因**：專案的 URP 用的是 **2D Renderer**（`test'_Renderer` ＝ `Renderer2DData`），
+Blend Style 0 是 **Multiply**。戰鬥那個「一片黑、只有怪被打光」的畫面
+是**兩顆 Light2D 合出來的**：
+
+| 燈 | 設定 | 作用 |
+|---|---|---|
+| `Global Light 2D` | Global、**黑色**、intensity 2.48、Multiply | 把 Default／sceneUI 整個乘成黑的 |
+| `Freeform Light 2D` | Freeform、偏藍、intensity 5.01、order 48 | 在那片黑上開一個看得見的區域 |
+
+`Freeform` 那顆在 `BattleSystemPrefab` 裡面，所以包成 `Stage_Battle.prefab` 時跟著走了；
+**`Global Light 2D` 是 `SampleScene` 的場景根物件，併進 `EventScene` 時漏掉了**
+（EventScene 一顆 Light2D 都沒有）。
+
+⚠️ **少那顆不會有任何錯誤訊息** —— Multiply 沒有光源時光照貼圖是白的，
+乘上去等於沒乘，所以畫面是「全部亮著」而不是「黑畫面」。
+症狀是「沒氣氛」不是「東西不見」，很難聯想到燈。
+
+**修法**：照 SampleScene 的設定原封不動複製一顆進 **`Stage_Battle.prefab`**。
+
+⚠️ **不要放回場景根** —— 它是 Multiply 的黑光，常駐的話房間美術、地圖、
+對話立繪會跟著一起變黑。放在 Stage prefab 裡才會「只有戰鬥的時候黑」：
+`StageHost` 是 Instantiate／Destroy，這一站結束燈也跟著消失。
+
+> 這是照 Romtyui 原場景**重建**的，數值一模一樣但**我沒有進 Play 看過** ——
+> 請他們對一眼是不是原本的味道。
 
 ### 地圖：分支路線與連線保證（2026-08-29 第五輪）
 

@@ -53,6 +53,19 @@ namespace EldritchMile.Core
         [Tooltip("一進遊戲就打開")]
         public bool openOnStart = false;
 
+        [Header("指定對手開打")]
+        [Tooltip("面板上「打誰」那一排按鈕。填的是 `EnemyData.enemyId`。\n\n" +
+                 "【為什麼要跟一般的「跳到 Battle」分開】那顆按鈕打的是\n" +
+                 "**當下被預約的對手**（多半是雜魚），Boss 這種只在最後一層出現的\n" +
+                 "根本沒辦法用它驗 —— 得先真的把整張圖走完。\n\n" +
+                 "⚠️ 填錯 id **不會報錯**，只會交給戰鬥組自己抽，\n" +
+                 "畫面上照樣打得起來但對手不是你指定的那一隻。\n" +
+                 "（`BattleStageController` 找不到時會把現有的 id 全部印到 Console）")]
+        public List<string> quickBattleEnemyIds = new List<string>
+        {
+            "boss", "fish_priest", "tua_khoo_tai", "coral_paguroidea", "minnow",
+        };
+
         [Header("外觀")]
         [Tooltip("面板寬度（像素）")]
         [Min(200)] public int width = 420;
@@ -166,6 +179,52 @@ namespace EldritchMile.Core
                 {
                     Debug.Log($"[除錯] 直接跳到 {t}");
                     GameFlowManager.Instance.DebugJumpToStage(t);
+                }
+                perRow++;
+            }
+            GUILayout.EndHorizontal();
+
+            DrawBattleJump();
+        }
+
+        /// <summary>
+        /// 指定對手直接開打。**Boss 只能用這個驗** ——
+        /// 它在地圖最後一層，正常要打到它得先走完整張圖。
+        ///
+        /// 【跟上面那顆 Battle 的差別】那顆打的是「當下被預約的對手」，
+        /// 這一排是先塞 `BattleStageController.PendingEnemyId` 再跳 ——
+        /// 跟《貪吃鬼》事件叫戰鬥的是**同一條路**，所以這裡驗得過的，事件那邊也會對。
+        /// </summary>
+        private void DrawBattleJump()
+        {
+            if (quickBattleEnemyIds == null || quickBattleEnemyIds.Count == 0) return;
+
+            GUILayout.Space(2);
+            GUILayout.Label("指定對手開打（Boss 只能從這裡驗）", labelStyle);
+
+            GUILayout.BeginHorizontal();
+            int perRow = 0;
+
+            for (int i = 0; i < quickBattleEnemyIds.Count; i++)
+            {
+                string id = quickBattleEnemyIds[i];
+                if (string.IsNullOrEmpty(id)) continue;
+
+                if (perRow >= 3)   // id 比 Stage 名長，一排三顆才看得見字
+                {
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    perRow = 0;
+                }
+
+                if (GUILayout.Button(id))
+                {
+                    Debug.Log($"[除錯] 指定對手「{id}」直接開打");
+
+                    // ⚠️ 一定要在跳轉**之前**塞 —— BattleStageController 是在
+                    //    OnStageEnter 讀它的，晚一步就讀到 null，變成交給戰鬥組自己抽
+                    BattleStageController.PendingEnemyId = id;
+                    GameFlowManager.Instance.DebugJumpToStage(StageType.Battle);
                 }
                 perRow++;
             }

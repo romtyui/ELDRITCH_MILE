@@ -18,14 +18,15 @@ MonoBehaviour:
   startNodeCount: 2
   midLayerMin: 2
   midLayerMax: 3
-  combatChance: 0.55
-  shopChance: 0.15
+  combatChance: 0.45
+  shopChance: 0.12
   specialEventChance: 0
+  dialogueChance: 0.15
   verticalMargin: 10
   horizontalMargin: 20
   horizontalJitter: 2
   firstLayerKind: 4
-  useDemoRoute: 1
+  useDemoRoute: 0
   demoRouteShape: 1
   demoRouteKinds: 05000000000000000300000004000000010000000000000005000000000000000300000002000000
   demoRouteLayers:
