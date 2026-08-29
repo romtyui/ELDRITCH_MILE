@@ -195,7 +195,9 @@ public class ProbabilityDialogueStageController : StageController
 
         if (endButton != null)
         {
-            // 出口只有這一顆鈕 —— 不逾時、不吃隨便一下點擊
+            // 出口只有這一顆鈕 —— 不逾時、不吃隨便一下點擊。
+            // 鎖住推進，不然玩家隨手一點就把結算那一頁跳掉了
+            if (PopupService.Instance != null) PopupService.Instance.LockAdvance = true;
             SetEndButtonVisible(true);
             yield break;
         }

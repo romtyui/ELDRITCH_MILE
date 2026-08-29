@@ -56,6 +56,21 @@ namespace EldritchMile.Core
         /// 而 `Drain()` 只有玩家**點擊推進**時才會被呼叫。
         /// 想在「最後一句打完的當下」做事（例如顯示結束鍵），用這個。
         /// </summary>
+        /// <summary>
+        /// 鎖住點擊推進 —— 結算那一頁只能由離開鍵收掉。
+        /// 見 <see cref="DialogueBoxUI.LockAdvance"/>。
+        ///
+        /// ⚠️ **離開那一站時記得解開。** 留著的話下一站的對話會整個點不動。
+        /// </summary>
+        /// <summary>解開推進鎖。給 `?.` 用的方法版 —— null 條件運算子不能接屬性 setter。</summary>
+        public void SetAdvanceUnlocked() { LockAdvance = false; }
+
+        public bool LockAdvance
+        {
+            get { return dialogueBox != null && dialogueBox.LockAdvance; }
+            set { if (dialogueBox != null) dialogueBox.LockAdvance = value; }
+        }
+
         public bool IsIdle => !HasPending && (dialogueBox == null || !dialogueBox.IsTyping);
 
         private void Awake()

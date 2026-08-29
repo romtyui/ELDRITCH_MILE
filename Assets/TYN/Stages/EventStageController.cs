@@ -278,6 +278,9 @@ public class EventStageController : ChoiceStageController
 
         if (PopupService.Instance != null && PopupService.Instance.IsIdle)
         {
+            // 結算那一頁鎖住點擊推進 —— 出口只剩離開鍵。
+            // 解鎖統一在 GameFlowManager 換站時做
+            PopupService.Instance.LockAdvance = true;
             SetEndButtonVisible(true);
         }
     }

@@ -891,8 +891,13 @@ public class BattleStageController : StageController
 
         if (endButton != null)
         {
+            // ⚠️ 結算這一頁鎖住點擊推進 —— 對話框的推進鍵是全幅透明的，
+            //    不鎖的話玩家隨手一點就把「拿到多少金幣」跳掉了。
+            //    出口只剩離開鍵。解鎖在 Report()
+            if (PopupService.Instance != null) PopupService.Instance.LockAdvance = true;
+
             SetEndButtonVisible(true);
-            yield break;      // 出口只有那顆鈕
+            yield break;
         }
 
         float t = 0f;
@@ -956,6 +961,10 @@ public class BattleStageController : StageController
     {
         if (reported) return;
         reported = true;
+
+        // ⚠️ **一定要解開。** 留著的話下一站的對話整個點不動 ——
+        //    而且那時看起來會像「遊戲卡住了」，很難聯想到是上一站沒收乾淨
+        if (PopupService.Instance != null) PopupService.Instance.LockAdvance = false;
 
         TutorialEventBus.OnSignalRaised -= HandleSignal;
         ReportComplete(result);

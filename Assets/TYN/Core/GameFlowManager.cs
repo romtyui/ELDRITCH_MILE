@@ -691,6 +691,18 @@ namespace EldritchMile.Core
 
             currentStage = next;
 
+            // ⚠️ **每次換站都把對話框的推進鎖解開。**
+            //
+            // 結算那一頁會鎖住點擊推進（見 DialogueBoxUI.LockAdvance），
+            // 讓玩家只能用離開鍵收掉。但只要有任何一條離場路徑忘了解鎖，
+            // 下一站的對話就會整個點不動 —— 而那看起來像「遊戲當掉」，
+            // 幾乎不可能聯想到是上一站沒收乾淨。
+            //
+            // 與其在每個 Stage 控制器的每個出口各補一次（漏一個就出事），
+            // 在這個唯一的換站點統一收。各控制器自己那份解鎖留著沒關係，
+            // 那是早一點解、這裡是保底。
+            PopupService.Instance?.SetAdvanceUnlocked();
+
             if (next != StageType.None && stageHost != null)
             {
                 StageController controller = stageHost.Load(next);

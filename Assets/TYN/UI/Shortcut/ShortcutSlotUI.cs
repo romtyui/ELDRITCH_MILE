@@ -95,7 +95,13 @@ namespace EldritchMile.UI.Shortcut
             // 拿那個值當「原位」，hover 離開時就會飛到容器頂端回不來。
             //
             // 改成第一次 hover 時才抓（那時排版一定跑完了），見 EnsureHome()。
-            homeCaptured = false;
+            //
+            // ⚠️ 但**固定格子會被重複 Bind**（每次背包變動都會）。
+            //    無條件清掉 homeCaptured 的話，下一次 EnsureHome() 會把
+            //    「此刻正被推出去的位置」記成原位 —— 用過的格子就再也回不來，
+            //    而且每用一次就再往外跑一截。所以已經量過的就別重量，改成歸位。
+            if (homeCaptured) RestoreHome();
+            else homeCaptured = false;
 
             gameObject.SetActive(true);
         }
@@ -123,8 +129,23 @@ namespace EldritchMile.UI.Shortcut
             frameVisible = false;
             ApplyTint(normalTint);
 
-            homeCaptured = false;
+            if (homeCaptured) RestoreHome();
             gameObject.SetActive(true);
+        }
+
+        /// <summary>
+        /// 回到量好的原位。**重新 Bind 時用** —— 見 Bind 裡的說明。
+        ///
+        /// 滑鼠還停在上面的話就維持推出的狀態（不然格子會在游標底下自己跳回去），
+        /// 等玩家真的移開時 OnPointerExit 會把它收回來。
+        /// </summary>
+        private void RestoreHome()
+        {
+            if (push != null) { StopCoroutine(push); push = null; }
+            if (!homeCaptured) return;
+
+            ((RectTransform)transform).anchoredPosition =
+                homePos + new Vector2(IsHovered ? hoverPushX : 0f, 0f);
         }
 
         /// <summary>
