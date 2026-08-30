@@ -591,14 +591,42 @@ namespace EldritchMile.UI.Shortcut
             //    寫帳面的話玩家會以為系統壞了（「明明說 +35 怎麼沒變」）。
             int hp0 = PlayerVitals.Hp, san0 = PlayerVitals.San;
 
+            // ── 戰鬥中的 HP 要走戰鬥單位，不能走 PlayerVitals ──
+            //
+            // PlayerVitals 寫的是 RunStateManager 的存檔值，而戰鬥中的血量在
+            // `BattleUnit.currentHp` —— 直接寫存檔值的話血條不會動，
+            // 而且戰鬥結束回存時整筆會被戰鬥單位的值蓋掉，等於白吃。
+            //
+            // 走 `Heal` / `TakeDamage` 則是他的正規入口：血條、狀態、
+            // 傷害修正都會照常跑。
+            BattleUnit unit = BattlePlayerUnit();
+            int battleHp0 = unit != null ? unit.currentHp : 0;
+
             // 先給再扣。反過來的話「回大量 HP、扣中等 SAN」那種食物
             // 會在 HP 很低時被自己的代價擋掉，而它本來就是要救命的
-            if (d.hpRestore > 0) PlayerVitals.HealHp(d.hpRestore);
+            if (unit != null)
+            {
+                if (d.hpRestore > 0) unit.Heal(d.hpRestore);
+
+                // ⚠️ TakeDamage 會被格擋吸收 —— 帶著格擋吃「奢侈的血塊」等於免費。
+                //    這是刻意接受的：直接改 currentHp 會跳過他的通知，血條不會更新
+                if (d.hpCost > 0) unit.TakeDamage(d.hpCost);
+            }
+            else
+            {
+                if (d.hpRestore > 0) PlayerVitals.HealHp(d.hpRestore);
+                if (d.hpCost > 0) PlayerVitals.SpendHp(d.hpCost);
+            }
+
+            // ⚠️ **SAN 不論在不在戰鬥裡都只寫 run 級的值。**
+            //    戰鬥中的 SAN 是 `EnergySystem`，而它**每回合都會 ResetEnergy()** ——
+            //    那是回合行動點，不是 run 級的理智值。往它加數字沒有意義
+            //    （下一回合就被重設掉），所以這裡不碰它
             if (d.sanRestore > 0) PlayerVitals.RestoreSan(d.sanRestore);
-            if (d.hpCost > 0) PlayerVitals.SpendHp(d.hpCost);
             if (d.sanCost > 0) PlayerVitals.SpendSan(d.sanCost);
 
-            int dHp = PlayerVitals.Hp - hp0, dSan = PlayerVitals.San - san0;
+            int dHp = unit != null ? unit.currentHp - battleHp0 : PlayerVitals.Hp - hp0;
+            int dSan = PlayerVitals.San - san0;
 
             if (dHp == 0 && dSan == 0)
             {
@@ -629,6 +657,22 @@ namespace EldritchMile.UI.Shortcut
         }
 
         /// <summary>
+        /// 現在正在戰鬥的話，回傳玩家的戰鬥單位；不在戰鬥中回傳 null。
+        ///
+        /// 用 `FindFirstObjectByType` 而不是快取 —— 戰鬥的 Stage 是動態載入的，
+        /// 快捷欄活得比它久，抓一次存起來下一場就是空參照了。
+        /// 這只在點下去的那一刻跑一次，不是每幀。
+        /// </summary>
+        private static BattleUnit BattlePlayerUnit()
+        {
+            BattleManager bm = Object.FindFirstObjectByType<BattleManager>();
+            if (bm == null) return null;
+
+            BattleUnit u = bm.playerUnit;
+            return u != null && u.isActiveAndEnabled ? u : null;
+        }
+
+        /// <summary>
         /// 代價付得起嗎。**扣到 0 或以下就算付不起** —— 與
         /// <see cref="PlayerVitals.SpendHp"/> 用同一條規矩，兩邊不能各判各的。
         /// </summary>
@@ -636,11 +680,25 @@ namespace EldritchMile.UI.Shortcut
         {
             if (d.hpCost <= 0 && d.sanCost <= 0) return true;
 
-            // 還沒進過戰鬥時 HP／SAN 尚未初始化。那時扣不動，也不該讓玩家白白用掉
-            if (!PlayerVitals.IsReady) return false;
+            // ⚠️ 戰鬥中要看戰鬥單位的血，不是存檔值 ——
+            //    存檔值在戰鬥期間不會跟著扣，拿它判斷會允許玩家把自己吃死
+            BattleUnit unit = BattlePlayerUnit();
+            if (unit != null)
+            {
+                if (d.hpCost > 0 && unit.currentHp - d.hpCost <= 0) return false;
+            }
+            else
+            {
+                // 還沒進過戰鬥時 HP／SAN 尚未初始化。那時扣不動，也不該讓玩家白白用掉
+                if (!PlayerVitals.IsReady) return false;
+                if (d.hpCost > 0 && PlayerVitals.Hp - d.hpCost <= 0) return false;
+            }
 
-            if (d.hpCost > 0 && PlayerVitals.Hp - d.hpCost <= 0) return false;
-            if (d.sanCost > 0 && PlayerVitals.San - d.sanCost <= 0) return false;
+            if (d.sanCost > 0)
+            {
+                if (!PlayerVitals.IsReady) return false;
+                if (PlayerVitals.San - d.sanCost <= 0) return false;
+            }
 
             return true;
         }

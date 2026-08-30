@@ -2084,3 +2084,112 @@ Refresh 每次背包變動、每次換環節都會跑，每次都喊會變洗版
 反過來說 **有三分之一的測試者不會體驗到遭遇對話** ——
 要讓它一定出現的話得調 `dialogueChance` 或把 Dialogue 放進保證清單，
 但保證清單只保證「地圖上有」，不保證「玩家走的那條路上有」。
+
+
+## 戰鬥中的食物與遺物（2026-08-30）
+
+**改用我方的快捷欄，藏掉他的 Props_Panel / Relics_Panel。**
+
+兩套面板在螢幕上位置完全重疊（我們本來就是照他的排版做的），
+所以只能留一套。留我方的理由：我方的欄直接讀 `RunContext`，
+不需要 `ItemEffectData` 資產就能正確顯示；他那套要填滿必須先建效果資產。
+
+### 為什麼他那兩個面板一直是空的
+
+```
+食物 → 需要 ItemData.battleItemEffect
+       12 件食物全部是 null（欄位根本沒被序列化過）
+遺物 → 需要 ItemData.relicEffect
+       全部 {fileID: 0}
+```
+
+⚠️ 更正先前的紀錄：`ItemEffectData` **有**兩個子類別
+（`HealItemEffectData`、`GainTemporaryStrengthItemEffectData`），
+只是專案裡一個資產都沒建。
+
+### 藏掉他的面板不影響遺物效果
+
+`BattleStageController` 抓 `ItemInventory` / `RelicsInventory` 用的是
+`GetComponentInChildren<T>(true)`（includeInactive），關掉之後仍然抓得到 ——
+**驗過**。遺物效果照樣由他的 `RelicsInventory` 觸發，只是不顯示。
+
+### 戰鬥中的 HP 要走 BattleUnit
+
+`ShortcutBarUI.HandleSlotClicked` 現在會先找 `BattleManager.playerUnit`：
+
+* **有**（在戰鬥中）→ `unit.Heal()` / `unit.TakeDamage()`
+* **沒有** → 照舊走 `PlayerVitals`
+
+⚠️ **不能在戰鬥中走 PlayerVitals** —— 它寫的是 `RunStateManager` 的存檔值，
+戰鬥中的血在 `BattleUnit.currentHp`。直接寫存檔值的話血條不會動，
+而且戰鬥結束回存時整筆會被戰鬥單位的值蓋掉，等於白吃。
+
+⚠️ `TakeDamage` 會被格擋吸收 —— 帶著格擋吃「奢侈的血塊」等於免費。
+刻意接受：直接改 `currentHp` 會跳過他的通知，血條不會更新。
+
+### ⚠️ 戰鬥中的 SAN 是「回合行動點」，不是 run 級理智值
+
+`EnergySystem.currentEnergy` **每回合都會 `ResetEnergy()`**
+（`BattleManager` 1680 / 1734 行）。所以食物的 `sanRestore` 在戰鬥中
+只寫 run 級的 `PlayerVitals`，**不碰 EnergySystem** —— 往它加數字下一回合就被重設。
+
+這一條要跟 Romtyui 確認：SAN 到底是 run 級資源還是回合資源？
+目前兩邊的語意對不起來（我方 0~100，他的 `maxEnergy` 預設 3 且每回合重設）。
+
+## 敵人分階（2026-08-30 定案）
+
+| enemyId | 血 | 階級 |
+|---|---|---|
+| minnow | 20 | Minion |
+| coral_paguroidea | 60 | Minion |
+| fish_priest | 50 | **Elite**（走 override 擺成「雜魚＋祭司＋雜魚」三隻魚）|
+| tua_khoo_tai | 80 | **Elite**（胖魚人）|
+
+⚠️ `tua_khoo_tai` 目前只有單隻的 formation，菁英會變成 1 隻。
+要跟 `fish_priest` 一樣是多隻的話，得請 Romtyui 補一個 formation 資產。
+
+## 商店金幣跑出畫面（2026-08-30）
+
+`MoneyText` 原本錨在畫面正中央再往左偏 760。`Canvas_Stage` 是
+`ScaleWithScreenSize / match 0.5`，**畫面比例一變，中央到邊緣的距離就跟著變**：
+
+```
+itch 常見的 960x600 內嵌（16:10）
+  scaleFactor = √(960/1920) × √(600/1080) = 0.527
+  畫面在參考單位下只有 1821 寬 → 半寬 910
+  文字左緣在 -920  →  出界 10 單位
+```
+
+改成錨在左上角、距角落固定 (40, 35)。1920x1080 下位置完全相同。
+
+⚠️ **這類「錨在中央 + 大偏移」的元件都有同樣的風險**，
+之後排 UI 時貼邊的東西一律錨到對應的角落。
+
+## 游標（2026-08-30）
+
+`Assets/TYN/UI/cursor_mat/` 三張原本 524x698 → 現在 **48x64**。
+
+* 524 遠超過 Unity 對 `Cursor.SetCursor` 的 128x128 文件上限，
+  也超過 Chrome 對 CSS 自訂游標的 128x128 上限
+* WebGL 的 `CursorMode.Auto` 會變成 canvas 的 `cursor: url(...)`，
+  而**瀏覽器在自訂游標圖會超出視窗邊界時會整張不畫、退回預設箭頭** ——
+  圖有 524px 寬，畫面邊緣就有五百多 px 的帶狀區域游標會變箭頭
+* 美術參考圖《游標在畫面上的樣子》裡游標約 40px 高，48x64 最接近
+* 同時取消壓縮：DXT 會把半透明邊緣壓出色塊，游標邊緣特別明顯
+
+## ⚠️ 離開遊戲鍵在 WebGL 上不可能有反應
+
+`Assets/Romtyui/codes/Units/OptionMenuUI.cs:158`
+
+```csharp
+public void QuitGame() {
+#if UNITY_EDITOR
+    UnityEditor.EditorApplication.isPlaying = false;
+#else
+    Application.Quit();     // ← WebGL 上是空操作
+#endif
+}
+```
+
+瀏覽器不允許腳本關閉分頁。exe 版正常。
+**這是 Romtyui 的檔案，還沒動** —— 要嘛 WebGL 時藏起來，要嘛改成「回主選單」。
