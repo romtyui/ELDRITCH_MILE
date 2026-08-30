@@ -13,24 +13,27 @@ MonoBehaviour:
   m_Name: Encounters_Village
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.EncounterPool
   entries:
-  - note: "\u6F01\u6751\u5E38\u898B\u3002\u8207\u53E6\u5916\u5169\u96BB\u540C\u968E\uFF0C\u6A5F\u5236\u4E0D\u540C"
+  - note: "\u83C1\u82F1\u968E\u3002\u539F\u672C\u662F\u4E00\u822C\u968E\uFF0C2026-08-30
+      \u4F9D\u6230\u9B25\u7D44\u610F\u898B\u4E0A\u8ABF"
     enemyId: coral_paguroidea
     weight: 10
-    tier: 0
+    tier: 1
     conditions: []
-  - note: "\u6F01\u6751\u5E38\u898B\u3002\u540C\u4E0A"
+  - note: "\u83C1\u82F1\u968E\u3002\u539F\u672C\u662F\u4E00\u822C\u968E\uFF0C2026-08-30
+      \u4F9D\u6230\u9B25\u7D44\u610F\u898B\u4E0A\u8ABF"
     enemyId: fish_priest
     weight: 10
-    tier: 0
+    tier: 1
     conditions: []
-  - note: "\u6F01\u6751\u5E38\u898B\u3002\u540C\u4E0A"
+  - note: "\u83C1\u82F1\u968E\u3002\u539F\u672C\u662F\u4E00\u822C\u968E\uFF0C2026-08-30
+      \u4F9D\u6230\u9B25\u7D44\u610F\u898B\u4E0A\u8ABF"
     enemyId: tua_khoo_tai
     weight: 10
-    tier: 0
+    tier: 1
     conditions: []
-  - note: "\u96DC\u9B5A\u3002\u6B0A\u91CD\u4F4E\u4E00\u9EDE\uFF0C\u7576\u8ABF\u5291\u7528"
+  - note: "\u4E00\u822C\u6230\u7684\u552F\u4E00\u5C0D\u624B\u300220 \u8840\uFF0C\u8A2D\u8A08\u4E0A\u5C31\u662F\u7D66\u73A9\u5BB6\u71B1\u8EAB\u7528\u7684"
     enemyId: minnow
-    weight: 5
+    weight: 10
     tier: 0
     conditions: []
   guaranteed:
