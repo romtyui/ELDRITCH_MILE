@@ -11,6 +11,7 @@ public class BattleUnit : MonoBehaviour
 
     public event Action OnHpChanged;
     public event Action OnStatusChanged;
+
     [Header("Unit Type")]
     public bool isPlayerUnit;
 
@@ -21,13 +22,14 @@ public class BattleUnit : MonoBehaviour
         currentHp = maxHp;
         OnHpChanged?.Invoke();
     }
+
     public Dictionary<StatusType, int> GetAllStatuses()
     {
         return new Dictionary<StatusType, int>(statuses);
     }
+
     public virtual void OnTurnStart()
     {
-
         ResolveRegenerationAtTurnStart();
         ResolveHardenAtTurnStart();
     }
@@ -38,10 +40,12 @@ public class BattleUnit : MonoBehaviour
         ClearEndOfTurnStatuses();
         TickTemporaryStatuses();
     }
+
     protected virtual void ClearEndOfTurnStatuses()
     {
         ClearStatusCompletely(StatusType.TemporaryStrength);
     }
+
     public virtual void ClearStatusCompletely(StatusType statusType)
     {
         if (!statuses.ContainsKey(statusType))
@@ -75,6 +79,7 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 已完全重置");
     }
+
     public virtual void DealDamageTo(BattleUnit target, int baseDamage)
     {
         if (target == null)
@@ -88,7 +93,7 @@ public class BattleUnit : MonoBehaviour
         if (damage < 0)
             damage = 0;
 
-        target.TakeDamage(damage);
+        target.TakeDamage(damage, this);
 
         Debug.Log($"{unitName} 對 {target.unitName} 造成 {damage} 傷害");
     }
@@ -170,6 +175,11 @@ public class BattleUnit : MonoBehaviour
 
     public virtual void TakeDamage(int amount)
     {
+        TakeDamage(amount, null);
+    }
+
+    public virtual void TakeDamage(int amount, BattleUnit damageSource)
+    {
         int hpBefore = currentHp;
 
         int remaining = amount;
@@ -209,6 +219,9 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}");
 
+        if (realHpDamage > 0)
+            TryTriggerCounter(damageSource);
+
         if (currentHp <= 0)
         {
             Die();
@@ -219,6 +232,48 @@ public class BattleUnit : MonoBehaviour
         }
 
         Debug.Log($"[Damage] {unitName} take {amount}, realHpDamage = {realHpDamage}, HP = {currentHp}");
+    }
+
+    private void TryTriggerCounter(BattleUnit damageSource)
+    {
+        if (damageSource == null)
+            return;
+
+        if (damageSource == this)
+            return;
+
+        int counterAmount = GetStatus(StatusType.Counter);
+
+        if (counterAmount <= 0)
+            return;
+
+        int finalCounterDamage = counterAmount;
+
+        ModifierSystem modifierSystem = ModifierSystem.Instance;
+
+        if (modifierSystem != null)
+        {
+            ModifierQuery query = new ModifierQuery(
+                ModifierType.CounterDamage,
+                this,
+                damageSource,
+                null
+            );
+
+            query.roundingMode = ModifierRoundingMode.Nearest;
+            query.clampResultToZero = true;
+
+            finalCounterDamage = modifierSystem.ModifyInt(query, finalCounterDamage);
+        }
+
+        if (finalCounterDamage <= 0)
+            return;
+
+        Debug.Log(
+            $"{unitName} 的反擊發動，反擊層數 {counterAmount}，最終反擊傷害 {finalCounterDamage}，目標：{damageSource.unitName}"
+        );
+
+        damageSource.TakeDamage(finalCounterDamage);
     }
 
     private void ReduceRegenerationOnDamage()
@@ -232,6 +287,7 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 受到傷害，再生層數減少 1，剩餘 {GetStatus(StatusType.Regeneration)}");
     }
+
     protected virtual void OnAfterHpDamageTaken(int realHpDamage)
     {
     }
@@ -372,6 +428,7 @@ public class BattleUnit : MonoBehaviour
     {
         return GetStatus(statusType) > 0;
     }
+
     public virtual void SetStatus(StatusType statusType, int amount)
     {
         if (amount <= 0)
@@ -389,11 +446,13 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 的 {statusType} 被設定為 {amount}");
     }
+
     public void NotifyUnitChanged()
     {
         OnHpChanged?.Invoke();
         OnStatusChanged?.Invoke();
     }
+
     public List<StatusSnapshotEntry> CaptureStatusSnapshot()
     {
         List<StatusSnapshotEntry> result = new List<StatusSnapshotEntry>();
@@ -408,6 +467,7 @@ public class BattleUnit : MonoBehaviour
 
         return result;
     }
+
     public void RestoreStatusSnapshot(List<StatusSnapshotEntry> snapshot)
     {
         statuses.Clear();
@@ -446,6 +506,7 @@ public class BattleUnit : MonoBehaviour
 
         RemoveStatus(StatusType.Poison, 1);
     }
+
     private void ResolveHardenAtTurnStart()
     {
         int harden = GetStatus(StatusType.Harden);
@@ -457,6 +518,7 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 的硬化發動，回合開始獲得 {harden} 點護盾");
     }
+
     private void ResolveRegenerationAtTurnStart()
     {
         int regeneration = GetStatus(StatusType.Regeneration);
@@ -476,6 +538,7 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 的再生發動，層數 {regeneration}，恢復 {healAmount} 點生命");
     }
+
     private void TickTemporaryStatuses()
     {
         TickStatus(StatusType.Weak);
@@ -483,6 +546,7 @@ public class BattleUnit : MonoBehaviour
         TickStatus(StatusType.Frail);
 
         // Strength 通常不自然下降，所以不 Tick。
+        // Counter 與 Strength 一樣，不自然下降。
         // Poison 已經在 OnTurnStart 裡處理。
     }
 
@@ -500,9 +564,11 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 狀態 {statusType} 回合結束減少 1");
     }
+
     protected virtual void OnDamagedButAlive()
     {
     }
+
     protected virtual void Die()
     {
         Debug.Log($"{unitName} 死亡");

@@ -10,6 +10,9 @@ public class BattleDeck : MonoBehaviour
     private List<CardInstance> hand = new();
     private List<CardInstance> discardPile = new();
     private List<CardInstance> exhaustPile = new();
+    private List<CardInstance> playedCardsThisTurn = new();
+
+    public IReadOnlyList<CardInstance> PlayedCardsThisTurn => playedCardsThisTurn;
 
     private Dictionary<string, int> usedTokenCounts = new();
 
@@ -25,6 +28,7 @@ public class BattleDeck : MonoBehaviour
     [SerializeField] private List<string> debugHand = new();
     [SerializeField] private List<string> debugDiscardPile = new();
     [SerializeField] private List<string> debugExhaustPile = new();
+    [SerializeField] private List<string> debugPlayedCardsThisTurn = new();
 
     private Dictionary<string, int> playedTokenCounts = new Dictionary<string, int>();
 
@@ -41,6 +45,7 @@ public class BattleDeck : MonoBehaviour
         hand.Clear();
         discardPile.Clear();
         exhaustPile.Clear();
+        playedCardsThisTurn.Clear();
         usedTokenCounts.Clear();
         foreach (CardData card in startingDeck)
         {
@@ -147,7 +152,10 @@ public class BattleDeck : MonoBehaviour
         if (card == null || card.data == null)
             return;
 
-        RegisterTokenPlayed(card);
+        if (playedCardsThisTurn == null)
+            playedCardsThisTurn = new List<CardInstance>();
+
+        playedCardsThisTurn.Add(card);
 
         if (hand.Remove(card))
         {
@@ -156,6 +164,8 @@ public class BattleDeck : MonoBehaviour
             else
                 discardPile.Add(card);
         }
+
+        Debug.Log($"[BattleDeck] 本回合已使用卡牌：{card.data.cardName}，目前累積 {playedCardsThisTurn.Count} 張");
 
         RefreshDebugView();
     }
@@ -174,6 +184,15 @@ public class BattleDeck : MonoBehaviour
         }
 
         hand.RemoveAll(card => card == null || card.data == null || !card.data.retain);
+
+        if (playedCardsThisTurn != null)
+        {
+            Debug.Log(
+                $"[BattleDeck] 玩家回合結束，清除本回合已使用卡牌紀錄，共 {playedCardsThisTurn.Count} 張"
+            );
+
+            playedCardsThisTurn.Clear();
+        }
 
         RefreshDebugView();
     }
@@ -289,6 +308,7 @@ public class BattleDeck : MonoBehaviour
         FillDebugList(debugHand, hand);
         FillDebugList(debugDiscardPile, discardPile);
         FillDebugList(debugExhaustPile, exhaustPile);
+        FillDebugList(debugPlayedCardsThisTurn, playedCardsThisTurn);
     }
 
     private void FillDebugList(List<string> debugList, List<CardInstance> source)
