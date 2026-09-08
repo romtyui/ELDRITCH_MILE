@@ -5,12 +5,6 @@ using UnityEngine.UI;
 using UnityEngine.InputSystem;
 using EldritchMile.Core;
 
-// ⚠️ Assets/TYN/_Archive/Scripts/PerspectiveMapGenerator.cs 在**全域命名空間**
-//    也定義了 RunNodeData 與 MapData，會蓋掉 EldritchMile.Core 那組
-//    （症狀是「MapData 沒有 GetNode」這種看起來莫名其妙的錯誤）。
-//    別名不能跟全域型別同名（CS0576），所以前面加 Core。
-using CoreMapData = EldritchMile.Core.MapData;
-using CoreNode = EldritchMile.Core.RunNodeData;
 
 
 namespace EldritchMile.Map3D
@@ -25,8 +19,8 @@ namespace EldritchMile.Map3D
     /// 附帶好處：3D 世界與遊戲主相機完全隔離，不必動現有的 2D Renderer 設定。
     ///
     /// 【資料層零改動】
-    /// 沿用 CoreNode 的 xPercent / yPercent（**0~100，不是 0~1**），
-    /// 直接鋪到地面的 XZ 平面。CoreMapData 與 MapGenerator 一行都不用改。
+    /// 沿用 RunNodeData 的 xPercent / yPercent（**0~100，不是 0~1**），
+    /// 直接鋪到地面的 XZ 平面。MapData 與 MapGenerator 一行都不用改。
     ///
     /// 【與舊的 MapView 並存】
     /// 舊那支留著沒動，要切回去只要換 prefab。萬一測試前發現不對，
@@ -54,6 +48,12 @@ namespace EldritchMile.Map3D
         [Tooltip("節點浮在地面之上多高，避免 z-fighting")]
         public float nodeLift = 0.02f;
 
+        [Tooltip("棋子的世界高度。**不用倍率是刻意的** —— 各種節點圖的解析度不同，寫倍率會大小不一")]
+        public float pinWorldHeight = 0.9f;
+
+        [Tooltip("底座圓環的世界直徑")]
+        public float ringWorldSize = 0.5f;
+
         [Header("節點圖（依種類）")]
         public Sprite spriteEvent;
         public Sprite spriteCombat;
@@ -80,7 +80,7 @@ namespace EldritchMile.Map3D
         public RectTransform tooltipAnchor;
 
         // ==========================================
-        private CoreMapData boundMap;
+        private MapData boundMap;
         private readonly Dictionary<string, MapNode3D> spawned = new Dictionary<string, MapNode3D>();
         private readonly List<LineRenderer> lines = new List<LineRenderer>();
         private MapNode3D hovered;
@@ -107,7 +107,7 @@ namespace EldritchMile.Map3D
         // 建圖
         // ==========================================
 
-        private void Build(CoreMapData map)
+        private void Build(MapData map)
         {
             Clear();
             boundMap = map;
@@ -120,7 +120,7 @@ namespace EldritchMile.Map3D
 
             for (int i = 0; i < map.allNodes.Count; i++)
             {
-                CoreNode d = map.allNodes[i];
+                RunNodeData d = map.allNodes[i];
                 if (d == null) continue;
 
                 MapNode3D n = Instantiate(nodePrefab, world);
@@ -128,7 +128,12 @@ namespace EldritchMile.Map3D
                 n.transform.localRotation = Quaternion.identity;
                 n.gameObject.name = "Node_" + d.nodeId;
 
-                if (n.pin != null) n.pin.sprite = SpriteFor(d);
+                if (n.pin != null)
+                {
+                    n.pin.sprite = SpriteFor(d);
+                    FitPin(n.pin);
+                }
+                if (n.ring != null) FitRing(n.ring);
 
                 // 棋子要面向地圖相機，不是主相機
                 YBillboard bb = n.pin != null ? n.pin.GetComponent<YBillboard>() : null;
@@ -142,10 +147,43 @@ namespace EldritchMile.Map3D
         }
 
         /// <summary>
+        /// 把棋子縮到指定的世界高度，並讓它**站在地面上**（底邊貼地，不是中心貼地）。
+        ///
+        /// 【為什麼不用固定倍率】節點圖的解析度各不相同（512、442…），
+        /// 同一個 localScale 會讓它們大小差好幾倍。指定「要多高」才是穩的。
+        /// </summary>
+        private void FitPin(SpriteRenderer sr)
+        {
+            if (sr == null || sr.sprite == null) return;
+
+            float h = sr.sprite.bounds.size.y;
+            if (h <= 0.0001f) return;
+
+            float k = pinWorldHeight / h;
+            sr.transform.localScale = new Vector3(k, k, 1f);
+
+            // sprite 的樞紐在中心，所以往上抬半個身高才會底邊貼地
+            Vector3 p = sr.transform.localPosition;
+            p.y = pinWorldHeight * 0.5f;
+            sr.transform.localPosition = p;
+        }
+
+        private void FitRing(SpriteRenderer sr)
+        {
+            if (sr == null || sr.sprite == null) return;
+
+            float w = sr.sprite.bounds.size.x;
+            if (w <= 0.0001f) return;
+
+            float k = ringWorldSize / w;
+            sr.transform.localScale = new Vector3(k, k, 1f);
+        }
+
+        /// <summary>
         /// xPercent / yPercent（**0~100**）換算成地面上的座標。
         /// y 走的是 Z 軸 —— 地面是平躺的，畫面上的「上」在 3D 裡是「遠」。
         /// </summary>
-        private Vector3 WorldPosOf(CoreNode d)
+        private Vector3 WorldPosOf(RunNodeData d)
         {
             return new Vector3(
                 (d.xPercent / 100f - 0.5f) * groundSize.x,
@@ -153,7 +191,7 @@ namespace EldritchMile.Map3D
                 (d.yPercent / 100f - 0.5f) * groundSize.y);
         }
 
-        private Sprite SpriteFor(CoreNode d)
+        private Sprite SpriteFor(RunNodeData d)
         {
             switch (d.kind)
             {
@@ -168,19 +206,19 @@ namespace EldritchMile.Map3D
             }
         }
 
-        private void BuildLines(CoreMapData map)
+        private void BuildLines(MapData map)
         {
             Material mat = lineMaterial != null
                 ? lineMaterial : new Material(Shader.Find("Sprites/Default"));
 
             for (int i = 0; i < map.allNodes.Count; i++)
             {
-                CoreNode a = map.allNodes[i];
+                RunNodeData a = map.allNodes[i];
                 if (a == null || a.nextNodeIds == null) continue;
 
                 for (int k = 0; k < a.nextNodeIds.Count; k++)
                 {
-                    CoreNode b = map.GetNode(a.nextNodeIds[k]);
+                    RunNodeData b = map.GetNode(a.nextNodeIds[k]);
                     if (b == null) continue;
 
                     GameObject go = new GameObject("Line_" + a.nodeId + "_" + b.nodeId);
@@ -225,7 +263,7 @@ namespace EldritchMile.Map3D
         {
             if (boundMap == null) return;
 
-            CoreNode cur = boundMap.CurrentNode;
+            RunNodeData cur = boundMap.CurrentNode;
             List<string> reachable = cur != null ? cur.nextNodeIds : new List<string>();
             bool atStart = string.IsNullOrEmpty(boundMap.currentNodeId);
 
@@ -321,7 +359,7 @@ namespace EldritchMile.Map3D
         }
 
         // ==========================================
-        public void OnNodeClicked(CoreNode node)
+        public void OnNodeClicked(RunNodeData node)
         {
             if (node == null || moving) return;
             if (GameFlowManager.Instance == null) return;
@@ -331,7 +369,7 @@ namespace EldritchMile.Map3D
             StartCoroutine(EnterAfterFrame(node));
         }
 
-        private IEnumerator EnterAfterFrame(CoreNode node)
+        private IEnumerator EnterAfterFrame(RunNodeData node)
         {
             moving = true;
             yield return null;   // 階段 1 還沒有棋子移動動畫，先留這一格

@@ -1,12 +1,6 @@
 using UnityEngine;
 using EldritchMile.Core;
 
-// ⚠️ Assets/TYN/_Archive/Scripts/PerspectiveMapGenerator.cs 在**全域命名空間**
-//    也定義了 RunNodeData 與 MapData，會蓋掉 EldritchMile.Core 那組
-//    （症狀是「MapData 沒有 GetNode」這種看起來莫名其妙的錯誤）。
-//    別名不能跟全域型別同名（CS0576），所以前面加 Core。
-using CoreMapData = EldritchMile.Core.MapData;
-using CoreNode = EldritchMile.Core.RunNodeData;
 
 
 namespace EldritchMile.Map3D
@@ -24,7 +18,7 @@ namespace EldritchMile.Map3D
     /// </summary>
     public class MapNode3D : MonoBehaviour
     {
-        public CoreNode Data { get; private set; }
+        public RunNodeData Data { get; private set; }
 
         [Header("組件")]
         [Tooltip("直立的棋子本體。應該掛 YBillboard")]
@@ -66,7 +60,7 @@ namespace EldritchMile.Map3D
         private bool pinHomeCaptured;
 
         // ==========================================
-        public void Init(CoreNode data, MapView3D owner)
+        public void Init(RunNodeData data, MapView3D owner)
         {
             Data = data;
             view = owner;

@@ -2,6 +2,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
+// ⚠️ 這一批是封存的舊碼，包進 namespace 是為了**不要污染全域命名空間**。
+//    它們宣告的 RunNodeData / MapData 與 EldritchMile.Core 那組同名，
+//    放在全域的話會蓋掉正式那組 —— 症狀是新檔案裡「MapData 沒有 GetNode」
+//    這種看起來莫名其妙的錯誤，而且完全不會指向這裡。
+//    （MapView.cs 第 9 行早就記過這個坑）
+namespace EldritchMile.Archive
+{
+
 [RequireComponent(typeof(CanvasGroup))]
 public class PerspectiveNode : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
@@ -77,4 +85,5 @@ public class PerspectiveNode : MonoBehaviour, IPointerClickHandler, IPointerEnte
     {
         if (isSelectable) transform.localScale = Vector3.one;
     }
+}
 }
