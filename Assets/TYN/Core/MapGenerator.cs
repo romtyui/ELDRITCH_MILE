@@ -33,6 +33,8 @@ namespace EldritchMile.Core
             MapData map;
             if (settings.useDemoRoute)
                 map = GenerateDemoRoute(settings, rng);
+            else if (settings.layout == MapLayout.Terrain)
+                map = GenerateTerrain(settings, rng);
             else if (settings.layout == MapLayout.Organic)
                 map = GenerateOrganic(settings, rng);
             else

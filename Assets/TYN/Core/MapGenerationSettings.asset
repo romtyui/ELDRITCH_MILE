@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 966927c2a5887794ca843a3863c836e0, type: 3}
   m_Name: MapGenerationSettings
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.MapGenerationSettings
-  layout: 1
+  layout: 2
   mapLayers: 8
   gridColumns: 5
   pathCount: 4
@@ -30,6 +30,13 @@ MonoBehaviour:
   organicAngleJitter: 0.4
   organicMinSpacing: 9
   organicCrossLink: 0.35
+  terrainMap: {fileID: 2800000, guid: 4e0b829dd9899a0438f9506acedfba48, type: 3}
+  waterThreshold: 0.5
+  coastRange: 8
+  coastBias: 2.5
+  candidatesPerNode: 24
+  maxForwardLinks: 2
+  maxLayerJump: 1
   verticalMargin: 10
   horizontalMargin: 20
   horizontalJitter: 2

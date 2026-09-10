@@ -88,6 +88,28 @@ namespace EldritchMile.Core
         [Tooltip("額外橫向連線的機率。這是「選擇更自由」的來源 —— 0 就是純樹、只能往前")]
         [Range(0f, 1f)] public float organicCrossLink = 0.35f;
 
+        [Header("Terrain 擺法（layout = Terrain 才生效）")]
+        [Tooltip("拿來判斷地形的底圖。要打開 Read/Write。留空則退回 Organic")]
+        public Texture2D terrainMap;
+
+        [Tooltip("亮度低於這個值算水域，不放節點。底圖實測雙峰分在 0.5 左右")]
+        [Range(0f, 1f)] public float waterThreshold = 0.5f;
+
+        [Tooltip("離水多近算「海岸」。真實地圖的聚落多半靠水，這裡加權")]
+        [Range(0f, 30f)] public float coastRange = 8f;
+
+        [Tooltip("海岸的權重倍率。1 = 不特別偏好，3 = 明顯往岸邊聚")]
+        [Range(1f, 6f)] public float coastBias = 2.5f;
+
+        [Tooltip("每個節點要試幾個候選點。越多分佈越均勻（藍雜訊），代價是生成變慢")]
+        [Range(4, 60)] public int candidatesPerNode = 24;
+
+        [Tooltip("每一站最多幾條往前的路。太多會變成三角網格，太少會退回一直線")]
+        [Range(1, 5)] public int maxForwardLinks = 2;
+
+        [Tooltip("連線最多容許幾層落差。1 = 只能往前一層，2 = 可以跳一層（路更自由）")]
+        [Range(1, 3)] public int maxLayerJump = 1;
+
         [Tooltip("第一層與最後一層距離上下邊界的百分比")]
         [Range(0f, 30f)] public float verticalMargin = 10f;
 
@@ -155,6 +177,13 @@ namespace EldritchMile.Core
     {
         Grid = 0,
         Organic = 1,
+
+        /// <summary>
+        /// 讀底圖的地形來擺節點：水域不放、海岸邊加權，
+        /// 再用 best-candidate 取樣（藍雜訊）避免擠在一起，
+        /// 最後用 Delaunay 三角化連線 —— **三角化是平面圖，連線保證不交叉**。
+        /// </summary>
+        Terrain = 2,
     }
 
     public enum DemoRouteShape
