@@ -104,6 +104,15 @@ namespace EldritchMile.Core
         [Tooltip("每個節點要試幾個候選點。越多分佈越均勻（藍雜訊），代價是生成變慢")]
         [Range(4, 60)] public int candidatesPerNode = 24;
 
+        [Tooltip("連線最長幾 %。太長會出現橫跨半張圖的斜線；太短圖會斷開、節點被丟掉")]
+        [Range(10f, 60f)] public float maxLinkDistance = 22f;
+
+        [Tooltip("Terrain 的連線方式。Triangulation = 現行（密、像網格）；SpanningTree = 稀疏（像道路）")]
+        public TerrainLinkMode linkMode = TerrainLinkMode.Triangulation;
+
+        [Tooltip("SpanningTree 用：主幹之外額外加線的機率。0 = 純樹只有一條路，0.3 左右開始有分岔")]
+        [Range(0f, 1f)] public float extraLinkChance = 0.3f;
+
         [Tooltip("每一站最多幾條往前的路。太多會變成三角網格，太少會退回一直線")]
         [Range(1, 5)] public int maxForwardLinks = 2;
 
@@ -184,6 +193,21 @@ namespace EldritchMile.Core
         /// 最後用 Delaunay 三角化連線 —— **三角化是平面圖，連線保證不交叉**。
         /// </summary>
         Terrain = 2,
+    }
+
+    /// <summary>
+    /// Terrain 擺法要怎麼連線。兩種都只用 Delaunay 的邊，所以都不會交叉。
+    /// </summary>
+    public enum TerrainLinkMode
+    {
+        /// <summary>三角化裡所有「跳數差 1」的邊全留。密，看起來像結構圖。</summary>
+        Triangulation = 0,
+
+        /// <summary>
+        /// 每個節點只保證一條主幹出邊，其餘依機率加回。
+        /// 稀疏，看起來像走出來的路。
+        /// </summary>
+        SpanningTree = 1,
     }
 
     public enum DemoRouteShape

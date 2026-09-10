@@ -277,7 +277,8 @@ namespace EldritchMile.Core
                 }
             }
 
-            for (int i = 0; i < n; i++) if (hop[i] < 0) hop[i] = maxHop;
+            // ⚠️ 這裡**故意不補** hop < 0。濾掉長邊之後圖可能斷開，
+            //    -1 就是「連不到起點」的記號，呼叫端要靠它把那些點丟掉
             return hop;
         }
 
@@ -370,6 +371,35 @@ namespace EldritchMile.Core
         // 入口
         // ==========================================
 
+        /// <summary>
+        /// 把長度超過 maxDist 的邊濾掉。
+        ///
+        /// Delaunay 的外圍邊（凸包附近）本來就會很長 —— 那些邊在畫面上
+        /// 是橫跨半張圖的斜線，看起來像結構圖的輔助線而不是路。
+        ///
+        /// 副作用是好的：邊短了之後要走更多步才到得了對岸，
+        /// **BFS 跳數自然變多**，也就是一場 run 變長。
+        /// </summary>
+        private static List<List<int>> FilterByLength(
+            List<List<int>> adj, List<Vector2> pts, float maxDist)
+        {
+            var outAdj = new List<List<int>>();
+            float max2 = maxDist * maxDist;
+
+            for (int i = 0; i < adj.Count; i++)
+            {
+                var row = new List<int>();
+                for (int k = 0; k < adj[i].Count; k++)
+                {
+                    int nb = adj[i][k];
+                    if ((pts[nb] - pts[i]).sqrMagnitude > max2) continue;
+                    row.Add(nb);
+                }
+                outAdj.Add(row);
+            }
+            return outAdj;
+        }
+
         /// <summary>三角形清單 → 每個點的鄰居清單。分層與連線都靠它。</summary>
         private static List<List<int>> BuildAdjacency(List<int[]> tris, int n)
         {
@@ -405,20 +435,40 @@ namespace EldritchMile.Core
 
             // ⚠️ 先三角化，再用圖上的跳數分層。順序不能反 —— 見 LayersByHops
             List<int[]> tris = Delaunay(pts);
-            List<List<int>> adj = BuildAdjacency(tris, pts.Count);
+            List<List<int>> adjAll = BuildAdjacency(tris, pts.Count);
+
+            // ⚠️ **把太長的邊濾掉**，這一步同時解兩件事：
+            //    ① 三角化的外圍邊本來就很長，畫出來是橫跨半張圖的斜線
+            //    ② 邊短了之後要走更多步才到得了對岸 → BFS 跳數變多 → 層數接近 mapLayers
+            //    不濾的話 40 個節點只會有 4 層，每層 10 個，「下一層」的鄰居隔半張圖
+            List<List<int>> adj = FilterByLength(adjAll, pts, s.maxLinkDistance);
 
             int maxHop;
-            int[] layer = LayersByHops(pts, adj, out maxHop);
+            int[] hop = LayersByHops(pts, adj, out maxHop);
+
+            // 濾完之後圖可能斷開 —— 連不到起點的那些點直接不要，
+            // 硬留著就是玩家永遠走不到的節點
+            var remap = new int[pts.Count];
+            for (int i = 0; i < pts.Count; i++) remap[i] = -1;
 
             var map = new MapData();
             var nodes = new List<RunNodeData>();
+            var keptPts = new List<Vector2>();
+            var keptLayer = new List<int>();
+
             for (int i = 0; i < pts.Count; i++)
             {
+                if (hop[i] < 0) continue;
+
+                remap[i] = nodes.Count;
+                keptPts.Add(pts[i]);
+                keptLayer.Add(hop[i]);
+
                 var d = new RunNodeData
                 {
-                    nodeId = "Node_" + layer[i] + "_" + i,
-                    kind = PickKind(s, rng, layer[i], maxHop + 1),
-                    layer = layer[i],
+                    nodeId = "Node_" + hop[i] + "_" + i,
+                    kind = PickKind(s, rng, hop[i], maxHop + 1),
+                    layer = hop[i],
                     dressingSeed = rng.Next(),
                     xPercent = pts[i].x,
                     yPercent = pts[i].y,
@@ -427,22 +477,52 @@ namespace EldritchMile.Core
                 map.allNodes.Add(d);
             }
 
-            // 只留「跳數差剛好 1」的三角化邊。因為層數就是 BFS 跳數，
-            // 每個節點必然有前有後 —— 不需要補洞，平面性完整保留
-            var seen = new HashSet<long>();
-            for (int t = 0; t < tris.Count; t++)
+            if (nodes.Count < 3) return GenerateOrganic(s, rng);
+
+            // 鄰接表換成新的索引
+            var adjK = new List<List<int>>();
+            for (int i = 0; i < nodes.Count; i++) adjK.Add(new List<int>());
+            for (int i = 0; i < pts.Count; i++)
             {
-                int[] tr = tris[t];
-                HopLink(nodes, layer, tr[0], tr[1], seen);
-                HopLink(nodes, layer, tr[1], tr[2], seen);
-                HopLink(nodes, layer, tr[2], tr[0], seen);
+                if (remap[i] < 0) continue;
+                for (int k = 0; k < adj[i].Count; k++)
+                {
+                    int nb = adj[i][k];
+                    if (remap[nb] < 0) continue;
+                    adjK[remap[i]].Add(remap[nb]);
+                }
             }
 
-            // ⚠️ 三角化的邊太多，畫出來像網格不像道路。剪成每站最多幾條 ——
-            //    但**不能剪掉別人唯一的入邊**，那會製造走不到的節點
-            PruneLinks(nodes, s.maxForwardLinks);
+            pts = keptPts;
+            adj = adjK;
+            int[] layer = keptLayer.ToArray();
 
-            EnsureReachesGoal(nodes, layer, adj, maxHop);
+            // 只留「跳數差剛好 1」的三角化邊。因為層數就是 BFS 跳數，
+            // 每個節點必然有前有後 —— 不需要補洞，平面性完整保留
+            if (s.linkMode == TerrainLinkMode.SpanningTree)
+            {
+                // 先只連必要的，再依機率加回 —— 順序與 Triangulation 相反，見那一支的說明
+                LinkSpanningTree(nodes, pts, layer, adj, maxHop, s, rng);
+
+                // ⚠️ 這一行不能省。主幹只保證「有比自己深的鄰居就連過去」，
+                //    但 BFS 樹的葉子整圈鄰居都不比自己深 —— 那就是死路。
+                //    實測少了這一行有 1046 個死路節點
+                EnsureReachesGoal(nodes, layer, adj, maxHop);
+            }
+            else
+            {
+                var seen = new HashSet<long>();
+                for (int t = 0; t < tris.Count; t++)
+                {
+                    int[] tr = tris[t];
+                    HopLink(nodes, layer, tr[0], tr[1], seen);
+                    HopLink(nodes, layer, tr[1], tr[2], seen);
+                    HopLink(nodes, layer, tr[2], tr[0], seen);
+                }
+
+                PruneLinks(nodes, s.maxForwardLinks);
+                EnsureReachesGoal(nodes, layer, adj, maxHop);
+            }
             return map;
         }
 
@@ -574,6 +654,108 @@ namespace EldritchMile.Core
         {
             for (int i = 0; i < nodes.Count; i++) if (nodes[i].nodeId == id) return i;
             return -1;
+        }
+
+        /// <summary>
+        /// 【SpanningTree】稀疏連法：每個節點只保證**一條**主幹出邊，其餘依機率加回。
+        ///
+        /// 【為什麼要有這一版】三角化把「跳數差 1」的邊全留，40 個節點會有 69 條線，
+        /// 畫出來是一張三角網 —— 像結構圖不像地圖上的路。
+        ///
+        /// 【為什麼先前的「事後剪枝」行不通】剪枝要保護「別人唯一的入邊」，
+        /// 而大多數節點本來就只有一條入邊，於是幾乎剪不動（實測 68 → 69，等於沒剪）。
+        /// **順序要反過來**：先只連必要的，再依機率加回 —— 這一版就是那個順序。
+        ///
+        /// 三步，缺一不可：
+        ///   ① 主幹：每個非終點節點挑一條「跳數 +1 且最近」的出邊 → 不會有死路
+        ///   ② 補入邊：沒有人連進來的節點，從跳數 -1 的最近鄰居拉一條 → 不會走不到
+        ///   ③ 額外：其餘的邊依 extraLinkChance 加回 → 這才是「選擇」
+        ///
+        /// 三步都只用 Delaunay 的邊，所以平面性完整保留、連線不會交叉。
+        /// </summary>
+        private static void LinkSpanningTree(
+            List<RunNodeData> nodes, List<Vector2> pts, int[] layer, List<List<int>> adj,
+            int maxHop, MapGenerationSettings s, System.Random rng)
+        {
+            int n = nodes.Count;
+
+            // ── ① 主幹 ──
+            for (int i = 0; i < n; i++)
+            {
+                if (layer[i] >= maxHop) continue;
+
+                int best = NearestNeighbourAtLayer(pts, adj, layer, i, layer[i] + 1);
+
+                // 沒有 +1 的鄰居（BFS 樹的葉子）→ 挑跳數最大的那個鄰居
+                if (best < 0)
+                    for (int k = 0; k < adj[i].Count; k++)
+                    {
+                        int nb = adj[i][k];
+                        if (layer[nb] <= layer[i]) continue;
+                        if (best < 0 || layer[nb] > layer[best]) best = nb;
+                    }
+
+                if (best >= 0) nodes[i].nextNodeIds.Add(nodes[best].nodeId);
+            }
+
+            // ── ② 補入邊 ──
+            var hasIn = new bool[n];
+            for (int i = 0; i < n; i++)
+                for (int k = 0; k < nodes[i].nextNodeIds.Count; k++)
+                {
+                    int idx = IndexOfId(nodes, nodes[i].nextNodeIds[k]);
+                    if (idx >= 0) hasIn[idx] = true;
+                }
+
+            for (int i = 0; i < n; i++)
+            {
+                if (layer[i] == 0 || hasIn[i]) continue;
+
+                int from = NearestNeighbourAtLayer(pts, adj, layer, i, layer[i] - 1);
+                if (from < 0) continue;
+
+                if (!nodes[from].nextNodeIds.Contains(nodes[i].nodeId))
+                {
+                    nodes[from].nextNodeIds.Add(nodes[i].nodeId);
+                    hasIn[i] = true;
+                }
+            }
+
+            // ── ③ 額外的岔路 ──
+            if (s.extraLinkChance <= 0f) return;
+
+            for (int i = 0; i < n; i++)
+            {
+                if (nodes[i].nextNodeIds.Count >= s.maxForwardLinks) continue;
+
+                for (int k = 0; k < adj[i].Count; k++)
+                {
+                    int nb = adj[i][k];
+                    if (layer[nb] - layer[i] != 1) continue;
+                    if (nodes[i].nextNodeIds.Contains(nodes[nb].nodeId)) continue;
+                    if (rng.NextDouble() > s.extraLinkChance) continue;
+
+                    nodes[i].nextNodeIds.Add(nodes[nb].nodeId);
+                    if (nodes[i].nextNodeIds.Count >= s.maxForwardLinks) break;
+                }
+            }
+        }
+
+        /// <summary>adj[from] 裡跳數剛好是 wantLayer 的鄰居中，距離最近的那一個。</summary>
+        private static int NearestNeighbourAtLayer(
+            List<Vector2> pts, List<List<int>> adj, int[] layer, int from, int wantLayer)
+        {
+            int best = -1; float bd = float.MaxValue;
+            for (int k = 0; k < adj[from].Count; k++)
+            {
+                int nb = adj[from][k];
+                if (layer[nb] != wantLayer) continue;
+
+                float d = (pts[nb] - pts[from]).sqrMagnitude;
+                if (d >= bd) continue;
+                bd = d; best = nb;
+            }
+            return best;
         }
 
         private static void HopLink(

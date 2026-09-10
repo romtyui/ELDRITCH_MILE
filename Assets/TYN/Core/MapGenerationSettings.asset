@@ -35,6 +35,9 @@ MonoBehaviour:
   coastRange: 8
   coastBias: 2.5
   candidatesPerNode: 24
+  maxLinkDistance: 22
+  linkMode: 1
+  extraLinkChance: 0.2
   maxForwardLinks: 2
   maxLayerJump: 1
   verticalMargin: 10
