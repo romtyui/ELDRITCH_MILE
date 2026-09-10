@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 966927c2a5887794ca843a3863c836e0, type: 3}
   m_Name: MapGenerationSettings
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.MapGenerationSettings
+  layout: 1
   mapLayers: 8
   gridColumns: 5
   pathCount: 4
@@ -22,6 +23,13 @@ MonoBehaviour:
   shopChance: 0.12
   specialEventChance: 0
   dialogueChance: 0.15
+  guaranteedKinds: 0300000005000000
+  organicSpread: 95
+  organicWidthMax: 4
+  organicRadialJitter: 0.6
+  organicAngleJitter: 0.4
+  organicMinSpacing: 9
+  organicCrossLink: 0.35
   verticalMargin: 10
   horizontalMargin: 20
   horizontalJitter: 2

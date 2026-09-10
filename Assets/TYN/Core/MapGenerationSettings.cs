@@ -14,6 +14,9 @@ namespace EldritchMile.Core
     public class MapGenerationSettings : ScriptableObject
     {
         [Header("結構（網格 ＋ 隨機遊走）")]
+        [Tooltip("節點怎麼擺。Grid = 舊的網格（每層一條水平線）；Organic = 放射生長")]
+        public MapLayout layout = MapLayout.Grid;
+
         [Tooltip("總層數，含起點層與最後的 Boss 層。**這就是一場 run 有多長**")]
         [Range(2, 16)] public int mapLayers = 8;
 
@@ -66,6 +69,25 @@ namespace EldritchMile.Core
         };
 
         [Header("版面")]
+        [Header("Organic 擺法（layout = Organic 才生效）")]
+        [Tooltip("扇形張開幾度。越大越像樹冠展開，太大會貼到左右邊界")]
+        [Range(20f, 170f)] public float organicSpread = 110f;
+
+        [Tooltip("中段最多幾個節點。樹狀感來自「中間寬、兩頭窄」")]
+        [Range(2, 7)] public int organicWidthMax = 4;
+
+        [Tooltip("半徑抖動，佔一層間距的比例。**這個值就是在打散水平線** —— 0 會退回並排")]
+        [Range(0f, 0.9f)] public float organicRadialJitter = 0.45f;
+
+        [Tooltip("角度抖動，佔一格角距的比例。讓同一層的節點不要等距排開")]
+        [Range(0f, 0.9f)] public float organicAngleJitter = 0.4f;
+
+        [Tooltip("兩個節點至少要距離多遠（百分比）。太小會擠成一團，太大會生不出節點")]
+        [Range(3f, 20f)] public float organicMinSpacing = 9f;
+
+        [Tooltip("額外橫向連線的機率。這是「選擇更自由」的來源 —— 0 就是純樹、只能往前")]
+        [Range(0f, 1f)] public float organicCrossLink = 0.35f;
+
         [Tooltip("第一層與最後一層距離上下邊界的百分比")]
         [Range(0f, 30f)] public float verticalMargin = 10f;
 
@@ -118,6 +140,23 @@ namespace EldritchMile.Core
     /// 只有一條路的時候「連線」「可前往／去不了」「選節點」全部沒有作用，
     /// 而那些正是地圖這一層要測的東西。
     /// </summary>
+    /// <summary>
+    /// 節點的擺法。
+    ///
+    /// 【Grid】舊的網格：`yPercent` 是 `layer` 的**純函數**，
+    /// 所以同一層必然落在同一條水平線上 —— 那就是「並排」與「扁平」的來源。
+    /// x 也被吸附到固定欄位，連直的都對齊。
+    ///
+    /// 【Organic】從底部放射生長：半徑隨深度增加、角度隨深度張開，
+    /// 而且**半徑帶抖動**讓相鄰深度的節點互相交錯 —— 沒有水平線，
+    /// 看起來像地圖上散落的地標而不是方格紙。
+    /// </summary>
+    public enum MapLayout
+    {
+        Grid = 0,
+        Organic = 1,
+    }
+
     public enum DemoRouteShape
     {
         /// <summary>一層一個節點，前後相連。讀 `demoRouteKinds`。</summary>

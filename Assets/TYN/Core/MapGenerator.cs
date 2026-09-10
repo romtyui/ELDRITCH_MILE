@@ -17,7 +17,7 @@ namespace EldritchMile.Core
     /// 2. 用 System.Random + seed，不用 UnityEngine.Random（全域狀態）。
     ///    同一個 seed 必定產生同一張地圖，除錯與重現問題容易得多。
     /// </summary>
-    public static class MapGenerator
+    public static partial class MapGenerator
     {
         public static MapData Generate(MapGenerationSettings settings, int seed)
         {
@@ -29,9 +29,14 @@ namespace EldritchMile.Core
 
             var rng = new System.Random(seed);
 
-            MapData map = settings.useDemoRoute
-                ? GenerateDemoRoute(settings, rng)
-                : GenerateProcedural(settings, rng);
+            // 固定路線優先 —— 那是為了測試特定關卡形狀，兩種擺法都該讓位
+            MapData map;
+            if (settings.useDemoRoute)
+                map = GenerateDemoRoute(settings, rng);
+            else if (settings.layout == MapLayout.Organic)
+                map = GenerateOrganic(settings, rng);
+            else
+                map = GenerateProcedural(settings, rng);
 
             EnsureGuaranteedKinds(map, settings, rng);
             WarnIfUnreachable(map);
