@@ -27,13 +27,13 @@ public class CardViewUI : MonoBehaviour
     public TooltipKeywordDatabase tooltipKeywordDatabase;
 
     [Header("Keyword Highlight")]
-    public string keywordColor = "#FFD45A";
-    public string damageValueColor = "#FF4A4A";
-    public string blockValueColor = "#66CCFF";
+    public Color keywordColor = new Color32(255, 212, 90, 255);
+    public Color damageValueColor = new Color32(255, 74, 74, 255);
+    public Color blockValueColor = new Color32(102, 204, 255, 255);
+    public Color counterValueColor = new Color32(255, 212, 90, 255);
 
     [Header("Tooltip Position")]
     public TooltipAnchorSide cardTooltipSide = TooltipAnchorSide.Top;
-
 
     private BattleManager cachedBattleManager;
     private string lastRuntimeDescription;
@@ -107,10 +107,10 @@ public class CardViewUI : MonoBehaviour
     }
 
     private string ReplaceDescriptionTokens(
-    string text,
-    CardInstance instance,
-    CardResolveContext context
-)
+        string text,
+        CardInstance instance,
+        CardResolveContext context
+    )
     {
         if (instance == null || instance.data == null || instance.data.effects == null)
             return text;
@@ -119,6 +119,52 @@ public class CardViewUI : MonoBehaviour
         int blockIndex = 0;
 
         Dictionary<string, string> values = new Dictionary<string, string>();
+
+        if (context != null && context.source != null)
+        {
+            int currentCounter = Mathf.Max(
+                0,
+                context.source.GetStatus(StatusType.Counter)
+            );
+
+            values["currentCounter"] = ColorValue(
+                currentCounter,
+                counterValueColor
+            );
+
+            int counterGainBeforeCounterHit = 0;
+
+            for (int i = 0; i < instance.data.effects.Count; i++)
+            {
+                CardEffectData effect = instance.data.effects[i];
+
+                if (effect == null)
+                    continue;
+
+                if (effect is CounterRandomTargetEachHitDamageEffectData)
+                    break;
+
+                if (effect is CardDescriptionValueProvider provider)
+                {
+                    if (provider.TryGetDescriptionValue(
+                        "counterGain",
+                        context,
+                        out int gain
+                    ))
+                    {
+                        counterGainBeforeCounterHit += Mathf.Max(0, gain);
+                    }
+                }
+            }
+
+            int counterAfterGain =
+                currentCounter + counterGainBeforeCounterHit;
+
+            values["counterAfterGain"] = ColorValue(
+                counterAfterGain,
+                counterValueColor
+            );
+        }
 
         for (int i = 0; i < instance.data.effects.Count; i++)
         {
@@ -160,6 +206,9 @@ public class CardViewUI : MonoBehaviour
                 AddProviderValue(values, provider, "damage", context, damageValueColor);
                 AddProviderValue(values, provider, "damege", context, damageValueColor);
                 AddProviderValue(values, provider, "block", context, blockValueColor);
+
+                AddProviderValue(values, provider, "counter", context, counterValueColor);
+                AddProviderValue(values, provider, "counterAmount", context, counterValueColor);
 
                 AddProviderValue(values, provider, "usedEggCount", context, damageValueColor);
                 AddProviderValue(values, provider, "usedTokenCount", context, damageValueColor);
@@ -222,12 +271,12 @@ public class CardViewUI : MonoBehaviour
     }
 
     private void AddProviderValue(
-    Dictionary<string, string> values,
-    CardDescriptionValueProvider provider,
-    string key,
-    CardResolveContext context,
-    string color
-)
+        Dictionary<string, string> values,
+        CardDescriptionValueProvider provider,
+        string key,
+        CardResolveContext context,
+        Color color
+    )
     {
         if (provider == null)
             return;
@@ -238,19 +287,14 @@ public class CardViewUI : MonoBehaviour
         if (provider.TryGetDescriptionValue(key, context, out int value))
             values.Add(key, ColorValue(value, color));
     }
-    private string ColorValue(int value, string color)
-    {
-        if (string.IsNullOrWhiteSpace(color))
-            return value.ToString();
 
-        return $"<color={color}>{value}</color>";
+    private string ColorValue(int value, Color color)
+    {
+        string colorHex = "#" + ColorUtility.ToHtmlStringRGBA(color);
+        return $"<color={colorHex}>{value}</color>";
     }
 
-    private int CalculateDamagePreview(
-        CardInstance instance,
-        DamageEffectData damageEffect,
-        CardResolveContext context
-    )
+    private int CalculateDamagePreview(CardInstance instance, DamageEffectData damageEffect, CardResolveContext context)
     {
         if (damageEffect == null)
             return 0;
@@ -314,6 +358,8 @@ public class CardViewUI : MonoBehaviour
         List<TooltipKeywordEntry> foundKeywords =
             tooltipKeywordDatabase.FindKeywordsInText(originalDescription);
 
+        string colorHex = "#" + ColorUtility.ToHtmlStringRGBA(keywordColor);
+
         for (int i = 0; i < foundKeywords.Count; i++)
         {
             TooltipKeywordEntry entry = foundKeywords[i];
@@ -324,7 +370,7 @@ public class CardViewUI : MonoBehaviour
             if (string.IsNullOrWhiteSpace(entry.keyword))
                 continue;
 
-            string coloredKeyword = $"<color={keywordColor}>{entry.keyword}</color>";
+            string coloredKeyword = $"<color={colorHex}>{entry.keyword}</color>";
             result = result.Replace(entry.keyword, coloredKeyword);
         }
 

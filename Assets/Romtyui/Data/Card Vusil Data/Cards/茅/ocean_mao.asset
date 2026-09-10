@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: ocean_mao
   cardName: ocean_mao
-  description: "\u7372\u5F97 {block} \u9EDE\u8B77\u76FE\n\u7372\u5F971\u9EDE\u529B\u91CF"
+  description: "\u9020\u6210 {damage} \u9EDE\u7A7F\u900F\u50B7\u5BB3\n\u7372\u5F97
+    {counter} \u9EDE \u53CD\u64CA"
   visualData: {fileID: 11400000, guid: fe612a04c9759df40bfdf648bc47315d, type: 2}
-  cardType: 1
+  cardType: 0
   rarity: 0
-  targetType: 1
+  targetType: 2
   baseCost: 1
   exhaust: 0
   ethereal: 0
@@ -28,6 +29,6 @@ MonoBehaviour:
   isGodCard: 0
   godCardAnimation: {fileID: 0}
   effects:
-  - {fileID: 0}
+  - {fileID: 11400000, guid: ff232e0511752324bb9256245cb2dcb8, type: 2}
   - {fileID: 11400000, guid: a9f4f469963dd5a4eabb7e9f4a24dbe8, type: 2}
   hitEffect: {fileID: 0}

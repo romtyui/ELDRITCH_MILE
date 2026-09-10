@@ -23,6 +23,9 @@ MonoBehaviour:
   damagePopupOffset: {x: 0, y: 80}
   hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
   hitBoxSprite: {fileID: 0}
+  targetFrameFollowBoneName: head_01
+  targetFrameAnchoredPosition: {x: 0, y: 65}
+  targetFrameSize: {x: 200, y: 200}
   stunIntent: {fileID: 0}
   startingStatuses:
   - statusType: 7

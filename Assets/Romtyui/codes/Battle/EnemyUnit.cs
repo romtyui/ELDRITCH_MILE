@@ -307,16 +307,43 @@ public class EnemyUnit : BattleUnit
 
         EnemyIntentData intent = CurrentIntent;
 
-        if (intent != null)
+        if (intent == null)
+        {
+            intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+            return;
+        }
+
+        if (intent.actions != null)
+        {
+            for (int i = 0; i < intent.actions.Count; i++)
+            {
+                EnemyActionData action = intent.actions[i];
+
+                if (action == null)
+                    continue;
+
+                TooltipEntry actionEntry = action.GetTooltipEntry();
+
+                if (actionEntry == null)
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(actionEntry.title) &&
+                    string.IsNullOrWhiteSpace(actionEntry.body))
+                    continue;
+
+                entries.Add(actionEntry);
+            }
+        }
+
+        if (entries.Count == 0)
         {
             string title = string.IsNullOrWhiteSpace(intent.intentName)
                 ? "意圖"
                 : intent.intentName;
 
-            string body = intent.description;
-
-            if (string.IsNullOrWhiteSpace(body))
-                body = "這個敵人即將執行此意圖。";
+            string body = string.IsNullOrWhiteSpace(intent.description)
+                ? "這名敵人將要行動。"
+                : intent.description;
 
             entries.Add(new TooltipEntry(title, body));
         }

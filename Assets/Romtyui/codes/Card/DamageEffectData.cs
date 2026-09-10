@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(menuName = "CardGame/Effects/Damage")]
+[CreateAssetMenu(menuName = "CardGame/Effects/Damage/Normal Damage")]
 public class DamageEffectData : CardEffectData, CardDescriptionValueProvider
 {
     public int amount;

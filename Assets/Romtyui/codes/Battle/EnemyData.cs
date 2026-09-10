@@ -35,6 +35,15 @@ public class EnemyData : ScriptableObject
     [Header("Image Settings")]
     public Color hitBoxColor = new Color(1f, 0f, 1f, 0.25f);
     public Sprite hitBoxSprite;
+    [Header("Target Frame Follow")]
+    [Tooltip("鎖定框要跟隨的骨骼名稱，例如 Body、Chest、Head")]
+    public string targetFrameFollowBoneName = "Body";
+    [Header("Target Frame Settings")]
+    [Tooltip("鎖定框相對位置")]
+    public Vector2 targetFrameAnchoredPosition = Vector2.zero;
+
+    [Tooltip("鎖定框大小")]
+    public Vector2 targetFrameSize = new Vector2(300f, 300f);
     [Header("Special Intents")]
     public EnemyIntentData stunIntent;
     [System.Serializable]

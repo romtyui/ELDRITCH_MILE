@@ -175,16 +175,21 @@ public class BattleUnit : MonoBehaviour
 
     public virtual void TakeDamage(int amount)
     {
-        TakeDamage(amount, null);
+        TakeDamage(amount, null, false);
     }
 
     public virtual void TakeDamage(int amount, BattleUnit damageSource)
+    {
+        TakeDamage(amount, damageSource, false);
+    }
+
+    public virtual void TakeDamage(int amount, BattleUnit damageSource, bool ignoreBlock)
     {
         int hpBefore = currentHp;
 
         int remaining = amount;
 
-        if (block > 0)
+        if (!ignoreBlock && block > 0)
         {
             int absorbed = Mathf.Min(block, remaining);
             block -= absorbed;
@@ -231,8 +236,9 @@ public class BattleUnit : MonoBehaviour
             OnDamagedButAlive();
         }
 
-        Debug.Log($"[Damage] {unitName} take {amount}, realHpDamage = {realHpDamage}, HP = {currentHp}");
+        Debug.Log($"[Damage] {unitName} take {amount}, ignoreBlock = {ignoreBlock}, realHpDamage = {realHpDamage}, HP = {currentHp}");
     }
+
 
     private void TryTriggerCounter(BattleUnit damageSource)
     {

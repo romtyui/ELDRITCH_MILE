@@ -3378,10 +3378,9 @@ MonoBehaviour:
   defaultVisualData: {fileID: 0}
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
-  keywordColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
-  damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
-  blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
-  counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &177232777
 GameObject:
@@ -6248,10 +6247,9 @@ MonoBehaviour:
   defaultVisualData: {fileID: 0}
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
-  keywordColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
-  damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
-  blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
-  counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &292422261
 GameObject:
@@ -16060,10 +16058,9 @@ MonoBehaviour:
   defaultVisualData: {fileID: 0}
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
-  keywordColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
-  damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
-  blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
-  counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &769923248
 GameObject:
@@ -19700,81 +19697,6 @@ RectTransform:
   m_AnchoredPosition: {x: 661863.5, y: 377733.8}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &921722558
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 921722559}
-  - component: {fileID: 921722561}
-  - component: {fileID: 921722560}
-  m_Layer: 5
-  m_Name: Target Frame
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &921722559
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 921722558}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.356169, y: 1.356169, z: 1.356169}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1485395012}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &921722560
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 921722558}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.86399376, g: 0.45597476, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4470358081bb8a34cb99ed5645e9e40b, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &921722561
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 921722558}
-  m_CullTransparentMesh: 1
 --- !u!4 &933264206 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -7552582706839291426, guid: 04fe20ea938923249bc14d12c73f1fbb, type: 3}
@@ -20460,10 +20382,9 @@ MonoBehaviour:
   defaultVisualData: {fileID: 0}
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
-  keywordColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
-  damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
-  blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
-  counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &952948179
 GameObject:
@@ -22871,7 +22792,6 @@ RectTransform:
   - {fileID: 2021610427}
   - {fileID: 1113497937}
   - {fileID: 1595762586}
-  - {fileID: 2096638114}
   m_Father: {fileID: 121597428}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -23000,14 +22920,12 @@ MonoBehaviour:
   slotImage: {fileID: 1056973083}
   enemyUnit: {fileID: 1056973085}
   battleTargetUI: {fileID: 1056973086}
-  targetFrameImage: {fileID: 2096638115}
   lightReveal: {fileID: 0}
   visualRoot: {fileID: 2021610427}
   slotVisualScaleMultiplier: 20
   slotVisualPositionOffset: {x: 0, y: -250}
   currentNormalVisual: {fileID: 0}
   currentDarkVisual: {fileID: 0}
-  currentEnemyData: {fileID: 0}
   worldVisualRoot: {fileID: 0}
   visualAnimationController: {fileID: 0}
   intentTooltipTrigger: {fileID: 268415630}
@@ -26438,10 +26356,9 @@ MonoBehaviour:
   defaultVisualData: {fileID: 0}
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
-  keywordColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
-  damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
-  blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
-  counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &1261777583
 GameObject:
@@ -27900,10 +27817,9 @@ MonoBehaviour:
   defaultVisualData: {fileID: 0}
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
-  keywordColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
-  damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
-  blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
-  counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &1330222676
 GameObject:
@@ -32506,7 +32422,6 @@ RectTransform:
   - {fileID: 241786019}
   - {fileID: 919383248}
   - {fileID: 2127834315}
-  - {fileID: 921722559}
   m_Father: {fileID: 428500117}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -32529,14 +32444,12 @@ MonoBehaviour:
   slotImage: {fileID: 1485395016}
   enemyUnit: {fileID: 1485395014}
   battleTargetUI: {fileID: 1485395015}
-  targetFrameImage: {fileID: 921722560}
   lightReveal: {fileID: 1238208734}
   visualRoot: {fileID: 241786019}
   slotVisualScaleMultiplier: 15
   slotVisualPositionOffset: {x: 0, y: -150}
   currentNormalVisual: {fileID: 0}
   currentDarkVisual: {fileID: 0}
-  currentEnemyData: {fileID: 0}
   worldVisualRoot: {fileID: 0}
   visualAnimationController: {fileID: 0}
   intentTooltipTrigger: {fileID: 298735826}
@@ -36918,81 +36831,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnergySystem
   maxEnergy: 100
   currentEnergy: 0
---- !u!1 &1663898018
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1663898019}
-  - component: {fileID: 1663898021}
-  - component: {fileID: 1663898020}
-  m_Layer: 5
-  m_Name: Target Frame
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1663898019
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1663898018}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.3561958, y: 1.3561958, z: 1.3561958}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2132923020}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1663898020
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1663898018}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.45490193, b: 0.524386, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4470358081bb8a34cb99ed5645e9e40b, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &1663898021
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1663898018}
-  m_CullTransparentMesh: 1
 --- !u!1 &1665138570
 GameObject:
   m_ObjectHideFlags: 0
@@ -40565,10 +40403,9 @@ MonoBehaviour:
   defaultVisualData: {fileID: 0}
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
-  keywordColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
-  damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
-  blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
-  counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1001 &1782066047
 PrefabInstance:
@@ -45082,10 +44919,9 @@ MonoBehaviour:
   defaultVisualData: {fileID: 0}
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
-  keywordColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
-  damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
-  blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
-  counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &2029354383
 GameObject:
@@ -45849,10 +45685,9 @@ MonoBehaviour:
   defaultVisualData: {fileID: 0}
   tooltipTrigger: {fileID: 0}
   tooltipKeywordDatabase: {fileID: 0}
-  keywordColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
-  damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
-  blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
-  counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  keywordColor: '#FFD45A'
+  damageValueColor: '#FF4A4A'
+  blockValueColor: '#66CCFF'
   cardTooltipSide: 3
 --- !u!1 &2053523263
 GameObject:
@@ -46305,81 +46140,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!1 &2096638113
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2096638114}
-  - component: {fileID: 2096638116}
-  - component: {fileID: 2096638115}
-  m_Layer: 5
-  m_Name: Target Frame
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &2096638114
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2096638113}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1056973082}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2096638115
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2096638113}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.86399376, g: 0.45597476, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4470358081bb8a34cb99ed5645e9e40b, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &2096638116
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2096638113}
-  m_CullTransparentMesh: 1
 --- !u!1 &2098615361
 GameObject:
   m_ObjectHideFlags: 0
@@ -47001,7 +46761,6 @@ RectTransform:
   - {fileID: 853341942}
   - {fileID: 1487619537}
   - {fileID: 1614959817}
-  - {fileID: 1663898019}
   m_Father: {fileID: 2112094903}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -47130,14 +46889,12 @@ MonoBehaviour:
   slotImage: {fileID: 2132923021}
   enemyUnit: {fileID: 2132923023}
   battleTargetUI: {fileID: 2132923024}
-  targetFrameImage: {fileID: 1663898020}
   lightReveal: {fileID: 1238208734}
   visualRoot: {fileID: 853341942}
   slotVisualScaleMultiplier: 15
   slotVisualPositionOffset: {x: 0, y: -150}
   currentNormalVisual: {fileID: 0}
   currentDarkVisual: {fileID: 0}
-  currentEnemyData: {fileID: 0}
   worldVisualRoot: {fileID: 1499612220}
   visualAnimationController: {fileID: 0}
   intentTooltipTrigger: {fileID: 619418751}

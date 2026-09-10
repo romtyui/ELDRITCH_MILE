@@ -485,6 +485,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardDragUI
   playThresholdPixels: 50
+  targetArrow: {fileID: 0}
+  useTargetArrowMode: 0
   playThresholdY: 200
   showPlayThresholdLine: 1
   thresholdLineColor: {r: 1, g: 0.2, b: 0.2, a: 0}
@@ -511,9 +513,10 @@ MonoBehaviour:
   defaultVisualData: {fileID: 11400000, guid: 27d540af5d656654dafab3f8a116db76, type: 2}
   tooltipTrigger: {fileID: 2071348053210116029}
   tooltipKeywordDatabase: {fileID: 11400000, guid: c4919ea44c1bc6d44a9426f1c93148a7, type: 2}
-  keywordColor: '#FF2D2D'
-  damageValueColor: '#FF4A4A'
-  blockValueColor: '#66CCFF'
+  keywordColor: {r: 0.5450981, g: 0, b: 0, a: 1}
+  damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
+  blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
+  counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
   cardTooltipSide: 3
 --- !u!114 &2071348053210116029
 MonoBehaviour:
