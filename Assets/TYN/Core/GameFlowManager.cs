@@ -701,7 +701,10 @@ namespace EldritchMile.Core
             // 與其在每個 Stage 控制器的每個出口各補一次（漏一個就出事），
             // 在這個唯一的換站點統一收。各控制器自己那份解鎖留著沒關係，
             // 那是早一點解、這裡是保底。
-            PopupService.Instance?.SetAdvanceUnlocked();
+            // 取消「再點一下就離開」的武裝並解鎖推進。
+            // 殘留的訂閱會打到下一站 —— 玩家在新對話框點第一下就被上一站的
+            // 離開邏輯吃掉，而那完全不會報錯
+            PopupService.Instance?.CancelDismiss();
 
             if (next != StageType.None && stageHost != null)
             {

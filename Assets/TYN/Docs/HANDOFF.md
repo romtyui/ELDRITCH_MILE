@@ -2506,3 +2506,32 @@ else if (layout == Terrain) → GenerateTerrain
 
 ⚠️ **滑鼠壓在 UI 上時不要動鏡頭**（`EventSystem.IsPointerOverGameObject`）。
 滑桿蓋在 MapSurface 上面，沒有這道判斷的話拖滑桿會**同時**把地圖拖走。
+
+
+## 離開鍵改成「點對話框就離開」（2026-09-13）
+
+玩家回報離開鍵**不方便、找不到**。事件／特殊事件／對話／戰鬥結算四處
+統一改成：結算播完之後，**再點一下對話框就離開**，跟翻頁同一個手勢。
+
+### ⚠️ 不能只是把 LockAdvance 拿掉
+
+當初鎖住是有原因的：結算排在**最後**播，而推進鍵是蓋住整個對話框的透明
+Button。玩家為了把最後一句打完而點的那一下，會在同一瞬間被當成
+「我看完了」——「拿到什麼」就這樣被跳掉。
+
+所以 `PopupService.ArmDismiss(grace, onDismiss)` 保留了保護：
+`grace`（0.35 秒）內鎖住推進，之後才解鎖並訂閱 `OnAdvanced`。
+玩家感覺不到延遲，但那一下誤觸被吃掉了。
+
+⚠️ 對話框如果已經收起來（自動推進、或被別的東西關掉），就沒有東西可以點 ——
+`ArmDismiss` 那時**直接離開**，不然玩家會對著空畫面按。
+
+⚠️ **離站一定要 `CancelDismiss()`**。殘留的訂閱會打到下一站 ——
+玩家在新對話框點第一下就被上一站的離開邏輯吃掉，而且完全不會報錯。
+補在三處的 `Unsubscribe` / `OnStageExit` / `Report`，以及
+`GameFlowManager` 換站那一點（保底）。
+
+### 離開鍵沒有刪除
+
+`endButton` 欄位留著，只是不再主動 `SetActive(true)`。
+要改回去的話把 `ArmDismiss` 那幾行換回 `SetEndButtonVisible(true)` 即可。

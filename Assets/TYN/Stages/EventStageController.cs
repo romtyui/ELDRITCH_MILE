@@ -29,6 +29,10 @@ public class EventStageController : ChoiceStageController
              "留空的話會退回「播完自動結束」——不建議，玩家會來不及讀完")]
     public Button endButton;
 
+        [Tooltip("改成「再點一下對話框就離開」，不用畫面上另一顆離開鍵。保護期內的點擊不算，避免把結算跳掉")]
+        [Min(0f)] public float dismissGrace = 0.35f;
+
+
     [Header("結果")]
     [Tooltip("效果的提示要怎麼接在結果內文後面。{0} = 所有效果")]
     [TextArea(2, 4)]
@@ -184,6 +188,10 @@ public class EventStageController : ChoiceStageController
         if (Options != null) Options.OnOptionClicked -= HandleChosen;
         if (endButton != null) endButton.onClick.RemoveListener(EndEvent);
 
+        // ⚠️ 殘留的武裝會打到下一站 —— 玩家在新對話框點第一下就被這一站的
+        //    離開邏輯吃掉，而且完全不會報錯
+        PopupService.Instance?.CancelDismiss();
+
         // 背景是生成出來的，離開時要收掉 —— 不收的話會一路留到下一站
         backdrop?.Despawn();
     }
@@ -274,15 +282,14 @@ public class EventStageController : ChoiceStageController
     private void Update()
     {
         if (!awaitingEnd) return;
-        if (endButton == null || endButton.gameObject.activeSelf) return;
+        if (PopupService.Instance == null || !PopupService.Instance.IsIdle) return;
 
-        if (PopupService.Instance != null && PopupService.Instance.IsIdle)
-        {
-            // 結算那一頁鎖住點擊推進 —— 出口只剩離開鍵。
-            // 解鎖統一在 GameFlowManager 換站時做
-            PopupService.Instance.LockAdvance = true;
-            SetEndButtonVisible(true);
-        }
+        // 武裝一次就好。ArmDismiss 自己會擋重複，但每幀重新武裝會把保護期一直重置
+        awaitingEnd = false;
+
+        // ⚠️ 出口是對話框本身。玩家回報離開鍵「不方便、找不到」
+        SetEndButtonVisible(false);
+        PopupService.Instance.ArmDismiss(dismissGrace, EndEvent);
     }
 
     private void SetEndButtonVisible(bool visible)

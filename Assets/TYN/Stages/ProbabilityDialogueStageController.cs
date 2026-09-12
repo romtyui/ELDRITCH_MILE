@@ -60,6 +60,10 @@ public class ProbabilityDialogueStageController : StageController
              "不建議，但至少不會卡住玩家")]
     public Button endButton;
 
+        [Tooltip("改成「再點一下對話框就離開」，不用畫面上另一顆離開鍵。保護期內的點擊不算，避免把結算跳掉")]
+        [Min(0f)] public float dismissGrace = 0.35f;
+
+
     [Tooltip("**只在沒有 End Button 時**才用得到：結束後最少停留幾秒，這段時間內點擊無效 ——\n" +
              "不然玩家在判定瞬間的那一下點擊會直接把結果跳掉")]
     [Min(0f)] public float endMinSeconds = 0.8f;
@@ -193,12 +197,11 @@ public class ProbabilityDialogueStageController : StageController
     {
         while (PopupService.Instance != null && !PopupService.Instance.IsIdle) yield return null;
 
-        if (endButton != null)
+        // ⚠️ 出口是對話框本身。玩家回報離開鍵「不方便、找不到」
+        if (PopupService.Instance != null)
         {
-            // 出口只有這一顆鈕 —— 不逾時、不吃隨便一下點擊。
-            // 鎖住推進，不然玩家隨手一點就把結算那一頁跳掉了
-            if (PopupService.Instance != null) PopupService.Instance.LockAdvance = true;
-            SetEndButtonVisible(true);
+            SetEndButtonVisible(false);
+            PopupService.Instance.ArmDismiss(dismissGrace, Report);
             yield break;
         }
 
@@ -253,6 +256,10 @@ public class ProbabilityDialogueStageController : StageController
 
         if (endButton != null) endButton.onClick.RemoveListener(Report);
         SetEndButtonVisible(false);
+
+        // ⚠️ 殘留的武裝會打到下一站 —— 玩家在新對話框點第一下就被這一站的
+        //    離開邏輯吃掉，而且完全不會報錯
+        PopupService.Instance?.CancelDismiss();
 
         // Detach 會把 HoldOpen / 立繪還回去（見那一支的說明），
         // 這裡再讓對話框自己收掉 —— 不收的話它會一路留到下一站

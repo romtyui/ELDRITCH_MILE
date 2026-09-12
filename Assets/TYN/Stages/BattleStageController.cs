@@ -89,6 +89,10 @@ public class BattleStageController : StageController
              "跟事件、機率對話的離開鍵是同一套做法。")]
     public UnityEngine.UI.Button endButton;
 
+        [Tooltip("改成「再點一下對話框就離開」，不用畫面上另一顆離開鍵。保護期內的點擊不算，避免把結算跳掉")]
+        [Min(0f)] public float dismissGrace = 0.35f;
+
+
     [Tooltip("**只在沒有 End Button 時**才用到：結算播完再等幾秒才回地圖。\n" +
              "0 = 不等（那就等於看不到結算）")]
     [Min(0f)] public float rewardAutoSeconds = 2f;
@@ -889,14 +893,13 @@ public class BattleStageController : StageController
     {
         while (PopupService.Instance != null && !PopupService.Instance.IsIdle) yield return null;
 
-        if (endButton != null)
+        // ⚠️ 出口是**對話框本身**，不是畫面上另一顆鈕。
+        //    玩家回報離開鍵「不方便、找不到」——對話框是他們一路點過來的地方。
+        //    保護期見 PopupService.ArmDismiss
+        if (PopupService.Instance != null)
         {
-            // ⚠️ 結算這一頁鎖住點擊推進 —— 對話框的推進鍵是全幅透明的，
-            //    不鎖的話玩家隨手一點就把「拿到多少金幣」跳掉了。
-            //    出口只剩離開鍵。解鎖在 Report()
-            if (PopupService.Instance != null) PopupService.Instance.LockAdvance = true;
-
-            SetEndButtonVisible(true);
+            SetEndButtonVisible(false);
+            PopupService.Instance.ArmDismiss(dismissGrace, LeaveBattle);
             yield break;
         }
 
@@ -964,7 +967,7 @@ public class BattleStageController : StageController
 
         // ⚠️ **一定要解開。** 留著的話下一站的對話整個點不動 ——
         //    而且那時看起來會像「遊戲卡住了」，很難聯想到是上一站沒收乾淨
-        if (PopupService.Instance != null) PopupService.Instance.LockAdvance = false;
+        if (PopupService.Instance != null) PopupService.Instance.CancelDismiss();
 
         TutorialEventBus.OnSignalRaised -= HandleSignal;
         ReportComplete(result);
