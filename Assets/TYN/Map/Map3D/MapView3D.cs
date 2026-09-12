@@ -355,6 +355,8 @@ namespace EldritchMile.Map3D
             List<string> reachable = cur != null ? cur.nextNodeIds : new List<string>();
             bool atStart = string.IsNullOrEmpty(boundMap.currentNodeId);
 
+            MapNode3D current = null;
+
             foreach (KeyValuePair<string, MapNode3D> kv in spawned)
             {
                 MapNode3D n = kv.Value;
@@ -363,7 +365,14 @@ namespace EldritchMile.Map3D
                 bool isCurrent = kv.Key == boundMap.currentNodeId;
                 bool selectable = atStart ? n.Data.layer == 0 : reachable.Contains(kv.Key);
                 n.UpdateVisual(isCurrent, selectable, n.Data.visited);
+
+                if (isCurrent) current = n;
             }
+
+            // 鏡頭追隨目前所在的節點。開場還沒選過節點時 current 是 null，
+            // 那時 followTarget 留空 —— 鏡頭會停在地圖中心，正好是「縱覽全局」
+            if (cameraController != null)
+                cameraController.followTarget = current != null ? current.transform : null;
         }
 
         // ==========================================

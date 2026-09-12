@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using UnityEngine.EventSystems;
 
 namespace EldritchMile.Map3D
 {
@@ -8,10 +9,11 @@ namespace EldritchMile.Map3D
     /// 玩家操作地圖視角。掛在 MapView3D 旁邊。
     ///
     /// ────────────────────────────────────────────────────────
-    /// 【設計取捨：為什麼拖曳是「轉」不是「平移」】
-    /// 這張地圖是**桌上的一張紙**，不是 Google Maps。玩家看到傾斜的紙
-    /// 第一個念頭是「把它轉過來看」，不是「把它推走」。
-    /// 平移留給右鍵／中鍵，需要的人才會用到。
+    /// 【操作配置】左鍵 = 平移，右鍵／中鍵 = 旋轉。
+    ///
+    /// 左鍵同時是選節點的鍵，所以左鍵上的手勢**必須是安全的** ——
+    /// 誤觸平移只要放手就會自己飄回去，誤觸旋轉則會留在歪掉的角度。
+    /// 一開始做成「左鍵旋轉」，實測之後換過來。
     ///
     /// 【為什麼旋轉要夾住】地圖有推進方向（往深處走）。
     /// 能轉 360 度的話玩家會轉到上下顛倒，再也分不出哪邊是前面。
@@ -56,6 +58,27 @@ namespace EldritchMile.Map3D
         [Tooltip("回到預設視角要多久（秒）")]
         [Min(0f)] public float resetSeconds = 0.35f;
 
+        [Header("追隨目前位置")]
+        [Tooltip("鏡頭跟著玩家目前所在的節點。關掉就固定看地圖中心")]
+        public bool followCurrentNode = true;
+
+        [Tooltip("追過去要多久（秒）。太快會像被拉扯，太慢會跟不上")]
+        [Min(0f)] public float followSmooth = 0.35f;
+
+        [Tooltip("追隨的目標。由 MapView3D 在換節點時指過來，不用手動填")]
+        public Transform followTarget;
+
+        [Header("平移自動歸位")]
+        [Tooltip("放手之後多久開始飄回去（秒）。0 = 放手就回")]
+        [Min(0f)] public float panReturnDelay = 1.2f;
+
+        [Tooltip("飄回去要多久（秒）")]
+        [Min(0.01f)] public float panReturnSmooth = 0.6f;
+
+        [Header("縮放滑桿")]
+        [Tooltip("左下角那根。0 = 拉遠，1 = 拉近。留空則只能用滾輪")]
+        public Slider zoomSlider;
+
         [Header("門檻")]
         [Tooltip("滑鼠移動超過這麼多像素才算拖曳，否則算點擊。太小會誤判成拖曳而點不到節點")]
         public float dragThreshold = 6f;
@@ -69,6 +92,19 @@ namespace EldritchMile.Map3D
         private bool pressedInside;
         private int pressButton = -1;
 
+        /// 手動平移的位移。會自己飄回 0
+        private Vector3 panOffset;
+
+        /// 追隨目前節點造成的位移。與 panOffset 相加才是最終的 pivotOffset
+        private Vector3 followOffset;
+        private Vector3 followVel;
+
+        /// 放手之後過了多久
+        private float sincePan;
+
+        /// 避免「滑桿改距離 → 距離改滑桿」無限互相觸發
+        private bool syncingSlider;
+
         private float homeYaw, homePitch, homeDistance;
         private Vector3 homeOffset;
         private float resetT = -1f;
@@ -80,6 +116,54 @@ namespace EldritchMile.Map3D
             rig = GetComponent<MapCameraRig>();
             homeYaw = rig.yaw; homePitch = rig.pitch;
             homeDistance = rig.distance; homeOffset = rig.pivotOffset;
+
+            if (zoomSlider == null) return;
+
+            // 滑桿右邊 = 拉近。距離越小越近，所以是反過來對應的
+            zoomSlider.minValue = 0f;
+            zoomSlider.maxValue = 1f;
+            zoomSlider.SetValueWithoutNotify(DistanceToSlider(rig.distance));
+            zoomSlider.onValueChanged.AddListener(OnSliderChanged);
+        }
+
+        private void OnDestroy()
+        {
+            if (zoomSlider != null) zoomSlider.onValueChanged.RemoveListener(OnSliderChanged);
+        }
+
+        private float DistanceToSlider(float d)
+        {
+            float lo = rig.distanceLimit.x, hi = rig.distanceLimit.y;
+            if (hi - lo < 0.001f) return 0f;
+            return 1f - Mathf.Clamp01((d - lo) / (hi - lo));
+        }
+
+        private float SliderToDistance(float v)
+        {
+            return Mathf.Lerp(rig.distanceLimit.y, rig.distanceLimit.x, Mathf.Clamp01(v));
+        }
+
+        /// <summary>
+        /// 滑桿被拖動。
+        ///
+        /// ⚠️ `syncingSlider` 是為了擋掉「滑桿改距離 → 距離回寫滑桿 → 又觸發一次」
+        /// 的互相觸發。沒有它的話用滾輪縮放會跟滑桿打架，數值會抖。
+        /// </summary>
+        private void OnSliderChanged(float v)
+        {
+            if (syncingSlider) return;
+
+            rig.distance = SliderToDistance(v);
+            rig.Apply();
+        }
+
+        private void PushSlider()
+        {
+            if (zoomSlider == null) return;
+
+            syncingSlider = true;
+            zoomSlider.SetValueWithoutNotify(DistanceToSlider(rig.distance));
+            syncingSlider = false;
         }
 
         /// <summary>回到預設視角。給 UI 的鈕綁。</summary>
@@ -87,6 +171,11 @@ namespace EldritchMile.Map3D
         {
             fromYaw = rig.yaw; fromPitch = rig.pitch;
             fromDistance = rig.distance; fromOffset = rig.pivotOffset;
+
+            // 手動平移直接歸零 —— 歸位動畫跑完之後才不會又被它拉走
+            panOffset = Vector3.zero;
+            sincePan = panReturnDelay;
+
             resetT = 0f;
         }
 
@@ -100,7 +189,13 @@ namespace EldritchMile.Map3D
             if (mouse == null) return;
 
             Vector2 pos = mouse.position.ReadValue();
-            bool inside = IsInsideSurface(pos);
+
+            // ⚠️ 滑鼠壓在 UI 上（縮放滑桿、離開鍵）時不要動鏡頭。
+            //    滑桿蓋在 MapSurface 上面，沒有這道判斷的話拖滑桿會**同時**把地圖拖走
+            bool overUI = EventSystem.current != null
+                          && EventSystem.current.IsPointerOverGameObject();
+
+            bool inside = !overUI && IsInsideSurface(pos);
 
             // ── 按下 ──
             if (mouse.leftButton.wasPressedThisFrame) BeginPress(pos, inside, 0);
@@ -126,8 +221,12 @@ namespace EldritchMile.Map3D
                 if (IsDragging)
                 {
                     Vector2 delta = pos - lastPos;
-                    if (pressButton == 0) Orbit(delta);
-                    else Pan(delta);
+
+                    // 左鍵 = 平移，右鍵／中鍵 = 旋轉。
+                    // 左鍵同時是選節點的鍵，而平移比旋轉「安全」——
+                    // 誤觸平移只要放手就會飄回去，誤觸旋轉則會留在歪掉的角度
+                    if (pressButton == 0) Pan(delta);
+                    else Orbit(delta);
                 }
             }
 
@@ -140,12 +239,68 @@ namespace EldritchMile.Map3D
 
             rig.distance -= Mathf.Sign(scroll) * zoomPerNotch;
             rig.Apply();
+            PushSlider();
         }
 
         private void LateUpdate()
         {
+            ComposeOffset();
+
             // 拖曳旗標活過整整一幀，讓 MapView3D 有機會讀到
             if (pressButton < 0) IsDragging = false;
+        }
+
+        /// <summary>
+        /// 每幀把「追隨目前節點」與「手動平移」合成最終的 pivotOffset。
+        ///
+        /// 【為什麼要拆成兩個變數】兩者的行為完全不同：
+        ///   · 追隨是**持續**的，玩家走到哪就跟到哪
+        ///   · 平移是**暫時**的，放手之後要飄回去
+        /// 混在同一個變數裡的話，平移歸位會把追隨的位移一起歸掉，
+        /// 鏡頭就會彈回地圖中心而不是回到玩家身上。
+        ///
+        /// 【為什麼平移要自動歸位】玩家推開地圖看遠處，看完之後
+        /// 十之八九想回到自己身上。要他手動推回來是多餘的操作，
+        /// 而且推不準 —— 沒有人能把地圖推回正中央。
+        /// </summary>
+        private void ComposeOffset()
+        {
+            if (rig == null) return;
+            if (resetT >= 0f) return;    // 歸位動畫進行中，別跟它搶
+
+            // ── 追隨 ──
+            if (followCurrentNode && followTarget != null)
+            {
+                Vector3 centre = rig.pivot != null ? rig.pivot.position : Vector3.zero;
+                Vector3 want = followTarget.position - centre;
+
+                // 地圖是平的，不要跟著節點的高度跑
+                want.y = 0f;
+
+                followOffset = Vector3.SmoothDamp(
+                    followOffset, want, ref followVel, Mathf.Max(0.01f, followSmooth));
+            }
+            else
+            {
+                followOffset = Vector3.SmoothDamp(
+                    followOffset, Vector3.zero, ref followVel, Mathf.Max(0.01f, followSmooth));
+            }
+
+            // ── 平移飄回 0 ──
+            bool panning = pressedInside && pressButton == 0 && IsDragging;
+            if (!panning)
+            {
+                sincePan += Time.unscaledDeltaTime;
+                if (sincePan >= panReturnDelay)
+                {
+                    float k = 1f - Mathf.Exp(-Time.unscaledDeltaTime / panReturnSmooth);
+                    panOffset = Vector3.Lerp(panOffset, Vector3.zero, k);
+                    if (panOffset.sqrMagnitude < 0.0004f) panOffset = Vector3.zero;
+                }
+            }
+
+            rig.pivotOffset = followOffset + panOffset;
+            rig.Apply();
         }
 
         private void BeginPress(Vector2 pos, bool inside, int button)
@@ -176,13 +331,13 @@ namespace EldritchMile.Map3D
             float kx = -delta.x / Mathf.Max(1f, Screen.width) * panPerScreen;
             float kz = -delta.y / Mathf.Max(1f, Screen.height) * panPerScreen;
 
-            Vector3 next = rig.pivotOffset + right * kx + fwd * kz;
+            Vector3 next = panOffset + right * kx + fwd * kz;
 
             // 夾在範圍內。沒有這個的話玩家會把地圖推出畫面再也找不回來
             if (next.magnitude > panLimit) next = next.normalized * panLimit;
 
-            rig.pivotOffset = next;
-            rig.Apply();
+            panOffset = next;
+            sincePan = 0f;      // 手還在動，重新計時
         }
 
         private void TickReset()
@@ -194,9 +349,13 @@ namespace EldritchMile.Map3D
             rig.yaw = Mathf.Lerp(fromYaw, homeYaw, e);
             rig.pitch = Mathf.Lerp(fromPitch, homePitch, e);
             rig.distance = Mathf.Lerp(fromDistance, homeDistance, e);
-            rig.pivotOffset = Vector3.Lerp(fromOffset, homeOffset, e);
+            // ⚠️ 目標是 followOffset 不是 homeOffset ——
+            //    追隨開著的時候「原位」就是玩家目前所在的節點
+            Vector3 goal = (followCurrentNode && followTarget != null) ? followOffset : homeOffset;
+            rig.pivotOffset = Vector3.Lerp(fromOffset, goal, e);
             rig.Apply();
 
+            PushSlider();
             if (t >= 1f) resetT = -1f;
         }
 
