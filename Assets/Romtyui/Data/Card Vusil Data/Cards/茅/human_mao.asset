@@ -14,12 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: human_mao
   cardName: human_mao
-  description: "\u5C0D \u96A8\u6A5F\u6575\u4EBA \u9020\u6210 {damage} \u9EDE \u50B7\u5BB3
-    3\u6B21"
+  description: "\u9020\u6210 {damage} \u9EDE\u7A7F\u900F\u50B7\u5BB3"
   visualData: {fileID: 11400000, guid: 9255815e66ae6af44930657bccb7655f, type: 2}
   cardType: 0
   rarity: 0
-  targetType: 3
+  targetType: 2
   baseCost: 1
   exhaust: 0
   ethereal: 0
@@ -29,4 +28,5 @@ MonoBehaviour:
   isGodCard: 0
   godCardAnimation: {fileID: 0}
   effects:
-  - {fileID: 11400000, guid: 22aad712da0de044c97f638ece8a80c2, type: 2}
+  - {fileID: 11400000, guid: ff232e0511752324bb9256245cb2dcb8, type: 2}
+  hitEffect: {fileID: 0}

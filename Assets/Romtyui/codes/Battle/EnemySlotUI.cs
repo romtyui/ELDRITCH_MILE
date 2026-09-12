@@ -1,16 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.U2D.Animation;
 using UnityEngine.UI;
 using static EnemyData;
 
-public class EnemySlotUI : MonoBehaviour
+public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnterHandler, UnityEngine.EventSystems.IPointerExitHandler
 {
     [Header("Slot Refs")]
     public Image slotImage;
     public EnemyUnit enemyUnit;
     public BattleTargetUI battleTargetUI;
+    [Header("Target Frame")]
+    public Image targetFrameImage;
 
     [Header("Light Reveal")]
     public PSBMonsterLightReveal lightReveal;
@@ -28,8 +31,15 @@ public class EnemySlotUI : MonoBehaviour
     [SerializeField] private GameObject currentNormalVisual;
     [SerializeField] private GameObject currentDarkVisual;
 
+    [SerializeField] private EnemyData currentEnemyData;
+
+    private Transform currentNormalTargetFrameBone;
+    private Transform currentDarkTargetFrameBone;
+
     [Header("World Visual Root Test")]
     public Transform worldVisualRoot;
+
+
 
     [Header("Animation")]
     public EnemyVisualAnimationController visualAnimationController;
@@ -55,7 +65,10 @@ public class EnemySlotUI : MonoBehaviour
     {
         AutoFindRefs();
     }
-
+    private void LateUpdate()
+    {
+        UpdateTargetFrameFollowPosition();
+    }
     private void Reset()
     {
         AutoFindRefs();
@@ -88,6 +101,28 @@ public class EnemySlotUI : MonoBehaviour
         }
     }
 
+    private void ApplyTargetFrameSettings(EnemyData enemyData)
+    {
+        if (enemyData == null)
+            return;
+
+        if (targetFrameImage == null)
+            return;
+
+        RectTransform rect = targetFrameImage.rectTransform;
+
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+
+        rect.sizeDelta = enemyData.targetFrameSize;
+
+        if (string.IsNullOrWhiteSpace(enemyData.targetFrameFollowBoneName))
+            rect.anchoredPosition = enemyData.targetFrameAnchoredPosition;
+
+        targetFrameImage.raycastTarget = false;
+    }
+
     public EnemyUnit SpawnEnemy(EnemyData enemyData)
     {
         if (enemyData == null)
@@ -98,16 +133,159 @@ public class EnemySlotUI : MonoBehaviour
 
         AutoFindRefs();
 
+        currentEnemyData = enemyData;
+
         gameObject.SetActive(true);
 
         ClearVisual();
 
         ApplyDataToImage(enemyData);
         ApplyDataToEnemyUnit(enemyData);
+        ApplyTargetFrameSettings(enemyData);
         SpawnVisual(enemyData);
+        BindTargetFrameBones(enemyData);
+
         RefreshIntentTooltip();
         RefreshStatusTooltip();
+
+        HideTargetFrame();
         return enemyUnit;
+    }
+
+    private void BindTargetFrameBones(EnemyData enemyData)
+    {
+        currentNormalTargetFrameBone = null;
+        currentDarkTargetFrameBone = null;
+
+        if (enemyData == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(enemyData.targetFrameFollowBoneName))
+            return;
+
+        if (currentNormalVisual != null)
+        {
+            currentNormalTargetFrameBone = FindChildRecursive(
+                currentNormalVisual.transform,
+                enemyData.targetFrameFollowBoneName
+            );
+        }
+
+        if (currentDarkVisual != null)
+        {
+            currentDarkTargetFrameBone = FindChildRecursive(
+                currentDarkVisual.transform,
+                enemyData.targetFrameFollowBoneName
+            );
+        }
+
+        if (currentNormalTargetFrameBone == null &&
+            currentDarkTargetFrameBone == null)
+        {
+            Debug.LogWarning(
+                $"[EnemySlotUI] {enemyData.unitName} 找不到鎖定框跟隨骨骼：" +
+                $"{enemyData.targetFrameFollowBoneName}",
+                this
+            );
+            return;
+        }
+
+        Debug.Log(
+            $"[EnemySlotUI] {enemyData.unitName} 鎖定框骨骼綁定完成。" +
+            $"Normal = {(currentNormalTargetFrameBone != null ? currentNormalTargetFrameBone.name : "None")}，" +
+            $"Dark = {(currentDarkTargetFrameBone != null ? currentDarkTargetFrameBone.name : "None")}",
+            this
+        );
+    }
+    private Transform FindChildRecursive(Transform root, string targetName)
+    {
+        if (root == null)
+            return null;
+
+        if (root.name == targetName)
+            return root;
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform result = FindChildRecursive(
+                root.GetChild(i),
+                targetName
+            );
+
+            if (result != null)
+                return result;
+        }
+
+        return null;
+    }
+
+    private void UpdateTargetFrameFollowPosition()
+    {
+        if (targetFrameImage == null)
+            return;
+
+        if (currentEnemyData == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(currentEnemyData.targetFrameFollowBoneName))
+            return;
+
+        Transform followBone = GetCurrentTargetFrameBone();
+
+        if (followBone == null)
+            return;
+
+        RectTransform frameRect = targetFrameImage.rectTransform;
+        RectTransform parentRect = frameRect.parent as RectTransform;
+
+        if (parentRect == null)
+            return;
+
+        Canvas canvas = targetFrameImage.canvas;
+
+        Camera uiCamera = null;
+
+        if (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            uiCamera = canvas.worldCamera;
+
+        Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(
+            uiCamera,
+            followBone.position
+        );
+
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            parentRect,
+            screenPosition,
+            uiCamera,
+            out Vector2 localPosition))
+        {
+            frameRect.anchoredPosition =
+                localPosition +
+                currentEnemyData.targetFrameAnchoredPosition;
+        }
+    }
+
+    private Transform GetCurrentTargetFrameBone()
+    {
+        if (currentNormalTargetFrameBone != null &&
+            currentNormalTargetFrameBone.gameObject.activeInHierarchy)
+        {
+            return currentNormalTargetFrameBone;
+        }
+
+        if (currentDarkTargetFrameBone != null &&
+            currentDarkTargetFrameBone.gameObject.activeInHierarchy)
+        {
+            return currentDarkTargetFrameBone;
+        }
+
+        if (currentNormalTargetFrameBone != null)
+            return currentNormalTargetFrameBone;
+
+        if (currentDarkTargetFrameBone != null)
+            return currentDarkTargetFrameBone;
+
+        return null;
     }
     private void RefreshIntentTooltip()
     {
@@ -315,7 +493,9 @@ public class EnemySlotUI : MonoBehaviour
             enemyUnit.ClearStatusIconUI();
         }
 
+        HideTargetFrame();
         ClearVisual();
+        currentEnemyData = null;
 
         if (enemyUnit != null)
         {
@@ -323,6 +503,7 @@ public class EnemySlotUI : MonoBehaviour
             enemyUnit.RefreshAllUI();
             enemyUnit.ClearStatusIconUI();
         }
+
 
         gameObject.SetActive(false);
     }
@@ -523,6 +704,9 @@ public class EnemySlotUI : MonoBehaviour
     }
     private void ClearVisual()
     {
+        currentNormalTargetFrameBone = null;
+        currentDarkTargetFrameBone = null;
+
         Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;
         Transform darkRoot = currentDarkVisual != null ? currentDarkVisual.transform : null;
 
@@ -548,5 +732,42 @@ public class EnemySlotUI : MonoBehaviour
                 Destroy(visualRoot.GetChild(i).gameObject);
             }
         }
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (battleTargetUI != null)
+            ((IPointerEnterHandler)battleTargetUI).OnPointerEnter(eventData);
+
+        ShowTargetFrame();
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (battleTargetUI != null)
+            ((IPointerExitHandler)battleTargetUI).OnPointerExit(eventData);
+
+        HideTargetFrame();
+    }
+    private void ShowTargetFrame()
+    {
+        if (targetFrameImage == null)
+            return;
+
+        if (enemyUnit == null)
+            return;
+
+        if (enemyUnit.currentHp <= 0)
+            return;
+
+        targetFrameImage.gameObject.SetActive(true);
+    }
+
+    private void HideTargetFrame()
+    {
+        if (targetFrameImage == null)
+            return;
+
+        targetFrameImage.gameObject.SetActive(false);
     }
 }

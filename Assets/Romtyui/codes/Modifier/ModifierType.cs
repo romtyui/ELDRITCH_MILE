@@ -8,6 +8,8 @@ public enum ModifierType
     DamageDealt,
     DamageReceived,
 
+    CounterDamage,
+
     BlockGain,
 
     EnergyGain,

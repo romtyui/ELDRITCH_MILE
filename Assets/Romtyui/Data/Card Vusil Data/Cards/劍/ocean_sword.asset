@@ -15,12 +15,12 @@ MonoBehaviour:
   cardId: ocean_sword
   cardName: ocean_sword
   description: "\u5C0D \u6240\u6709\u6575\u4EBA \u9020\u6210 {damage} \u9EDE \u50B7\u5BB3\n\u7372\u5F97
-    3\u9EDE \u81E8\u6642\u529B\u91CF"
+    {block} \u9EDE \u8B77\u76FE\n\u7372\u5F97 {counter} \u9EDE \u53CD\u64CA"
   visualData: {fileID: 11400000, guid: 72b03fb8f9d7b164db781fde8b1abd2f, type: 2}
   cardType: 0
   rarity: 0
   targetType: 4
-  baseCost: 1
+  baseCost: 3
   exhaust: 0
   ethereal: 0
   retain: 0
@@ -30,4 +30,6 @@ MonoBehaviour:
   godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
-  - {fileID: 11400000, guid: 53fe4992020dade479438ae12030a34d, type: 2}
+  - {fileID: 11400000, guid: 144e6b3118cd63a43acac2b553d92499, type: 2}
+  - {fileID: 11400000, guid: a9f4f469963dd5a4eabb7e9f4a24dbe8, type: 2}
+  hitEffect: {fileID: 0}

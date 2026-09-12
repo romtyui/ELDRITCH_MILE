@@ -1,4 +1,4 @@
-using UnityEditor;
+ï»¿using UnityEditor;
 
 [CustomEditor(typeof(GeneralCardPlayAnimationController))]
 public class GeneralCardPlayAnimationControllerEditor : Editor
@@ -589,7 +589,7 @@ public class GeneralCardPlayAnimationControllerEditor : Editor
 
 
         // =====================================================
-        // ¥Ø«e¿ï¾Üªº Animation Type
+        // ï¿½Ø«eï¿½ï¿½Üªï¿½ Animation Type
         // =====================================================
 
         GeneralCardPlayAnimationType currentType =
@@ -988,8 +988,8 @@ public class GeneralCardPlayAnimationControllerEditor : Editor
 
 
         /*
-         * fadeDuration ¤w¸g©ñ¦b Common Settings¡A
-         * ©Ò¥H³o¸Ì¤£¥Î¦Aµe¤@¦¸¡C
+         * fadeDuration ï¿½wï¿½gï¿½ï¿½b Common Settingsï¿½A
+         * ï¿½Ò¥Hï¿½oï¿½Ì¤ï¿½ï¿½Î¦Aï¿½eï¿½@ï¿½ï¿½ï¿½C
          */
 
 

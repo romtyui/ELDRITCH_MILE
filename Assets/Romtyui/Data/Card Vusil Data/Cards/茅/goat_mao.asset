@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: goat_mao
   cardName: goat_mao
-  description: "\u7372\u5F97 {shieldBlock} \u9EDE\u8B77\u76FE\n({baseBlock} + {usedEggCount}(\u5DF2\u4F7F\u7528\u5375\u6B21\u6578)) "
+  description: "\u9020\u6210 {damage} \u9EDE\u7A7F\u900F\u50B7\u5BB3\n({baseBlock}
+    + {usedEggCount}(\u5DF2\u4F7F\u7528\u5375\u6B21\u6578)) "
   visualData: {fileID: 11400000, guid: 81586612e28f6894a8033449b1a6f132, type: 2}
-  cardType: 1
+  cardType: 0
   rarity: 0
-  targetType: 1
+  targetType: 2
   baseCost: 1
   exhaust: 0
   ethereal: 0
@@ -28,5 +29,6 @@ MonoBehaviour:
   isGodCard: 0
   godCardAnimation: {fileID: 0}
   effects:
-  - {fileID: 11400000, guid: 144e6b3118cd63a43acac2b553d92499, type: 2}
+  - {fileID: 11400000, guid: ff232e0511752324bb9256245cb2dcb8, type: 2}
   - {fileID: 11400000, guid: 3d510e2e827d87c498b9693468a0a9fa, type: 2}
+  hitEffect: {fileID: 0}

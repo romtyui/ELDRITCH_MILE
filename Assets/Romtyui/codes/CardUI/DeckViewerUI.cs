@@ -4,13 +4,59 @@ using UnityEngine;
 using UnityEngine.UI;
 using static BattleDeck;
 
+public enum DeckViewerDisplayMode
+{
+    ClassicDragScroll,
+    BookPaged
+}
+
 public class DeckViewerUI : MonoBehaviour
 {
     [Header("Refs")]
     public BattleDeck battleDeck;
     public GameObject panelRoot;
+
+    [Header("Display Mode")]
+    [Tooltip("ClassicDragScroll = 原版全部生成到 ContentRoot。BookPaged = 新版書本固定 8 格分頁")]
+    public DeckViewerDisplayMode displayMode = DeckViewerDisplayMode.ClassicDragScroll;
+
+    [Header("Classic Drag Scroll Mode")]
+    [Tooltip("原版顯示模式使用。ClassicDragScroll 會把所有卡牌生成到這裡")]
     public RectTransform contentRoot;
+
+    [Tooltip("原版顯示模式使用的卡牌 Prefab")]
     public CardViewUI cardPrefab;
+
+    [Tooltip("原版列表 Root。使用 BookPaged 時會自動關閉。可以不指定，預設會用 contentRoot")]
+    public GameObject classicRoot;
+
+    [Header("Book Paged Mode")]
+    [Tooltip("新版書本模式 Root。使用 ClassicDragScroll 時會自動關閉")]
+    public GameObject bookRoot;
+
+    [Tooltip("新版一頁顯示幾張。你目前圖上是 8 張")]
+    public int cardsPerPage = 8;
+
+    [Tooltip("新版固定卡牌位置。請拖 8 個已經擺好位置的 CardViewUI")]
+    public List<CardViewUI> bookCardSlots = new List<CardViewUI>();
+
+    [Tooltip("上一頁按鈕。如果在第一頁按，會跳到最後一頁")]
+    public Button previousPageButton;
+
+    [Tooltip("下一頁按鈕。如果在最後一頁按，會跳到第一頁")]
+    public Button nextPageButton;
+
+    [Tooltip("頁數文字，例如 1 / 3。可不指定")]
+    public TMP_Text pageText;
+
+    [Tooltip("如果目前分類沒有牌，要顯示的物件。可不指定")]
+    public GameObject emptyMessageRoot;
+
+    [Tooltip("只有超過一頁時才顯示上一頁 / 下一頁按鈕")]
+    public bool hidePageButtonsWhenSinglePage = true;
+
+    [Tooltip("切換分類時是否回到第一頁")]
+    public bool resetPageWhenSwitchTab = true;
 
     [Header("Center Title")]
     [Tooltip("如果不想顯示中間標題，就關掉")]
@@ -56,7 +102,21 @@ public class DeckViewerUI : MonoBehaviour
     public Vector2 viewerCardSize = new Vector2(180f, 260f);
     public Vector3 viewerCardScale = Vector3.one;
 
-    private DeckViewMode currentMode = DeckViewMode.DrawPile;
+    [Header("Viewer Interaction")]
+    [Tooltip("查看視窗中的卡牌是否禁用出牌拖曳。建議打開")]
+    public bool disableDragInViewer = true;
+
+    [Tooltip("查看視窗中的卡牌是否禁用 Hover 放大。建議打開")]
+    public bool disableHoverInViewer = true;
+
+    [Tooltip("查看視窗中的卡牌 Tooltip 顯示方向")]
+    public TooltipAnchorSide viewerCardTooltipSide = TooltipAnchorSide.Left;
+
+    [Header("Runtime")]
+    [SerializeField] private DeckViewMode currentMode = DeckViewMode.DrawPile;
+    [SerializeField] private int currentPageIndex = 0;
+    [SerializeField] private int totalPageCount = 1;
+
     private readonly List<CardViewUI> spawnedCards = new();
 
     private void Awake()
@@ -78,11 +138,19 @@ public class DeckViewerUI : MonoBehaviour
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
 
+        if (previousPageButton != null)
+            previousPageButton.onClick.AddListener(PreviousPage);
+
+        if (nextPageButton != null)
+            nextPageButton.onClick.AddListener(NextPage);
+
         if (panelRoot != null)
             panelRoot.SetActive(false);
 
         RefreshTabUI();
         UpdateCenterTitle();
+        RefreshModeRootVisibility();
+        ClearBookSlots();
     }
 
     private void AutoBindButtonRefs()
@@ -166,6 +234,9 @@ public class DeckViewerUI : MonoBehaviour
     {
         currentMode = mode;
 
+        if (resetPageWhenSwitchTab)
+            currentPageIndex = 0;
+
         if (panelRoot != null)
             panelRoot.SetActive(true);
 
@@ -177,9 +248,58 @@ public class DeckViewerUI : MonoBehaviour
     public void Close()
     {
         ClearCards();
+        ClearBookSlots();
+
+        if (emptyMessageRoot != null)
+            emptyMessageRoot.SetActive(false);
 
         if (panelRoot != null)
             panelRoot.SetActive(false);
+    }
+
+    public void SetDisplayMode(DeckViewerDisplayMode mode)
+    {
+        displayMode = mode;
+        currentPageIndex = 0;
+        Refresh();
+    }
+
+    public void NextPage()
+    {
+        if (displayMode != DeckViewerDisplayMode.BookPaged)
+            return;
+
+        IReadOnlyList<CardInstance> cards = GetCurrentCards();
+        int pageCount = CalculatePageCount(cards);
+
+        if (pageCount <= 1)
+            return;
+
+        currentPageIndex++;
+
+        if (currentPageIndex >= pageCount)
+            currentPageIndex = 0;
+
+        Refresh();
+    }
+
+    public void PreviousPage()
+    {
+        if (displayMode != DeckViewerDisplayMode.BookPaged)
+            return;
+
+        IReadOnlyList<CardInstance> cards = GetCurrentCards();
+        int pageCount = CalculatePageCount(cards);
+
+        if (pageCount <= 1)
+            return;
+
+        currentPageIndex--;
+
+        if (currentPageIndex < 0)
+            currentPageIndex = pageCount - 1;
+
+        Refresh();
     }
 
     public void Refresh()
@@ -190,22 +310,21 @@ public class DeckViewerUI : MonoBehaviour
             return;
         }
 
-        if (cardPrefab == null)
+        if (cardPrefab == null && displayMode == DeckViewerDisplayMode.ClassicDragScroll)
         {
-            Debug.LogWarning("[DeckViewerUI] cardPrefab 沒有指定");
+            Debug.LogWarning("[DeckViewerUI] cardPrefab 沒有指定，ClassicDragScroll 無法生成卡牌");
             return;
         }
 
-        if (contentRoot == null)
+        if (contentRoot == null && displayMode == DeckViewerDisplayMode.ClassicDragScroll)
         {
-            Debug.LogWarning("[DeckViewerUI] contentRoot 沒有指定");
+            Debug.LogWarning("[DeckViewerUI] contentRoot 沒有指定，ClassicDragScroll 無法生成卡牌");
             return;
         }
 
+        RefreshModeRootVisibility();
         RefreshTabUI();
         UpdateCenterTitle();
-
-        ClearCards();
 
         IReadOnlyList<CardInstance> cards = GetCurrentCards();
 
@@ -215,7 +334,38 @@ public class DeckViewerUI : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[DeckViewerUI] Refresh {currentMode}, count = {cards.Count}");
+        totalPageCount = Mathf.Max(1, CalculatePageCount(cards));
+        currentPageIndex = Mathf.Clamp(currentPageIndex, 0, totalPageCount - 1);
+
+        Debug.Log($"[DeckViewerUI] Refresh {currentMode}, count = {cards.Count}, mode = {displayMode}");
+
+        switch (displayMode)
+        {
+            case DeckViewerDisplayMode.ClassicDragScroll:
+                RefreshClassicDragScroll(cards);
+                break;
+
+            case DeckViewerDisplayMode.BookPaged:
+                RefreshBookPaged(cards);
+                break;
+        }
+
+        RefreshPageUI(cards);
+    }
+
+    private void RefreshClassicDragScroll(IReadOnlyList<CardInstance> cards)
+    {
+        ClearBookSlots();
+        ClearCards();
+
+        if (cards == null)
+            return;
+
+        if (cardPrefab == null)
+            return;
+
+        if (contentRoot == null)
+            return;
 
         for (int i = 0; i < cards.Count; i++)
         {
@@ -228,36 +378,147 @@ public class DeckViewerUI : MonoBehaviour
             }
 
             CardViewUI view = Instantiate(cardPrefab, contentRoot);
-            view.SetTooltipSide(TooltipAnchorSide.Left);
-            view.gameObject.SetActive(true);
-            view.Bind(card);
 
-            RectTransform rect = view.GetComponent<RectTransform>();
-
-            if (rect != null)
-            {
-                rect.localRotation = Quaternion.identity;
-
-                if (overrideCardSize)
-                    rect.sizeDelta = viewerCardSize;
-
-                rect.localScale = viewerCardScale;
-            }
-
-            CardDragUI drag = view.GetComponent<CardDragUI>();
-
-            if (drag != null)
-                drag.enabled = false;
-
-            CardHoverUI hover = view.GetComponent<CardHoverUI>();
-
-            if (hover != null)
-                hover.enabled = false;
+            SetupViewerCard(view, card);
 
             spawnedCards.Add(view);
 
             Debug.Log($"[DeckViewerUI] 生成卡牌 UI：{card.data.cardName}");
         }
+
+        if (emptyMessageRoot != null)
+            emptyMessageRoot.SetActive(cards.Count == 0);
+    }
+
+    private void RefreshBookPaged(IReadOnlyList<CardInstance> cards)
+    {
+        ClearCards();
+        ClearBookSlots();
+
+        if (cards == null)
+            return;
+
+        if (bookCardSlots == null || bookCardSlots.Count == 0)
+        {
+            Debug.LogWarning("[DeckViewerUI] bookCardSlots 沒有指定，BookPaged 無法顯示卡牌");
+            return;
+        }
+
+        int safeCardsPerPage = Mathf.Max(1, cardsPerPage);
+        int startIndex = currentPageIndex * safeCardsPerPage;
+
+        for (int i = 0; i < bookCardSlots.Count; i++)
+        {
+            CardViewUI slot = bookCardSlots[i];
+
+            if (slot == null)
+                continue;
+
+            int cardIndex = startIndex + i;
+
+            bool hasCard =
+                i < safeCardsPerPage &&
+                cardIndex >= 0 &&
+                cardIndex < cards.Count &&
+                cards[cardIndex] != null &&
+                cards[cardIndex].data != null;
+
+            if (!hasCard)
+            {
+                slot.gameObject.SetActive(false);
+                continue;
+            }
+
+            SetupViewerCard(slot, cards[cardIndex]);
+
+            Debug.Log($"[DeckViewerUI] 書本頁 Slot {i} 顯示：{cards[cardIndex].data.cardName}");
+        }
+
+        if (emptyMessageRoot != null)
+            emptyMessageRoot.SetActive(cards.Count == 0);
+    }
+
+    private void SetupViewerCard(CardViewUI view, CardInstance card)
+    {
+        if (view == null)
+            return;
+
+        view.SetTooltipSide(viewerCardTooltipSide);
+        view.gameObject.SetActive(true);
+        view.Bind(card);
+
+        RectTransform rect = view.GetComponent<RectTransform>();
+
+        if (rect != null)
+        {
+            rect.localRotation = Quaternion.identity;
+
+            if (overrideCardSize)
+                rect.sizeDelta = viewerCardSize;
+
+            rect.localScale = viewerCardScale;
+        }
+
+        if (disableDragInViewer)
+        {
+            CardDragUI drag = view.GetComponent<CardDragUI>();
+
+            if (drag != null)
+                drag.enabled = false;
+        }
+
+        if (disableHoverInViewer)
+        {
+            CardHoverUI hover = view.GetComponent<CardHoverUI>();
+
+            if (hover != null)
+                hover.enabled = false;
+        }
+    }
+
+    private void RefreshModeRootVisibility()
+    {
+        if (classicRoot != null)
+            classicRoot.SetActive(displayMode == DeckViewerDisplayMode.ClassicDragScroll);
+        else if (contentRoot != null)
+            contentRoot.gameObject.SetActive(displayMode == DeckViewerDisplayMode.ClassicDragScroll);
+
+        if (bookRoot != null)
+            bookRoot.SetActive(displayMode == DeckViewerDisplayMode.BookPaged);
+    }
+
+    private void RefreshPageUI(IReadOnlyList<CardInstance> cards)
+    {
+        int pageCount = CalculatePageCount(cards);
+        bool hasMultiplePages = pageCount > 1;
+
+        bool showPageButtons =
+            displayMode == DeckViewerDisplayMode.BookPaged &&
+            (!hidePageButtonsWhenSinglePage || hasMultiplePages);
+
+        if (previousPageButton != null)
+            previousPageButton.gameObject.SetActive(showPageButtons);
+
+        if (nextPageButton != null)
+            nextPageButton.gameObject.SetActive(showPageButtons);
+
+        if (pageText != null)
+        {
+            if (displayMode == DeckViewerDisplayMode.BookPaged && cards != null && cards.Count > 0)
+                pageText.text = $"{currentPageIndex + 1} / {Mathf.Max(1, pageCount)}";
+            else
+                pageText.text = "";
+        }
+    }
+
+    private int CalculatePageCount(IReadOnlyList<CardInstance> cards)
+    {
+        if (cards == null || cards.Count == 0)
+            return 0;
+
+        int safeCardsPerPage = Mathf.Max(1, cardsPerPage);
+
+        return Mathf.CeilToInt(cards.Count / (float)safeCardsPerPage);
     }
 
     private void RefreshTabUI()
@@ -414,6 +675,22 @@ public class DeckViewerUI : MonoBehaviour
             {
                 Destroy(contentRoot.GetChild(i).gameObject);
             }
+        }
+    }
+
+    private void ClearBookSlots()
+    {
+        if (bookCardSlots == null)
+            return;
+
+        for (int i = 0; i < bookCardSlots.Count; i++)
+        {
+            CardViewUI slot = bookCardSlots[i];
+
+            if (slot == null)
+                continue;
+
+            slot.gameObject.SetActive(false);
         }
     }
 }
