@@ -34,8 +34,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -39.1828, y: -4.4018}
-  m_SizeDelta: {x: 57.4703, y: 27.2695}
+  m_AnchoredPosition: {x: -32.1509, y: 2.6302}
+  m_SizeDelta: {x: 43.4065, y: 26.8676}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1262790489665954927
 CanvasRenderer:
@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: 999
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -92,14 +92,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
+  m_fontSize: 23.25
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 4
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -174,7 +174,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 139.9104, y: -5}
-  m_SizeDelta: {x: 279.8208, y: 10}
+  m_SizeDelta: {x: 270, y: 270}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5204375593199812058
 MonoBehaviour:
@@ -192,6 +192,7 @@ MonoBehaviour:
   stackText: {fileID: 22560675520507211}
   tooltipTrigger: {fileID: 0}
   keywordDatabase: {fileID: 0}
+  showNumberWhenOneStack: 1
 --- !u!114 &8150403969932170253
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -236,7 +237,7 @@ RectTransform:
   m_GameObject: {fileID: 7031162652024920858}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5.7372594, y: 3.0196102, z: 1.1474519}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2417002716793284222}
@@ -244,7 +245,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -63.6077, y: 25.0492}
-  m_SizeDelta: {x: 10.4869, y: 19.904}
+  m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6849031026166009118
 CanvasRenderer:

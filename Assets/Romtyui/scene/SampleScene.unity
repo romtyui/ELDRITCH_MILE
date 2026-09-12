@@ -260,8 +260,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -14.565}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 49.7, y: -43.4}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 170, y: -87}
+  m_SizeDelta: {x: 269.8, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &21368318
 MonoBehaviour:
@@ -272,23 +272,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 21368316}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
   m_Padding:
     m_Left: 0
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 3
-  m_Spacing: -187.96
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 1
+  m_CellSize: {x: 88.11, y: 55.5}
+  m_Spacing: {x: -18.18, y: 0}
+  m_Constraint: 1
+  m_ConstraintCount: 4
 --- !u!1 &25262937
 GameObject:
   m_ObjectHideFlags: 0
@@ -22919,6 +22917,7 @@ GameObject:
   - component: {fileID: 1056973083}
   - component: {fileID: 1056973086}
   - component: {fileID: 1056973085}
+  - component: {fileID: 1056973090}
   - component: {fileID: 1056973087}
   - component: {fileID: 1056973088}
   - component: {fileID: 1056973089}
@@ -23020,6 +23019,7 @@ MonoBehaviour:
   statusIconPrefab: {fileID: 5204375593199812058, guid: 9d62f1c58d1e5094f9dd30d97e685dd4, type: 3}
   hideStatusRootWhenEmpty: 1
   currentIntentIndex: 0
+  hpNumberAnimator: {fileID: 1056973090}
   currentHpText: {fileID: 512364049}
   maxHpText: {fileID: 1691219662}
   stunIntent: {fileID: 0}
@@ -23121,6 +23121,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialTarget
   targetId: Battle_FirstEnemy
+--- !u!114 &1056973090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1056973081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedNumberTextUI
+  valueText: {fileID: 512364049}
+  animationDuration: 0.4
+  useUnscaledTime: 1
+  showMaxValue: 0
+  separator: ' / '
 --- !u!1 &1070034184
 GameObject:
   m_ObjectHideFlags: 0
@@ -23273,6 +23290,7 @@ RectTransform:
   - {fileID: 1458075006}
   - {fileID: 1918266300}
   - {fileID: 637183852}
+  - {fileID: 1749557557}
   m_Father: {fileID: 1875921558}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -32554,6 +32572,7 @@ GameObject:
   - component: {fileID: 1485395016}
   - component: {fileID: 1485395015}
   - component: {fileID: 1485395014}
+  - component: {fileID: 1485395019}
   - component: {fileID: 1485395013}
   - component: {fileID: 1485395018}
   m_Layer: 5
@@ -32649,6 +32668,7 @@ MonoBehaviour:
   statusIconPrefab: {fileID: 5204375593199812058, guid: 9d62f1c58d1e5094f9dd30d97e685dd4, type: 3}
   hideStatusRootWhenEmpty: 1
   currentIntentIndex: 0
+  hpNumberAnimator: {fileID: 1485395019}
   currentHpText: {fileID: 1392624695}
   maxHpText: {fileID: 1742393611}
   stunIntent: {fileID: 0}
@@ -32744,6 +32764,23 @@ MonoBehaviour:
   openMode: 1
   stopEventPropagation: 0
   entries: []
+--- !u!114 &1485395019
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1485395011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedNumberTextUI
+  valueText: {fileID: 1392624695}
+  animationDuration: 0.4
+  useUnscaledTime: 1
+  showMaxValue: 0
+  separator: ' / '
 --- !u!1 &1486562985
 GameObject:
   m_ObjectHideFlags: 0
@@ -38602,8 +38639,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -14.565}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -31.4, y: -33.7}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 94, y: -51}
+  m_SizeDelta: {x: 211.6, y: 48.6}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1702379481
 MonoBehaviour:
@@ -38614,23 +38651,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 1702379479}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
   m_Padding:
     m_Left: 0
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 3
-  m_Spacing: -187.96
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 1
+  m_CellSize: {x: 88.11, y: 55.5}
+  m_Spacing: {x: -18.18, y: 0}
+  m_Constraint: 1
+  m_ConstraintCount: 4
 --- !u!1001 &1705930081
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -39699,16 +39734,16 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1749557556}
   m_LocalRotation: {x: -0, y: -0, z: -0.12676296, w: 0.99193305}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.78910595, y: 0.78910595, z: 0.78910595}
+  m_LocalPosition: {x: 0, y: 0, z: -0.000152606}
+  m_LocalScale: {x: 0.78910583, y: 0.78910583, z: 0.78910595}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1813222583}
+  m_Father: {fileID: 1075896138}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -14.565}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -45.2, y: -10.6}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 64, y: -55}
+  m_SizeDelta: {x: 229, y: 92.324}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1749557558
 MonoBehaviour:
@@ -39719,23 +39754,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 1749557556}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
   m_Padding:
     m_Left: 0
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 3
-  m_Spacing: -187.96
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 1
+  m_CellSize: {x: 88.11, y: 55.5}
+  m_Spacing: {x: -18.18, y: 0}
+  m_Constraint: 1
+  m_ConstraintCount: 4
 --- !u!1 &1753983812
 GameObject:
   m_ObjectHideFlags: 0
@@ -40907,6 +40940,8 @@ GameObject:
   - component: {fileID: 1791172256}
   - component: {fileID: 1791172255}
   - component: {fileID: 1791172257}
+  - component: {fileID: 1791172261}
+  - component: {fileID: 1791172260}
   - component: {fileID: 1791172259}
   - component: {fileID: 1791172258}
   m_Layer: 0
@@ -40981,6 +41016,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleHUDUI
   battleUnit: {fileID: 1663680720}
   energySystem: {fileID: 1663680723}
+  hpNumberAnimator: {fileID: 1791172260}
   currentHpText: {fileID: 237316757}
   maxHpText: {fileID: 164017274}
   currentEnergyText: {fileID: 181309836}
@@ -41023,6 +41059,40 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RelicsRuntime
   relicsInventory: {fileID: 1153238460}
+--- !u!114 &1791172260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1791172254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedNumberTextUI
+  valueText: {fileID: 237316757}
+  animationDuration: 0.4
+  useUnscaledTime: 1
+  showMaxValue: 0
+  separator: ' / '
+--- !u!114 &1791172261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1791172254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedNumberTextUI
+  valueText: {fileID: 181309836}
+  animationDuration: 0.4
+  useUnscaledTime: 1
+  showMaxValue: 0
+  separator: ' / '
 --- !u!1 &1791411460
 GameObject:
   m_ObjectHideFlags: 0
@@ -41348,7 +41418,6 @@ RectTransform:
   - {fileID: 1739929400}
   - {fileID: 1691219661}
   - {fileID: 1285507561}
-  - {fileID: 1749557557}
   - {fileID: 292422262}
   - {fileID: 1757971482}
   m_Father: {fileID: 1875921558}
@@ -47052,6 +47121,7 @@ GameObject:
   - component: {fileID: 2132923021}
   - component: {fileID: 2132923024}
   - component: {fileID: 2132923023}
+  - component: {fileID: 2132923027}
   - component: {fileID: 2132923025}
   - component: {fileID: 2132923026}
   m_Layer: 5
@@ -47151,6 +47221,7 @@ MonoBehaviour:
   statusIconPrefab: {fileID: 5204375593199812058, guid: 9d62f1c58d1e5094f9dd30d97e685dd4, type: 3}
   hideStatusRootWhenEmpty: 1
   currentIntentIndex: 0
+  hpNumberAnimator: {fileID: 2132923027}
   currentHpText: {fileID: 550124009}
   maxHpText: {fileID: 132822267}
   stunIntent: {fileID: 0}
@@ -47239,6 +47310,23 @@ MonoBehaviour:
   openMode: 1
   stopEventPropagation: 0
   entries: []
+--- !u!114 &2132923027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2132923019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedNumberTextUI
+  valueText: {fileID: 550124009}
+  animationDuration: 0.4
+  useUnscaledTime: 1
+  showMaxValue: 0
+  separator: ' / '
 --- !u!1 &2137561411
 GameObject:
   m_ObjectHideFlags: 0

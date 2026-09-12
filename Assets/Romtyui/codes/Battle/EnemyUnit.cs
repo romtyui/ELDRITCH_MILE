@@ -45,6 +45,8 @@ public class EnemyUnit : BattleUnit
     [Header("Runtime")]
     public int currentIntentIndex = 0;
 
+    public AnimatedNumberTextUI hpNumberAnimator;
+
     [Header("HP UI")]
     public TMP_Text currentHpText;
     public TMP_Text maxHpText;
@@ -516,8 +518,14 @@ public class EnemyUnit : BattleUnit
 
     public void RefreshHpUI()
     {
-        if (currentHpText != null)
+        if (hpNumberAnimator != null)
+        {
+            hpNumberAnimator.SetValue(currentHp);
+        }
+        else if (currentHpText != null)
+        {
             currentHpText.text = currentHp.ToString();
+        }
 
         if (maxHpText != null)
             maxHpText.text = maxHp.ToString();
