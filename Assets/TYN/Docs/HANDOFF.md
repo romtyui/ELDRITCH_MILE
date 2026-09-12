@@ -2535,3 +2535,60 @@ Button。玩家為了把最後一句打完而點的那一下，會在同一瞬�
 
 `endButton` 欄位留著，只是不再主動 `SetActive(true)`。
 要改回去的話把 `ArmDismiss` 那幾行換回 `SetEndButtonVisible(true)` 即可。
+
+
+## 把 Romtyui 的戰鬥系統重新打包成 Stage_Battle_v2（2026-09-13）
+
+他的戰鬥系統活在 `Assets/Romtyui/scene/SampleScene.unity` 的
+**`BattleSystemPrefab`**（那不是 prefab 資產，只是一個同名的場景物件）。
+我們的 `Stage_Battle.prefab` 是打包過去的副本，所以他一改就要重新打包。
+
+### 結構比對（濾掉 _Runtime 之後）
+
+| | 數量 |
+|---|---|
+| 他有我們沒有 | 19 條路徑 |
+| 我們有他沒有 | 15 條路徑 |
+
+他新增的：
+* `BattleUICanvas/DeckViewerPanel/BookRoot ` ＋ 5 個子物件 —— **牌組檢視器（翻頁的書）**
+* `Target Frame` × 3（每個怪物站位一個）
+* `lamp_Panel/Root/` 底下的 指針 / 按鈕 / 血條框
+* 幾個意圖說明與怪物位置的錨點
+
+我們有他沒有的，扣掉**我方 4 個**（見下）之後幾乎都是**他改過名字**的
+（`Image (3)` → `指針`、`GameObject (1)` → 具名錨點…），不是刪除。
+
+### ⚠️ 打包時一定要補回的我方 7 項
+
+1. `Global Light 2D`　2. `Global Volume`　3. `Global Volume (1)`
+   —— 少了這三個**戰鬥場景會沒有渲染**（先前查過的坑）
+4. `EndButtonCanvas`（含 EndButton）
+5. `BattleStageController` ＋ 全部設定（tierRewards 3 筆、formationOverrides 1 筆、
+   rewardLineFormat、defeatFlagPrefix、dismissGrace…）
+6. `Props_Panel` / `Relics_Panel` **關閉**（我們改用 Canvas_HUD 那一套）
+7. 刪掉 `_Runtime` 殘骸
+
+⚠️ **複製 `BattleStageController` 過去之後，物件參照還指著舊實體**，
+要重新指向新副本裡的 `battleManager` / `endButton` / `godCardAnimationCanvas`。
+不重指的話會指到已經被刪掉的物件，而且不會報錯。
+
+### 做法：新檔案，不覆蓋
+
+存成 **`Stage_Battle_v2.prefab`**，`StageHost.stages[6].prefab` 指過去。
+舊的 `Stage_Battle.prefab` 原封不動留著 —— 要退回只要把那一格改回去。
+
+⚠️ `customParent = WorldRoot` 必須保留。戰鬥掛在 `WorldRoot` 不是
+`Canvas_Stage`，換 prefab 時很容易忘記檢查這一格。
+
+### 打包後驗證
+
+```
+Transform 450 → 516        BookRoot 1 個   Target Frame 3 個
+我方 4 個物件全在          遺失腳本 0      _Runtime 0
+BattleStageController 設定全數保留，三個物件參照都重新指好
+EnemyFormationSpawner slots 3　BattleManager.playerUnit ✔
+ItemInventory ✔　RelicsInventory ✔
+```
+
+⚠️ 疊加開啟他的場景之後**沒有存檔就關掉**，他的 SampleScene 沒有被動到。
