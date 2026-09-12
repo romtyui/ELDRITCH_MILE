@@ -13787,6 +13787,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 626338526}
+  - component: {fileID: 626338527}
   m_Layer: 5
   m_Name: HP_Root
   m_TagString: Untagged
@@ -13813,6 +13814,26 @@ Transform:
   - {fileID: 164017273}
   m_Father: {fileID: 1294764177}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &626338527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 626338525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedNumberTextUI
+  valueText: {fileID: 237316757}
+  animationDuration: 0.4
+  useUnscaledTime: 1
+  decreaseColor: {r: 1, g: 0, b: 0, a: 1}
+  increaseColor: {r: 0, g: 1, b: 0, a: 1}
+  changeColorDuringAnimation: 1
+  showMaxValue: 0
+  separator: ' / '
 --- !u!1 &629097574
 GameObject:
   m_ObjectHideFlags: 0
@@ -23136,6 +23157,9 @@ MonoBehaviour:
   valueText: {fileID: 512364049}
   animationDuration: 0.4
   useUnscaledTime: 1
+  decreaseColor: {r: 1, g: 0, b: 0, a: 1}
+  increaseColor: {r: 0, g: 1, b: 0, a: 1}
+  changeColorDuringAnimation: 1
   showMaxValue: 0
   separator: ' / '
 --- !u!1 &1070034184
@@ -26016,6 +26040,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1249957690}
+  - component: {fileID: 1249957691}
   m_Layer: 5
   m_Name: SanRoot
   m_TagString: Untagged
@@ -26042,6 +26067,26 @@ Transform:
   - {fileID: 538242479}
   m_Father: {fileID: 1294764177}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1249957691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1249957689}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedNumberTextUI
+  valueText: {fileID: 181309836}
+  animationDuration: 0.4
+  useUnscaledTime: 1
+  decreaseColor: {r: 1, g: 0, b: 0, a: 1}
+  increaseColor: {r: 0, g: 1, b: 0, a: 1}
+  changeColorDuringAnimation: 1
+  showMaxValue: 0
+  separator: ' / '
 --- !u!1 &1251152406
 GameObject:
   m_ObjectHideFlags: 0
@@ -32779,6 +32824,9 @@ MonoBehaviour:
   valueText: {fileID: 1392624695}
   animationDuration: 0.4
   useUnscaledTime: 1
+  decreaseColor: {r: 1, g: 0, b: 0, a: 1}
+  increaseColor: {r: 0, g: 1, b: 0, a: 1}
+  changeColorDuringAnimation: 1
   showMaxValue: 0
   separator: ' / '
 --- !u!1 &1486562985
@@ -41016,7 +41064,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BattleHUDUI
   battleUnit: {fileID: 1663680720}
   energySystem: {fileID: 1663680723}
-  hpNumberAnimator: {fileID: 1791172260}
+  hpNumberAnimator_HP: {fileID: 626338527}
+  hpNumberAnimator_SAN: {fileID: 1249957691}
   currentHpText: {fileID: 237316757}
   maxHpText: {fileID: 164017274}
   currentEnergyText: {fileID: 181309836}
@@ -41066,7 +41115,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1791172254}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
   m_Name: 
@@ -41074,6 +41123,9 @@ MonoBehaviour:
   valueText: {fileID: 237316757}
   animationDuration: 0.4
   useUnscaledTime: 1
+  decreaseColor: {r: 1, g: 0, b: 0, a: 1}
+  increaseColor: {r: 0, g: 1, b: 0, a: 1}
+  changeColorDuringAnimation: 1
   showMaxValue: 0
   separator: ' / '
 --- !u!114 &1791172261
@@ -41083,7 +41135,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1791172254}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
   m_Name: 
@@ -41091,6 +41143,9 @@ MonoBehaviour:
   valueText: {fileID: 181309836}
   animationDuration: 0.4
   useUnscaledTime: 1
+  decreaseColor: {r: 1, g: 0, b: 0, a: 1}
+  increaseColor: {r: 0, g: 1, b: 0, a: 1}
+  changeColorDuringAnimation: 1
   showMaxValue: 0
   separator: ' / '
 --- !u!1 &1791411460
@@ -47325,6 +47380,9 @@ MonoBehaviour:
   valueText: {fileID: 550124009}
   animationDuration: 0.4
   useUnscaledTime: 1
+  decreaseColor: {r: 1, g: 0.06968109, b: 0, a: 1}
+  increaseColor: {r: 0, g: 1, b: 0, a: 1}
+  changeColorDuringAnimation: 1
   showMaxValue: 0
   separator: ' / '
 --- !u!1 &2137561411

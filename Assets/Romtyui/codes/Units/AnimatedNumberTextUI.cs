@@ -14,6 +14,16 @@ public class AnimatedNumberTextUI : MonoBehaviour
     [Tooltip("是否使用真實時間。建議開啟，這樣 Time.timeScale = 0 時 UI 動畫仍然能跑")]
     public bool useUnscaledTime = true;
 
+    [Header("Animation Color")]
+    [Tooltip("數字下降時使用的顏色")]
+    public Color decreaseColor = Color.red;
+
+    [Tooltip("數字上升時使用的顏色")]
+    public Color increaseColor = Color.green;
+
+    [Tooltip("數字動畫期間是否變色")]
+    public bool changeColorDuringAnimation = true;
+
     [Header("Format")]
     [Tooltip("是否顯示最大值，例如 75 / 100")]
     public bool showMaxValue;
@@ -27,10 +37,24 @@ public class AnimatedNumberTextUI : MonoBehaviour
 
     private bool initialized;
 
+    private Color originalColor;
+    private bool colorInitialized;
+
     private void Awake()
     {
         if (valueText == null)
             valueText = GetComponent<TMP_Text>();
+
+        CacheOriginalColor();
+    }
+
+    private void CacheOriginalColor()
+    {
+        if (valueText == null)
+            return;
+
+        originalColor = valueText.color;
+        colorInitialized = true;
     }
 
     public void SetValueImmediate(int value)
@@ -45,6 +69,7 @@ public class AnimatedNumberTextUI : MonoBehaviour
             animationCoroutine = null;
         }
 
+        RestoreOriginalColor();
         RefreshText();
     }
 
@@ -61,6 +86,7 @@ public class AnimatedNumberTextUI : MonoBehaviour
             animationCoroutine = null;
         }
 
+        RestoreOriginalColor();
         RefreshText();
     }
 
@@ -91,6 +117,25 @@ public class AnimatedNumberTextUI : MonoBehaviour
         if (animationCoroutine != null)
             StopCoroutine(animationCoroutine);
 
+        if (changeColorDuringAnimation && valueText != null)
+        {
+            if (!colorInitialized)
+                CacheOriginalColor();
+
+            if (targetValue < displayedValue)
+            {
+                valueText.color = decreaseColor;
+            }
+            else if (targetValue > displayedValue)
+            {
+                valueText.color = increaseColor;
+            }
+            else
+            {
+                RestoreOriginalColor();
+            }
+        }
+
         animationCoroutine = StartCoroutine(
             AnimateValueRoutine(targetValue, maxValue)
         );
@@ -106,6 +151,7 @@ public class AnimatedNumberTextUI : MonoBehaviour
         {
             displayedValue = targetValue;
             RefreshText();
+            RestoreOriginalColor();
 
             animationCoroutine = null;
             yield break;
@@ -115,6 +161,7 @@ public class AnimatedNumberTextUI : MonoBehaviour
         {
             displayedValue = targetValue;
             RefreshText();
+            RestoreOriginalColor();
 
             animationCoroutine = null;
             yield break;
@@ -144,7 +191,20 @@ public class AnimatedNumberTextUI : MonoBehaviour
         displayedValue = targetValue;
         RefreshText();
 
+        RestoreOriginalColor();
+
         animationCoroutine = null;
+    }
+
+    private void RestoreOriginalColor()
+    {
+        if (valueText == null)
+            return;
+
+        if (!colorInitialized)
+            return;
+
+        valueText.color = originalColor;
     }
 
     private void RefreshText()

@@ -8,7 +8,8 @@ public class BattleHUDUI : MonoBehaviour
     public BattleUnit battleUnit;
     public EnergySystem energySystem;
 
-    public AnimatedNumberTextUI hpNumberAnimator;
+    public AnimatedNumberTextUI hpNumberAnimator_HP;
+    public AnimatedNumberTextUI hpNumberAnimator_SAN;
 
     [Header("HP TMP")]
     public TMP_Text currentHpText;
@@ -98,7 +99,7 @@ public class BattleHUDUI : MonoBehaviour
         }
 
         if (currentHpText != null)
-            hpNumberAnimator.SetValue(battleUnit.currentHp);
+            hpNumberAnimator_HP.SetValue(battleUnit.currentHp);
         //currentHpText.text = battleUnit.currentHp.ToString();
 
         if (maxHpText != null)
@@ -116,7 +117,8 @@ public class BattleHUDUI : MonoBehaviour
         }
 
         if (currentEnergyText != null)
-            currentEnergyText.text = energySystem.currentEnergy.ToString();
+             hpNumberAnimator_SAN.SetValue(energySystem.currentEnergy);
+            //currentEnergyText.text = energySystem.currentEnergy.ToString();
 
         if (maxEnergyText != null)
             maxEnergyText.text = energySystem.maxEnergy.ToString();
