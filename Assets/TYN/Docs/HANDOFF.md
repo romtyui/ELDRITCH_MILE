@@ -2419,3 +2419,46 @@ else if (layout == Terrain) → GenerateTerrain
 
 是結構上保證的：層數 = BFS 跳數，最深的點唯一，
 `EnsureReachesGoal` 逼每個節點都通到它。不是運氣。
+
+
+## 3D 地圖接上遊戲流程（2026-09-12）
+
+```
+[MAP_OVERLAY]                    ← MapView3D 掛在這（平面版 MapView 停用但留著）
+   MapPanel
+      MapSurface (RawImage)      ← 顯示 MapRT，滿版，raycastTarget = false
+      map_image (straight) (關)  ← 平面版的底圖
+      MapContainer (關)          ← 平面版的節點容器
+      TooltipAnchor              ← 說明框貼的位置（世界轉螢幕之後移到這）
+      MapBanner / 離開鍵         ← 不動，疊在 RawImage 上面
+[MAP_3D]                          ← 世界空間，不參與滑動
+   World / MapCamera(+Rig+Controller) → MapRT
+```
+
+⚠️ **`MapSurface` 的 `raycastTarget` 要關掉**。`MapView3D` 自己用
+`Physics.Raycast` 打射線，不吃 uGUI 事件；開著的話會擋住 Banner 上的離開鍵。
+
+⚠️ **地圖相機的背景要全透明**，`StageBackdrop` 才透得出來。
+不然地圖外圍是一片純色，看不到場景美術。
+
+⚠️ **複製元件之後要把來源那份移除**。`[MAP_3D]` 上留著一份 MapView3D 的話
+會跟覆蓋層那份搶著跑 `Update()` 與射線偵測。
+
+### 節點隱形的 bug
+
+`SpriteFor` 拿不到圖時回傳 null → `icon.enabled = false` → 節點隱形，
+但連線照畫 —— 看起來就是「線連到空氣」。實測 40 個節點有 7 個隱形
+（6 商店 + 1 特殊事件）。平面版的 `PrefabFor` 本來就有退路，3D 版漏了。
+
+**每一條分支都要有退路**，最後再退到 `spriteEvent`，還是 null 就報警告。
+
+### 美術缺口（要跟美術確認）
+
+`Assets/TYN/Map/ART/節點/` 裡**沒有商店、特殊事件、對話的專用圖示**。
+目前拿現成素材當佔位：
+
+| 種類 | 佔位用 | 依據 |
+|---|---|---|
+| 商店 | `屋子` | 使用者附的示意圖裡有黑色小屋 |
+| 特殊事件 | `地圖物件_平地_紅` | 示意圖裡有紅色菱形 |
+| 對話 | `地圖物件_一般探索` | 沒有更好的，先借事件的 |

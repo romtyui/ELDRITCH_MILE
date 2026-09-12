@@ -65,6 +65,9 @@ namespace EldritchMile.Map3D
         public Sprite spriteShop;
         public Sprite spriteSpecialEvent;
 
+        [Tooltip("對話節點。留空會退回事件的圖")]
+        public Sprite spriteDialogue;
+
         [Header("連線")]
         [Tooltip("連線材質。留空會用 Sprites/Default")]
         public Material lineMaterial;
@@ -200,19 +203,38 @@ namespace EldritchMile.Map3D
                 (d.yPercent / 100f - 0.5f) * groundSize.y);
         }
 
+        /// <summary>
+        /// 這一種節點用哪張圖。
+        ///
+        /// ⚠️ **每一條都要有退路。** 沒有退路的話，沒指定圖的種類會變成
+        /// 「有節點、有連線，但畫面上什麼都沒有」—— 玩家看到的是線連到空氣。
+        /// 平面版的 `PrefabFor` 本來就有這條退路，3D 版一開始漏掉了，
+        /// 實測 40 個節點有 7 個是隱形的（6 商店 + 1 特殊事件）。
+        /// </summary>
         private Sprite SpriteFor(RunNodeData d)
         {
+            Sprite s;
             switch (d.kind)
             {
                 case MapNodeKind.Combat:
                     // 菁英不是一種 MapNodeKind，是 Combat 加上 enemyTier —— 與平面版同一條規則
-                    return d.enemyTier == EncounterPool.Tier.Elite && spriteElite != null
+                    s = d.enemyTier == EncounterPool.Tier.Elite && spriteElite != null
                         ? spriteElite : spriteCombat;
-                case MapNodeKind.Boss: return spriteBoss;
-                case MapNodeKind.Shop: return spriteShop;
-                case MapNodeKind.SpecialEvent: return spriteSpecialEvent;
-                default: return spriteEvent;
+                    break;
+                case MapNodeKind.Boss: s = spriteBoss; break;
+                case MapNodeKind.Shop: s = spriteShop; break;
+                case MapNodeKind.SpecialEvent: s = spriteSpecialEvent; break;
+                case MapNodeKind.Dialogue: s = spriteDialogue; break;
+                default: s = spriteEvent; break;
             }
+
+            if (s == null) s = spriteEvent;
+
+            if (s == null)
+                Debug.LogWarning("[地圖3D]「" + d.kind + "」沒有圖，連 spriteEvent 也是空的 —— "
+                    + "這個節點會是隱形的（線連過去但看不到東西）", this);
+
+            return s;
         }
 
         /// <summary>
