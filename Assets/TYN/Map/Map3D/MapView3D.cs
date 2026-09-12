@@ -38,6 +38,9 @@ namespace EldritchMile.Map3D
         [Tooltip("顯示 RenderTexture 的 UI。這個會跟著地圖一起滑下來")]
         public RawImage surface;
 
+        [Tooltip("視角操作。留空則不做拖曳／點擊的區分，任何點擊都會選節點")]
+        public MapCameraController cameraController;
+
         [Tooltip("地面的世界尺寸（寬, 深）")]
         public Vector2 groundSize = new Vector2(20f, 20f);
 
@@ -71,6 +74,12 @@ namespace EldritchMile.Map3D
 
         [Tooltip("線從節點中心往內縮多少，免得插進棋子裡")]
         public float lineEndGap = 0.25f;
+
+        [Tooltip("連線的彎曲程度，佔線長的比例。0 = 直線，0.15 左右接近示意圖的弧線")]
+        [Range(0f, 0.5f)] public float lineBend = 0.15f;
+
+        [Tooltip("弧線用幾段折線畫。直線時忽略。太少會看出稜角")]
+        [Range(2, 32)] public int lineSegments = 14;
 
         [Header("說明框")]
         [Tooltip("沿用平面版那一套。留空則不顯示")]
@@ -206,10 +215,23 @@ namespace EldritchMile.Map3D
             }
         }
 
+        /// <summary>
+        /// 畫連線。
+        ///
+        /// ⚠️ **`alignment` 一定要是 `TransformZ`，不能用預設的 `View`。**
+        /// `View` 會讓線永遠轉向面對相機 —— 俯視時線就「立起來」變成緞帶，
+        /// 而且相機一轉整條線跟著扭。地面上的路必須躺在地面上。
+        ///
+        /// 為了讓 `TransformZ` 的法線朝上，線物件要轉 -90 度（local +Z → world +Y），
+        /// 因此世界座標 (x, ?, z) 要寫成 local (x, -z, 0)。這個換算不直覺，
+        /// 改的時候先看清楚再動。
+        ///
+        /// 【弧線】二次貝茲，控制點往垂直方向偏 `lineBend` × 線長。
+        /// 弧線躺在地面上，所以透視怎麼壓底圖就怎麼壓它 —— 不會有額外的變形。
+        /// </summary>
         private void BuildLines(MapData map)
         {
-            Material mat = lineMaterial != null
-                ? lineMaterial : new Material(Shader.Find("Sprites/Default"));
+            Material mat = lineMaterial != null ? lineMaterial : new Material(Shader.Find("Sprites/Default"));
 
             for (int i = 0; i < map.allNodes.Count; i++)
             {
@@ -225,23 +247,67 @@ namespace EldritchMile.Map3D
                     go.transform.SetParent(world, false);
                     go.layer = world.gameObject.layer;
 
+                    // local +Z 轉成 world +Y，線才會躺著
+                    go.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                    go.transform.localPosition = new Vector3(0f, nodeLift * 0.5f, 0f);
+
                     LineRenderer lr = go.AddComponent<LineRenderer>();
                     lr.useWorldSpace = false;
+                    lr.alignment = LineAlignment.TransformZ;
                     lr.material = mat;
                     lr.widthMultiplier = lineWidth;
-                    lr.positionCount = 2;
                     lr.numCapVertices = 2;
+                    lr.numCornerVertices = 4;
+                    lr.textureMode = LineTextureMode.Tile;
 
                     Vector3 pa = WorldPosOf(a);
                     Vector3 pb = WorldPosOf(b);
 
-                    // 兩端各縮一點，線才不會插進棋子底座裡
                     Vector3 dir = (pb - pa).normalized;
-                    lr.SetPosition(0, pa + dir * lineEndGap);
-                    lr.SetPosition(1, pb - dir * lineEndGap);
+                    pa += dir * lineEndGap;
+                    pb -= dir * lineEndGap;
 
-                    lines.Add(lr);
+                    WriteCurve(lr, pa, pb);
                 }
+            }
+        }
+
+        /// <summary>
+        /// 把一條（可能彎的）路寫進 LineRenderer。
+        /// 座標要從世界的 XZ 換成線物件的 local XY —— 見 BuildLines 的說明。
+        /// </summary>
+        private void WriteCurve(LineRenderer lr, Vector3 pa, Vector3 pb)
+        {
+            if (lineBend <= 0.001f)
+            {
+                lr.positionCount = 2;
+                lr.SetPosition(0, new Vector3(pa.x, -pa.z, 0f));
+                lr.SetPosition(1, new Vector3(pb.x, -pb.z, 0f));
+                return;
+            }
+
+            Vector3 mid = (pa + pb) * 0.5f;
+            Vector3 d = pb - pa;
+
+            // 垂直於連線、躺在地面上的方向
+            Vector3 perp = new Vector3(-d.z, 0f, d.x).normalized;
+
+            // 往哪邊彎由兩端的座標決定 —— 同一組節點每次都彎同一邊，
+            // 不然重建地圖時線會左右亂跳
+            float side = (pa.x + pb.z) >= 0f ? 1f : -1f;
+            Vector3 ctrl = mid + perp * (d.magnitude * lineBend * side);
+
+            int n = Mathf.Max(2, lineSegments);
+            lr.positionCount = n;
+
+            for (int i = 0; i < n; i++)
+            {
+                float t = (float)i / (n - 1);
+                float u = 1f - t;
+
+                // 二次貝茲
+                Vector3 p = u * u * pa + 2f * u * t * ctrl + t * t * pb;
+                lr.SetPosition(i, new Vector3(p.x, -p.z, 0f));
             }
         }
 
@@ -320,7 +386,13 @@ namespace EldritchMile.Map3D
 
             SetHovered(found);
 
-            if (found != null && mouse.leftButton.wasPressedThisFrame) found.OnClicked();
+            // ⚠️ 改成「放開」才算點，而且拖曳過就不算。
+            //    左鍵同時用來轉視角，沒有這道判斷的話玩家想轉視角卻會誤觸節點 ——
+            //    而進關卡是不可逆的
+            if (found == null || !mouse.leftButton.wasReleasedThisFrame) return;
+            if (cameraController != null && cameraController.IsDragging) return;
+
+            found.OnClicked();
         }
 
         private void SetHovered(MapNode3D n)

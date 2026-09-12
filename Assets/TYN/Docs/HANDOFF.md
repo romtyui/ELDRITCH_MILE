@@ -2354,3 +2354,68 @@ BFS 樹的葉子沒有 k+1 的鄰居 → 走進去出不來。實測 200 張圖�
 仍有的問題：
 * 還是偏密，外圍仍有幾條長邊（`EnsureReachesGoal` 補出來的）
 * 交叉從 0.00 變 0.11、水裡從 0 變 10 —— 都是補邊與邊界取樣造成的小回歸
+
+
+## 弧線連線與玩家視角操作（2026-09-12）
+
+### ⚠️ useDemoRoute 會完全跳過 layout
+
+`Generate()` 的分派是「固定路線優先」：
+
+```
+if (useDemoRoute)          → GenerateDemoRoute   ← 在這裡就 return 了
+else if (layout == Terrain) → GenerateTerrain
+```
+
+查了半天「為什麼 Terrain 沒生效」，答案是 `useDemoRoute = True`。
+**改 layout 之前先確認這個開關**。目前已關閉，出測試版時要決定開不開。
+
+⚠️ 另外 `MapGenerationSettings` 的欄位跨 session 會掉。
+直接改欄位 + `SetDirty` 不夠可靠，要用
+`SerializedObject` + `ApplyModifiedPropertiesWithoutUndo` + `SaveAssetIfDirty`。
+
+### 連線改成弧線
+
+`lineBend`（0.15）＋ `lineSegments`（14），二次貝茲，
+控制點往垂直方向偏。彎哪一邊由兩端座標決定 —— 固定的，
+不然重建地圖時線會左右亂跳。
+
+⚠️ **`LineRenderer.alignment` 一定要是 `TransformZ`，不能用預設的 `View`。**
+`View` 會讓線永遠轉向面對相機 —— 俯視時線會「立起來」變成緞帶，
+相機一轉整條線跟著扭。這個 bug 在直線時看不太出來，弧線會很明顯。
+
+為了讓法線朝上，線物件要轉 -90 度（local +Z → world +Y），
+所以世界座標 (x, ?, z) 要寫成 local (x, -z, 0)。這個換算不直覺。
+
+**弧線不會額外變形** —— 它躺在地面上，透視怎麼壓底圖就怎麼壓它。
+
+### 玩家視角操作（MapCameraController）
+
+| 操作 | 行為 |
+|---|---|
+| 左鍵拖曳 | 旋轉（yaw 夾 ±40°、pitch 25~70°） |
+| 滾輪 | 縮放（改距離，不改 FOV —— 改 FOV 會變形） |
+| 右鍵／中鍵拖曳 | 平移（夾在中心 6 單位內） |
+| `ResetView()` | 回到預設視角 |
+
+設計理由：這張地圖是**桌上的一張紙**，不是 Google Maps。
+玩家看到傾斜的紙第一個念頭是「轉過來看」，不是「推走」。
+平移留給右鍵。
+
+⚠️ **旋轉一定要夾住**。地圖有推進方向，能轉 360 度的話玩家會轉到
+上下顛倒再也分不出哪邊是前面。也**一定要有歸位鈕** ——
+任何自由視角都必須有回家的路。
+
+⚠️ **拖曳與點擊要分得開**。節點是左鍵點的，而左鍵也用來轉視角。
+沒有位移門檻（`dragThreshold` 6px）的話，玩家想轉視角會誤觸節點 ——
+而進關卡是不可逆的。所以改成「放開才算點，且拖曳過就不算」。
+
+### 「每條路都走得到 Boss」驗證（200 張圖）
+
+```
+平均 Boss 節點數   1.00     最深層節點數   1.00
+有多個/沒有 Boss   0 張      走不到 Boss    0 個
+```
+
+是結構上保證的：層數 = BFS 跳數，最深的點唯一，
+`EnsureReachesGoal` 逼每個節點都通到它。不是運氣。
