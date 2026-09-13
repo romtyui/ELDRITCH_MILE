@@ -2748,3 +2748,43 @@ ItemInventory ✔　RelicsInventory ✔
 - 距離自動算（依節點範圍、俯角、長寬比），超過縮放上限時會**暫時**放寬（`MapCameraRig.distanceMaxOverride`，不存檔）。
 - 還沒出發時鏡頭追的是起點的棋子，不再是地圖中心。
 - 開關：`MapView3D.playIntroOnNewMap`。
+
+## EXIT 改版、HP/SAN 輪流顯示、打牌點空白處離開（2026-09-15）
+
+### 右下角共用 EXIT（`Canvas_HUD/Exit_Shared`，`SharedExitUI`）
+
+探索、商店、對話節點**共用同一顆**。Stage 進場 `SharedExitUI.Instance.Show(按下去做什麼)`、離場 `Hide()`。
+
+- 外觀沿用商店那一套（SlideOutTab 滑出 ＋ HoverCrossfadeImage 兩張圖替換）：底圖 `EXIT_人v2`、hover `EXIT`。
+  ⚠️ **兩張圖長寬比不同**（3.23 vs 4.13），各自依原比例、靠右對齊，不是同尺寸 —— 等 `EXIT` 也出 v2 再對齊。
+- 縮著時露出約 120px，伸出時整塊可見（離右緣 16px）。感應區加寬到蓋住伸出後的整塊，避免游標在招牌左半邊時縮回去而閃爍。
+- 對話框開著 → `aboveDialogueY`（400）；關著 → `bottomY`（40）。實測對話框開著時 EXIT 下緣 412、對話框上緣 380。
+- 舊的：探索上方書籤 `ExitTag`（UIPanel 環節清空並停用）、商店 `ExitTab_Zone`（停用）。場上沒有共用 EXIT 時商店會退回舊的那顆。
+- 對話節點：`ChoiceStageController.UsesSharedExit`，只有 `DialogueStageController` 打開。點下去：打牌中先結束打牌 → `Finish()` 回地圖（**沒有確認面板**）。
+
+### HP／SAN 只在數值變動時出現（`VitalsHudUI.pulseOnChange`）
+
+實測（HP 100 → 85）：
+
+```
+EXIT 淡出 0.25s → EXIT 完全消失才開始 → HP/SAN 淡入 0.3s → 淡入完成才跑數字 100→85（0.8s）
+→ 停 1.5s → 淡出 0.3s → EXIT 淡回來
+```
+
+過程中又變了一次：不重播淡入，從目前顯示的數字接著跑。秒數都在 Inspector 調。
+關掉部分子物件（燈光、指針、按鈕、火、燈杖）不影響 —— 程式只用血量、san條、HP、SAN。
+
+### 食物
+
+- **不能吃的時機**：地圖、轉場、打牌中（寶箱／人物）、對話節點。文字在 `ShortcutBarUI` 的三個 `*BlockedMessage`。
+- **提示改走 Toast**（`Canvas_Tooltip/Toast`，`ToastUI`）：自己會消失、不用點、不擋滑鼠、蓋在地圖之上。
+  原因：以前走對話框 —— 在地圖上對話框（101）在地圖（300）底下看不到也點不到；打牌中對話框是 HoldOpen 點不掉。
+  實測：地圖上點蛋糕 → Toast「在地圖上不能使用道具」、蛋糕沒被吃、對話框沒被打開。
+- **吃完說明框沒消失**：吃掉最後一個之後那格被換掉，滑鼠沒動所以沒有 OnPointerExit。現在每次重建格子後重新判斷一次（`RefreshTooltipAfterRebuild`），空格子也不再顯示「沒登記的道具」。
+
+### 和寶箱打牌：點空白處離開（`DimmerClickEndsEncounter`，掛在 `DialogueUI/BLACK`）
+
+打牌時點在對象大圖、對話框、手牌上會被它們自己收走；**穿過去落到壓黑層的就是空白處**。
+- 選著牌時第一下只取消選取（兩段式出牌點偏不會直接結束整個環節）
+- 探索會藏起「結束」鍵（`ExploreStageController.clickOutsideEndsEncounter`），打牌結束時還原 —— 對話節點的打牌還在用那顆
+- ⚠️ 這一項**還沒在 Play 模式實際點過**（要真的開一個寶箱），請實測
