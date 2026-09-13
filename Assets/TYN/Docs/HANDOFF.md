@@ -2788,3 +2788,51 @@ EXIT 淡出 0.25s → EXIT 完全消失才開始 → HP/SAN 淡入 0.3s → 淡�
 - 選著牌時第一下只取消選取（兩段式出牌點偏不會直接結束整個環節）
 - 探索會藏起「結束」鍵（`ExploreStageController.clickOutsideEndsEncounter`），打牌結束時還原 —— 對話節點的打牌還在用那顆
 - ⚠️ 這一項**還沒在 Play 模式實際點過**（要真的開一個寶箱），請實測
+
+## 確認面板移到 HUD、遭遇節點的 EXIT、build 版戰鬥外框與神牌動畫（2026-09-15）
+
+### 在寶箱畫面點 EXIT，詢問面板出不來
+
+兩個原因疊在一起：
+1. 探索的 `ContinueAskPanel` 在 **Canvas_Stage（100）**，對話框是 **DialogueUI（101）**，寶箱大圖又在對話框裡 —— 面板就算開了也被蓋住
+2. `ShowContinueAsk` 在「對話框開著或打牌中」會**延後到關掉才跳** —— 寶箱畫面兩個條件都成立
+
+**修法**：共用的確認面板 `Canvas_HUD/ExitConfirmPanel`（HUD 是 400，蓋得過對話框與寶箱），由 `SharedExitUI.ShowWithConfirm` 開關。
+點 EXIT 是玩家明確要走，面板**立刻**出來；按「是」時打牌中會先結束打牌再離開。
+⚠️ 面板要是 EXIT 的**兄弟**不是子物件 —— 放在底下的話 EXIT 淡出時會把面板一起淡掉、一起關掉點擊。
+
+探索、商店、對話、遭遇節點**全部**走這一塊。各 prefab 自己的詢問面板保留，只在場上沒有共用 EXIT 時才用得到。
+
+### 遭遇／對話節點看不到 EXIT
+
+地圖的 Dialogue 節點實際載入的是 `GameFlowManager.dialogueNodeStage` = **ProbabilityDialogue**，
+上一輪只加在 `DialogueStageController`。現在 `ProbabilityDialogueStageController` 也有 EXIT ＋ 確認。
+中途離開**不標記成演過**，那段對話之後還可以再遇到。
+
+實測：遭遇節點進場 EXIT 可見（對話框開著所以在 y=400）→ 點下去確認面板在 Canvas_HUD 最上層 → 按「否」留在原地。
+
+### build 版戰鬥外框是螢光藍綠
+
+**在 1920×1200（16:10）重現**：戰鬥背景只蓋 16:9 那一塊，上下多出的地方露出淺灰色，
+被戰鬥的 `Global Volume (1)`（colorFilter 藍綠 ＋ saturation 0 ＋ Bloom 10.36）染成螢光藍綠。
+關掉那個 Volume 邊條變淺灰 —— 顏色來自後製，露出來是因為長寬比。編輯器 Game 視窗是 16:9 所以一直沒看到。
+（品質設定只有一個 PC 等級，編輯器與 build 用同一個管線，不是品質差異。）
+
+**修法**：場景根的 `LetterboxBars`（Overlay 畫布排序 **-100**）把 16:9 以外蓋黑。
+- Overlay 畫在相機與後製之後 → 蓋得住被染色的那一塊
+- 排序比所有遊戲 UI 低（戰鬥最低的 SceneCanvas 是 0）→ 手牌、書、血條伸進邊條不會被蓋
+- 不擋滑鼠；解析度改變時自動重排；比 16:9 寬時改成左右黑邊
+- `UIPanel.visibleInStages` 目前只有 **Battle**，其他環節要黑邊的話加進清單即可
+
+實測 1920×1200：上下各 60px 黑邊，UI 照常在上面。
+
+### build 版觸手動畫變很小
+
+`Stage_Battle_v2/BattleContentRoot/AnimCanvas`（神牌動畫的畫布）是 **ConstantPixelSize**，
+其他戰鬥畫布都是 ScaleWithScreenSize 1920×1080 —— build 解析度不是 1920×1080 時，只有它不跟著縮放。
+已改成 ScaleWithScreenSize 1920×1080、match 0.5。1920×1080 下外觀不變。
+⚠️ **還沒在 build 實際看過**；Romtyui 的 SampleScene 裡同一個畫布也是 ConstantPixelSize，要跟他說。
+
+### 測試時動過編輯器的 Game 視窗
+
+為了重現，暫時把 Game 視窗改成 1920×1200，測完已改回 1920×1080 並移除測試用尺寸。
