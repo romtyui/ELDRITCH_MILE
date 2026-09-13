@@ -29,6 +29,10 @@ namespace EldritchMile.Map
 
             /// 位置由編輯器擺好，程式不碰。適合固定在角落的資訊區
             Fixed = 1,
+
+            /// 擺在節點**正上方**，上面放不下就換到下方。3D 地圖用這個 ——
+            /// 棋子是直立的，框貼在頭頂上才讀得出「這是在講這一顆」
+            AboveNode = 2,
         }
 
         [Header("元件")]
@@ -53,8 +57,11 @@ namespace EldritchMile.Map
         [Tooltip("與節點之間的間距。**僅 Follow Node 模式使用**")]
         public Vector2 offset = new Vector2(24f, 0f);
 
-        [Tooltip("與畫面邊緣至少保留多少距離。**僅 Follow Node 模式使用**")]
+        [Tooltip("與畫面邊緣至少保留多少距離。**Follow Node 與 Above Node 模式使用**")]
         public Vector2 screenPadding = new Vector2(16f, 16f);
+
+        [Tooltip("框的底邊離節點頭頂多遠。**僅 Above Node 模式使用**")]
+        public float aboveGap = 12f;
 
         [Header("閒置狀態（固定面板適用）")]
         [Tooltip("沒有 hover 任何節點時，**保留框、只換文字**，而不是整個消失。\n\n" +
@@ -125,8 +132,8 @@ namespace EldritchMile.Map
             if (suppressed || panel == null) return;
             if (string.IsNullOrEmpty(title) && string.IsNullOrEmpty(body)) return;
 
-            // ⚠️ Fixed 模式不需要 target。Follow Node 沒有 target 就無從定位，直接放棄
-            if (placement == PlacementMode.FollowNode && target == null) return;
+            // ⚠️ Fixed 模式不需要 target。跟隨式的沒有 target 就無從定位，直接放棄
+            if (placement != PlacementMode.Fixed && target == null) return;
 
             SetTexts(title, body);
 
@@ -136,7 +143,7 @@ namespace EldritchMile.Map
             // Fixed 模式雖然不定位，但若面板掛了 ContentSizeFitter 仍需要這一步。
             UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(panel);
 
-            if (placement == PlacementMode.FollowNode) Reposition(target);
+            Follow(target);
 
             // 固定面板一直都在，不做淡入 —— 每次 hover 都閃一下比不淡入更吵
             if (canvasGroup != null && !keepFrameWhenIdle)
@@ -268,6 +275,50 @@ namespace EldritchMile.Map
 
             // 淡出結束才真的關掉，否則淡出中會提前消失
             if (target <= 0f && panel != null) panel.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// 只重新定位，不換文字、不重播淡入。
+        ///
+        /// 【為什麼要單獨一支】3D 地圖的鏡頭會動（追隨、拖曳、縮放），
+        /// 節點在畫面上的位置每一幀都可能變。每幀呼叫 Show() 的話淡入會一直重來。
+        /// </summary>
+        public void Follow(RectTransform target)
+        {
+            if (suppressed || panel == null || target == null) return;
+            if (!panel.gameObject.activeSelf) return;
+
+            if (placement == PlacementMode.FollowNode) Reposition(target);
+            else if (placement == PlacementMode.AboveNode) RepositionAbove(target);
+        }
+
+        /// <summary>
+        /// 擺在節點正上方；上面放不下就換到下方；左右夾進畫面。
+        ///
+        /// 【為什麼用世界座標設定，不用 anchoredPosition】這個框原本是 Fixed 模式，
+        /// 錨點與樞紐是美術擺的（可能錨在右下角）。anchoredPosition 的意義跟著錨點變，
+        /// 用它算會整個偏掉。先算出框在 Canvas 裡該在哪，再換成世界座標，就與錨點無關。
+        /// </summary>
+        private void RepositionAbove(RectTransform target)
+        {
+            if (canvasRect == null) return;
+
+            Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(canvasRect, target);
+            Vector2 size = panel.rect.size;
+            Rect canvas = canvasRect.rect;
+
+            // 以框的「左下角」推算
+            float left = (b.min.x + b.max.x) * 0.5f - size.x * 0.5f;
+            float bottom = b.max.y + aboveGap;
+
+            if (bottom + size.y > canvas.yMax - screenPadding.y)
+                bottom = b.min.y - aboveGap - size.y;   // 上面放不下 → 放到下面
+
+            left = Mathf.Clamp(left, canvas.xMin + screenPadding.x, canvas.xMax - size.x - screenPadding.x);
+            bottom = Mathf.Clamp(bottom, canvas.yMin + screenPadding.y, canvas.yMax - size.y - screenPadding.y);
+
+            Vector2 pivotLocal = new Vector2(left + size.x * panel.pivot.x, bottom + size.y * panel.pivot.y);
+            panel.position = canvasRect.TransformPoint(pivotLocal);
         }
 
         /// <summary>擺在節點右邊；右邊放不下就換左邊；再放不下就夾進畫面。</summary>

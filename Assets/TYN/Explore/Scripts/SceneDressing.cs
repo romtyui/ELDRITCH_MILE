@@ -39,6 +39,12 @@ namespace EldritchMile.Explore
             [Tooltip("勾起來就**永遠顯示**，忽略機率。\n" +
                      "美術之後補了「這張是背景的一部分，不能關」的東西時用這個")]
             public bool always = false;
+
+            [Tooltip("**只在「全部顯示」時才出現**，平常隨機時一律關掉。\n\n" +
+                     "【什麼時候用】劇情專屬的擺設 —— 例如戶外路中間的魚頭，\n" +
+                     "只有特定事件（EventData 勾了 Show All Dressing）才該看到它。\n" +
+                     "（2026-09-13 試玩回饋）")]
+            public bool onlyWhenShowAll = false;
         }
 
         [Tooltip("可有可無的組件。**背景本身不要列進來** —— 背景關掉就穿幫了")]
@@ -59,10 +65,14 @@ namespace EldritchMile.Explore
         /// <summary>
         /// 依 seed 決定哪些東西出現。**同一個 seed 必定得到同一套擺設。**
         /// </summary>
-        public void Apply(int seed)
+        /// <param name="showAll">
+        /// 這一次全部顯示（含 onlyWhenShowAll 的那些）。特定事件用。
+        /// </param>
+        public void Apply(int seed, bool showAll = false)
         {
             var rng = new System.Random(seed);
             int on = 0, total = 0;
+            bool all = alwaysShowAll || showAll;
 
             for (int i = 0; i < pieces.Count; i++)
             {
@@ -70,7 +80,15 @@ namespace EldritchMile.Explore
                 if (p == null || p.target == null) continue;
 
                 total++;
-                bool show = alwaysShowAll || p.always || rng.NextDouble() < p.chance;
+
+                // ⚠️ 每一件都先擲一次，不管用不用得到。
+                //    跳過擲骰的話，後面每一件拿到的亂數都會位移 ——
+                //    勾一個 onlyWhenShowAll，整間房的擺設就全變了
+                double roll = rng.NextDouble();
+
+                bool show = p.onlyWhenShowAll
+                    ? all
+                    : all || p.always || roll < p.chance;
                 p.target.SetActive(show);
                 if (show) on++;
             }

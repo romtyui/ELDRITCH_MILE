@@ -56,6 +56,9 @@ namespace EldritchMile.Shop
         /// 被點了。參數是自己，Panel 靠它知道是哪一格。
         public event Action<ShopSlotUI> OnClicked;
 
+        /// 滑鼠移進／移出。說明框由 Panel 負責畫 —— 格子不知道框長什麼樣
+        public event Action<ShopSlotUI, bool> OnHoverChanged;
+
         public string ItemId { get; private set; } = "";
         public int Price { get; private set; }
         public int Count { get; private set; }
@@ -139,6 +142,7 @@ namespace EldritchMile.Shop
         public void SetEmpty()
         {
             ItemId = "";
+            if (hovered) OnHoverChanged?.Invoke(this, false);
             hovered = false;
             Count = 0;
             Price = 0;
@@ -169,6 +173,9 @@ namespace EldritchMile.Shop
             group.alpha = unaffordableAlpha;
             group.blocksRaycasts = false;
 
+            // ⚠️ 關掉 raycast 之後 Unity 不會再送 OnPointerExit —— 要自己收框，
+            //    不然買完那一瞬間說明框會留在畫面上
+            if (hovered) OnHoverChanged?.Invoke(this, false);
             hovered = false;
             ApplyTint();
         }
@@ -200,12 +207,22 @@ namespace EldritchMile.Shop
 
             hovered = true;
             ApplyTint();
+            OnHoverChanged?.Invoke(this, true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            bool was = hovered;
             hovered = false;
             ApplyTint();
+            if (was) OnHoverChanged?.Invoke(this, false);
+        }
+
+        private void OnDisable()
+        {
+            // 商店卸載時滑鼠可能還停在格子上 —— 物件被停用不會送 OnPointerExit
+            if (hovered) OnHoverChanged?.Invoke(this, false);
+            hovered = false;
         }
 
         /// <summary>

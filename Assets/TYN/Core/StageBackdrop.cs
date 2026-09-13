@@ -67,6 +67,25 @@ namespace EldritchMile.Core
         /// <summary>進場時呼叫。重複呼叫會先收掉舊的。</summary>
         public void Spawn()
         {
+            Spawn(0, false, false);
+        }
+
+        /// <summary>
+        /// 同上，並套用背景上的 <see cref="EldritchMile.Explore.SceneDressing"/>（擺設隨機開關）。
+        ///
+        /// 【為什麼以前事件的戶外背景永遠全亮】隨機開關只在探索房間
+        /// （ExploreStageController）呼叫過 —— 事件、機率對話是經由這裡生成背景的，
+        /// 從來沒人叫 Apply，所以路牌、魚頭每次全部都在。（2026-09-13 試玩回饋）
+        /// </summary>
+        /// <param name="dressingSeed">用節點的 dressingSeed —— 同一站重進要長一樣</param>
+        /// <param name="showAllDressing">這一次全部顯示（含只給特定事件看的擺設，例如路中間的魚頭）</param>
+        public void Spawn(int dressingSeed, bool showAllDressing)
+        {
+            Spawn(dressingSeed, showAllDressing, true);
+        }
+
+        private void Spawn(int dressingSeed, bool showAllDressing, bool applyDressing)
+        {
             Despawn();
             if (prefab == null) return;
 
@@ -86,6 +105,15 @@ namespace EldritchMile.Core
             spawned.transform.localScale = new Vector3(scale, scale, 1f);
 
             ApplyTint();
+
+            if (applyDressing)
+            {
+                foreach (EldritchMile.Explore.SceneDressing d in
+                         spawned.GetComponentsInChildren<EldritchMile.Explore.SceneDressing>(true))
+                {
+                    d.Apply(dressingSeed, showAllDressing);
+                }
+            }
 
             if (fitToCamera) FitSpawnedToCamera();
             else if (warnIfNotCovering) WarnIfNotCovering();

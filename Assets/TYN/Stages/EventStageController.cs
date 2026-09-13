@@ -60,7 +60,10 @@ public class EventStageController : ChoiceStageController
 
         // 事件沒有自己的場景，不墊背景的話會直接看到相機的天空底色
         if (backdrop == null) backdrop = GetComponentInChildren<StageBackdrop>(true);
-        backdrop?.Spawn();
+
+        // 擺設用節點的種子（同一站重進長一樣）；特定事件可以要求全部顯示
+        RunNodeData node = run != null ? run.pendingNode : null;
+        backdrop?.Spawn(node != null ? node.dressingSeed : 0, data != null && data.showAllDressing);
 
         // ⚠️ 事件沒有打牌環節，手牌區整組都不該出現。
         //

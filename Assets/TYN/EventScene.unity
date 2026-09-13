@@ -980,7 +980,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.0586493, g: 0, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -1568,6 +1568,7 @@ MonoBehaviour:
   tooltipRoot: {fileID: 836097242}
   tooltipTitle: {fileID: 811723437}
   tooltipBody: {fileID: 212740068}
+  mapBlockedMessage: "\u5728\u5730\u5716\u4E0A\u4E0D\u80FD\u4F7F\u7528\u9053\u5177"
   openOnHover: 0
   closeAfterExitSeconds: 0.4
   idleCloseSeconds: 6
@@ -4084,6 +4085,7 @@ MonoBehaviour:
   tooltipRoot: {fileID: 1722927809}
   tooltipTitle: {fileID: 1496995841}
   tooltipBody: {fileID: 609678754}
+  mapBlockedMessage: "\u5728\u5730\u5716\u4E0A\u4E0D\u80FD\u4F7F\u7528\u9053\u5177"
   openOnHover: 0
   closeAfterExitSeconds: 0.4
   idleCloseSeconds: 6
@@ -7536,8 +7538,8 @@ CanvasGroup:
   m_GameObject: {fileID: 1037407246}
   m_Enabled: 1
   m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
 --- !u!114 &1037407249
 MonoBehaviour:
@@ -7555,10 +7557,11 @@ MonoBehaviour:
   canvasGroup: {fileID: 1037407248}
   titleText: {fileID: 1312533095}
   bodyText: {fileID: 1167181298}
-  placement: 1
+  placement: 2
   offset: {x: 24, y: 0}
   screenPadding: {x: 16, y: 16}
-  keepFrameWhenIdle: 1
+  aboveGap: 12
+  keepFrameWhenIdle: 0
   idleTitle: "\u63D0\u793A"
   idleBody: "\u67E5\u770B\u7BC0\u9EDE"
   fadeDuration: 0.12
@@ -8252,7 +8255,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -9502,7 +9505,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -12228,7 +12231,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1664716218
 RectTransform:
   m_ObjectHideFlags: 0
@@ -15695,6 +15698,68 @@ MonoBehaviour:
   lineSegments: 14
   nodeTooltip: {fileID: 1037407249}
   tooltipAnchor: {fileID: 1934568157}
+  nodeTooltipTexts:
+  - kind: 0
+    title: "\u74B0\u5883"
+    body: 
+  - kind: 1
+    title: "\u6575\u4EBA"
+    body: 
+  - kind: 2
+    title: "\u9996\u9818"
+    body: 
+  - kind: 3
+    title: "\u5546\u5E97"
+    body: 
+  - kind: 4
+    title: "\u7279\u6B8A"
+    body: 
+  - kind: 5
+    title: "\u906D\u9047"
+    body: 
+  tooltipTierElite: "<color=#FF9B6A>\u25C6 \u83C1\u82F1</color>"
+  tooltipTierBoss: "<color=#FF6A6A>\u25C6\u25C6 BOSS</color>"
+  tooltipStateCurrent: "<color=#FFD98A>\u4F60\u5728\u9019\u88E1\u3002</color>"
+  tooltipStateSelectable: "<color=#9BE39B>\u53EF\u4EE5\u524D\u5F80\u3002</color>"
+  tooltipStateVisited: "<color=#8A8A8A>\u5DF2\u7D93\u53BB\u904E\u4E86\u3002</color>"
+  tooltipStateUnreachable: "<color=#8A8A8A>\u5F9E\u9019\u88E1\u904E\u4E0D\u53BB\u3002</color>"
+  playerSprite: {fileID: 21300000, guid: 8976a080ad69ae747856f906e4317144, type: 3}
+  playerWorldHeight: 0.7
+  playerOffset: {x: 0.4, y: 0, z: -0.2}
+  playerMoveDuration: 0.9
+  playerMoveCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.28
+      value: 0.55
+      inSlope: 2.1
+      outSlope: 2.1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &2111348373
 GameObject:
   m_ObjectHideFlags: 0

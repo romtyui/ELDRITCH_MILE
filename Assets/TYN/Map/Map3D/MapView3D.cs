@@ -91,12 +91,51 @@ namespace EldritchMile.Map3D
         [Tooltip("一個空的 RectTransform，我會把它移到節點的螢幕位置給說明框貼")]
         public RectTransform tooltipAnchor;
 
+        [Tooltip("各種節點的標題與說明。格式與平面版 MapView 相同。\n" +
+                 "沒有對應條目的類型會退回顯示 enum 名稱")]
+        public List<EldritchMile.Map.MapView.NodeTooltipInfo> nodeTooltipTexts =
+            new List<EldritchMile.Map.MapView.NodeTooltipInfo>();
+
+        [Tooltip("菁英戰的附註。一般雜魚刻意不標 —— 標示的價值來自稀有")]
+        public string tooltipTierElite = "<color=#FF9B6A>◆ 菁英 —— 這一站不好惹。</color>";
+        public string tooltipTierBoss = "<color=#FF6A6A>◆◆ 首領。</color>";
+
+        [Tooltip("接在說明後面的一行，講「你現在能不能去」。留空則不附加")]
+        public string tooltipStateCurrent = "<color=#FFD98A>你在這裡。</color>";
+        public string tooltipStateSelectable = "<color=#9BE39B>可以前往。</color>";
+        public string tooltipStateVisited = "<color=#8A8A8A>已經去過了。</color>";
+        public string tooltipStateUnreachable = "<color=#8A8A8A>從這裡過不去。</color>";
+
+        [Header("玩家棋子")]
+        [Tooltip("玩家在地圖上的棋子。留空則不顯示")]
+        public Sprite playerSprite;
+
+        [Tooltip("棋子的世界高度")]
+        public float playerWorldHeight = 0.7f;
+
+        [Tooltip("棋子站在節點的哪一側（世界單位）。站正中間會被節點的圖擋住")]
+        public Vector3 playerOffset = new Vector3(0.4f, 0f, -0.2f);
+
+        [Tooltip("從一站移到下一站花幾秒")]
+        public float playerMoveDuration = 0.9f;
+
+        [Tooltip("位移的緩動。預設與平面版相同：推出去 → 滑行 → 摩擦煞停，不回彈")]
+        public AnimationCurve playerMoveCurve = new AnimationCurve(
+            new Keyframe(0f, 0f, 0f, 0f),
+            new Keyframe(0.28f, 0.55f, 2.1f, 2.1f),
+            new Keyframe(1f, 1f, 0f, 0f));
+
         // ==========================================
         private MapData boundMap;
         private readonly Dictionary<string, MapNode3D> spawned = new Dictionary<string, MapNode3D>();
         private readonly List<LineRenderer> lines = new List<LineRenderer>();
         private MapNode3D hovered;
         private bool moving;
+
+        /// 說明框正在講的節點。鏡頭會動，所以每幀要重新對位
+        private MapNode3D tooltipNode;
+
+        private Transform playerRoot;
 
         // ==========================================
         public override void Refresh(RunContext run)
@@ -112,7 +151,23 @@ namespace EldritchMile.Map3D
             // 覆蓋層是滑出畫面的，子物件的 OnDisable 永遠不會觸發（見基底類別）。
             // hover 的殘留一定要在這裡清，不然說明框會浮在下一個畫面上
             if (hovered != null) { hovered.OnHoverExit(); hovered = null; }
-            if (nodeTooltip != null) nodeTooltip.HideImmediate();
+            tooltipNode = null;
+
+            // ⚠️ 用總開關，不是只 HideImmediate —— 理由見平面版 MapView.OnClosing
+            if (nodeTooltip != null) nodeTooltip.SetSuppressed(true);
+        }
+
+        /// <summary>
+        /// 地圖展開 → 說明框的總開關打開。
+        ///
+        /// ⚠️ **少了這一支說明框永遠不會出現。** MapTooltipUI 的 suppressed 一旦被設成 true
+        /// （地圖第一次收起來時），之後所有 Show() 都會被吃掉。平面版在 OnOpened 解開，
+        /// 3D 版一開始漏抄了 —— 實測 suppressed = True、Show 呼叫了但框沒開（2026-09-14）。
+        /// </summary>
+        public override IEnumerator OnOpened()
+        {
+            if (nodeTooltip != null) nodeTooltip.SetSuppressed(false);
+            yield return base.OnOpened();
         }
 
         // ==========================================
@@ -143,7 +198,7 @@ namespace EldritchMile.Map3D
                 if (n.pin != null)
                 {
                     n.pin.sprite = SpriteFor(d);
-                    FitPin(n.pin);
+                    FitPin(n.pin, pinWorldHeight);
                 }
                 if (n.ring != null) FitRing(n.ring);
 
@@ -156,6 +211,97 @@ namespace EldritchMile.Map3D
             }
 
             BuildLines(map);
+            BuildPlayer();
+        }
+
+        /// <summary>
+        /// 玩家的棋子。跟節點一樣是直立的、只繞 Y 軸面向地圖相機。
+        ///
+        /// 材質借節點 pin 的那一份 —— 用 SpriteRenderer 的預設材質的話，
+        /// 在 2D Renderer 底下光照行為會跟節點不一樣，棋子會比地圖亮或暗一截。
+        /// </summary>
+        private void BuildPlayer()
+        {
+            if (playerSprite == null || world == null) return;
+
+            GameObject root = new GameObject("Player");
+            root.transform.SetParent(world, false);
+            root.layer = world.gameObject.layer;
+
+            GameObject pinGo = new GameObject("Pin");
+            pinGo.transform.SetParent(root.transform, false);
+            pinGo.layer = root.layer;
+
+            SpriteRenderer sr = pinGo.AddComponent<SpriteRenderer>();
+            sr.sprite = playerSprite;
+            if (nodePrefab != null && nodePrefab.pin != null) sr.sharedMaterial = nodePrefab.pin.sharedMaterial;
+
+            YBillboard bb = pinGo.AddComponent<YBillboard>();
+            bb.target = mapCamera;
+
+            FitPin(sr, playerWorldHeight);
+
+            playerRoot = root.transform;
+            playerRoot.localPosition = PlayerSpot(boundMap != null ? boundMap.currentNodeId : null) + playerOffset;
+        }
+
+        /// <summary>
+        /// 棋子該站的位置（不含 playerOffset）。
+        /// 還沒出發時站在第 0 層那幾站的前方。
+        /// </summary>
+        private Vector3 PlayerSpot(string nodeId)
+        {
+            MapNode3D n;
+            if (!string.IsNullOrEmpty(nodeId) && spawned.TryGetValue(nodeId, out n) && n != null)
+                return n.transform.localPosition;
+
+            Vector3 sum = Vector3.zero;
+            float minZ = float.MaxValue;
+            int count = 0;
+
+            foreach (KeyValuePair<string, MapNode3D> kv in spawned)
+            {
+                if (kv.Value == null || kv.Value.Data.layer != 0) continue;
+                Vector3 p = kv.Value.transform.localPosition;
+                sum += p;
+                minZ = Mathf.Min(minZ, p.z);
+                count++;
+            }
+
+            if (count == 0) return Vector3.zero;
+
+            Vector3 spot = sum / count;
+            spot.z = minZ - 1f;
+            return spot;
+        }
+
+        /// <summary>
+        /// 棋子沿著**跟連線同一條弧線**滑過去。
+        ///
+        /// 【為什麼要沿弧線】連線是彎的，棋子走直線的話會切過地面、偏離畫出來的路，
+        /// 看起來像抄捷徑。控制點用同一支 CurveControl 算，兩者必定重合。
+        ///
+        /// 移動期間鏡頭改追棋子 —— 不然棋子會滑出畫面。
+        /// </summary>
+        private IEnumerator MovePlayer(Vector3 from, Vector3 to)
+        {
+            if (playerRoot == null) yield break;
+
+            if (cameraController != null) cameraController.followTarget = playerRoot;
+
+            Vector3 ctrl = CurveControl(from, to);
+            float dur = Mathf.Max(0.01f, playerMoveDuration);
+            float t = 0f;
+
+            while (t < dur)
+            {
+                t += Time.unscaledDeltaTime;
+                float p = playerMoveCurve.Evaluate(Mathf.Clamp01(t / dur));
+                playerRoot.localPosition = Bezier(from, ctrl, to, p) + playerOffset;
+                yield return null;
+            }
+
+            playerRoot.localPosition = to + playerOffset;
         }
 
         /// <summary>
@@ -164,19 +310,19 @@ namespace EldritchMile.Map3D
         /// 【為什麼不用固定倍率】節點圖的解析度各不相同（512、442…），
         /// 同一個 localScale 會讓它們大小差好幾倍。指定「要多高」才是穩的。
         /// </summary>
-        private void FitPin(SpriteRenderer sr)
+        private static void FitPin(SpriteRenderer sr, float worldHeight)
         {
             if (sr == null || sr.sprite == null) return;
 
             float h = sr.sprite.bounds.size.y;
             if (h <= 0.0001f) return;
 
-            float k = pinWorldHeight / h;
+            float k = worldHeight / h;
             sr.transform.localScale = new Vector3(k, k, 1f);
 
             // sprite 的樞紐在中心，所以往上抬半個身高才會底邊貼地
             Vector3 p = sr.transform.localPosition;
-            p.y = pinWorldHeight * 0.5f;
+            p.y = worldHeight * 0.5f;
             sr.transform.localPosition = p;
         }
 
@@ -285,11 +431,18 @@ namespace EldritchMile.Map3D
                     Vector3 pa = WorldPosOf(a);
                     Vector3 pb = WorldPosOf(b);
 
+                    // ⚠️ 控制點用**節點中心**算，不是縮短後的端點 ——
+                    //    棋子的移動也用節點中心算，兩邊才會是同一條弧
+                    Vector3 ctrl = CurveControl(pa, pb);
+
                     Vector3 dir = (pb - pa).normalized;
                     pa += dir * lineEndGap;
                     pb -= dir * lineEndGap;
 
-                    WriteCurve(lr, pa, pb);
+                    WriteCurve(lr, pa, pb, ctrl);
+
+                    // 之前漏了這一行 —— Clear() 清不到線，換一場 run 舊線會留在地上
+                    lines.Add(lr);
                 }
             }
         }
@@ -298,7 +451,7 @@ namespace EldritchMile.Map3D
         /// 把一條（可能彎的）路寫進 LineRenderer。
         /// 座標要從世界的 XZ 換成線物件的 local XY —— 見 BuildLines 的說明。
         /// </summary>
-        private void WriteCurve(LineRenderer lr, Vector3 pa, Vector3 pb)
+        private void WriteCurve(LineRenderer lr, Vector3 pa, Vector3 pb, Vector3 ctrl)
         {
             if (lineBend <= 0.001f)
             {
@@ -308,7 +461,25 @@ namespace EldritchMile.Map3D
                 return;
             }
 
+            int n = Mathf.Max(2, lineSegments);
+            lr.positionCount = n;
+
+            for (int i = 0; i < n; i++)
+            {
+                Vector3 p = Bezier(pa, ctrl, pb, (float)i / (n - 1));
+                lr.SetPosition(i, new Vector3(p.x, -p.z, 0f));
+            }
+        }
+
+        /// <summary>
+        /// 兩站之間那條弧線的控制點。**連線與棋子移動共用這一支** —— 兩邊各算各的，
+        /// 棋子就會偏離畫出來的路。lineBend 為 0 時就是中點（直線）。
+        /// </summary>
+        private Vector3 CurveControl(Vector3 pa, Vector3 pb)
+        {
             Vector3 mid = (pa + pb) * 0.5f;
+            if (lineBend <= 0.001f) return mid;
+
             Vector3 d = pb - pa;
 
             // 垂直於連線、躺在地面上的方向
@@ -317,20 +488,14 @@ namespace EldritchMile.Map3D
             // 往哪邊彎由兩端的座標決定 —— 同一組節點每次都彎同一邊，
             // 不然重建地圖時線會左右亂跳
             float side = (pa.x + pb.z) >= 0f ? 1f : -1f;
-            Vector3 ctrl = mid + perp * (d.magnitude * lineBend * side);
+            return mid + perp * (d.magnitude * lineBend * side);
+        }
 
-            int n = Mathf.Max(2, lineSegments);
-            lr.positionCount = n;
-
-            for (int i = 0; i < n; i++)
-            {
-                float t = (float)i / (n - 1);
-                float u = 1f - t;
-
-                // 二次貝茲
-                Vector3 p = u * u * pa + 2f * u * t * ctrl + t * t * pb;
-                lr.SetPosition(i, new Vector3(p.x, -p.z, 0f));
-            }
+        /// <summary>二次貝茲。</summary>
+        private static Vector3 Bezier(Vector3 a, Vector3 c, Vector3 b, float t)
+        {
+            float u = 1f - t;
+            return u * u * a + 2f * u * t * c + t * t * b;
         }
 
         private void Clear()
@@ -343,7 +508,11 @@ namespace EldritchMile.Map3D
                 if (lines[i] != null) DestroyImmediate(lines[i].gameObject);
             lines.Clear();
 
+            if (playerRoot != null) DestroyImmediate(playerRoot.gameObject);
+            playerRoot = null;
+
             hovered = null;
+            tooltipNode = null;
         }
 
         // ==========================================
@@ -371,8 +540,12 @@ namespace EldritchMile.Map3D
 
             // 鏡頭追隨目前所在的節點。開場還沒選過節點時 current 是 null，
             // 那時 followTarget 留空 —— 鏡頭會停在地圖中心，正好是「縱覽全局」
-            if (cameraController != null)
+            if (cameraController != null && !moving)
                 cameraController.followTarget = current != null ? current.transform : null;
+
+            // 棋子歸位。移動中不碰 —— 那時位置由 MovePlayer 在寫
+            if (playerRoot != null && !moving)
+                playerRoot.localPosition = PlayerSpot(boundMap.currentNodeId) + playerOffset;
         }
 
         // ==========================================
@@ -441,24 +614,96 @@ namespace EldritchMile.Map3D
 
         public void ShowNodeTooltip(MapNode3D node)
         {
-            if (nodeTooltip == null || tooltipAnchor == null || node == null) return;
-            if (mapCamera == null || surface == null) return;
+            if (nodeTooltip == null || tooltipAnchor == null || node == null || node.Data == null) return;
+            if (!PlaceTooltipAnchor(node)) return;
 
-            Vector3 vp = mapCamera.WorldToViewportPoint(node.transform.position);
-            Rect r = surface.rectTransform.rect;
+            string title, body;
+            BuildTooltipText(node, out title, out body);
 
-            tooltipAnchor.SetParent(surface.rectTransform, false);
-            tooltipAnchor.anchorMin = new Vector2(0.5f, 0.5f);
-            tooltipAnchor.anchorMax = new Vector2(0.5f, 0.5f);
-            tooltipAnchor.anchoredPosition = new Vector2(
-                (vp.x - 0.5f) * r.width, (vp.y - 0.5f) * r.height);
-
-            nodeTooltip.Show(node.Data.kind.ToString(), "", tooltipAnchor);
+            tooltipNode = node;
+            nodeTooltip.Show(title, body, tooltipAnchor);
         }
 
         public void HideNodeTooltip(MapNode3D node)
         {
+            if (tooltipNode == node) tooltipNode = null;
             if (nodeTooltip != null) nodeTooltip.Hide();
+        }
+
+        /// <summary>
+        /// 鏡頭會追隨、拖曳、縮放 —— 節點在畫面上的位置每幀都可能變，框要跟著走。
+        /// 放 LateUpdate 是為了盡量排在鏡頭移動之後。
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (tooltipNode == null || nodeTooltip == null || !IsOpen) return;
+            if (PlaceTooltipAnchor(tooltipNode)) nodeTooltip.Follow(tooltipAnchor);
+        }
+
+        /// <summary>
+        /// 把 tooltipAnchor 移到**棋子頭頂**在畫面上的位置。
+        ///
+        /// 【為什麼是頭頂不是節點中心】節點中心在地面上，框貼那裡會蓋住棋子本身。
+        /// 【為什麼先換成 RawImage 的比例】相機畫的是 RenderTexture，
+        /// 視埠座標要對應到 RawImage 的矩形，不是整個螢幕。
+        /// </summary>
+        private bool PlaceTooltipAnchor(MapNode3D node)
+        {
+            if (mapCamera == null || surface == null || tooltipAnchor == null || node == null) return false;
+
+            Vector3 head = node.transform.position;
+            if (node.pin != null)
+                head = node.pin.transform.position
+                     + node.transform.up * (pinWorldHeight * 0.5f * node.transform.lossyScale.y);
+
+            Vector3 vp = mapCamera.WorldToViewportPoint(head);
+            if (vp.z <= 0f) return false;   // 在鏡頭背後
+
+            Rect r = surface.rectTransform.rect;
+
+            if (tooltipAnchor.parent != surface.rectTransform)
+                tooltipAnchor.SetParent(surface.rectTransform, false);
+
+            tooltipAnchor.anchorMin = new Vector2(0.5f, 0.5f);
+            tooltipAnchor.anchorMax = new Vector2(0.5f, 0.5f);
+            tooltipAnchor.sizeDelta = Vector2.zero;
+            tooltipAnchor.anchoredPosition = new Vector2(
+                (vp.x - 0.5f) * r.width, (vp.y - 0.5f) * r.height);
+            return true;
+        }
+
+        /// <summary>標題、難度、說明、狀態 —— 與平面版 MapView 同一套規則。</summary>
+        private void BuildTooltipText(MapNode3D node, out string title, out string body)
+        {
+            RunNodeData d = node.Data;
+
+            EldritchMile.Map.MapView.NodeTooltipInfo info = null;
+            for (int i = 0; i < nodeTooltipTexts.Count; i++)
+                if (nodeTooltipTexts[i] != null && nodeTooltipTexts[i].kind == d.kind) { info = nodeTooltipTexts[i]; break; }
+
+            title = info != null && !string.IsNullOrEmpty(info.title) ? info.title : d.kind.ToString();
+            body = info != null ? info.body : "";
+
+            // 難度先講 —— 「這站硬不硬」是玩家在分岔口最想知道的事
+            string tier = "";
+            if (d.kind == MapNodeKind.Combat || d.kind == MapNodeKind.Boss)
+            {
+                if (d.enemyTier == EncounterPool.Tier.Elite) tier = tooltipTierElite;
+                else if (d.enemyTier == EncounterPool.Tier.Boss) tier = tooltipTierBoss;
+            }
+            if (!string.IsNullOrEmpty(tier))
+                body = string.IsNullOrEmpty(body) ? tier : tier + "\n" + body;
+
+            string state;
+            switch (node.NodeState)
+            {
+                case MapNode3D.State.Current: state = tooltipStateCurrent; break;
+                case MapNode3D.State.Selectable: state = tooltipStateSelectable; break;
+                case MapNode3D.State.Visited: state = tooltipStateVisited; break;
+                default: state = tooltipStateUnreachable; break;
+            }
+            if (!string.IsNullOrEmpty(state))
+                body = string.IsNullOrEmpty(body) ? state : body + "\n" + state;
         }
 
         // ==========================================
@@ -468,6 +713,7 @@ namespace EldritchMile.Map3D
             if (GameFlowManager.Instance == null) return;
             if (GameFlowManager.Instance.IsTransitioning) return;
 
+            tooltipNode = null;
             if (nodeTooltip != null) nodeTooltip.HideImmediate();
             StartCoroutine(EnterAfterFrame(node));
         }
@@ -475,7 +721,12 @@ namespace EldritchMile.Map3D
         private IEnumerator EnterAfterFrame(RunNodeData node)
         {
             moving = true;
-            yield return null;   // 階段 1 還沒有棋子移動動畫，先留這一格
+
+            if (playerRoot != null && boundMap != null)
+                yield return MovePlayer(PlayerSpot(boundMap.currentNodeId), PlayerSpot(node.nodeId));
+            else
+                yield return null;
+
             moving = false;
 
             // 收地圖、載入 Stage 全交給總管（鐵則 1：畫面層不做流程決策）

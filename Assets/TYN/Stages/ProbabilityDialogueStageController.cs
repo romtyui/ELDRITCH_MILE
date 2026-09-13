@@ -96,7 +96,8 @@ public class ProbabilityDialogueStageController : StageController
         }
 
         if (backdrop == null) backdrop = GetComponentInChildren<StageBackdrop>(true);
-        backdrop?.Spawn();
+        // 擺設隨機開關，用節點的種子（同一站重進長一樣）
+        backdrop?.Spawn(run != null && run.pendingNode != null ? run.pendingNode.dressingSeed : 0, false);
 
         if (view == null) view = GetComponentInChildren<ProbabilityDialogueView>(true);
 

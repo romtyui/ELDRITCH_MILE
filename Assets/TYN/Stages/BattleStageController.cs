@@ -209,6 +209,50 @@ public class BattleStageController : StageController
         // Unity 就會在對的時機呼叫 Start()，而且只呼叫一次。
         // 順序也才對 —— 先 ReserveEnemies 再啟用，他才撈得到我們預約的對手。
         battleManager.gameObject.SetActive(true);
+
+        StartCoroutine(RefreshSanLightAfterStart());
+    }
+
+    /// <summary>
+    /// 開場後補一次「怪物明暗依 SAN」的刷新。
+    ///
+    /// ────────────────────────────────────────────────────────
+    /// 【症狀】試玩回報「怪物一開場就是黑色型態」—— 黑色型態應該是 SAN 越低越明顯。
+    ///
+    /// 【實測】SAN 100/100，但 `PSBMonsterLightReveal.lightPower` 卡在 **0.20**
+    /// （`EnergyLightPowerBinder.minLightPower`），黑色那層 alpha 0.95。
+    ///
+    /// 【原因】Binder 只在 `OnEnable` 與 `OnEnergyChanged` 時計算。
+    /// 它跟 BattleManager 在同一個物件上，我們 SetActive 的當下 OnEnable 就跑了 ——
+    /// 那時 run 的 SAN 還沒套進來。之後 `RunStateManager.ApplyToBattle()` 直接改
+    /// `currentEnergy`，**不會發 OnEnergyChanged**，所以 Binder 一直停在開場那個值，
+    /// 直到玩家第一次花 SAN 才跳回正確的亮度。
+    ///
+    /// 【為什麼修在這裡】那三支都是 Romtyui 的檔案。這裡只是在他的流程跑完之後
+    /// 多叫一次他本來就公開的 `RefreshLightPower()`，不改他的任何行為。
+    /// 根治的做法（ApplyToBattle 之後發事件）要跟他討論。
+    ///
+    /// 等兩幀：第一幀 BattleManager.Start() 才會跑。這時畫面還在黑幕底下，玩家看不到跳動。
+    /// </summary>
+    private IEnumerator RefreshSanLightAfterStart()
+    {
+        yield return null;
+        yield return null;
+        RefreshSanLight();
+    }
+
+    public override IEnumerator OnStageReady()
+    {
+        yield return base.OnStageReady();
+
+        // 保底：黑幕淡出後再對一次，萬一 StartBattle 比兩幀還晚才套用 SAN
+        RefreshSanLight();
+    }
+
+    private void RefreshSanLight()
+    {
+        EnergyLightPowerBinder binder = GetComponentInChildren<EnergyLightPowerBinder>(true);
+        if (binder != null && binder.isActiveAndEnabled) binder.RefreshLightPower();
     }
 
     public override IEnumerator OnStageExit()

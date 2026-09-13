@@ -326,6 +326,13 @@ namespace EldritchMile.Core
                  "不知道是「效果還沒接」還是「企劃決定不要」。")]
         [Min(0f)] public float weight = 1f;
 
+        [Header("背景擺設")]
+        [Tooltip("勾起來：這個事件的背景**全部擺設都顯示**，包括平常一律關掉的那些" +
+                 "（例如戶外路中間的魚頭）。\n\n" +
+                 "不勾：照平常隨機開關，只給特定事件看的擺設不會出現。\n" +
+                 "哪些擺設算「只給特定事件看」，在背景 prefab 的 SceneDressing 上勾 Only When Show All。")]
+        public bool showAllDressing = false;
+
         [Header("內容")]
         [TextArea(4, 12)]
         [Tooltip("事件內文。大綱表格裡「事件內容」那一格")]

@@ -36,6 +36,10 @@ namespace EldritchMile.Map3D
         public Color colorVisited = new Color(0.55f, 0.55f, 0.55f, 1f);
         public Color colorUnreachable = new Color(0.35f, 0.35f, 0.35f, 0.65f);
 
+        [Tooltip("走過的節點再乘上的透明度。**表示「不能再選了」** ——\n" +
+                 "只靠變灰的話跟「還去不了」的節點分不出來（2026-09-13 試玩回饋）")]
+        [Range(0f, 1f)] public float visitedAlpha = 0.4f;
+
         [Header("大小")]
         [Tooltip("目前所在的節點放大倍率")]
         public float scaleCurrent = 1.25f;
@@ -86,7 +90,7 @@ namespace EldritchMile.Map3D
             {
                 case State.Current: c = colorCurrent; s = scaleCurrent; break;
                 case State.Selectable: c = colorSelectable; s = scaleSelectable; break;
-                case State.Visited: c = colorVisited; s = scaleInactive; break;
+                case State.Visited: c = colorVisited; c.a *= visitedAlpha; s = scaleInactive; break;
                 default: c = colorUnreachable; s = scaleInactive; break;
             }
 
@@ -102,12 +106,19 @@ namespace EldritchMile.Map3D
         // 由 MapView3D 的射線偵測呼叫（不是 uGUI 事件 —— 這裡是世界空間）
         // ==========================================
 
+        /// <summary>
+        /// 說明框**每一種狀態都給**（去不了的節點正是玩家最想問「那是什麼」的），
+        /// 但抬起來只給可前往的 —— 抬起來在玩家眼裡等於「可以點」。
+        /// 與平面版 MapNodeUI 同一條規則。
+        /// </summary>
         public void OnHoverEnter()
         {
-            if (!IsSelectable || pin == null) return;
+            if (IsSelectable && pin != null)
+            {
+                EnsurePinHome();
+                pin.transform.localPosition = pinHome + new Vector3(0f, hoverLift, 0f);
+            }
 
-            EnsurePinHome();
-            pin.transform.localPosition = pinHome + new Vector3(0f, hoverLift, 0f);
             if (view != null) view.ShowNodeTooltip(this);
         }
 

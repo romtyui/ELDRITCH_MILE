@@ -508,6 +508,7 @@ namespace EldritchMile.Core
                 //    但 BFS 樹的葉子整圈鄰居都不比自己深 —— 那就是死路。
                 //    實測少了這一行有 1046 個死路節點
                 EnsureReachesGoal(nodes, layer, adj, maxHop);
+                RemoveStrandedNodes(map, maxHop);
             }
             else
             {
@@ -522,8 +523,81 @@ namespace EldritchMile.Core
 
                 PruneLinks(nodes, s.maxForwardLinks);
                 EnsureReachesGoal(nodes, layer, adj, maxHop);
+                RemoveStrandedNodes(map, maxHop);
             }
             return map;
+        }
+
+        /// <summary>
+        /// 拿掉「走不到終點」或「從起點走不到」的節點，連同指向它們的邊。
+        ///
+        /// 【為什麼需要】EnsureReachesGoal 加了防迴圈的條件之後，有些死路找不到
+        /// 合法的出口（鄰居全都走得回自己）。實測 300 張圖約 455 個。
+        /// 硬接一條就是迴圈，不接就是死路 —— 兩個都比「這個岔路口不存在」糟。
+        ///
+        /// 刪掉一個節點可能讓前一站也變成死路，所以反覆做到穩定為止。
+        /// </summary>
+        private static void RemoveStrandedNodes(MapData map, int maxHop)
+        {
+            List<RunNodeData> nodes = map.allNodes;
+
+            for (int guard = 0; guard < 64; guard++)
+            {
+                var ids = new Dictionary<string, int>();
+                for (int i = 0; i < nodes.Count; i++) ids[nodes[i].nodeId] = i;
+
+                int n = nodes.Count;
+
+                // 往前：走得到終點嗎
+                var toGoal = new bool[n];
+                for (int i = 0; i < n; i++) if (nodes[i].layer == maxHop) toGoal[i] = true;
+
+                bool changed = true;
+                while (changed)
+                {
+                    changed = false;
+                    for (int i = 0; i < n; i++)
+                    {
+                        if (toGoal[i]) continue;
+                        List<string> next = nodes[i].nextNodeIds;
+                        for (int k = 0; k < next.Count; k++)
+                        {
+                            int j;
+                            if (!ids.TryGetValue(next[k], out j) || !toGoal[j]) continue;
+                            toGoal[i] = true; changed = true; break;
+                        }
+                    }
+                }
+
+                // 往後：從起點走得到嗎
+                var fromStart = new bool[n];
+                var queue = new Queue<int>();
+                for (int i = 0; i < n; i++)
+                    if (nodes[i].layer == 0) { fromStart[i] = true; queue.Enqueue(i); }
+
+                while (queue.Count > 0)
+                {
+                    int c = queue.Dequeue();
+                    List<string> next = nodes[c].nextNodeIds;
+                    for (int k = 0; k < next.Count; k++)
+                    {
+                        int j;
+                        if (!ids.TryGetValue(next[k], out j) || fromStart[j]) continue;
+                        fromStart[j] = true;
+                        queue.Enqueue(j);
+                    }
+                }
+
+                var dead = new HashSet<string>();
+                for (int i = 0; i < n; i++)
+                    if (!toGoal[i] || !fromStart[i]) dead.Add(nodes[i].nodeId);
+
+                if (dead.Count == 0) return;
+
+                nodes.RemoveAll(delegate (RunNodeData d) { return dead.Contains(d.nodeId); });
+                for (int i = 0; i < nodes.Count; i++)
+                    nodes[i].nextNodeIds.RemoveAll(delegate (string id) { return dead.Contains(id); });
+            }
         }
 
         /// <summary>
@@ -533,8 +607,13 @@ namespace EldritchMile.Core
         /// 但**不保證有 k+1 的鄰居** —— BFS 樹的葉子就沒有。
         /// 那種節點玩家走進去就出不來了。實測 200 張圖有 405 個。
         ///
-        /// 【為什麼不會產生迴圈】只往「已經確定走得到終點」的節點連。
-        /// 目標本身能到終點，所以連過去之後也能到，而且不可能繞回來。
+        /// 【⚠️ 迴圈】舊版註解寫「只往走得到終點的節點連，所以不可能繞回來」—— **錯的。**
+        /// 目標走得到終點，不代表它走不回自己：A→B（死路）而 A 本身也走得到終點，
+        /// B 就會補一條 B→A，玩家從 A 進 B 又被送回 A。實測 300 張圖有 271 張有迴圈、
+        /// 1141 條往回走的邊（2026-09-13 試玩回報「繞一圈回到原節點」）。
+        ///
+        /// 所以候選要多一個條件：**從目標出發走不回自己**（CanReach 檢查）。
+        /// 優先往更深的層連，其次同層，最後才考慮更淺的 —— 三者都不會形成迴圈。
         ///
         /// 【為什麼只連三角化的鄰居】保住平面性。隨便連最近的就會交叉 ——
         /// 那正是上一版每張圖 3.5 處交叉的原因。
@@ -580,7 +659,11 @@ namespace EldritchMile.Core
                     {
                         int nb = adj[i][k];
                         if (!reaches[nb]) continue;
-                        if (best < 0 || layer[nb] > layer[best]) best = nb;
+                        if (best >= 0 && layer[nb] <= layer[best]) continue;
+
+                        // 從 nb 走得回 i 的話，這條邊就是迴圈
+                        if (CanReach(nodes, nb, i)) continue;
+                        best = nb;
                     }
 
                     if (best < 0) continue;
@@ -648,6 +731,32 @@ namespace EldritchMile.Core
             float dx = nodes[idx].xPercent - from.xPercent;
             float dy = nodes[idx].yPercent - from.yPercent;
             return dx * dx + dy * dy;
+        }
+
+        /// <summary>沿著出邊，從 from 走得到 to 嗎。</summary>
+        private static bool CanReach(List<RunNodeData> nodes, int from, int to)
+        {
+            if (from == to) return true;
+
+            var seen = new bool[nodes.Count];
+            var stack = new Stack<int>();
+            stack.Push(from);
+            seen[from] = true;
+
+            while (stack.Count > 0)
+            {
+                int cur = stack.Pop();
+                List<string> next = nodes[cur].nextNodeIds;
+                for (int k = 0; k < next.Count; k++)
+                {
+                    int idx = IndexOfId(nodes, next[k]);
+                    if (idx < 0 || seen[idx]) continue;
+                    if (idx == to) return true;
+                    seen[idx] = true;
+                    stack.Push(idx);
+                }
+            }
+            return false;
         }
 
         private static int IndexOfId(List<RunNodeData> nodes, string id)

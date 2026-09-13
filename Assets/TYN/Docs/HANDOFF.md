@@ -2592,3 +2592,59 @@ ItemInventory ✔　RelicsInventory ✔
 ```
 
 ⚠️ 疊加開啟他的場景之後**沒有存檔就關掉**，他的 SampleScene 沒有被動到。
+
+## 試玩回饋修正（2026-09-13 ~ 09-14）
+
+### 查到的根本原因（先看這段）
+
+| 回報 | 真正的原因 | 修法 |
+|---|---|---|
+| 卡牌上 `{counter}`、穿刺的 `{damage}` 不見 | 6 張卡的 `effects` 在**編輯器記憶體裡是 null**（GUID、fileID 全對）。合併 Romtyui 進度時卡牌先被載入、效果資產後到，快取住了 null。效果是 null 的話那張牌**打出去也沒有效果** | 不是程式問題。重新載入那 6 張卡就好（重開 Unity 也會好）。**正式包不受影響** |
+| 怪物一開場就是黑色型態 | SAN 100/100 但 `lightPower` 卡在 0.20：Binder 在 OnEnable 算一次，之後 `ApplyToBattle` 改 SAN 不發事件 | `BattleStageController` 開場補叫 `RefreshLightPower()`（見該方法註解） |
+| 進出節點沒有黑幕 | `[SYSTEM]/ScreenFader` 從 **08-14 Phase4** 起就是停用的 → `Instance` 是 null → 所有淡入淡出都跳過 | 重新啟用。實測開機淡出 alpha 1 → 0 正常 |
+| 繞一圈回到原節點 | `EnsureReachesGoal` 補邊時可能連回「走得回自己」的節點。300 張圖 271 張有迴圈 | 補邊加 `CanReach` 檢查；找不到合法出口的死路節點整個拿掉（`RemoveStrandedNodes`） |
+| 戰鬥中吃食物 HP/SAN 沒反應 | SAN 只寫存檔值；戰鬥中的 SAN 是 `EnergySystem`，戰鬥結束 `SaveFromBattle` 會蓋回去 | 戰鬥中走 `EnergySystem.GainEnergy`。播報改用畫面上那一份數值 |
+
+⚠️ **「EnergySystem 每回合重設所以不能加 SAN」是錯的**（之前的註解這樣寫）。
+有 run 狀態時 BattleManager 不會重設它 —— 戰鬥中的 SAN 就是 EnergySystem。
+
+### 地圖
+
+- **說明框顯示在棋子頭頂**：`MapTooltipUI` 新增 `AboveNode` 模式；鏡頭移動時每幀跟著走（`Follow`）。
+  文案沿用平面版 `MapView` 的六筆，已複製到 `MapView3D.nodeTooltipTexts`。
+  去不了、走過的節點也會顯示說明（但只有可前往的會抬起來）。
+- ⚠️ **3D 版漏抄了 `SetSuppressed(false)`** —— 地圖第一次收起來之後說明框就永遠開不了。已補在 `OnOpened`。
+- **走過的節點半透明**：`MapNode3D.visitedAlpha`（預設 0.4）。
+- **玩家棋子**：`MapView3D.playerSprite`（`地圖物件_玩家`）。沿著**跟連線同一條弧線**滑到下一站，移動時鏡頭追棋子。
+  控制點由 `CurveControl` 統一算，連線與棋子不會分岔。
+- **地圖上不能吃東西**（轉場中也不行），提示文字在 `ShortcutBarUI.mapBlockedMessage`。
+- 順手修：`BuildLines` 沒把線加進 `lines`，換一場 run 舊線會留在地上。
+
+地圖生成驗證（300 張）：
+
+```
+            迴圈   死路   走不到   沒有 Boss   平均節點
+修正前      271     0       0        0          39.5
+修正後        0     0       0        0          37.4（最少 20）
+```
+
+仍有約 1.1 條／圖「往較淺層走」的邊 —— 不是迴圈（走不回原點），只是地理上往回。
+
+### 室外背景的擺設開關
+
+- 以前**只有探索房間**會隨機開關擺設；事件、機率對話的戶外背景是 `StageBackdrop` 生成的，沒人呼叫 `Apply`，所以永遠全亮。
+- 現在 `StageBackdrop.Spawn(seed, showAll)` 會套用；種子用節點的 `dressingSeed`（同一站重進長一樣）。
+- `SceneDressing.Piece.onlyWhenShowAll`：只有「全部顯示」時才出現。**魚頭、魚頭2、魚頭3 已勾**（三個並排在路中間，x 39%／49%／59%）。
+- `EventData.showAllDressing`：勾了的事件背景全部顯示（含魚頭）。**目前沒有任何事件勾** —— 要全亮的是哪一個事件待確認（《好餓好餓的貪吃鬼》的內容跟魚頭有關，可能是它）。
+- ⚠️ 每一件都先擲骰再判斷，勾 `onlyWhenShowAll` 不會讓其他擺設的結果位移。
+
+### 商店
+
+- hover 商品顯示名稱與說明，擺在格子正上方（放不下換下方）。框是從快捷欄的 Tooltip 複製的，掛在 `Stage_Shop/.../Shelf/ShopTooltip`。
+- ⚠️ 框的 `blocksRaycasts` 一定要關，否則框蓋住格子 → exit → 框消失 → enter …… 會一直閃。
+
+### 其他
+
+- `Room_Village_Outdoor.prefab` 裡面放的是 **`Art_Village_MiddleRoom`**，不是戶外那張。名字與內容不符，待美術確認是不是放錯。
+- 用 MCP 在 Play 模式測試時：編輯器沒有焦點**不會跑幀**（frameCount 停在 2），要先 `Application.runInBackground = true`。
+  另外 `DebugJumpToStage` 是 `[Conditional("UNITY_EDITOR")]`，從 execute_code 呼叫會被編譯器拿掉，要用反射叫 `DebugJumpRoutine`。

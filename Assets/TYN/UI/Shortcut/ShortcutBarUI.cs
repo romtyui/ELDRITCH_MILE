@@ -88,6 +88,9 @@ namespace EldritchMile.UI.Shortcut
         public TextMeshProUGUI tooltipTitle;
         public TextMeshProUGUI tooltipBody;
 
+        [Tooltip("在地圖畫面（或轉場中）點道具時的提示。留空則不提示")]
+        public string mapBlockedMessage = "在地圖上不能使用道具";
+
         [Header("行為")]
         [Tooltip("勾選＝滑鼠移上去就展開；取消＝**點一下開、再點一下關**（美術稿方案 3 的兩種）。\n\n" +
                  "預設是點擊 —— hover 展開在這個位置很容易誤觸：\n" +
@@ -560,6 +563,15 @@ namespace EldritchMile.UI.Shortcut
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
             if (run == null) return;
 
+            // ── 地圖畫面上不能吃（2026-09-13 試玩回饋）──
+            // 轉場中一併擋掉：黑幕中途吃下去，結果會落在哪一邊（戰鬥單位或存檔值）說不準
+            if (IsOnMapOrTransitioning())
+            {
+                if (!string.IsNullOrEmpty(mapBlockedMessage))
+                    PopupService.Instance?.ShowInstant(mapBlockedMessage);
+                return;
+            }
+
             // ── 有代價的食物：付不起就**整個不發生** ──
             //
             // 【為什麼要在消耗之前檢查】`PlayerVitals.SpendHp` 付不起時會安靜地回 false，
@@ -618,15 +630,37 @@ namespace EldritchMile.UI.Shortcut
                 if (d.hpCost > 0) PlayerVitals.SpendHp(d.hpCost);
             }
 
-            // ⚠️ **SAN 不論在不在戰鬥裡都只寫 run 級的值。**
-            //    戰鬥中的 SAN 是 `EnergySystem`，而它**每回合都會 ResetEnergy()** ——
-            //    那是回合行動點，不是 run 級的理智值。往它加數字沒有意義
-            //    （下一回合就被重設掉），所以這裡不碰它
-            if (d.sanRestore > 0) PlayerVitals.RestoreSan(d.sanRestore);
-            if (d.sanCost > 0) PlayerVitals.SpendSan(d.sanCost);
+            // ── SAN：戰鬥中走 EnergySystem ──
+            //
+            // ⚠️ 舊版這裡只寫 run 級的值，理由是「EnergySystem 每回合重設」—— **那是錯的。**
+            //    有 run 狀態時 BattleManager 不會重設它（他那句「SAN 值不重製」），
+            //    戰鬥中的 SAN 就是 EnergySystem。只寫存檔值的話血條不動，
+            //    而且戰鬥結束 SaveFromBattle() 會用 EnergySystem 的值蓋回去 —— 等於白吃。
+            //    （2026-09-13 試玩回報「戰鬥中吃食物 SAN 沒反應」）
+            EnergySystem energy = unit != null ? BattleEnergy() : null;
+            int battleSan0 = energy != null ? energy.currentEnergy : 0;
+
+            if (energy != null)
+            {
+                if (d.sanRestore > 0) energy.GainEnergy(d.sanRestore);
+                if (d.sanCost > 0) energy.Spend(Mathf.Min(d.sanCost, energy.currentEnergy));
+            }
+            else
+            {
+                if (d.sanRestore > 0) PlayerVitals.RestoreSan(d.sanRestore);
+                if (d.sanCost > 0) PlayerVitals.SpendSan(d.sanCost);
+            }
 
             int dHp = unit != null ? unit.currentHp - battleHp0 : PlayerVitals.Hp - hp0;
-            int dSan = PlayerVitals.San - san0;
+            int dSan = energy != null ? energy.currentEnergy - battleSan0 : PlayerVitals.San - san0;
+
+            // 播報用「現在畫面上那一份」的數值 —— 戰鬥中講存檔值的話，
+            // 玩家看到的數字會跟血條對不起來（試玩回報的「紀錄的數值與戰鬥不同步」）
+            int hpNow = unit != null ? unit.currentHp : PlayerVitals.Hp;
+            int hpMax = unit != null ? unit.maxHp : PlayerVitals.MaxHp;
+            int sanNow = energy != null ? energy.currentEnergy : PlayerVitals.San;
+            int sanMax = energy != null ? energy.maxEnergy : PlayerVitals.MaxSan;
+            bool ready = unit != null || PlayerVitals.IsReady;
 
             if (dHp == 0 && dSan == 0)
             {
@@ -634,21 +668,20 @@ namespace EldritchMile.UI.Shortcut
                 // 所以講清楚是「滿了」還是「系統還沒初始化」
                 Debug.LogWarning(
                     $"[快捷欄]「{d.Label}」吃下去了，但 HP／SAN 完全沒有變動。\n" +
-                    (PlayerVitals.IsReady
-                        ? $"　目前 HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}"
+                    (ready
+                        ? $"　目前 HP {hpNow}/{hpMax}、SAN {sanNow}/{sanMax}"
                           + " —— 應該是已經滿了，或這件道具的回復值本來就是 0。"
                         : "　⚠️ 這場 run 的 HP／SAN **還沒初始化**（見 PlayerVitals 的警告）。"));
             }
 
-            Debug.Log($"[快捷欄] 使用「{d.Label}」"
+            Debug.Log($"[快捷欄] 使用「{d.Label}」" + (unit != null ? "（戰鬥中）" : "")
                       + (d.hpRestore > 0 ? $"　HP +{d.hpRestore}" : "")
                       + (d.sanRestore > 0 ? $"　SAN +{d.sanRestore}" : "")
                       + (d.hpCost > 0 ? $"　HP -{d.hpCost}" : "")
                       + (d.sanCost > 0 ? $"　SAN -{d.sanCost}" : "")
-                      + $"　→ HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}"
-                      + $"　SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}");
+                      + $"　→ HP {hpNow}/{hpMax}　SAN {sanNow}/{sanMax}");
 
-            PopupService.Instance?.ShowInstant(UsedTextFor(d, dHp, dSan));
+            PopupService.Instance?.ShowInstant(UsedTextFor(d, dHp, dSan, hpNow, hpMax, sanNow, sanMax, ready));
 
             // 用完就重建 —— 數量要跟著變，用光了那一格要消失
             Refresh(false);
@@ -670,6 +703,23 @@ namespace EldritchMile.UI.Shortcut
 
             BattleUnit u = bm.playerUnit;
             return u != null && u.isActiveAndEnabled ? u : null;
+        }
+
+        /// <summary>戰鬥中的 SAN（隊友那邊叫 Energy）。不在戰鬥中回傳 null。</summary>
+        private static EnergySystem BattleEnergy()
+        {
+            if (BattlePlayerUnit() == null) return null;
+            BattleManager bm = Object.FindFirstObjectByType<BattleManager>();
+            return bm != null ? bm.energySystem : null;
+        }
+
+        /// <summary>地圖開著、或正在轉場。</summary>
+        private static bool IsOnMapOrTransitioning()
+        {
+            GameFlowManager g = GameFlowManager.Instance;
+            if (g == null) return false;
+            if (g.IsTransitioning) return true;
+            return g.mapOverlay != null && g.mapOverlay.IsOpen;
         }
 
         /// <summary>
@@ -696,8 +746,17 @@ namespace EldritchMile.UI.Shortcut
 
             if (d.sanCost > 0)
             {
-                if (!PlayerVitals.IsReady) return false;
-                if (PlayerVitals.San - d.sanCost <= 0) return false;
+                // 戰鬥中的 SAN 在 EnergySystem，理由同上面的 HP
+                EnergySystem energy = BattleEnergy();
+                if (energy != null)
+                {
+                    if (energy.currentEnergy - d.sanCost <= 0) return false;
+                }
+                else
+                {
+                    if (!PlayerVitals.IsReady) return false;
+                    if (PlayerVitals.San - d.sanCost <= 0) return false;
+                }
             }
 
             return true;
@@ -710,7 +769,8 @@ namespace EldritchMile.UI.Shortcut
         /// 帳面是 +35、實際是 +0 —— 照抄帳面的話玩家會以為系統壞了。
         /// 講「HP 100/100（已滿）」他就知道是自己已經滿了。
         /// </summary>
-        private static string UsedTextFor(ItemData d, int dHp, int dSan)
+        private static string UsedTextFor(ItemData d, int dHp, int dSan,
+            int hpNow, int hpMax, int sanNow, int sanMax, bool ready)
         {
             var bits = new List<string>();
             if (dHp != 0) bits.Add($"HP {dHp:+#;-#;0}");
@@ -718,14 +778,13 @@ namespace EldritchMile.UI.Shortcut
 
             if (bits.Count == 0)
             {
-                return PlayerVitals.IsReady
-                    ? $"{d.Label}　（HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、"
-                      + $"SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}，沒有變化）"
+                return ready
+                    ? $"{d.Label}　（HP {hpNow}/{hpMax}、SAN {sanNow}/{sanMax}，沒有變化）"
                     : $"{d.Label}　（沒有變化）";
             }
 
             return $"{d.Label}　{string.Join("　", bits.ToArray())}"
-                 + $"　→　HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}　SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}";
+                 + $"　→　HP {hpNow}/{hpMax}　SAN {sanNow}/{sanMax}";
         }
     }
 }

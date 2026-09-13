@@ -33,6 +33,24 @@ namespace EldritchMile.Shop
         [Tooltip("錢的顯示格式。{0} = 數字")]
         public string moneyFormat = "{0}";
 
+        [Header("說明框（hover 商品時）")]
+        [Tooltip("整個框。留空則不顯示說明。\n" +
+                 "⚠️ 框本身不能擋 raycast（CanvasGroup.blocksRaycasts = false）——\n" +
+                 "擋到的話框一出現就蓋住格子，格子收到 exit，框消失，然後又 enter……會一直閃")]
+        public RectTransform tooltipPanel;
+        public TextMeshProUGUI tooltipTitle;
+
+        [Tooltip("道具說明。留空則只顯示名稱")]
+        public TextMeshProUGUI tooltipBody;
+
+        [Tooltip("框的底邊離格子頂端多遠")]
+        public float tooltipGap = 12f;
+
+        [Tooltip("與畫面邊緣至少保留多少距離")]
+        public float tooltipScreenPadding = 16f;
+
+        private ShopSlotUI tooltipSlot;
+
         /// 玩家點了一格（還沒判斷買不買得起）。
         public event Action<ShopSlotUI> OnSlotClicked;
 
@@ -52,15 +70,97 @@ namespace EldritchMile.Shop
 
                 slots[i].OnClicked -= HandleSlotClicked;
                 slots[i].OnClicked += HandleSlotClicked;
+                slots[i].OnHoverChanged -= HandleSlotHover;
+                slots[i].OnHoverChanged += HandleSlotHover;
             }
+
+            HideTooltip();
         }
 
         private void OnDestroy()
         {
             for (int i = 0; i < slots.Count; i++)
             {
-                if (slots[i] != null) slots[i].OnClicked -= HandleSlotClicked;
+                if (slots[i] == null) continue;
+                slots[i].OnClicked -= HandleSlotClicked;
+                slots[i].OnHoverChanged -= HandleSlotHover;
             }
+        }
+
+        // ==========================================
+        // 說明框
+        // ==========================================
+
+        private void HandleSlotHover(ShopSlotUI slot, bool on)
+        {
+            if (tooltipPanel == null) return;
+
+            if (!on)
+            {
+                // 只收「自己那一格」的框 —— 從 A 移到 B 時，B 的 enter 可能比 A 的 exit 先到
+                if (tooltipSlot == slot) HideTooltip();
+                return;
+            }
+
+            if (slot == null || slot.IsEmpty) return;
+
+            ItemData data = GameFlowManager.Item(slot.ItemId);
+
+            if (tooltipTitle != null)
+                tooltipTitle.text = data != null ? data.Label : slot.ItemId;
+
+            if (tooltipBody != null)
+            {
+                string body = data != null ? data.description : "";
+                tooltipBody.text = body;
+                tooltipBody.gameObject.SetActive(!string.IsNullOrEmpty(body));
+            }
+
+            tooltipSlot = slot;
+            tooltipPanel.gameObject.SetActive(true);
+            tooltipPanel.SetAsLastSibling();
+
+            // 先讓 layout 定出尺寸再定位，不然會用到上一件商品的框大小
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipPanel);
+            PlaceTooltipAbove(slot.transform as RectTransform);
+        }
+
+        private void HideTooltip()
+        {
+            tooltipSlot = null;
+            if (tooltipPanel != null) tooltipPanel.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// 擺在格子正上方；上面放不下就換到下方；左右夾進畫面。
+        /// 與地圖的 MapTooltipUI.RepositionAbove 同一套算法（用世界座標設定，與框的錨點無關）。
+        /// </summary>
+        private void PlaceTooltipAbove(RectTransform target)
+        {
+            if (target == null) return;
+
+            Canvas canvas = tooltipPanel.GetComponentInParent<Canvas>();
+            if (canvas == null) return;
+            RectTransform canvasRect = canvas.rootCanvas.transform as RectTransform;
+
+            Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(canvasRect, target);
+            Vector2 size = tooltipPanel.rect.size;
+            Rect area = canvasRect.rect;
+            float pad = tooltipScreenPadding;
+
+            float left = (b.min.x + b.max.x) * 0.5f - size.x * 0.5f;
+            float bottom = b.max.y + tooltipGap;
+
+            if (bottom + size.y > area.yMax - pad)
+                bottom = b.min.y - tooltipGap - size.y;
+
+            left = Mathf.Clamp(left, area.xMin + pad, area.xMax - size.x - pad);
+            bottom = Mathf.Clamp(bottom, area.yMin + pad, area.yMax - size.y - pad);
+
+            Vector2 pivotLocal = new Vector2(
+                left + size.x * tooltipPanel.pivot.x,
+                bottom + size.y * tooltipPanel.pivot.y);
+            tooltipPanel.position = canvasRect.TransformPoint(pivotLocal);
         }
 
         /// <summary>
