@@ -2652,3 +2652,50 @@ ItemInventory ✔　RelicsInventory ✔
 - `Room_Village_Outdoor.prefab` 裡面放的是 **`Art_Village_MiddleRoom`**，不是戶外那張。名字與內容不符，待美術確認是不是放錯。
 - 用 MCP 在 Play 模式測試時：編輯器沒有焦點**不會跑幀**（frameCount 停在 2），要先 `Application.runInBackground = true`。
   另外 `DebugJumpToStage` 是 `[Conditional("UNITY_EDITOR")]`，從 execute_code 呼叫會被編譯器拿掉，要用反射叫 `DebugJumpRoutine`。
+
+## 第二輪試玩回饋（2026-09-14）
+
+### 一條路到不了 Boss
+
+**原因**：BFS 最深那一層平均有 2.4 個節點，以前**全部都變成 Boss**。每個節點都走得到「某一個」Boss，
+但玩家看到的是遠方那一個 —— 岔路選到另一邊，就到不了看到的那個，而且每個 Boss 都會結束 run。
+
+**修法**：`CollapseToSingleBoss` 只留「走得到它的節點最多」的那一個，其他降級成一般節點並補邊接過去，
+補不到的由 `RemoveStrandedNodes`（終點改成看 Boss）拿掉。
+
+⚠️ `MapData.IsFinalLayer` 改成**有 Boss 就以 Boss 為終點**。只留一個 Boss 之後最深層還有一般節點，
+照層數判斷的話走到那裡 run 會莫名結束。
+
+```
+300 張圖：Boss 恰好 1 個　走不到 Boss 0　死路 0　迴圈 0　走不到的節點 0　平均 36 個節點（最少 20）
+```
+
+### 新一輪沿用上一輪的 HP／SAN／牌組
+
+**原因**：`RunStateManager` 是 DontDestroyOnLoad，而 `PlayerVitals.EnsureInitialized` 「已經有值就不覆蓋」。
+
+**修法**：`GameFlowManager.ResetRunLevelState()` 在開新一輪之前清掉 RunStateManager（含戰鬥快照、保留怪物組）、
+`PendingEvent`、`stageAfterEvent／Battle`、`BattleStageController.PendingEnemyId`、`ProbabilityDialogueStageController.PendingDialogue`。
+遺產（Meta）刻意不清。
+
+實測：第一輪改成 HP 60／SAN 70／牌組 9 張／殘留敵人 → 開新一輪 → HP 100／SAN 100／8 張／null。
+
+### 開關
+
+| 項目 | 位置 | 現在 |
+|---|---|---|
+| 侵蝕度提示（「【深淵】的侵蝕度 +5%」） | `GameFlowManager.showCorruptionNotices` | 關（數值照樣累積） |
+| 進節點／事件的地點卡 | `GameFlowManager.showTitleCards` | 關 |
+| 事件背景全部顯示（含魚頭） | `EventData.showAllDressing` | 只有《好餓好餓的貪吃鬼》勾 |
+| 探索的戶外房間 | `RoomLibrary` 的 `Room_Village_Outdoor` weight | 0（文案：探索目前只有屋內） |
+
+### 探索的 HP／SAN 顯示
+
+`Canvas_HUD/Vitals_HUD`：從戰鬥的 `lamp_Panel/Root` 複製外觀，拿掉結束回合鍵、動畫、教學錨點等戰鬥專用元件，
+改掛 `VitalsHudUI` 讀 `PlayerVitals`。位置與戰鬥那顆燈相同（右下）。
+`UIPanel.visibleInStages` 只有 **Explore** —— 其他環節可能有位置衝突，待討論。
+
+### 地圖
+
+- 說明框改成商店／遺物同款（深色底 0.05／0.88、標題白 22、內文淺灰 17），寬 240、高度跟著文字。
+- 玩家棋子 = 一般節點的 75%（`MapView3D.playerHeightOfNode`，用倍率是為了節點改大小時跟著變）。
