@@ -150,7 +150,8 @@ public class ShopStageController : StageController
         // 有它就把 prefab 自己那顆關掉，沒有才退回舊的
         if (EldritchMile.UI.SharedExitUI.Instance != null)
         {
-            EldritchMile.UI.SharedExitUI.Instance.Show(AskLeave);
+            // 確認面板改用共用的那一塊（跟 EXIT 同一個畫布），按「是」就開始離開
+            EldritchMile.UI.SharedExitUI.Instance.ShowWithConfirm(BeginLeave);
             if (exitTab != null) exitTab.gameObject.SetActive(false);
         }
 

@@ -166,7 +166,10 @@ namespace EldritchMile.Explore
             // 右下角共用的 EXIT（2026-09-15 改版）。有它就不用上方那顆書籤
             if (EldritchMile.UI.SharedExitUI.Instance != null)
             {
-                EldritchMile.UI.SharedExitUI.Instance.Show(ShowContinueAsk);
+                // ⚠️ 不走 ShowContinueAsk：那一支在對話框開著、或打牌中會**延後**到關掉才跳 ——
+                //    玩家在寶箱畫面點 EXIT 會什麼都看不到（2026-09-15 回報）。
+                //    點 EXIT 是玩家明確要走，確認面板立刻出來（它在 HUD 畫布上，不會被寶箱蓋住）
+                EldritchMile.UI.SharedExitUI.Instance.ShowWithConfirm(LeaveFromSharedExit);
                 if (exitTag != null) exitTag.gameObject.SetActive(false);
             }
         }
@@ -782,6 +785,19 @@ namespace EldritchMile.Explore
         public void RequestExit()
         {
             ReportComplete(StageResult.Completed);
+        }
+
+        /// <summary>
+        /// 共用 EXIT 的確認面板按了「是」。打牌中就先把打牌收掉再走 ——
+        /// 不收的話手牌區、HoldOpen 的對話框會留到下一站。
+        /// </summary>
+        private void LeaveFromSharedExit()
+        {
+            if (Encounter != null && Encounter.IsActive) Encounter.EndEncounter();
+
+            continueAskShown = false;
+            SetContinueAskVisible(false);
+            RequestExit();
         }
     }
 }

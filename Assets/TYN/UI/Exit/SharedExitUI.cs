@@ -50,6 +50,26 @@ namespace EldritchMile.UI
         [Tooltip("完整淡入或淡出要多久（秒）")]
         [Min(0.01f)] public float fadeSeconds = 0.25f;
 
+        [Header("確認面板（「確定要離開嗎？」）")]
+        [Tooltip("整塊面板（含擋住後面點擊的全螢幕底）。\n\n" +
+                 "⚠️ **要跟 EXIT 在同一個畫布（Canvas_HUD），而且是它的兄弟、不是子物件**：\n" +
+                 "　· 放在 Stage 的畫布（Canvas_Stage，100）裡會被對話框（101）、寶箱大圖蓋住 ——\n" +
+                 "　　2026-09-15 回報「和寶箱打牌時點 EXIT，詢問畫面顯示不出來」就是這個\n" +
+                 "　· 放在 EXIT 底下的話，EXIT 淡出時會把面板一起淡掉、一起關掉點擊")]
+        public GameObject confirmPanel;
+
+        public TMPro.TMP_Text confirmQuestion;
+        public Button confirmYes;
+        public Button confirmNo;
+
+        [Tooltip("沒指定問句時用這一句")]
+        public string defaultQuestion = "確定要離開嗎？";
+
+        /// <summary>確認面板開著</summary>
+        public bool IsConfirming { get { return confirmPanel != null && confirmPanel.activeSelf; } }
+
+        private Action onConfirm;
+
         /// <summary>目前有 Stage 要它出現</summary>
         public bool IsRequested { get; private set; }
 
@@ -82,11 +102,17 @@ namespace EldritchMile.UI
                 button.onClick.RemoveListener(HandleClick);
                 button.onClick.AddListener(HandleClick);
             }
+
+            if (confirmYes != null) { confirmYes.onClick.RemoveListener(HandleYes); confirmYes.onClick.AddListener(HandleYes); }
+            if (confirmNo != null) { confirmNo.onClick.RemoveListener(HandleNo); confirmNo.onClick.AddListener(HandleNo); }
+            if (confirmPanel != null) confirmPanel.SetActive(false);
         }
 
         private void OnDestroy()
         {
             if (button != null) button.onClick.RemoveListener(HandleClick);
+            if (confirmYes != null) confirmYes.onClick.RemoveListener(HandleYes);
+            if (confirmNo != null) confirmNo.onClick.RemoveListener(HandleNo);
             if (Instance == this) Instance = null;
         }
 
@@ -105,12 +131,57 @@ namespace EldritchMile.UI
             IsRequested = true;
         }
 
+        /// <summary>
+        /// 進場時呼叫。點 EXIT 先跳「確定要離開嗎？」，按「是」才執行 <paramref name="onYes"/>。
+        /// 探索、商店、對話節點都走這一支 —— 誤觸 EXIT 就直接離開的代價太大。
+        /// </summary>
+        public void ShowWithConfirm(Action onYes, string question = null)
+        {
+            Show(delegate { Confirm(onYes, question); });
+        }
+
         /// <summary>離場時呼叫。</summary>
         public void Hide()
         {
             onClick = null;
             IsRequested = false;
             Retract();
+            CloseConfirm();
+        }
+
+        /// <summary>跳出確認面板。場上沒有面板的話直接執行（少一個欄位比讓玩家出不去好）。</summary>
+        public void Confirm(Action onYes, string question = null)
+        {
+            if (confirmPanel == null)
+            {
+                if (onYes != null) onYes();
+                return;
+            }
+
+            onConfirm = onYes;
+            if (confirmQuestion != null) confirmQuestion.text = string.IsNullOrEmpty(question) ? defaultQuestion : question;
+
+            confirmPanel.SetActive(true);
+            confirmPanel.transform.SetAsLastSibling();   // 蓋在 HUD 其他東西（含 EXIT）之上
+            Retract();
+        }
+
+        public void CloseConfirm()
+        {
+            onConfirm = null;
+            if (confirmPanel != null) confirmPanel.SetActive(false);
+        }
+
+        private void HandleYes()
+        {
+            Action a = onConfirm;
+            CloseConfirm();
+            if (a != null) a();
+        }
+
+        private void HandleNo()
+        {
+            CloseConfirm();
         }
 
         /// <summary>把滑出的標籤收回去（不影響顯示）。確認面板跳出來時用。</summary>
@@ -139,7 +210,8 @@ namespace EldritchMile.UI
             float want = IsRequested && !hudBusy ? 1f : 0f;
             group.alpha = Mathf.MoveTowards(group.alpha, want, dt / fadeSeconds);
 
-            bool clickable = want > 0.5f && group.alpha > 0.5f;
+            // 確認面板開著時 EXIT 不收點擊 —— 面板本來就蓋著，這是保險
+            bool clickable = want > 0.5f && group.alpha > 0.5f && !IsConfirming;
             group.blocksRaycasts = clickable;
             group.interactable = clickable;
 

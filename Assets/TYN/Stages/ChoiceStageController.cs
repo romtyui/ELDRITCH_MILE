@@ -92,7 +92,8 @@ public abstract class ChoiceStageController : StageController
     {
         phase = Phase.Intro;
 
-        if (UsesSharedExit) EldritchMile.UI.SharedExitUI.Instance?.Show(OnSharedExitClicked);
+        // 點 EXIT 先確認（2026-09-15：對話節點也要確認面板）
+        if (UsesSharedExit) EldritchMile.UI.SharedExitUI.Instance?.ShowWithConfirm(OnSharedExitClicked);
 
         if (PopupService.Instance == null)
         {
