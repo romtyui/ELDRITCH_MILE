@@ -129,9 +129,22 @@ namespace EldritchMile.Core
             }
         }
 
+        /// <summary>
+        /// 這一站打完就結束這場 run 嗎。
+        ///
+        /// ⚠️ **有 Boss 的地圖以 Boss 為終點**，不是看層數。Terrain 擺法只留一個 Boss，
+        /// 最深那一層可能還有一般節點 —— 照層數判斷的話走到那裡 run 就莫名結束了。
+        /// 沒有 Boss 的地圖（例如測試用路線）才退回看層數。
+        /// </summary>
         public bool IsFinalLayer(RunNodeData node)
         {
-            return node != null && node.layer >= MaxLayer;
+            if (node == null) return false;
+
+            for (int i = 0; i < allNodes.Count; i++)
+                if (allNodes[i] != null && allNodes[i].kind == MapNodeKind.Boss)
+                    return node.kind == MapNodeKind.Boss;
+
+            return node.layer >= MaxLayer;
         }
 
         /// 從目前位置可以前往的節點。currentNodeId 為空時代表尚未出發，回傳第 0 層。

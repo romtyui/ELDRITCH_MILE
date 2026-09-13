@@ -110,8 +110,12 @@ namespace EldritchMile.Map3D
         [Tooltip("玩家在地圖上的棋子。留空則不顯示")]
         public Sprite playerSprite;
 
-        [Tooltip("棋子的世界高度")]
+        [Tooltip("棋子的世界高度。**下面那格大於 0 時不用這格**")]
         public float playerWorldHeight = 0.7f;
+
+        [Tooltip("棋子高度 ＝ 一般節點（Pin World Height）的幾倍。大於 0 時優先於上面那格。\n" +
+                 "用倍率是為了節點改大小時棋子跟著變（2026-09-14 定 75%）")]
+        [Range(0f, 2f)] public float playerHeightOfNode = 0.75f;
 
         [Tooltip("棋子站在節點的哪一側（世界單位）。站正中間會被節點的圖擋住")]
         public Vector3 playerOffset = new Vector3(0.4f, 0f, -0.2f);
@@ -239,7 +243,7 @@ namespace EldritchMile.Map3D
             YBillboard bb = pinGo.AddComponent<YBillboard>();
             bb.target = mapCamera;
 
-            FitPin(sr, playerWorldHeight);
+            FitPin(sr, playerHeightOfNode > 0f ? pinWorldHeight * playerHeightOfNode : playerWorldHeight);
 
             playerRoot = root.transform;
             playerRoot.localPosition = PlayerSpot(boundMap != null ? boundMap.currentNodeId : null) + playerOffset;

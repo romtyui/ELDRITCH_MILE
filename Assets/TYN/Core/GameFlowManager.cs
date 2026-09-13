@@ -211,8 +211,16 @@ namespace EldritchMile.Core
                  "留空 = 不顯示地點卡，退回單純的黑幕停頓")]
         public MapBannerUI titleBanner;
 
-        [Tooltip("總開關。取消勾選就回到只有黑幕停頓的版本")]
+        [Tooltip("總開關。取消勾選就回到只有黑幕停頓的版本。\n" +
+                 "節點名稱（戰鬥、遭遇…）與事件名稱（無人的小船…）都由這一格管。\n" +
+                 "（2026-09-14 文案要求先關掉）")]
         public bool showTitleCards = true;
+
+        [Header("通知")]
+        [Tooltip("事件結果裡要不要顯示「【深淵】的侵蝕度 +5%」這類提示。\n\n" +
+                 "**關掉只是不講，侵蝕度照樣會累積**，條件判斷也照常。\n" +
+                 "（2026-09-14 文案要求先不要顯示）")]
+        public bool showCorruptionNotices = false;
 
         [Serializable]
         public class NodeTitle
@@ -326,6 +334,9 @@ namespace EldritchMile.Core
         {
             IsTransitioning = true;
 
+            // ⚠️ 上一輪的東西要先全部清掉（2026-09-14 試玩回報「新一輪沿用舊的 HP／SAN／牌組」）
+            ResetRunLevelState();
+
             Run = RunContext.CreateNew(Meta);
             Run.AddMoney(startingMoney);
 
@@ -370,6 +381,34 @@ namespace EldritchMile.Core
             IsTransitioning = false;
 
             yield return OpenMapRoutine();
+        }
+
+        /// <summary>
+        /// 把「活得比一場 run 久」的東西歸零。**開新的一輪之前呼叫。**
+        ///
+        /// ────────────────────────────────────────────────────────
+        /// 【為什麼會漏】
+        ///   · `RunStateManager` 是 **DontDestroyOnLoad**，HP／SAN／牌組／戰鬥快照都存在它身上
+        ///   · 而 `PlayerVitals.EnsureInitialized` 的規則是「**已經有值就不覆蓋**」
+        ///     （為了讀檔續玩）—— 兩個加起來，新的一輪會直接沿用上一輪的血量與牌組
+        ///   · 下面幾個 static 與佇列欄位同理：Stage 會卸載，static 不會
+        ///
+        /// ⚠️ **遺產（Meta）不在這裡清** —— 那是刻意留給下一輪的（見 RunContext.CreateNew）。
+        /// </summary>
+        private void ResetRunLevelState()
+        {
+            if (RunStateManager.Instance != null)
+            {
+                RunStateManager.Instance.ClearAllRunData();
+                RunStateManager.Instance.ClearReservedEncounter();
+            }
+
+            PendingEvent = null;
+            stageAfterEvent = StageType.None;
+            stageAfterBattle = StageType.None;
+
+            BattleStageController.PendingEnemyId = null;
+            ProbabilityDialogueStageController.PendingDialogue = null;
         }
 
         private IEnumerator EnterNodeRoutine(RunNodeData node)

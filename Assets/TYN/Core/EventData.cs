@@ -154,6 +154,10 @@ namespace EldritchMile.Core
                     int actual = run.AddCorruption(key, amount);
                     if (actual == 0) return "";
 
+                    // 文案要求先不顯示侵蝕度的提示 —— 數值照加，只是不講（開關在 GameFlowManager）
+                    if (GameFlowManager.Instance != null && !GameFlowManager.Instance.showCorruptionNotices)
+                        return "";
+
                     // 已經 98% 時再 +5，玩家該看到的是 +2 —— 用實際變動量，不是傳入值
                     return $"【{CorruptionLabel(key)}】的侵蝕度 {actual:+#;-#;0}%";
                 }

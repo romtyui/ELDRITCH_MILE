@@ -508,6 +508,7 @@ namespace EldritchMile.Core
                 //    但 BFS 樹的葉子整圈鄰居都不比自己深 —— 那就是死路。
                 //    實測少了這一行有 1046 個死路節點
                 EnsureReachesGoal(nodes, layer, adj, maxHop);
+                CollapseToSingleBoss(nodes, layer, adj, maxHop, s, rng);
                 RemoveStrandedNodes(map, maxHop);
             }
             else
@@ -523,9 +524,92 @@ namespace EldritchMile.Core
 
                 PruneLinks(nodes, s.maxForwardLinks);
                 EnsureReachesGoal(nodes, layer, adj, maxHop);
+                CollapseToSingleBoss(nodes, layer, adj, maxHop, s, rng);
                 RemoveStrandedNodes(map, maxHop);
             }
             return map;
+        }
+
+        /// <summary>
+        /// 整張圖只留**一個** Boss，其他節點全部要走得到它。
+        ///
+        /// ────────────────────────────────────────────────────────
+        /// 【為什麼】BFS 最深那一層通常不只一個點（實測平均 2.4 個），以前全部都變成 Boss。
+        /// 每個節點都走得到「某一個」Boss，但玩家看到的是遠方那一個 Boss ——
+        /// 在岔路選了另一邊，最後到的是另一個 Boss，看起來就像「這條路到不了 Boss」
+        /// （2026-09-14 試玩回報）。而且每一個 Boss 都會結束這一場 run，終點不唯一。
+        ///
+        /// 【挑哪一個】目前走得到它的節點最多的那一個 —— 需要補邊、需要刪掉的最少。
+        /// 其他 Boss 降級成一般節點（重新擲種類），再補邊讓它們接到留下的 Boss。
+        /// 補不到的由接下來的 RemoveStrandedNodes 拿掉。
+        /// </summary>
+        private static void CollapseToSingleBoss(
+            List<RunNodeData> nodes, int[] layer, List<List<int>> adj, int maxHop,
+            MapGenerationSettings s, System.Random rng)
+        {
+            if (maxHop < 2) return;   // 太淺的圖降級後會又擲到 Boss，不處理
+
+            int n = nodes.Count;
+            var ids = new Dictionary<string, int>();
+            for (int i = 0; i < n; i++) ids[nodes[i].nodeId] = i;
+
+            // 反向鄰接：誰連到我
+            var incoming = new List<List<int>>();
+            for (int i = 0; i < n; i++) incoming.Add(new List<int>());
+            for (int i = 0; i < n; i++)
+                for (int k = 0; k < nodes[i].nextNodeIds.Count; k++)
+                {
+                    int j;
+                    if (ids.TryGetValue(nodes[i].nextNodeIds[k], out j)) incoming[j].Add(i);
+                }
+
+            int boss = -1, bestReach = -1;
+            for (int i = 0; i < n; i++)
+            {
+                if (nodes[i].kind != MapNodeKind.Boss) continue;
+                int reach = CountAncestors(incoming, i, n);
+                if (reach <= bestReach) continue;
+                bestReach = reach;
+                boss = i;
+            }
+            if (boss < 0) return;
+
+            var goal = new bool[n];
+            goal[boss] = true;
+
+            for (int i = 0; i < n; i++)
+            {
+                if (i == boss || nodes[i].kind != MapNodeKind.Boss) continue;
+
+                // layer 傳 maxHop - 1、layerCount 傳 maxHop + 1 → PickKind 不會再給 Boss
+                nodes[i].kind = PickKind(s, rng, maxHop - 1, maxHop + 1);
+            }
+
+            EnsureReachesGoal(nodes, layer, adj, goal);
+        }
+
+        /// <summary>沿著入邊往回走，有幾個節點走得到 from。</summary>
+        private static int CountAncestors(List<List<int>> incoming, int from, int n)
+        {
+            var seen = new bool[n];
+            var stack = new Stack<int>();
+            stack.Push(from);
+            seen[from] = true;
+            int count = 0;
+
+            while (stack.Count > 0)
+            {
+                int cur = stack.Pop();
+                for (int k = 0; k < incoming[cur].Count; k++)
+                {
+                    int p = incoming[cur][k];
+                    if (seen[p]) continue;
+                    seen[p] = true;
+                    count++;
+                    stack.Push(p);
+                }
+            }
+            return count;
         }
 
         /// <summary>
@@ -549,8 +633,9 @@ namespace EldritchMile.Core
                 int n = nodes.Count;
 
                 // 往前：走得到終點嗎
+                // 終點是 Boss，不是「最深那一層」—— 單一 Boss 之後最深層還有一般節點
                 var toGoal = new bool[n];
-                for (int i = 0; i < n; i++) if (nodes[i].layer == maxHop) toGoal[i] = true;
+                for (int i = 0; i < n; i++) if (nodes[i].kind == MapNodeKind.Boss) toGoal[i] = true;
 
                 bool changed = true;
                 while (changed)
@@ -621,10 +706,19 @@ namespace EldritchMile.Core
         private static void EnsureReachesGoal(
             List<RunNodeData> nodes, int[] layer, List<List<int>> adj, int maxHop)
         {
+            var goal = new bool[nodes.Count];
+            for (int i = 0; i < nodes.Count; i++) goal[i] = layer[i] == maxHop;
+            EnsureReachesGoal(nodes, layer, adj, goal);
+        }
+
+        /// <summary>同上，但終點由 goal 指定（單一 Boss 用這一支）。</summary>
+        private static void EnsureReachesGoal(
+            List<RunNodeData> nodes, int[] layer, List<List<int>> adj, bool[] goal)
+        {
             int n = nodes.Count;
             var reaches = new bool[n];
 
-            for (int i = 0; i < n; i++) if (layer[i] == maxHop) reaches[i] = true;
+            for (int i = 0; i < n; i++) if (goal[i]) reaches[i] = true;
 
             // 由深往淺傳播：只要有一個出邊通到「能到終點」的，自己就能到
             bool changed = true;
