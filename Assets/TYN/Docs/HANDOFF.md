@@ -2614,6 +2614,10 @@ ItemInventory ✔　RelicsInventory ✔
   文案沿用平面版 `MapView` 的六筆，已複製到 `MapView3D.nodeTooltipTexts`。
   去不了、走過的節點也會顯示說明（但只有可前往的會抬起來）。
 - ⚠️ **3D 版漏抄了 `SetSuppressed(false)`** —— 地圖第一次收起來之後說明框就永遠開不了。已補在 `OnOpened`。
+- ⚠️ **第一次 hover 沒有框、第二次才有**：`MapTooltipUI` 在場景裡是停用存檔的，
+  它的 `Awake` 會在第一次 `Show()` 呼叫 `SetActive(true)` 的**當下**才跑，
+  而 `Awake` 裡的「開場先藏起來」會立刻把框關回去。已用 `activatingForShow` 擋掉。
+  **任何「停用存檔、Awake 裡會把自己關掉」的 UI 都有這個坑。**
 - **走過的節點半透明**：`MapNode3D.visitedAlpha`（預設 0.4）。
 - **玩家棋子**：`MapView3D.playerSprite`（`地圖物件_玩家`）。沿著**跟連線同一條弧線**滑到下一站，移動時鏡頭追棋子。
   控制點由 `CurveControl` 統一算，連線與棋子不會分岔。

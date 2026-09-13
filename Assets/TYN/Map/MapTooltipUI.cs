@@ -97,16 +97,38 @@ namespace EldritchMile.Map
         /// </summary>
         private bool suppressed;
 
+        /// <summary>
+        /// 正在由 Show／ShowIdle 啟用自己。見 Awake 的說明。
+        /// </summary>
+        private bool activatingForShow;
+
         private void Awake()
         {
             if (panel == null) panel = transform as RectTransform;
 
-            Canvas canvas = GetComponentInParent<Canvas>();
+            // ⚠️ 要帶 includeInactive —— 第一次被 Show 啟用時，這一行跑在「剛啟用」的當下
+            Canvas canvas = GetComponentInParent<Canvas>(true);
             if (canvas != null) canvasRect = canvas.GetComponent<RectTransform>();
+
+            // ⚠️ **第一次 Show 的時候不能把自己關掉。**
+            //
+            // 這個物件在場景裡是**停用存檔**的，所以 Awake 不會在載入時跑，
+            // 而是在第一次 Show() 呼叫 SetActive(true) 的**當下同步執行** ——
+            // 下面那行 HideImmediate() 就會馬上把剛打開的框關回去。
+            // 症狀：第一次 hover 節點沒有框，第二次開始才正常（2026-09-14 實測）。
+            if (activatingForShow) return;
 
             // 固定面板要在一開始就把閒置文字擺好，否則玩家開地圖會先看到上一次的殘留內容
             if (keepFrameWhenIdle) ShowIdle();
             else HideImmediate();
+        }
+
+        /// <summary>啟用面板。會觸發 Awake 的話，讓它知道這是 Show 在開，不要自己關掉。</summary>
+        private void ActivatePanel()
+        {
+            activatingForShow = true;
+            try { panel.gameObject.SetActive(true); }
+            finally { activatingForShow = false; }
         }
 
         /// <summary>
@@ -137,7 +159,7 @@ namespace EldritchMile.Map
 
             SetTexts(title, body);
 
-            panel.gameObject.SetActive(true);
+            ActivatePanel();
 
             // 先讓 layout 算出真正的尺寸，再定位 —— 尺寸沒定下來就算位置會用到上一則的大小。
             // Fixed 模式雖然不定位，但若面板掛了 ContentSizeFitter 仍需要這一步。
@@ -165,7 +187,7 @@ namespace EldritchMile.Map
 
             SetTexts(idleTitle, idleBody);
 
-            panel.gameObject.SetActive(true);
+            ActivatePanel();
             if (canvasGroup != null) canvasGroup.alpha = 1f;
         }
 
