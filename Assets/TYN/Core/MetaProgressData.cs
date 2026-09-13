@@ -35,6 +35,14 @@ namespace EldritchMile.Core
         /// 已解鎖、之後每場 run 都能出現的卡牌 id。
         public List<string> unlockedCardIds = new List<string>();
 
+        [Header("遊玩紀錄摘要")]
+        /// <summary>
+        /// 每一場的精簡摘要（最多 RunRecorder.MaxSummaries 筆）。
+        /// 完整紀錄在 `persistentDataPath/RunHistory/` 的檔案裡；這一份是 WebGL 的保底 ——
+        /// 瀏覽器不保證檔案寫得進去，PlayerPrefs 則會保留。
+        /// </summary>
+        public List<RunSummary> runHistory = new List<RunSummary>();
+
         public bool HasLegacyItem(string id)
         {
             return !string.IsNullOrEmpty(id) && legacyItemIds.Contains(id);

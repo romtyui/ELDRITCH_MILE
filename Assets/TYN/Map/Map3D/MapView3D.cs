@@ -106,6 +106,11 @@ namespace EldritchMile.Map3D
         public string tooltipStateVisited = "<color=#8A8A8A>已經去過了。</color>";
         public string tooltipStateUnreachable = "<color=#8A8A8A>從這裡過不去。</color>";
 
+        [Header("開場縱覽")]
+        [Tooltip("每一場 run 第一次打開地圖時，先讓玩家看整張圖，再平滑移到起點。\n" +
+                 "時間長短在 MapCameraController 的「開場縱覽」那一組調")]
+        public bool playIntroOnNewMap = true;
+
         [Header("玩家棋子")]
         [Tooltip("玩家在地圖上的棋子。留空則不顯示")]
         public Sprite playerSprite;
@@ -146,8 +151,32 @@ namespace EldritchMile.Map3D
         {
             if (run == null || run.mapData == null) return;
 
-            if (boundMap != run.mapData) Build(run.mapData);
+            bool rebuilt = boundMap != run.mapData;
+            if (rebuilt) Build(run.mapData);
             SyncState();
+
+            // ⚠️ 在地圖滑下來**之前**就把縱覽擺好 —— 玩家看到的第一眼才是全圖。
+            //    停留時間等 OnOpened（滑完）才開始算，見 MapCameraController.PrepareIntro
+            if (rebuilt && playIntroOnNewMap && cameraController != null && spawned.Count > 0)
+                cameraController.PrepareIntro(NodeBounds(), playerRoot);
+        }
+
+        /// <summary>所有節點（含棋子）的世界範圍。縱覽要把它整個裝進畫面。</summary>
+        private Bounds NodeBounds()
+        {
+            bool first = true;
+            Bounds b = new Bounds();
+
+            foreach (KeyValuePair<string, MapNode3D> kv in spawned)
+            {
+                if (kv.Value == null) continue;
+                Vector3 p = kv.Value.transform.position;
+                if (first) { b = new Bounds(p, Vector3.zero); first = false; }
+                else b.Encapsulate(p);
+            }
+
+            if (playerRoot != null) b.Encapsulate(playerRoot.position);
+            return b;
         }
 
         protected override void OnClosing()
@@ -171,6 +200,10 @@ namespace EldritchMile.Map3D
         public override IEnumerator OnOpened()
         {
             if (nodeTooltip != null) nodeTooltip.SetSuppressed(false);
+
+            // 地圖滑完了才開始算縱覽的停留時間（沒準備過縱覽的話什麼都不會發生）
+            if (cameraController != null) cameraController.StartIntro();
+
             yield return base.OnOpened();
         }
 
@@ -544,8 +577,12 @@ namespace EldritchMile.Map3D
 
             // 鏡頭追隨目前所在的節點。開場還沒選過節點時 current 是 null，
             // 那時 followTarget 留空 —— 鏡頭會停在地圖中心，正好是「縱覽全局」
-            if (cameraController != null && !moving)
-                cameraController.followTarget = current != null ? current.transform : null;
+            // 還沒出發時追起點的棋子（2026-09-15：開地圖要帶玩家看到自己在哪）。
+            // 縱覽進行中不碰 —— 縱覽結束時它自己會把目標交過來
+            if (cameraController != null && !moving && !cameraController.IsPlayingIntro)
+                cameraController.followTarget = current != null
+                    ? current.transform
+                    : playerRoot;
 
             // 棋子歸位。移動中不碰 —— 那時位置由 MovePlayer 在寫
             if (playerRoot != null && !moving)

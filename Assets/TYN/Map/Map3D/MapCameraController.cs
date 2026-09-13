@@ -83,6 +83,27 @@ namespace EldritchMile.Map3D
         [Tooltip("滑鼠移動超過這麼多像素才算拖曳，否則算點擊。太小會誤判成拖曳而點不到節點")]
         public float dragThreshold = 6f;
 
+        [Header("開場縱覽（每一場 run 第一次打開地圖）")]
+        [Tooltip("地圖滑下來之後，停在「看得到整張圖」的距離多久（秒）。\n" +
+                 "玩家點一下或滾輪就提早開始移動")]
+        [Min(0f)] public float introHoldSeconds = 1.5f;
+
+        [Tooltip("從縱覽拉近到起點要多久（秒）")]
+        [Min(0.01f)] public float introMoveSeconds = 1.4f;
+
+        [Tooltip("縱覽時四周留多少空間。1 = 剛好貼齊邊緣，1.15 = 多留 15%")]
+        [Min(1f)] public float introFitMargin = 1.15f;
+
+        /// <summary>開場縱覽還在跑（含等待地圖滑下來那一段）</summary>
+        public bool IsPlayingIntro { get { return introPhase != IntroPhase.None; } }
+
+        private enum IntroPhase { None, Waiting, Hold, Move }
+        private IntroPhase introPhase = IntroPhase.None;
+        private float introT;
+        private float introFromDistance;
+        private Vector3 introFromOffset;
+        private Transform introTarget;
+
         /// <summary>這一次按下之後有沒有被判定成拖曳。MapView3D 靠它決定要不要吃點擊。</summary>
         public bool IsDragging { get; private set; }
 
@@ -179,9 +200,134 @@ namespace EldritchMile.Map3D
             resetT = 0f;
         }
 
+        // ==========================================
+        // 開場縱覽
+        // ==========================================
+
+        /// <summary>
+        /// 準備開場縱覽：把鏡頭擺到看得到整張圖的位置，**先不開始計時**。
+        ///
+        /// 【為什麼分成準備與開始兩步】地圖是滑下來的覆蓋層。在滑下來**之前**就擺好縱覽，
+        /// 玩家看到的第一眼就是全圖；等滑完（`StartIntro`）才開始算停留時間 ——
+        /// 不然停留時間有一大半花在滑動上，玩家根本沒看清楚。
+        /// </summary>
+        /// <param name="mapBounds">所有節點的世界範圍</param>
+        /// <param name="target">縱覽結束後要停在誰身上（起點的棋子）</param>
+        public void PrepareIntro(Bounds mapBounds, Transform target)
+        {
+            if (rig == null) rig = GetComponent<MapCameraRig>();
+
+            resetT = -1f;
+            panOffset = Vector3.zero;
+            sincePan = panReturnDelay;
+
+            Vector3 centre = rig.pivot != null ? rig.pivot.position : Vector3.zero;
+            Vector3 off = mapBounds.center - centre;
+            off.y = 0f;
+
+            followOffset = off;
+            followVel = Vector3.zero;
+
+            float fit = FitDistance(mapBounds);
+            rig.distanceMaxOverride = fit;
+            rig.yaw = homeYaw;
+            rig.pitch = homePitch;
+            rig.distance = fit;
+            rig.pivotOffset = followOffset;
+            rig.Apply();
+            PushSlider();
+
+            introTarget = target;
+            introPhase = IntroPhase.Waiting;
+            introT = 0f;
+        }
+
+        /// <summary>地圖滑完了，開始算停留時間。沒有準備過的話什麼都不做。</summary>
+        public void StartIntro()
+        {
+            if (introPhase != IntroPhase.Waiting) return;
+            introPhase = IntroPhase.Hold;
+            introT = 0f;
+        }
+
+        /// <summary>
+        /// 要多遠才裝得下整張圖。
+        ///
+        /// 地面是斜著看的：左右看的是整個寬，前後因為俯角被壓扁成 sin(pitch) 倍。
+        /// 兩個方向各算一次需要的距離，取大的那個。
+        /// </summary>
+        private float FitDistance(Bounds b)
+        {
+            float radius = new Vector2(b.extents.x, b.extents.z).magnitude;
+            float vHalf = rig.fieldOfView * 0.5f * Mathf.Deg2Rad;
+            float hHalf = Mathf.Atan(Mathf.Tan(vHalf) * Mathf.Max(0.1f, rig.Aspect));
+
+            float byHeight = radius * Mathf.Sin(rig.pitch * Mathf.Deg2Rad) / Mathf.Tan(vHalf);
+            float byWidth = radius / Mathf.Tan(hHalf);
+
+            return Mathf.Max(byHeight, byWidth, homeDistance) * introFitMargin;
+        }
+
+        /// <summary>
+        /// 縱覽的每一幀。停留 → 平滑拉近到起點 → 交還給一般的追隨。
+        ///
+        /// ⚠️ 期間**不吃拖曳與縮放**（會跟動畫搶鏡頭），但點一下／滾輪會跳過停留。
+        /// 點擊本身照常交給 MapView3D —— 看完全圖直接點起點是合理的。
+        /// </summary>
+        private void TickIntro(Mouse mouse)
+        {
+            if (introPhase == IntroPhase.Waiting) return;
+
+            bool input = mouse != null
+                && (mouse.leftButton.wasPressedThisFrame
+                    || mouse.rightButton.wasPressedThisFrame
+                    || mouse.middleButton.wasPressedThisFrame
+                    || Mathf.Abs(mouse.scroll.ReadValue().y) > 0.01f);
+
+            introT += Time.unscaledDeltaTime;
+
+            if (introPhase == IntroPhase.Hold)
+            {
+                if (introT < introHoldSeconds && !input) return;
+
+                introPhase = IntroPhase.Move;
+                introT = 0f;
+                introFromDistance = rig.distance;
+                introFromOffset = followOffset;
+                return;
+            }
+
+            float t = Mathf.Clamp01(introT / introMoveSeconds);
+            float e = Mathf.SmoothStep(0f, 1f, t);
+
+            Vector3 goal = introFromOffset;
+            if (introTarget != null)
+            {
+                Vector3 centre = rig.pivot != null ? rig.pivot.position : Vector3.zero;
+                goal = introTarget.position - centre;
+                goal.y = 0f;
+            }
+
+            rig.distance = Mathf.Lerp(introFromDistance, homeDistance, e);
+            followOffset = Vector3.Lerp(introFromOffset, goal, e);
+            rig.pivotOffset = followOffset;
+            rig.Apply();
+            PushSlider();
+
+            if (t < 1f) return;
+
+            // 交還：之後由 ComposeOffset 照常追隨起點的棋子
+            introPhase = IntroPhase.None;
+            rig.distanceMaxOverride = 0f;
+            followVel = Vector3.zero;
+            if (introTarget != null) followTarget = introTarget;
+        }
+
         private void Update()
         {
             if (rig == null) return;
+
+            if (introPhase != IntroPhase.None) { TickIntro(Mouse.current); return; }
 
             if (resetT >= 0f) { TickReset(); return; }
 
@@ -267,6 +413,7 @@ namespace EldritchMile.Map3D
         {
             if (rig == null) return;
             if (resetT >= 0f) return;    // 歸位動畫進行中，別跟它搶
+            if (introPhase != IntroPhase.None) return;   // 開場縱覽自己在寫鏡頭
 
             // ── 追隨 ──
             if (followCurrentNode && followTarget != null)

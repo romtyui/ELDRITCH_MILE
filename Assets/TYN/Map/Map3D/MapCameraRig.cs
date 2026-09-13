@@ -52,7 +52,26 @@ namespace EldritchMile.Map3D
         public Vector2 pitchLimit = new Vector2(25f, 70f);
         public Vector2 distanceLimit = new Vector2(8f, 30f);
 
+        /// <summary>
+        /// 暫時放寬「最遠距離」。0 = 不放寬。
+        ///
+        /// 【給誰用】開場縱覽全圖 —— 平常的上限是給玩家縮放用的，
+        /// 整張圖要拉得比那更遠才裝得下。縱覽結束會設回 0。
+        /// 不序列化：它只該活在那幾秒裡，存進場景的話上限就永遠失效了。
+        /// </summary>
+        [System.NonSerialized] public float distanceMaxOverride;
+
         private Camera cam;
+
+        /// <summary>這台相機的長寬比。縱覽時算「整張圖裝不裝得下」要用</summary>
+        public float Aspect
+        {
+            get
+            {
+                if (cam == null) cam = GetComponent<Camera>();
+                return cam != null ? cam.aspect : 16f / 9f;
+            }
+        }
 
         private void LateUpdate() { Apply(); }
         private void OnValidate() { Apply(); }
@@ -65,7 +84,7 @@ namespace EldritchMile.Map3D
 
             yaw = Mathf.Clamp(yaw, yawCenter - yawLimit, yawCenter + yawLimit);
             pitch = Mathf.Clamp(pitch, pitchLimit.x, pitchLimit.y);
-            distance = Mathf.Clamp(distance, distanceLimit.x, distanceLimit.y);
+            distance = Mathf.Clamp(distance, distanceLimit.x, Mathf.Max(distanceLimit.y, distanceMaxOverride));
 
             Vector3 centre = (pivot != null ? pivot.position : Vector3.zero) + pivotOffset;
 

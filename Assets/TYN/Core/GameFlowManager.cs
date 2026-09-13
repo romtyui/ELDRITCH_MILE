@@ -216,6 +216,12 @@ namespace EldritchMile.Core
                  "（2026-09-14 文案要求先關掉）")]
         public bool showTitleCards = true;
 
+        [Header("輪迴")]
+        [Tooltip("新的一輪要不要帶入遺產道具（MetaProgressData.legacyItemIds）。\n\n" +
+                 "**預設不帶** —— 目前體驗以單輪為主，遺物、道具、數值都不延續到下一輪。\n" +
+                 "遺產機制設計好之後再打開。統計與遊玩紀錄不受這一格影響，一律保留")]
+        public bool inheritLegacyItems = false;
+
         [Header("通知")]
         [Tooltip("事件結果裡要不要顯示「【深淵】的侵蝕度 +5%」這類提示。\n\n" +
                  "**關掉只是不講，侵蝕度照樣會累積**，條件判斷也照常。\n" +
@@ -337,7 +343,9 @@ namespace EldritchMile.Core
             // ⚠️ 上一輪的東西要先全部清掉（2026-09-14 試玩回報「新一輪沿用舊的 HP／SAN／牌組」）
             ResetRunLevelState();
 
-            Run = RunContext.CreateNew(Meta);
+            // 遺產道具預設**不繼承**（2026-09-15：遺物與道具不能帶到新一輪）。
+            // Meta 本身照樣保留 —— 統計與遊玩紀錄都在裡面
+            Run = RunContext.CreateNew(inheritLegacyItems ? Meta : null);
             Run.AddMoney(startingMoney);
 
             // HP／SAN 不存在 RunContext 裡 —— 它們歸 RunStateManager（戰鬥端）持有，
@@ -358,6 +366,9 @@ namespace EldritchMile.Core
             EncounterPlanner.AssignEnemies(
                 Run.mapData, encounterPool, Run,
                 new System.Random(Run.runSeed ^ 1), itemDatabase);
+
+            // 遊玩紀錄從這裡開始（地圖與敵人都排好了，種子與節點數才是最終的）
+            RunRecorder.BeginRun(Run, Meta);
 
             Debug.Log(
                 $"[Flow] 開始新的一場 run（seed {Run.runSeed}）：" +
@@ -430,6 +441,7 @@ namespace EldritchMile.Core
             // 前置，不覆蓋。玩家不會因為運氣好觸發了事件反而少玩到一間房。
             StageType nodeStage = StageTypeForNode(node);
             EventData ev = PickEventForNode();
+            RunRecorder.NodeEntered(Run, node, ev);
 
             string card;
 
@@ -555,6 +567,7 @@ namespace EldritchMile.Core
             IsTransitioning = true;
 
             Debug.Log($"[Flow] {currentStage} 完成：{result}");
+            RunRecorder.StageCompleted(Run, currentStage, result);
 
             // ── 事件播完 → 接回原本那個節點，而不是收工回地圖 ──
             if (currentStage == StageType.Event && stageAfterEvent != StageType.None)
@@ -616,6 +629,7 @@ namespace EldritchMile.Core
             if (result == StageResult.PlayerDied || result == StageResult.RunFinished)
             {
                 Run?.ContributeToMeta(Meta, result);
+                RunRecorder.EndRun(Run, Meta, result);
 
                 // ── 結局：打完 Boss 或中途死掉，都先演一段再回主選單 ──
                 //
