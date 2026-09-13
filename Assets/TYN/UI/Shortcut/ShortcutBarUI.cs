@@ -91,6 +91,12 @@ namespace EldritchMile.UI.Shortcut
         [Tooltip("在地圖畫面（或轉場中）點道具時的提示。留空則不提示")]
         public string mapBlockedMessage = "在地圖上不能使用道具";
 
+        [Tooltip("打牌中（寶箱、人物對話）點道具時的提示。留空則不提示")]
+        public string encounterBlockedMessage = "打牌時不能使用道具";
+
+        [Tooltip("對話節點中點道具時的提示。留空則不提示")]
+        public string dialogueBlockedMessage = "對話中不能使用道具";
+
         [Header("行為")]
         [Tooltip("勾選＝滑鼠移上去就展開；取消＝**點一下開、再點一下關**（美術稿方案 3 的兩種）。\n\n" +
                  "預設是點擊 —— hover 展開在這個位置很容易誤觸：\n" +
@@ -185,6 +191,8 @@ namespace EldritchMile.UI.Shortcut
             if (slots.Count == 0)
                 Debug.Log($"[快捷欄] {name}：身上沒有標籤「{filterTag}」的道具，展開會是空的");
 
+            RefreshTooltipAfterRebuild();
+
             refreshing = false;
             if (collapseAfter) SetExpanded(alwaysExpanded, true);
         }
@@ -264,7 +272,7 @@ namespace EldritchMile.UI.Shortcut
 
             if (!worse || string.IsNullOrEmpty(overflowMessage)) return;
 
-            PopupService.Instance?.ShowInstant(string.Format(overflowMessage, fixedSlots.Count));
+            Notify(string.Format(overflowMessage, fixedSlots.Count));
         }
 
         /// <summary>【生成】舊的做法：依道具數量生格子，交給 Layout Group 排。</summary>
@@ -513,7 +521,8 @@ namespace EldritchMile.UI.Shortcut
         // ==========================================
         private void HandleSlotHover(ShortcutSlotUI s)
         {
-            if (!s.IsHovered) { HideTooltip(); return; }
+            // 空格子（沒有道具）不顯示說明 —— 以前會跳出「（沒登記的道具）」
+            if (!s.IsHovered || s.Item == null) { HideTooltip(); return; }
 
             if (tooltipRoot == null) return;
             tooltipRoot.SetActive(true);
@@ -563,12 +572,11 @@ namespace EldritchMile.UI.Shortcut
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
             if (run == null) return;
 
-            // ── 地圖畫面上不能吃（2026-09-13 試玩回饋）──
-            // 轉場中一併擋掉：黑幕中途吃下去，結果會落在哪一邊（戰鬥單位或存檔值）說不準
-            if (IsOnMapOrTransitioning())
+            // ── 不能吃的時機：地圖、轉場、打牌、對話（2026-09-13／09-15 試玩回饋）──
+            string blocked = BlockedReason();
+            if (blocked != null)
             {
-                if (!string.IsNullOrEmpty(mapBlockedMessage))
-                    PopupService.Instance?.ShowInstant(mapBlockedMessage);
+                Notify(blocked);
                 return;
             }
 
@@ -585,7 +593,7 @@ namespace EldritchMile.UI.Shortcut
                 Debug.Log($"[快捷欄]「{d.Label}」現在用不起 —— " +
                           $"代價 HP -{d.hpCost}／SAN -{d.sanCost}，" +
                           $"目前 HP {PlayerVitals.Hp}、SAN {PlayerVitals.San}");
-                PopupService.Instance?.ShowInstant($"{d.Label}　現在承受不起");
+                Notify($"{d.Label}　現在承受不起");
                 return;
             }
 
@@ -681,7 +689,7 @@ namespace EldritchMile.UI.Shortcut
                       + (d.sanCost > 0 ? $"　SAN -{d.sanCost}" : "")
                       + $"　→ HP {hpNow}/{hpMax}　SAN {sanNow}/{sanMax}");
 
-            PopupService.Instance?.ShowInstant(UsedTextFor(d, dHp, dSan, hpNow, hpMax, sanNow, sanMax, ready));
+            Notify(UsedTextFor(d, dHp, dSan, hpNow, hpMax, sanNow, sanMax, ready));
 
             // 用完就重建 —— 數量要跟著變，用光了那一格要消失
             Refresh(false);
@@ -713,13 +721,59 @@ namespace EldritchMile.UI.Shortcut
             return bm != null ? bm.energySystem : null;
         }
 
-        /// <summary>地圖開著、或正在轉場。</summary>
-        private static bool IsOnMapOrTransitioning()
+        /// <summary>
+        /// 現在不能吃的話，回傳要跟玩家說的話（可能是空字串 = 不說）；可以吃回傳 null。
+        ///
+        ///   · 地圖／轉場：黑幕中途吃下去，結果會落在戰鬥單位還是存檔值說不準
+        ///   · 打牌中：對話框是 HoldOpen，吃的播報會跟打牌的文字搶同一個框
+        ///   · 對話節點：人物對話中不該能邊聊邊吃（2026-09-15）
+        /// </summary>
+        private string BlockedReason()
         {
             GameFlowManager g = GameFlowManager.Instance;
-            if (g == null) return false;
-            if (g.IsTransitioning) return true;
-            return g.mapOverlay != null && g.mapOverlay.IsOpen;
+            if (g != null && (g.IsTransitioning || (g.mapOverlay != null && g.mapOverlay.IsOpen)))
+                return mapBlockedMessage ?? "";
+
+            DialogueEncounterController enc = DialogueEncounterController.Instance;
+            if (enc != null && enc.IsActive) return encounterBlockedMessage ?? "";
+
+            if (Object.FindFirstObjectByType<DialogueStageController>() != null)
+                return dialogueBlockedMessage ?? "";
+
+            return null;
+        }
+
+        /// <summary>
+        /// 給玩家看的一句話。**走 Toast，不走對話框** ——
+        /// 對話框要點才會關，在地圖上它還在地圖底下看不到（見 ToastUI 的說明）。
+        /// 場上沒有 Toast 才退回對話框。
+        /// </summary>
+        private static void Notify(string message)
+        {
+            if (string.IsNullOrEmpty(message)) return;
+            if (!EldritchMile.UI.ToastUI.TryShow(message)) PopupService.Instance?.ShowInstant(message);
+        }
+
+        /// <summary>
+        /// 重建格子之後，重新決定說明框要不要留著。
+        ///
+        /// 【為什麼需要】（2026-09-15「吃完食物 tooltip 沒消失」）吃掉最後一個之後，
+        /// 那一格被換成空針筒或關掉 —— 滑鼠沒動，所以**不會有 OnPointerExit**，
+        /// 說明框就停在上一件道具的內容上。重建完主動看一次：
+        /// 滑鼠還停在一格有東西的上面就換成它的說明，否則收掉。
+        /// </summary>
+        private void RefreshTooltipAfterRebuild()
+        {
+            for (int i = 0; i < slots.Count; i++)
+            {
+                ShortcutSlotUI s = slots[i];
+                if (s != null && s.IsHovered && s.Item != null && s.gameObject.activeInHierarchy)
+                {
+                    HandleSlotHover(s);
+                    return;
+                }
+            }
+            HideTooltip();
         }
 
         /// <summary>

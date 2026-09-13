@@ -958,6 +958,7 @@ MonoBehaviour:
   roomRoot: {fileID: 7317945159859054323}
   roomLibrary: {fileID: 11400000, guid: e084caf92c615374b8e8565ba03b1c97, type: 2}
   exitTag: {fileID: 4453551890473637009}
+  clickOutsideEndsEncounter: 1
   continueAskPanel: {fileID: 3421436478176035620}
   askOnRoomCleared: 0
   explorationDeck: {fileID: 4677082942379712021}
@@ -1011,7 +1012,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1728290024676504876
 RectTransform:
   m_ObjectHideFlags: 0

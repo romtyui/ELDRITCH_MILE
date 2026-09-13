@@ -31,6 +31,9 @@ namespace EldritchMile.Explore
         [Tooltip("整個手牌區的開關對象（含結束按鈕等）。留空則使用自身")]
         public GameObject root;
 
+        [Tooltip("「結束打牌」那顆按鈕。探索改成點空白處離開之後會把它藏起來（見 DimmerClickEndsEncounter）")]
+        public GameObject endButton;
+
         [Header("排版")]
         [Tooltip("卡片間距")]
         public float cardSpacing = 140f;
@@ -138,6 +141,15 @@ namespace EldritchMile.Explore
         {
             Clear();
             if (root != null) root.SetActive(false);
+        }
+
+        /// <summary>
+        /// 顯示／隱藏「結束打牌」鍵。**每次打牌開始時由呼叫方決定** ——
+        /// 探索點空白處就能離開所以藏起來，對話節點的打牌還是用這顆。
+        /// </summary>
+        public void SetEndButtonVisible(bool visible)
+        {
+            if (endButton != null) endButton.SetActive(visible);
         }
 
         /// <summary>

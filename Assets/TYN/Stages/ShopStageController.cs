@@ -146,6 +146,14 @@ public class ShopStageController : StageController
 
         askToggle.Set(leaveAskPanel, false);
 
+        // 右下角共用的 EXIT（2026-09-15 改版：探索、商店、對話同一顆）。
+        // 有它就把 prefab 自己那顆關掉，沒有才退回舊的
+        if (EldritchMile.UI.SharedExitUI.Instance != null)
+        {
+            EldritchMile.UI.SharedExitUI.Instance.Show(AskLeave);
+            if (exitTab != null) exitTab.gameObject.SetActive(false);
+        }
+
         StockShelf();
     }
 
@@ -164,6 +172,7 @@ public class ShopStageController : StageController
         if (exitButton != null) exitButton.onClick.RemoveListener(AskLeave);
         if (confirmLeaveButton != null) confirmLeaveButton.onClick.RemoveListener(ConfirmLeave);
         if (cancelLeaveButton != null) cancelLeaveButton.onClick.RemoveListener(CancelLeave);
+        EldritchMile.UI.SharedExitUI.Instance?.Hide();
 
         askToggle.Set(leaveAskPanel, false);
 
@@ -335,6 +344,7 @@ public class ShopStageController : StageController
         // ⚠️ 面板會蓋在標籤上，蓋住之後標籤收不到 OnPointerExit，
         //    不主動收的話它會一直卡在伸出來的狀態
         exitTab?.SetShown(false);
+        EldritchMile.UI.SharedExitUI.Instance?.Retract();
 
         askToggle.Set(leaveAskPanel, true);
     }
@@ -356,6 +366,7 @@ public class ShopStageController : StageController
         leaving = true;
 
         if (exitButton != null) exitButton.interactable = false;
+        EldritchMile.UI.SharedExitUI.Instance?.Hide();   // 說再見的那一秒不該還點得到
 
         if (string.IsNullOrEmpty(farewellLine))
         {

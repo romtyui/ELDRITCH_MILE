@@ -33,6 +33,10 @@ namespace EldritchMile.Explore
                  "所以標籤本身只需要單擊，不必再做二次點擊")]
         public Button exitTag;
 
+        [Tooltip("和寶箱打牌時，點空白處（不是對象大圖、對話框、手牌）就結束打牌，並藏起「結束」鍵。\n" +
+                 "（2026-09-15）判定掛在對話框後面的壓黑層上，見 DimmerClickEndsEncounter")]
+        public bool clickOutsideEndsEncounter = true;
+
         [Tooltip("離開前的確認面板。\n" +
                  "若上面掛了 FadePanel 就會用淡入（與 MapBanner 外觀一致），否則直接 SetActive")]
         public GameObject continueAskPanel;
@@ -159,6 +163,12 @@ namespace EldritchMile.Explore
                 exitTag.onClick.AddListener(ShowContinueAsk);
             }
 
+            // 右下角共用的 EXIT（2026-09-15 改版）。有它就不用上方那顆書籤
+            if (EldritchMile.UI.SharedExitUI.Instance != null)
+            {
+                EldritchMile.UI.SharedExitUI.Instance.Show(ShowContinueAsk);
+                if (exitTag != null) exitTag.gameObject.SetActive(false);
+            }
         }
 
         public override IEnumerator OnStageReady()
@@ -173,6 +183,7 @@ namespace EldritchMile.Explore
         public override IEnumerator OnStageExit()
         {
             if (exitTag != null) exitTag.onClick.RemoveListener(ShowContinueAsk);
+            EldritchMile.UI.SharedExitUI.Instance?.Hide();
 
             if (room != null) room.OnRoomCleared -= HandleRoomCleared;
 
@@ -335,6 +346,9 @@ namespace EldritchMile.Explore
 
             continueAskShown = true;
             SetContinueAskVisible(true);
+
+            // 面板蓋上來之後標籤收不到 OnPointerExit，不收會卡在伸出來的狀態
+            EldritchMile.UI.SharedExitUI.Instance?.Retract();
         }
 
         /// <summary>
@@ -454,6 +468,9 @@ namespace EldritchMile.Explore
             // 先開手牌區再 Begin —— 手牌區在 Start 才訂閱事件，
             // 順序反了就會漏掉第一次的 OnHandChanged，卡片畫不出來。
             HandUI?.Show();
+
+            // 點空白處就能離開的話，「結束」鍵就多餘了
+            HandUI?.SetEndButtonVisible(!clickOutsideEndsEncounter);
 
             Encounter.OnEncounterEnded -= HandleEncounterEnded;
             Encounter.OnEncounterEnded += HandleEncounterEnded;
@@ -713,6 +730,9 @@ namespace EldritchMile.Explore
             }
 
             currentEncounterTarget = null;
+
+            // ⚠️ 還原「結束」鍵 —— 手牌區是場景常駐的，對話節點的打牌還要用它
+            HandUI?.SetEndButtonVisible(true);
             HandUI?.Hide();
 
             // 打牌期間壓下來的開箱結果，現在才播報
