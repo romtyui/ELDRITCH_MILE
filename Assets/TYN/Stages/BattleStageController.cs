@@ -183,6 +183,11 @@ public class BattleStageController : StageController
         // 相機沒綁好的話第一幀就會用錯的排序畫出來
         BindToHostScene();
 
+        // 怪物的狀態／意圖說明框會跑到右上角：說明框在 Overlay 畫布、怪物圖示在 Camera 畫布，
+        // 兩邊座標系不同（見 TooltipCanvasBridge 的說明）。這裡在我方補一層轉接
+        if (GetComponent<EldritchMile.UI.TooltipCanvasBridge>() == null)
+            gameObject.AddComponent<EldritchMile.UI.TooltipCanvasBridge>();
+
         // ⚠️ 訂閱要在 StartBattle 之前 —— 一場空的戰鬥（沒有敵人）
         //    有可能在同一幀就結束，晚訂就收不到了
         TutorialEventBus.OnSignalRaised -= HandleSignal;

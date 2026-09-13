@@ -37,6 +37,13 @@ namespace EldritchMile.Explore
                  "（2026-09-15）判定掛在對話框後面的壓黑層上，見 DimmerClickEndsEncounter")]
         public bool clickOutsideEndsEncounter = true;
 
+        [Tooltip("開箱成功後，再點一下對話框就結算（播出拿到什麼）並離開寶箱畫面。\n" +
+                 "（2026-09-15）跟事件、對話的「點對話框就離開」同一套")]
+        public bool settleByDialogueClick = true;
+
+        [Tooltip("開箱成功之後多久內的點擊不算數（秒）—— 成功那一刻隨手一點不會直接跳過結果")]
+        [Min(0f)] public float settleDismissGrace = 0.35f;
+
         [Tooltip("離開前的確認面板。\n" +
                  "若上面掛了 FadePanel 就會用淡入（與 MapBanner 外觀一致），否則直接 SetActive")]
         public GameObject continueAskPanel;
@@ -604,6 +611,17 @@ namespace EldritchMile.Explore
             pendingLootName = containerName;
             pendingLoot.Clear();
             if (items != null) pendingLoot.AddRange(items);
+
+            // ── 開箱成功 → 再點一下對話框就結算並離開寶箱畫面（2026-09-15）──
+            //
+            // 跟事件、對話的「點對話框就離開」同一套（PopupService.ArmDismiss）：
+            // 保護期內的誤觸不算、打字中的點擊只快轉；文字播完後的下一次點擊才結束打牌，
+            // HandleEncounterEnded 會接著播出拿到什麼。
+            //
+            // ⚠️ 只在**成功**這個時間點武裝。沒成功的話打牌還要繼續（蓄意失敗是合法策略），
+            //    點對話框只是推進文字，不能把整個環節結束掉。
+            if (settleByDialogueClick && Encounter != null && Encounter.IsActive && PopupService.Instance != null)
+                PopupService.Instance.ArmDismiss(settleDismissGrace, EndEncounter);
         }
 
         private void HandleTargetViewClicked(EncounterTargetView view)
@@ -701,6 +719,10 @@ namespace EldritchMile.Explore
         private void HandleEncounterEnded()
         {
             if (Encounter == null) return;
+
+            // 不管是點對話框、點空白處、EXIT 還是手牌用盡結束的，都把「點對話框就結算」的武裝解掉 ——
+            // 殘留的話，下一次打開對話框的第一下會被當成結算吃掉
+            PopupService.Instance?.CancelDismiss();
 
             Encounter.OnEncounterEnded -= HandleEncounterEnded;
 
