@@ -2699,3 +2699,52 @@ ItemInventory ✔　RelicsInventory ✔
 
 - 說明框改成商店／遺物同款（深色底 0.05／0.88、標題白 22、內文淺灰 17），寬 240、高度跟著文字。
 - 玩家棋子 = 一般節點的 75%（`MapView3D.playerHeightOfNode`，用倍率是為了節點改大小時跟著變）。
+
+## 遊玩紀錄、輪迴、地圖開場縱覽（2026-09-15）
+
+### 探索 HP／SAN 顯示關掉部分子物件是否安全
+
+安全。`VitalsHudUI` 只用 `血量`、`san條`、`HP_Root/HP`、`SanRoot/SAN` 四個，關掉的是
+`燈光`、`指針`、`按鈕`、`火`、`燈杖`，都沒有被參照。
+⚠️ 就算之後把那四個也關掉也不會報錯（對停用物件設值沒問題、參照是空的會跳過），只是不會顯示；
+**刪掉**的話參照會變成空的，一樣不會報錯但數值就不顯示了。
+
+### 遺物、道具不帶到新一輪
+
+- 本來就沒有帶：每一輪都 `new RunContext`，背包是新的；遺產清單 `legacyItemIds` 也從來沒有人寫入。
+- 為了之後做遺產機制時不會不小心打開，改成明確的開關 `GameFlowManager.inheritLegacyItems`（預設關）。
+- 實測：第一輪背包放生日蛋糕 ×2、血腥魚叉 ×1 → 開新一輪 → 背包空、HP 100、牌組 8 張。
+
+### 遊玩紀錄（RunRecorder）
+
+**每一場一個 JSON**：`persistentDataPath/RunHistory/run_日期_時間_種子.json`
+（Windows：`%USERPROFILE%/AppData/LocalLow/LightCat/ELDRITCH_MILE/RunHistory`）
+
+| 什麼時候寫 | 記什麼 |
+|---|---|
+| 開局 | 版本、平台、**地圖種子**、節點數、起始 HP／SAN／錢／背包／戰鬥牌組 |
+| 每進一站 | 節點 id、種類、層、敵人、插播的事件，與當下狀態 |
+| 每個環節結束 | 環節、結果（Completed／PlayerDied…），與結束後的狀態 |
+| 結束 | 結果：`PlayerDied`／`RunFinished`／`Abandoned_NewRun`（沒打完就開新局）／`Abandoned_Quit`（關遊戲） |
+
+- **有種子就能重現地圖**：丟回 `MapGenerator.Generate(settings, seed)`。
+- Meta（PlayerPrefs）另外留最多 200 筆**精簡摘要** —— WebGL 不保證檔案寫得進去，這一份是保底。
+- 格式規則：**只加欄位，不改名、不刪**，舊紀錄才讀得回來。寫檔失敗只會警告，不影響遊戲。
+- 戰鬥**中途**的 HP／SAN 不會即時進紀錄（讀的是回存值），但戰鬥結束那一筆是準的。
+
+實測：開局寫入檔案（種子、37 個節點、起始牌組 8 張）；開新局時上一場標成 `Abandoned_NewRun`、Meta 摘要 +1。
+
+### 地圖開場縱覽
+
+每一場**第一次**打開地圖：
+
+1. 地圖滑下來之前（黑幕中）就把鏡頭擺到看得到整張圖的距離 —— 玩家第一眼就是全圖
+2. 滑完之後停 `introHoldSeconds`（1.5 秒）
+3. 平滑拉近到起點的棋子（`introMoveSeconds` 1.4 秒），之後照常追隨
+4. 停留期間點一下或滾輪 → 直接開始拉近；期間不吃拖曳與縮放
+
+實測：距離 36（全圖）→ 停 1.5 秒 → 1.4 秒內拉到 26（平常的距離）並停在起點。
+
+- 距離自動算（依節點範圍、俯角、長寬比），超過縮放上限時會**暫時**放寬（`MapCameraRig.distanceMaxOverride`，不存檔）。
+- 還沒出發時鏡頭追的是起點的棋子，不再是地圖中心。
+- 開關：`MapView3D.playIntroOnNewMap`。
