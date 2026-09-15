@@ -185,6 +185,9 @@ public class BattleUnit : MonoBehaviour
 
     public virtual void TakeDamage(int amount, BattleUnit damageSource, bool ignoreBlock)
     {
+        if (amount <= 0)
+            return;
+
         int hpBefore = currentHp;
 
         int remaining = amount;
@@ -205,38 +208,66 @@ public class BattleUnit : MonoBehaviour
 
         OnHpChanged?.Invoke();
 
+        // =========================================================
+        // 真正扣到 HP 才觸發的效果
+        // =========================================================
+
         if (realHpDamage > 0)
         {
             ReduceRegenerationOnDamage();
             OnAfterHpDamageTaken(realHpDamage);
         }
 
-        if (realHpDamage > 0 && isPlayerUnit)
+        // =========================================================
+        // 只要受到攻擊就觸發玩家受擊震動
+        // 即使傷害全部被護盾擋住也一樣
+        // =========================================================
+
+        if (isPlayerUnit)
         {
             if (CameraShake.Instance != null)
                 CameraShake.Instance.Shake();
         }
+
+        // =========================================================
+        // 傷害數字仍然只顯示真正扣掉的 HP
+        // =========================================================
 
         if (realHpDamage > 0 && this is EnemyUnit enemy)
         {
             enemy.ShowDamagePopup(realHpDamage);
         }
 
-        Debug.Log($"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}");
+        Debug.Log(
+            $"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}"
+        );
 
-        if (realHpDamage > 0)
-            TryTriggerCounter(damageSource);
+        // =========================================================
+        // 反擊
+        // 只要受到攻擊就觸發，即使被護盾完全擋住
+        // =========================================================
+
+        TryTriggerCounter(damageSource);
 
         if (currentHp <= 0)
         {
             Die();
         }
-        else if (realHpDamage > 0)
+        else
         {
+            // =====================================================
+            // 受擊動畫
+            // 只要受到攻擊就播放
+            // 不要求一定扣到 HP
+            // =====================================================
+
             OnDamagedButAlive();
         }
 
-        Debug.Log($"[Damage] {unitName} take {amount}, ignoreBlock = {ignoreBlock}, realHpDamage = {realHpDamage}, HP = {currentHp}");
+        Debug.Log(
+            $"[Damage] {unitName} take {amount}, ignoreBlock = {ignoreBlock}, " +
+            $"realHpDamage = {realHpDamage}, HP = {currentHp}"
+        );
     }
 
 
