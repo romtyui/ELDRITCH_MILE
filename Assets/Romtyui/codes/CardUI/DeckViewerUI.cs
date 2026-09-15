@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -52,8 +53,21 @@ public class DeckViewerUI : MonoBehaviour
     [Tooltip("如果目前分類沒有牌，要顯示的物件。可不指定")]
     public GameObject emptyMessageRoot;
 
-    [Tooltip("只有超過一頁時才顯示上一頁 / 下一頁按鈕")]
+    [Tooltip("舊設定。目前 BookPaged 模式下翻頁按鈕會固定顯示，此欄位暫時保留")]
     public bool hidePageButtonsWhenSinglePage = true;
+
+    [Header("Page Button Visual")]
+    [Tooltip("上一頁按鈕圖片。沒指定時會自動使用 Button.image")]
+    public Image previousPageButtonImage;
+
+    [Tooltip("下一頁按鈕圖片。沒指定時會自動使用 Button.image")]
+    public Image nextPageButtonImage;
+
+    [Tooltip("有兩頁以上時的分頁按鈕顏色")]
+    public Color pageButtonActiveColor = Color.white;
+
+    [Tooltip("只有一頁或沒有牌時的分頁按鈕顏色")]
+    public Color pageButtonInactiveColor = new Color(0.35f, 0.35f, 0.35f, 1f);
 
     [Tooltip("切換分類時是否回到第一頁")]
     public bool resetPageWhenSwitchTab = true;
@@ -72,30 +86,57 @@ public class DeckViewerUI : MonoBehaviour
     public Button handButton;
     public Button closeButton;
 
+    [Header("Tab Button Animation")]
+    [Tooltip("目前選中的按鈕 Y 位移量。正數往上，負數往下")]
+    public float activeTabYOffset = 15f;
+
+    [Tooltip("頁籤按鈕移動動畫時間")]
+    public float tabMoveDuration = 0.15f;
+
+    [Tooltip("是否使用 Unscaled Time，建議開啟")]
+    public bool tabAnimationUseUnscaledTime = true;
+
+    private Vector2 drawPileButtonBasePosition;
+    private Vector2 discardPileButtonBasePosition;
+    private Vector2 exhaustPileButtonBasePosition;
+    private Vector2 handButtonBasePosition;
+
+    private Coroutine drawPileButtonMoveCoroutine;
+    private Coroutine discardPileButtonMoveCoroutine;
+    private Coroutine exhaustPileButtonMoveCoroutine;
+    private Coroutine handButtonMoveCoroutine;
+
     [Header("Button Text")]
+    [Tooltip("抽牌堆標籤名稱文字")]
     public TMP_Text drawPileButtonText;
+
+    [Tooltip("棄牌堆標籤名稱文字")]
     public TMP_Text discardPileButtonText;
+
+    [Tooltip("消耗區標籤名稱文字")]
     public TMP_Text exhaustPileButtonText;
+
+    [Tooltip("手牌區標籤名稱文字")]
     public TMP_Text handButtonText;
 
-    [Header("Button Image")]
-    public Image drawPileButtonImage;
-    public Image discardPileButtonImage;
-    public Image exhaustPileButtonImage;
-    public Image handButtonImage;
+    [Header("Button Count Text")]
+    [Tooltip("抽牌堆目前數量文字")]
+    public TMP_Text drawPileButtonCountText;
+
+    [Tooltip("棄牌堆目前數量文字")]
+    public TMP_Text discardPileButtonCountText;
+
+    [Tooltip("消耗區目前數量文字")]
+    public TMP_Text exhaustPileButtonCountText;
+
+    [Tooltip("手牌目前數量文字")]
+    public TMP_Text handButtonCountText;
 
     [Header("Tab Text Label")]
     public string drawPileLabel = "牌組區";
     public string discardPileLabel = "棄牌區";
     public string exhaustPileLabel = "消耗區";
     public string handLabel = "手牌區";
-
-    [Header("Tab Colors")]
-    public Color activeTabColor = Color.white;
-    public Color inactiveTabColor = new Color(0.45f, 0.45f, 0.45f, 1f);
-
-    public Color activeTextColor = Color.black;
-    public Color inactiveTextColor = new Color(0.18f, 0.18f, 0.18f, 1f);
 
     [Header("Card Size In Viewer")]
     public bool overrideCardSize = false;
@@ -122,6 +163,7 @@ public class DeckViewerUI : MonoBehaviour
     private void Awake()
     {
         AutoBindButtonRefs();
+        CacheTabButtonBasePositions();
 
         if (drawPileButton != null)
             drawPileButton.onClick.AddListener(OpenDrawPile);
@@ -153,43 +195,32 @@ public class DeckViewerUI : MonoBehaviour
         ClearBookSlots();
     }
 
-    private void AutoBindButtonRefs()
+    private void CacheTabButtonBasePositions()
     {
         if (drawPileButton != null)
-        {
-            if (drawPileButtonImage == null)
-                drawPileButtonImage = drawPileButton.image;
-
-            if (drawPileButtonText == null)
-                drawPileButtonText = drawPileButton.GetComponentInChildren<TMP_Text>(true);
-        }
+            drawPileButtonBasePosition =
+                ((RectTransform)drawPileButton.transform).anchoredPosition;
 
         if (discardPileButton != null)
-        {
-            if (discardPileButtonImage == null)
-                discardPileButtonImage = discardPileButton.image;
-
-            if (discardPileButtonText == null)
-                discardPileButtonText = discardPileButton.GetComponentInChildren<TMP_Text>(true);
-        }
+            discardPileButtonBasePosition =
+                ((RectTransform)discardPileButton.transform).anchoredPosition;
 
         if (exhaustPileButton != null)
-        {
-            if (exhaustPileButtonImage == null)
-                exhaustPileButtonImage = exhaustPileButton.image;
-
-            if (exhaustPileButtonText == null)
-                exhaustPileButtonText = exhaustPileButton.GetComponentInChildren<TMP_Text>(true);
-        }
+            exhaustPileButtonBasePosition =
+                ((RectTransform)exhaustPileButton.transform).anchoredPosition;
 
         if (handButton != null)
-        {
-            if (handButtonImage == null)
-                handButtonImage = handButton.image;
+            handButtonBasePosition =
+                ((RectTransform)handButton.transform).anchoredPosition;
+    }
 
-            if (handButtonText == null)
-                handButtonText = handButton.GetComponentInChildren<TMP_Text>(true);
-        }
+    private void AutoBindButtonRefs()
+    {
+        if (previousPageButton != null && previousPageButtonImage == null)
+            previousPageButtonImage = previousPageButton.image;
+
+        if (nextPageButton != null && nextPageButtonImage == null)
+            nextPageButtonImage = nextPageButton.image;
     }
 
     [ContextMenu("Test Open Draw Pile")]
@@ -337,7 +368,9 @@ public class DeckViewerUI : MonoBehaviour
         totalPageCount = Mathf.Max(1, CalculatePageCount(cards));
         currentPageIndex = Mathf.Clamp(currentPageIndex, 0, totalPageCount - 1);
 
-        Debug.Log($"[DeckViewerUI] Refresh {currentMode}, count = {cards.Count}, mode = {displayMode}");
+        Debug.Log(
+            $"[DeckViewerUI] Refresh {currentMode}, count = {cards.Count}, mode = {displayMode}"
+        );
 
         switch (displayMode)
         {
@@ -431,7 +464,9 @@ public class DeckViewerUI : MonoBehaviour
 
             SetupViewerCard(slot, cards[cardIndex]);
 
-            Debug.Log($"[DeckViewerUI] 書本頁 Slot {i} 顯示：{cards[cardIndex].data.cardName}");
+            Debug.Log(
+                $"[DeckViewerUI] 書本頁 Slot {i} 顯示：{cards[cardIndex].data.cardName}"
+            );
         }
 
         if (emptyMessageRoot != null)
@@ -490,21 +525,32 @@ public class DeckViewerUI : MonoBehaviour
     private void RefreshPageUI(IReadOnlyList<CardInstance> cards)
     {
         int pageCount = CalculatePageCount(cards);
+
         bool hasMultiplePages = pageCount > 1;
+        bool isBookPaged = displayMode == DeckViewerDisplayMode.BookPaged;
 
-        bool showPageButtons =
-            displayMode == DeckViewerDisplayMode.BookPaged &&
-            (!hidePageButtonsWhenSinglePage || hasMultiplePages);
-
+        // BookPaged 模式下翻頁按鈕永遠顯示。
         if (previousPageButton != null)
-            previousPageButton.gameObject.SetActive(showPageButtons);
+            previousPageButton.gameObject.SetActive(isBookPaged);
 
         if (nextPageButton != null)
-            nextPageButton.gameObject.SetActive(showPageButtons);
+            nextPageButton.gameObject.SetActive(isBookPaged);
+
+        // 沒有第二頁以上時，不隱藏按鈕，只改成較暗的顏色。
+        Color pageButtonColor =
+            hasMultiplePages
+                ? pageButtonActiveColor
+                : pageButtonInactiveColor;
+
+        if (previousPageButtonImage != null)
+            previousPageButtonImage.color = pageButtonColor;
+
+        if (nextPageButtonImage != null)
+            nextPageButtonImage.color = pageButtonColor;
 
         if (pageText != null)
         {
-            if (displayMode == DeckViewerDisplayMode.BookPaged && cards != null && cards.Count > 0)
+            if (isBookPaged && cards != null && cards.Count > 0)
                 pageText.text = $"{currentPageIndex + 1} / {Mathf.Max(1, pageCount)}";
             else
                 pageText.text = "";
@@ -528,52 +574,224 @@ public class DeckViewerUI : MonoBehaviour
         int exhaustCount = GetPileCount(DeckViewMode.ExhaustPile);
         int handCount = GetPileCount(DeckViewMode.Hand);
 
+        // =====================================================
+        // 標籤名稱
+        // =====================================================
+
         if (drawPileButtonText != null)
-            drawPileButtonText.text = $"{drawPileLabel} ({drawCount})";
+            drawPileButtonText.text = drawPileLabel;
 
         if (discardPileButtonText != null)
-            discardPileButtonText.text = $"{discardPileLabel} ({discardCount})";
+            discardPileButtonText.text = discardPileLabel;
 
         if (exhaustPileButtonText != null)
-            exhaustPileButtonText.text = $"{exhaustPileLabel} ({exhaustCount})";
+            exhaustPileButtonText.text = exhaustPileLabel;
 
         if (handButtonText != null)
-            handButtonText.text = $"{handLabel} ({handCount})";
+            handButtonText.text = handLabel;
+
+        // =====================================================
+        // 標籤目前數量
+        // =====================================================
+
+        if (drawPileButtonCountText != null)
+            drawPileButtonCountText.text = drawCount.ToString();
+
+        if (discardPileButtonCountText != null)
+            discardPileButtonCountText.text = discardCount.ToString();
+
+        if (exhaustPileButtonCountText != null)
+            exhaustPileButtonCountText.text = exhaustCount.ToString();
+
+        if (handButtonCountText != null)
+            handButtonCountText.text = handCount.ToString();
+
+        // =====================================================
+        // 標籤只控制 Y 位移動畫。
+        // 不修改 Image / Name Text / Count Text 顏色。
+        // =====================================================
 
         SetTabVisual(
             DeckViewMode.DrawPile,
-            drawPileButtonImage,
-            drawPileButtonText
+            drawPileButton
         );
 
         SetTabVisual(
             DeckViewMode.DiscardPile,
-            discardPileButtonImage,
-            discardPileButtonText
+            discardPileButton
         );
 
         SetTabVisual(
             DeckViewMode.ExhaustPile,
-            exhaustPileButtonImage,
-            exhaustPileButtonText
+            exhaustPileButton
         );
 
         SetTabVisual(
             DeckViewMode.Hand,
-            handButtonImage,
-            handButtonText
+            handButton
         );
     }
 
-    private void SetTabVisual(DeckViewMode mode, Image buttonImage, TMP_Text buttonText)
+    private void SetTabVisual(
+        DeckViewMode mode,
+        Button button
+    )
     {
         bool isActive = currentMode == mode;
 
-        if (buttonImage != null)
-            buttonImage.color = isActive ? activeTabColor : inactiveTabColor;
+        AnimateTabButton(
+            mode,
+            button,
+            isActive
+        );
+    }
 
-        if (buttonText != null)
-            buttonText.color = isActive ? activeTextColor : inactiveTextColor;
+    private void AnimateTabButton(
+        DeckViewMode mode,
+        Button button,
+        bool isActive
+    )
+    {
+        if (button == null)
+            return;
+
+        RectTransform rect = button.transform as RectTransform;
+
+        if (rect == null)
+            return;
+
+        Vector2 basePosition = GetTabButtonBasePosition(mode);
+
+        Vector2 targetPosition = basePosition;
+
+        if (isActive)
+            targetPosition.y += activeTabYOffset;
+
+        Coroutine currentCoroutine = GetTabMoveCoroutine(mode);
+
+        if (currentCoroutine != null)
+            StopCoroutine(currentCoroutine);
+
+        Coroutine newCoroutine = StartCoroutine(
+            AnimateTabButtonRoutine(
+                rect,
+                targetPosition,
+                tabMoveDuration
+            )
+        );
+
+        SetTabMoveCoroutine(mode, newCoroutine);
+    }
+
+    private IEnumerator AnimateTabButtonRoutine(
+        RectTransform rect,
+        Vector2 targetPosition,
+        float duration
+    )
+    {
+        if (rect == null)
+            yield break;
+
+        Vector2 startPosition = rect.anchoredPosition;
+
+        if (duration <= 0f)
+        {
+            rect.anchoredPosition = targetPosition;
+            yield break;
+        }
+
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            float deltaTime =
+                tabAnimationUseUnscaledTime
+                    ? Time.unscaledDeltaTime
+                    : Time.deltaTime;
+
+            elapsed += deltaTime;
+
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            t = Mathf.SmoothStep(0f, 1f, t);
+
+            rect.anchoredPosition = Vector2.Lerp(
+                startPosition,
+                targetPosition,
+                t
+            );
+
+            yield return null;
+        }
+
+        rect.anchoredPosition = targetPosition;
+    }
+
+    private Vector2 GetTabButtonBasePosition(DeckViewMode mode)
+    {
+        switch (mode)
+        {
+            case DeckViewMode.DrawPile:
+                return drawPileButtonBasePosition;
+
+            case DeckViewMode.DiscardPile:
+                return discardPileButtonBasePosition;
+
+            case DeckViewMode.ExhaustPile:
+                return exhaustPileButtonBasePosition;
+
+            case DeckViewMode.Hand:
+                return handButtonBasePosition;
+
+            default:
+                return Vector2.zero;
+        }
+    }
+
+    private Coroutine GetTabMoveCoroutine(DeckViewMode mode)
+    {
+        switch (mode)
+        {
+            case DeckViewMode.DrawPile:
+                return drawPileButtonMoveCoroutine;
+
+            case DeckViewMode.DiscardPile:
+                return discardPileButtonMoveCoroutine;
+
+            case DeckViewMode.ExhaustPile:
+                return exhaustPileButtonMoveCoroutine;
+
+            case DeckViewMode.Hand:
+                return handButtonMoveCoroutine;
+
+            default:
+                return null;
+        }
+    }
+
+    private void SetTabMoveCoroutine(
+        DeckViewMode mode,
+        Coroutine coroutine
+    )
+    {
+        switch (mode)
+        {
+            case DeckViewMode.DrawPile:
+                drawPileButtonMoveCoroutine = coroutine;
+                break;
+
+            case DeckViewMode.DiscardPile:
+                discardPileButtonMoveCoroutine = coroutine;
+                break;
+
+            case DeckViewMode.ExhaustPile:
+                exhaustPileButtonMoveCoroutine = coroutine;
+                break;
+
+            case DeckViewMode.Hand:
+                handButtonMoveCoroutine = coroutine;
+                break;
+        }
     }
 
     private int GetPileCount(DeckViewMode mode)

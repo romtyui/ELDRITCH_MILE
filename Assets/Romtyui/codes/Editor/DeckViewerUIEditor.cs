@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEngine;
 
 [CustomEditor(typeof(DeckViewerUI))]
 public class DeckViewerUIEditor : Editor
@@ -39,6 +40,15 @@ public class DeckViewerUIEditor : Editor
     private SerializedProperty resetPageWhenSwitchTab;
 
     // =========================================================
+    // Page Button Visual
+    // =========================================================
+
+    private SerializedProperty previousPageButtonImage;
+    private SerializedProperty nextPageButtonImage;
+    private SerializedProperty pageButtonActiveColor;
+    private SerializedProperty pageButtonInactiveColor;
+
+    // =========================================================
     // Center Title
     // =========================================================
 
@@ -57,6 +67,14 @@ public class DeckViewerUIEditor : Editor
     private SerializedProperty closeButton;
 
     // =========================================================
+    // Tab Button Animation
+    // =========================================================
+
+    private SerializedProperty activeTabYOffset;
+    private SerializedProperty tabMoveDuration;
+    private SerializedProperty tabAnimationUseUnscaledTime;
+
+    // =========================================================
     // Button Text
     // =========================================================
 
@@ -66,13 +84,13 @@ public class DeckViewerUIEditor : Editor
     private SerializedProperty handButtonText;
 
     // =========================================================
-    // Button Image
+    // Button Count Text
     // =========================================================
 
-    private SerializedProperty drawPileButtonImage;
-    private SerializedProperty discardPileButtonImage;
-    private SerializedProperty exhaustPileButtonImage;
-    private SerializedProperty handButtonImage;
+    private SerializedProperty drawPileButtonCountText;
+    private SerializedProperty discardPileButtonCountText;
+    private SerializedProperty exhaustPileButtonCountText;
+    private SerializedProperty handButtonCountText;
 
     // =========================================================
     // Tab Text Label
@@ -82,15 +100,6 @@ public class DeckViewerUIEditor : Editor
     private SerializedProperty discardPileLabel;
     private SerializedProperty exhaustPileLabel;
     private SerializedProperty handLabel;
-
-    // =========================================================
-    // Tab Colors
-    // =========================================================
-
-    private SerializedProperty activeTabColor;
-    private SerializedProperty inactiveTabColor;
-    private SerializedProperty activeTextColor;
-    private SerializedProperty inactiveTextColor;
 
     // =========================================================
     // Card Size In Viewer
@@ -153,6 +162,15 @@ public class DeckViewerUIEditor : Editor
         resetPageWhenSwitchTab = serializedObject.FindProperty("resetPageWhenSwitchTab");
 
         // =====================================================
+        // Page Button Visual
+        // =====================================================
+
+        previousPageButtonImage = serializedObject.FindProperty("previousPageButtonImage");
+        nextPageButtonImage = serializedObject.FindProperty("nextPageButtonImage");
+        pageButtonActiveColor = serializedObject.FindProperty("pageButtonActiveColor");
+        pageButtonInactiveColor = serializedObject.FindProperty("pageButtonInactiveColor");
+
+        // =====================================================
         // Center Title
         // =====================================================
 
@@ -171,6 +189,14 @@ public class DeckViewerUIEditor : Editor
         closeButton = serializedObject.FindProperty("closeButton");
 
         // =====================================================
+        // Tab Button Animation
+        // =====================================================
+
+        activeTabYOffset = serializedObject.FindProperty("activeTabYOffset");
+        tabMoveDuration = serializedObject.FindProperty("tabMoveDuration");
+        tabAnimationUseUnscaledTime = serializedObject.FindProperty("tabAnimationUseUnscaledTime");
+
+        // =====================================================
         // Button Text
         // =====================================================
 
@@ -180,13 +206,16 @@ public class DeckViewerUIEditor : Editor
         handButtonText = serializedObject.FindProperty("handButtonText");
 
         // =====================================================
-        // Button Image
+        // Button Count Text
         // =====================================================
 
-        drawPileButtonImage = serializedObject.FindProperty("drawPileButtonImage");
-        discardPileButtonImage = serializedObject.FindProperty("discardPileButtonImage");
-        exhaustPileButtonImage = serializedObject.FindProperty("exhaustPileButtonImage");
-        handButtonImage = serializedObject.FindProperty("handButtonImage");
+        drawPileButtonCountText = serializedObject.FindProperty("drawPileButtonCountText");
+        discardPileButtonCountText = serializedObject.FindProperty("discardPileButtonCountText");
+        exhaustPileButtonCountText = serializedObject.FindProperty("exhaustPileButtonCountText");
+        handButtonCountText = serializedObject.FindProperty("handPileButtonCountText");
+
+        if (handButtonCountText == null)
+            handButtonCountText = serializedObject.FindProperty("handButtonCountText");
 
         // =====================================================
         // Tab Text Label
@@ -196,15 +225,6 @@ public class DeckViewerUIEditor : Editor
         discardPileLabel = serializedObject.FindProperty("discardPileLabel");
         exhaustPileLabel = serializedObject.FindProperty("exhaustPileLabel");
         handLabel = serializedObject.FindProperty("handLabel");
-
-        // =====================================================
-        // Tab Colors
-        // =====================================================
-
-        activeTabColor = serializedObject.FindProperty("activeTabColor");
-        inactiveTabColor = serializedObject.FindProperty("inactiveTabColor");
-        activeTextColor = serializedObject.FindProperty("activeTextColor");
-        inactiveTextColor = serializedObject.FindProperty("inactiveTextColor");
 
         // =====================================================
         // Card Size In Viewer
@@ -236,14 +256,14 @@ public class DeckViewerUIEditor : Editor
 
         DrawSectionTitle("Refs");
 
-        EditorGUILayout.PropertyField(battleDeck);
-        EditorGUILayout.PropertyField(panelRoot);
+        DrawProperty(battleDeck);
+        DrawProperty(panelRoot);
 
         EditorGUILayout.Space(8f);
 
         DrawSectionTitle("Display Mode");
 
-        EditorGUILayout.PropertyField(displayMode);
+        DrawProperty(displayMode);
 
         DeckViewerDisplayMode currentDisplayMode =
             (DeckViewerDisplayMode)displayMode.enumValueIndex;
@@ -292,42 +312,51 @@ public class DeckViewerUIEditor : Editor
     {
         DrawSectionTitle("Classic Drag Scroll Mode");
 
-        EditorGUILayout.PropertyField(classicRoot);
-        EditorGUILayout.PropertyField(contentRoot);
-        EditorGUILayout.PropertyField(cardPrefab);
+        DrawProperty(classicRoot);
+        DrawProperty(contentRoot);
+        DrawProperty(cardPrefab);
     }
 
     private void DrawBookPagedSettings()
     {
         DrawSectionTitle("Book Paged Mode");
 
-        EditorGUILayout.PropertyField(bookRoot);
-        EditorGUILayout.PropertyField(cardsPerPage);
-        EditorGUILayout.PropertyField(bookCardSlots, true);
+        DrawProperty(bookRoot);
+        DrawProperty(cardsPerPage);
+        DrawProperty(bookCardSlots, true);
 
         EditorGUILayout.Space(4f);
 
-        EditorGUILayout.PropertyField(previousPageButton);
-        EditorGUILayout.PropertyField(nextPageButton);
-        EditorGUILayout.PropertyField(pageText);
-        EditorGUILayout.PropertyField(emptyMessageRoot);
+        DrawProperty(previousPageButton);
+        DrawProperty(nextPageButton);
+        DrawProperty(pageText);
+        DrawProperty(emptyMessageRoot);
 
         EditorGUILayout.Space(4f);
 
-        EditorGUILayout.PropertyField(hidePageButtonsWhenSinglePage);
-        EditorGUILayout.PropertyField(resetPageWhenSwitchTab);
+        DrawProperty(hidePageButtonsWhenSinglePage);
+        DrawProperty(resetPageWhenSwitchTab);
+
+        EditorGUILayout.Space(8f);
+
+        DrawSectionTitle("Page Button Visual");
+
+        DrawProperty(previousPageButtonImage);
+        DrawProperty(nextPageButtonImage);
+        DrawProperty(pageButtonActiveColor);
+        DrawProperty(pageButtonInactiveColor);
     }
 
     private void DrawCenterTitleSettings()
     {
         DrawSectionTitle("Center Title");
 
-        EditorGUILayout.PropertyField(showCenterTitle);
+        DrawProperty(showCenterTitle);
 
-        if (showCenterTitle.boolValue)
+        if (showCenterTitle != null && showCenterTitle.boolValue)
         {
-            EditorGUILayout.PropertyField(titleText);
-            EditorGUILayout.PropertyField(countText);
+            DrawProperty(titleText);
+            DrawProperty(countText);
         }
     }
 
@@ -335,71 +364,70 @@ public class DeckViewerUIEditor : Editor
     {
         DrawSectionTitle("Buttons");
 
-        EditorGUILayout.PropertyField(drawPileButton);
-        EditorGUILayout.PropertyField(discardPileButton);
-        EditorGUILayout.PropertyField(exhaustPileButton);
-        EditorGUILayout.PropertyField(handButton);
-        EditorGUILayout.PropertyField(closeButton);
+        DrawProperty(drawPileButton);
+        DrawProperty(discardPileButton);
+        DrawProperty(exhaustPileButton);
+        DrawProperty(handButton);
+        DrawProperty(closeButton);
 
-        EditorGUILayout.Space(4f);
+        EditorGUILayout.Space(8f);
 
         DrawSectionTitle("Button Text");
 
-        EditorGUILayout.PropertyField(drawPileButtonText);
-        EditorGUILayout.PropertyField(discardPileButtonText);
-        EditorGUILayout.PropertyField(exhaustPileButtonText);
-        EditorGUILayout.PropertyField(handButtonText);
+        DrawProperty(drawPileButtonText);
+        DrawProperty(discardPileButtonText);
+        DrawProperty(exhaustPileButtonText);
+        DrawProperty(handButtonText);
 
-        EditorGUILayout.Space(4f);
+        EditorGUILayout.Space(8f);
 
-        DrawSectionTitle("Button Image");
+        DrawSectionTitle("Button Count Text");
 
-        EditorGUILayout.PropertyField(drawPileButtonImage);
-        EditorGUILayout.PropertyField(discardPileButtonImage);
-        EditorGUILayout.PropertyField(exhaustPileButtonImage);
-        EditorGUILayout.PropertyField(handButtonImage);
+        DrawProperty(drawPileButtonCountText);
+        DrawProperty(discardPileButtonCountText);
+        DrawProperty(exhaustPileButtonCountText);
+        DrawProperty(handButtonCountText);
+
+        EditorGUILayout.Space(8f);
+
+        DrawSectionTitle("Tab Button Animation");
+
+        DrawProperty(activeTabYOffset);
+        DrawProperty(tabMoveDuration);
+        DrawProperty(tabAnimationUseUnscaledTime);
     }
 
     private void DrawTabSettings()
     {
         DrawSectionTitle("Tab Text Label");
 
-        EditorGUILayout.PropertyField(drawPileLabel);
-        EditorGUILayout.PropertyField(discardPileLabel);
-        EditorGUILayout.PropertyField(exhaustPileLabel);
-        EditorGUILayout.PropertyField(handLabel);
-
-        EditorGUILayout.Space(4f);
-
-        DrawSectionTitle("Tab Colors");
-
-        EditorGUILayout.PropertyField(activeTabColor);
-        EditorGUILayout.PropertyField(inactiveTabColor);
-        EditorGUILayout.PropertyField(activeTextColor);
-        EditorGUILayout.PropertyField(inactiveTextColor);
+        DrawProperty(drawPileLabel);
+        DrawProperty(discardPileLabel);
+        DrawProperty(exhaustPileLabel);
+        DrawProperty(handLabel);
     }
 
     private void DrawCardSizeSettings()
     {
         DrawSectionTitle("Card Size In Viewer");
 
-        EditorGUILayout.PropertyField(overrideCardSize);
+        DrawProperty(overrideCardSize);
 
-        if (overrideCardSize.boolValue)
+        if (overrideCardSize != null && overrideCardSize.boolValue)
         {
-            EditorGUILayout.PropertyField(viewerCardSize);
+            DrawProperty(viewerCardSize);
         }
 
-        EditorGUILayout.PropertyField(viewerCardScale);
+        DrawProperty(viewerCardScale);
     }
 
     private void DrawViewerInteractionSettings()
     {
         DrawSectionTitle("Viewer Interaction");
 
-        EditorGUILayout.PropertyField(disableDragInViewer);
-        EditorGUILayout.PropertyField(disableHoverInViewer);
-        EditorGUILayout.PropertyField(viewerCardTooltipSide);
+        DrawProperty(disableDragInViewer);
+        DrawProperty(disableHoverInViewer);
+        DrawProperty(viewerCardTooltipSide);
     }
 
     private void DrawRuntimeDebug()
@@ -408,9 +436,23 @@ public class DeckViewerUIEditor : Editor
 
         using (new EditorGUI.DisabledScope(true))
         {
-            EditorGUILayout.PropertyField(currentPageIndex);
-            EditorGUILayout.PropertyField(totalPageCount);
+            DrawProperty(currentPageIndex);
+            DrawProperty(totalPageCount);
         }
+    }
+
+    private void DrawProperty(
+        SerializedProperty property,
+        bool includeChildren = false
+    )
+    {
+        if (property == null)
+            return;
+
+        EditorGUILayout.PropertyField(
+            property,
+            includeChildren
+        );
     }
 
     private void DrawSectionTitle(string title)
