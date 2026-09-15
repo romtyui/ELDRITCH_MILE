@@ -9007,7 +9007,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -392.1}
+  m_AnchoredPosition: {x: 0, y: -400}
   m_SizeDelta: {x: 87, y: 25.272}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &409322872
@@ -18153,10 +18153,10 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1578066575}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
+      - m_Target: {fileID: 1578066580}
+        m_TargetAssemblyTypeName: DeckViewerUI, Assembly-CSharp
+        m_MethodName: OpenDrawPile
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -19819,7 +19819,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 885652280}
-  m_LocalRotation: {x: -0, y: -0, z: 0.21132481, w: 0.9774159}
+  m_LocalRotation: {x: -0, y: -0, z: 0.34447905, w: 0.938794}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -19828,7 +19828,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -421.53, y: -25.565193}
+  m_AnchoredPosition: {x: -445.9, y: 11.5}
   m_SizeDelta: {x: 87.418, y: 42.8975}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &885652282
@@ -22169,8 +22169,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -105.361725, y: 108.950195}
-  m_SizeDelta: {x: 60.7237, y: 89.5418}
+  m_AnchoredPosition: {x: -105.361725, y: 103.9086}
+  m_SizeDelta: {x: 60.7237, y: 99.625}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &981408695
 MonoBehaviour:
@@ -22192,7 +22192,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 112260113, guid: 7beb7209e0be3b84da9e64512768de83, type: 3}
+  m_Sprite: {fileID: -411483594, guid: d7a5946ee4f30de4a809017ba311ef5c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -23787,7 +23787,7 @@ MonoBehaviour:
   damagePopupRoot: {fileID: 1595762586}
   damagePopupAnchor: {fileID: 1595762586}
   damagePopupOffset: {x: 0, y: 120}
-  damagePopupRandomRange: {x: 40, y: 20}
+  damagePopupRandomRange: {x: 200, y: 40}
   blockRoot: {fileID: 1285507560}
   blockImage: {fileID: 1696468601}
   blockText: {fileID: 232491991}
@@ -36189,7 +36189,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1578066576
 RectTransform:
   m_ObjectHideFlags: 0
@@ -36298,7 +36298,7 @@ MonoBehaviour:
   exhaustPileButton: {fileID: 0}
   handButton: {fileID: 0}
   closeButton: {fileID: 1796214922}
-  activeTabYOffset: 45
+  activeTabYOffset: 65
   tabMoveDuration: 0.15
   tabAnimationUseUnscaledTime: 1
   drawPileButtonText: {fileID: 1778321528}
