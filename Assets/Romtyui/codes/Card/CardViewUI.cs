@@ -82,6 +82,14 @@ public class CardViewUI : MonoBehaviour
 
         string text = instance.data.description;
 
+        if (text == null)
+            text = "";
+
+        text = AppendFlagDescription(
+            text,
+            instance.data
+        );
+
         if (string.IsNullOrWhiteSpace(text))
             return "";
 
@@ -270,6 +278,32 @@ public class CardViewUI : MonoBehaviour
         });
     }
 
+    private string AppendFlagDescription(string description, CardData cardData)
+    {
+        if (cardData == null)
+            return description;
+
+        List<string> flags = new List<string>();
+
+        if (cardData.exhaust)
+            flags.Add("消耗");
+
+        if (cardData.ethereal)
+            flags.Add("虛無");
+
+        if (cardData.retain)
+            flags.Add("保留");
+
+        if (flags.Count == 0)
+            return description;
+
+        string flagLine = string.Join(" ", flags);
+
+        if (string.IsNullOrWhiteSpace(description))
+            return flagLine;
+
+        return flagLine + "\n" + description;
+    }
     private void AddProviderValue(
         Dictionary<string, string> values,
         CardDescriptionValueProvider provider,

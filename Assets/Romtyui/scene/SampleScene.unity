@@ -17572,7 +17572,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &832575518
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -30108,7 +30108,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 786947252, guid: 2d3b911e28303354f864ae3e65a44b9a, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 916c5236304e4e6409f87a12eedfc170, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -31952,6 +31952,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: eb3f010ea207df442b8463c1ebe43510, type: 2}
   - {fileID: 11400000, guid: 73275e3c8c5a61146b78e6734693504f, type: 2}
   - {fileID: 11400000, guid: 95b8f4a71a6d46f4ab65c57417877017, type: 2}
+  tokenUsageRecords:
+  - tokenId: goat_token
+    count: 0
   debugDrawPile: []
   debugHand: []
   debugDiscardPile: []
@@ -40988,8 +40991,6 @@ GameObject:
   - component: {fileID: 1791172256}
   - component: {fileID: 1791172255}
   - component: {fileID: 1791172257}
-  - component: {fileID: 1791172261}
-  - component: {fileID: 1791172260}
   - component: {fileID: 1791172259}
   - component: {fileID: 1791172258}
   m_Layer: 0
@@ -41108,46 +41109,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RelicsRuntime
   relicsInventory: {fileID: 1153238460}
---- !u!114 &1791172260
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1791172254}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimatedNumberTextUI
-  valueText: {fileID: 237316757}
-  animationDuration: 0.4
-  useUnscaledTime: 1
-  decreaseColor: {r: 1, g: 0, b: 0, a: 1}
-  increaseColor: {r: 0, g: 1, b: 0, a: 1}
-  changeColorDuringAnimation: 1
-  showMaxValue: 0
-  separator: ' / '
---- !u!114 &1791172261
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1791172254}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 815c9241ae07a754fad9d991d9f260e4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AnimatedNumberTextUI
-  valueText: {fileID: 181309836}
-  animationDuration: 0.4
-  useUnscaledTime: 1
-  decreaseColor: {r: 1, g: 0, b: 0, a: 1}
-  increaseColor: {r: 0, g: 1, b: 0, a: 1}
-  changeColorDuringAnimation: 1
-  showMaxValue: 0
-  separator: ' / '
 --- !u!1 &1791411460
 GameObject:
   m_ObjectHideFlags: 0
@@ -44139,7 +44100,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.04047004, w: 0.9991808}
   m_LocalPosition: {x: -0.15155, y: 7.6887, z: 0}
-  m_LocalScale: {x: 8.381504, y: 8.381504, z: 8.381503}
+  m_LocalScale: {x: 7.3443766, y: 7.3443766, z: 7.3443756}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 499606085}

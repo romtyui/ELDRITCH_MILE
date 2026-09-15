@@ -14,17 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: goat_token
   cardName: goat_token
-  description: "\u5375 \n\u5C0D\u6575\u4EBA\u9020\u62101\u9EDE\u50B7\u5BB3(\u5361\u9762\u662F\u6E2C\u8A66\u7528)"
+  description: "\u5C0D\u6575\u4EBA\u9020\u62106\u9EDE\u50B7\u5BB3(\u5361\u9762\u662F\u6E2C\u8A66\u7528)"
   visualData: {fileID: 11400000, guid: a0482c434d5479741bc7f59927770121, type: 2}
   cardType: 1
   rarity: 0
   targetType: 2
   baseCost: 0
-  exhaust: 0
+  exhaust: 1
   ethereal: 0
-  retain: 1
+  retain: 0
   isToken: 1
   tokenId: goat_token
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 41e4082d3cadc1948b5c436273ca6d5e, type: 2}
-  - {fileID: 11400000, guid: 137e5a80717b5bb43802586b79a5a1a2, type: 2}
+  hitEffect: {fileID: 0}

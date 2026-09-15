@@ -1,6 +1,12 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public class TokenUsageRecord
+{
+    public string tokenId;
+    public int count;
+}
 public class BattleDeck : MonoBehaviour
 {
     [Header("Starting Deck")]
@@ -14,7 +20,10 @@ public class BattleDeck : MonoBehaviour
 
     public IReadOnlyList<CardInstance> PlayedCardsThisTurn => playedCardsThisTurn;
 
-    private Dictionary<string, int> usedTokenCounts = new();
+    [Header("Token Usage Records")]
+    [SerializeField] private List<TokenUsageRecord> tokenUsageRecords = new();
+
+    public IReadOnlyList<TokenUsageRecord> TokenUsageRecords => tokenUsageRecords;
 
     //public IReadOnlyList<CardInstance> Hand => hand;
 
@@ -46,7 +55,7 @@ public class BattleDeck : MonoBehaviour
         discardPile.Clear();
         exhaustPile.Clear();
         playedCardsThisTurn.Clear();
-        usedTokenCounts.Clear();
+        ResetTokenUsage();
         foreach (CardData card in startingDeck)
         {
             drawPile.Add(new CardInstance(card));
@@ -77,35 +86,129 @@ public class BattleDeck : MonoBehaviour
         if (exhaustPile == null)
             exhaustPile = new List<CardInstance>();
 
-        // 下一場戰鬥：不重製成 startingDeck，而是保留目前戰鬥中的牌
-        // 把手牌、棄牌、消耗牌整理回抽牌堆
+        List<CardInstance> nextBattleDeck = new List<CardInstance>();
+
+        // DrawPile
+        for (int i = 0; i < drawPile.Count; i++)
+        {
+            CardInstance card = drawPile[i];
+
+            if (card == null || card.data == null)
+                continue;
+
+            // Exhaust 卡無論目前在哪裡，下一場都不保留。
+            if (card.data.exhaust)
+            {
+                Debug.Log(
+                    $"[BattleDeck] 戰鬥結束移除 Exhaust 卡牌：{card.data.cardName}（DrawPile）"
+                );
+
+                continue;
+            }
+
+            nextBattleDeck.Add(card);
+        }
+
+        // Hand
         for (int i = 0; i < hand.Count; i++)
         {
-            if (hand[i] != null)
-                drawPile.Add(hand[i]);
+            CardInstance card = hand[i];
+
+            if (card == null || card.data == null)
+                continue;
+
+            if (card.data.exhaust)
+            {
+                Debug.Log(
+                    $"[BattleDeck] 戰鬥結束移除 Exhaust 卡牌：{card.data.cardName}（Hand）"
+                );
+
+                continue;
+            }
+
+            nextBattleDeck.Add(card);
         }
 
+        // DiscardPile
         for (int i = 0; i < discardPile.Count; i++)
         {
-            if (discardPile[i] != null)
-                drawPile.Add(discardPile[i]);
+            CardInstance card = discardPile[i];
+
+            if (card == null || card.data == null)
+                continue;
+
+            if (card.data.exhaust)
+            {
+                Debug.Log(
+                    $"[BattleDeck] 戰鬥結束移除 Exhaust 卡牌：{card.data.cardName}（DiscardPile）"
+                );
+
+                continue;
+            }
+
+            nextBattleDeck.Add(card);
         }
 
+        // ExhaustPile
         for (int i = 0; i < exhaustPile.Count; i++)
         {
-            if (exhaustPile[i] != null)
-                drawPile.Add(exhaustPile[i]);
+            CardInstance card = exhaustPile[i];
+
+            if (card == null || card.data == null)
+                continue;
+
+            // 真正的 Exhaust 卡：永久移除。
+            if (card.data.exhaust)
+            {
+                Debug.Log(
+                    $"[BattleDeck] 戰鬥結束永久移除 Exhaust 卡牌：{card.data.cardName}"
+                );
+
+                continue;
+            }
+
+            // 非 Exhaust，但因 Ethereal 等原因進入 ExhaustPile 的牌：
+            // 下一場重新回到牌組。
+            nextBattleDeck.Add(card);
+
+            Debug.Log(
+                $"[BattleDeck] Ethereal / 非 Exhaust 卡牌返回下一場牌組：{card.data.cardName}"
+            );
         }
 
+        drawPile.Clear();
         hand.Clear();
         discardPile.Clear();
         exhaustPile.Clear();
+        playedCardsThisTurn.Clear();
+
+        drawPile.AddRange(nextBattleDeck);
 
         Shuffle(drawPile);
 
         RefreshDebugView();
 
-        Debug.Log($"[BattleDeck] 下一場戰鬥準備完成：保留目前牌組，抽牌堆數量 = {drawPile.Count}");
+        Debug.Log(
+            $"[BattleDeck] 下一場戰鬥準備完成，剩餘牌組數量 = {drawPile.Count}"
+        );
+    }
+
+    private bool ShouldRemoveAfterBattle(CardInstance card)
+    {
+        if (card == null || card.data == null)
+            return true;
+
+        return card.data.exhaust;
+    }
+
+    private void LogRemovedBattleOnlyCard(CardInstance card)
+    {
+        if (card == null || card.data == null)
+            return;
+
+        Debug.Log(
+            $"[BattleDeck] 戰鬥結束移除 Exhaust 卡牌：{card.data.cardName}"
+        );
     }
 
     public void DrawCards(int amount)
@@ -152,10 +255,7 @@ public class BattleDeck : MonoBehaviour
         if (card == null || card.data == null)
             return;
 
-        if (playedCardsThisTurn == null)
-            playedCardsThisTurn = new List<CardInstance>();
-
-        playedCardsThisTurn.Add(card);
+        RegisterTokenPlayed(card);
 
         if (hand.Remove(card))
         {
@@ -165,33 +265,40 @@ public class BattleDeck : MonoBehaviour
                 discardPile.Add(card);
         }
 
-        Debug.Log($"[BattleDeck] 本回合已使用卡牌：{card.data.cardName}，目前累積 {playedCardsThisTurn.Count} 張");
-
         RefreshDebugView();
     }
 
     public void DiscardHandAtEndTurn()
     {
-        foreach (CardInstance card in hand)
+        for (int i = hand.Count - 1; i >= 0; i--)
         {
+            CardInstance card = hand[i];
+
             if (card == null || card.data == null)
+            {
+                hand.RemoveAt(i);
                 continue;
+            }
+
+            // Ethereal 優先於 Retain：
+            // 回合結束仍在手上時直接消耗。
+            if (card.data.ethereal)
+            {
+                hand.RemoveAt(i);
+                exhaustPile.Add(card);
+
+                Debug.Log(
+                    $"[BattleDeck] Ethereal 卡牌回合結束被消耗：{card.data.cardName}"
+                );
+
+                continue;
+            }
 
             if (card.data.retain)
                 continue;
 
+            hand.RemoveAt(i);
             discardPile.Add(card);
-        }
-
-        hand.RemoveAll(card => card == null || card.data == null || !card.data.retain);
-
-        if (playedCardsThisTurn != null)
-        {
-            Debug.Log(
-                $"[BattleDeck] 玩家回合結束，清除本回合已使用卡牌紀錄，共 {playedCardsThisTurn.Count} 張"
-            );
-
-            playedCardsThisTurn.Clear();
         }
 
         RefreshDebugView();
@@ -355,20 +462,47 @@ public class BattleDeck : MonoBehaviour
 
         string id = NormalizeTokenId(card.data.tokenId);
 
-        if (!usedTokenCounts.ContainsKey(id))
-            usedTokenCounts[id] = 0;
+        if (string.IsNullOrWhiteSpace(id))
+            return;
 
-        usedTokenCounts[id]++;
+        for (int i = 0; i < tokenUsageRecords.Count; i++)
+        {
+            TokenUsageRecord record = tokenUsageRecords[i];
 
-        Debug.Log($"[BattleDeck] 使用 Token：{id}，目前使用次數：{usedTokenCounts[id]}");
+            if (record == null)
+                continue;
+
+            if (NormalizeTokenId(record.tokenId) != id)
+                continue;
+
+            record.count++;
+
+            Debug.Log(
+                $"[BattleDeck] 使用 Token：{id}，目前使用次數：{record.count}"
+            );
+
+            return;
+        }
+
+        Debug.LogWarning(
+            $"[BattleDeck] 打出了 Token：{id}，但 Token Usage Records 裡沒有設定這個 ID，所以沒有累加"
+        );
     }
 
     public int GetUsedTokenCount(string tokenId)
     {
         string id = NormalizeTokenId(tokenId);
 
-        if (usedTokenCounts.TryGetValue(id, out int count))
-            return count;
+        for (int i = 0; i < tokenUsageRecords.Count; i++)
+        {
+            TokenUsageRecord record = tokenUsageRecords[i];
+
+            if (record == null)
+                continue;
+
+            if (NormalizeTokenId(record.tokenId) == id)
+                return Mathf.Max(0, record.count);
+        }
 
         return 0;
     }
@@ -398,7 +532,17 @@ public class BattleDeck : MonoBehaviour
 
     public void ResetTokenUsage()
     {
-        usedTokenCounts.Clear();
+        for (int i = 0; i < tokenUsageRecords.Count; i++)
+        {
+            TokenUsageRecord record = tokenUsageRecords[i];
+
+            if (record == null)
+                continue;
+
+            record.count = 0;
+        }
+
+        Debug.Log("[BattleDeck] 所有 Token 使用次數已重置為 0");
     }
 
     private string NormalizeTokenId(string tokenId)

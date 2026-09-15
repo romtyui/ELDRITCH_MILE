@@ -5144,6 +5144,67 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1167181296}
   m_CullTransparentMesh: 1
+--- !u!1 &1270214050
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1270214052}
+  - component: {fileID: 1270214051}
+  m_Layer: 0
+  m_Name: debug
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1270214051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1270214050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3740f6c11f25ffa4db961e7863f93aab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleDebugHotkeys
+  battleManager: {fileID: 0}
+  battleManagerObject: {fileID: 0}
+  killAllEnemiesKey: 25
+  enableBattleManagerKey: 16
+  toggleStatusDebugUIKey: 94
+  loadSceneWithSaveKey: 98
+  reloadSceneWithoutCommitKey: 99
+  debugDamage: 9999
+  debugSceneName: SampleScene
+  saveRunStateBeforeLoadScene: 1
+  enableDebugHotkeys: 1
+  showStatusDebugUI: 0
+  includeInactiveEnemies: 0
+  statusAmount: 1
+  allCardDatabase: {fileID: 11400000, guid: 716868c49c6c473459a8b95399ff61f1, type: 2}
+  debugAddableCards: []
+  addCardAmount: 1
+--- !u!4 &1270214052
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1270214050}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 7.90479, y: 29.66178, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1277115876
 GameObject:
   m_ObjectHideFlags: 0
@@ -8844,3 +8905,4 @@ SceneRoots:
   - {fileID: 2110897643}
   - {fileID: 1628889181}
   - {fileID: 398155700}
+  - {fileID: 1270214052}

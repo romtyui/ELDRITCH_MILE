@@ -200,6 +200,18 @@ public class RunStateManager : MonoBehaviour
             if (card == null || card.data == null)
                 continue;
 
+            // Exhaust 是戰鬥限定卡。
+            // 不管戰鬥結束時它位於 Draw / Hand / Discard / ExhaustPile，
+            // 都不能保存到下一場戰鬥。
+            if (card.data.exhaust)
+            {
+                Debug.Log(
+                    $"[RunStateManager] 不保存 Exhaust 卡牌：{card.data.cardName}"
+                );
+
+                continue;
+            }
+
             savedDeck.Add(card.data);
         }
     }
