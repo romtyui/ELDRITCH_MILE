@@ -270,7 +270,36 @@ public class BattleUnit : MonoBehaviour
         );
     }
 
+    public virtual void PayHpCost(int amount, bool triggerHurtAnimation)
+    {
+        if (amount <= 0)
+            return;
 
+        int hpBefore = currentHp;
+
+        currentHp -= amount;
+
+        if (currentHp < 0)
+            currentHp = 0;
+
+        int actualHpCost = hpBefore - currentHp;
+
+        OnHpChanged?.Invoke();
+
+        Debug.Log($"{unitName} 支付 {actualHpCost} HP 作為卡牌費用，剩餘 HP: {currentHp}");
+
+        if (triggerHurtAnimation && isPlayerUnit)
+        {
+            if (CameraShake.Instance != null)
+                CameraShake.Instance.Shake();
+        }
+
+        if (currentHp <= 0)
+        {
+            Die();
+            return;
+        }
+    }
     private void TryTriggerCounter(BattleUnit damageSource)
     {
         if (damageSource == null)

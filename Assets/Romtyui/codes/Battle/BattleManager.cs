@@ -7,6 +7,11 @@ using Random = UnityEngine.Random;
 
 public class BattleManager : MonoBehaviour
 {
+
+    [Header("Card Cost HP Payment")]
+    [Tooltip("出牌費用使用 HP 支付時，是否播放玩家受傷動畫")]
+    public bool playCardHpCostTriggersHurtAnimation = true;
+
     [Header("Test Option Menu")]
     public OptionMenuUI optionMenuUI;
 
@@ -181,6 +186,41 @@ public class BattleManager : MonoBehaviour
             Debug.Log($"{playerDeck.Hand.Count}");
         }
     }
+
+    private void PayCardCost(int cost)
+    {
+        if (cost <= 0)
+            return;
+
+        if (energySystem == null || playerUnit == null)
+            return;
+
+        int sanPayment = Mathf.Min(energySystem.currentEnergy, cost);
+        int hpPayment = cost - sanPayment;
+
+        if (sanPayment > 0)
+            energySystem.Spend(sanPayment);
+
+        if (hpPayment > 0)
+            playerUnit.PayHpCost(hpPayment, playCardHpCostTriggersHurtAnimation);
+
+        Debug.Log($"[CardCost] Cost = {cost}, SAN 支付 = {sanPayment}, HP 支付 = {hpPayment}");
+    }
+    private bool CanPayCardCost(int cost)
+    {
+        if (cost <= 0)
+            return true;
+
+        if (energySystem == null || playerUnit == null)
+            return false;
+
+        int sanPayment = Mathf.Min(energySystem.currentEnergy, cost);
+        int hpPayment = cost - sanPayment;
+
+        return playerUnit.currentHp >= hpPayment;
+    }
+
+
     private void TriggerRelics(RelicsTriggerType triggerType,CardInstance playedCard = null)
     {
         if (relicsRuntime == null)
@@ -666,9 +706,15 @@ public class BattleManager : MonoBehaviour
             return false;
         }
 
-        if (!energySystem.CanSpend(card.currentCost))
+        if (playerUnit == null)
         {
-            Debug.Log("能量不足");
+            Debug.LogWarning("[TryPlayCard] playerUnit 沒有指定");
+            return false;
+        }
+
+        if (!CanPayCardCost(card.currentCost))
+        {
+            Debug.Log("SAN + HP 不足，無法支付卡牌費用");
             return false;
         }
 
@@ -698,7 +744,7 @@ public class BattleManager : MonoBehaviour
          * =========================================================
          */
 
-        energySystem.Spend(card.currentCost);
+        PayCardCost(card.currentCost);
 
         RefreshPlayerBarsUI();
 
