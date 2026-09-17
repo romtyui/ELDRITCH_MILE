@@ -27680,14 +27680,11 @@ MonoBehaviour:
   monsterTargets: []
   lightPower: 1
   sanRatio: 1
-  minNormalAlpha: 0
-  maxNormalAlpha: 1
-  maxDarkAlpha: 1
-  minDarkAlpha: 0
-  visualLight: {fileID: 1939482551}
   darkToNormalStart: 0.25
   darkToNormalEnd: 0.75
-  hideAlphaThreshold: 0.025
+  disableHiddenFormRenderers: 1
+  endpointEpsilon: 0.0001
+  visualLight: {fileID: 1939482551}
   minLightIntensity: 1
   maxLightIntensity: 3
   minLightOuterRadius: 1.5
