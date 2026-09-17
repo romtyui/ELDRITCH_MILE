@@ -120,6 +120,7 @@ namespace EldritchMile.Core
             DrawVitals(run);
 
             DrawStageJump();
+            DrawShopTools();
 
             GUILayout.Space(6);
             tab = GUILayout.Toolbar(tab, TabNames);
@@ -185,6 +186,28 @@ namespace EldritchMile.Core
             GUILayout.EndHorizontal();
 
             DrawBattleJump();
+        }
+
+        /// <summary>
+        /// 商店專用的除錯鈕。**只有人在商店裡才會出現** ——
+        /// 不在商店時按了也沒有貨架可以換，列出來只會讓人以為壞了。
+        ///
+        /// 【為什麼需要】貨是照節點種子抽的，同一間店重進是同一批。
+        /// 要驗某一件商品（長名字、貴到買不起、賣光…）本來得一直換節點。
+        /// </summary>
+        private void DrawShopTools()
+        {
+            ShopStageController shop = FindFirstObjectByType<ShopStageController>();
+            if (shop == null) return;
+
+            GUILayout.Space(4);
+            GUILayout.Label("商店（除錯用）", labelStyle);
+
+            if (GUILayout.Button("重抽商品"))
+            {
+                Debug.Log("[除錯] 重抽商品");
+                shop.DebugRestock();
+            }
         }
 
         /// <summary>

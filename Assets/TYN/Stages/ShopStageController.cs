@@ -106,6 +106,30 @@ public class ShopStageController : StageController
     private RunContext run;
     private bool leaving;
 
+    /// 除錯重抽按了幾次。混進亂數種子裡，見 ShopSeed()
+    private int restockSalt;
+
+    /// <summary>
+    /// **除錯用**：換一批商品。F1 面板的「重抽商品」按這裡。
+    ///
+    /// 【為什麼需要】貨是照節點的種子抽的 —— 同一間店重進永遠是同一批。
+    /// 要驗某一件商品（例如長名字的跑馬燈）就得一直換節點，很花時間。
+    ///
+    /// ⚠️ 已經賣掉的不會回來：這裡是重新進貨，不是還原這一站的購買紀錄。
+    /// </summary>
+    public void DebugRestock()
+    {
+        if (shelf == null)
+        {
+            Debug.LogWarning("[商店] 沒有貨架可以重抽");
+            return;
+        }
+
+        restockSalt++;
+        StockShelf();
+        Debug.Log($"[商店] 除錯重抽第 {restockSalt} 次");
+    }
+
     // ==========================================
     public override void OnStageEnter(RunContext context)
     {
@@ -252,6 +276,9 @@ public class ShopStageController : StageController
         {
             seed ^= node.nodeId.GetHashCode();
         }
+
+        // 除錯重抽用的鹽。不混這個的話，同一個節點按幾次都是同一批貨
+        if (restockSalt != 0) seed ^= restockSalt * 7919;
 
         return seed;
     }
