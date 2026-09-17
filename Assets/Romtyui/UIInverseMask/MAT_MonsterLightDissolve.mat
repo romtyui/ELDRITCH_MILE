@@ -24,8 +24,7 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: fd7b2e804403510488f043fa21bb3cc0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - SKINNED_SPRITE
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -56,9 +55,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _DissolveScale: 5
-    - _FormBlend: 0.497
-    - _FormSide: 1
+    - _FormBlend: 1
+    - _FormSide: 0
+    - _NoiseStrength: 0.3
+    - _RevealLightIntensity: 3
+    - _RevealRadius: 3.158389
     m_Colors:
     - White: {r: 1, g: 1, b: 1, a: 1}
+    - _Freeform_Light_Dot_Product: {r: 0.2126, g: 0.7152, b: 0.0722, a: 0}
+    - _RevealLightPosition: {r: 0.07000001, g: 2.25, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

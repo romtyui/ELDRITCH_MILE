@@ -410,7 +410,27 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 原始治療 {amount}，Modifier 後 {finalAmount}，實際恢復 {actualHeal} HP，當前 HP: {currentHp}");
     }
+    /// <summary>
+    /// Debug UI 專用：直接設定 HP，不觸發格擋、受傷動畫與受傷狀態效果。
+    /// </summary>
+    public virtual void SetCurrentHpForDebug(int value, bool allowDeath = false)
+    {
+        int safeMaxHp = Mathf.Max(1, maxHp);
+        int minimumHp = allowDeath ? 0 : 1;
+        int targetHp = Mathf.Clamp(value, minimumHp, safeMaxHp);
 
+        if (currentHp == targetHp)
+            return;
+
+        int previousHp = currentHp;
+        currentHp = targetHp;
+        OnHpChanged?.Invoke();
+
+        Debug.Log($"[Debug HP] {unitName}：{previousHp} → {currentHp}");
+
+        if (allowDeath && previousHp > 0 && currentHp <= 0)
+            Die();
+    }
     public virtual void GainBlock(int amount)
     {
         int finalBlock = ModifyBlockGain(amount);
