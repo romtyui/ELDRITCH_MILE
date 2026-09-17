@@ -630,6 +630,7 @@ GameObject:
   - component: {fileID: 2409475948999160710}
   - component: {fileID: 859486492533846022}
   - component: {fileID: 7207212685433461701}
+  - component: {fileID: 6018306069973657074}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -756,6 +757,22 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6018306069973657074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1292830541734521066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46d03cac3895d304d912d2e86fa45a6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.MarqueeText
+  speed: 60
+  startDelay: 1.2
+  endDelay: 1.2
+  fadeSeconds: 0.2
 --- !u!1 &1386277507748743728
 GameObject:
   m_ObjectHideFlags: 0
@@ -2104,6 +2121,7 @@ GameObject:
   - component: {fileID: 8067028856916505424}
   - component: {fileID: 8244063228858617349}
   - component: {fileID: 1457109555233001295}
+  - component: {fileID: 323741472439474517}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -2230,6 +2248,22 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &323741472439474517
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2286011099162687109}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46d03cac3895d304d912d2e86fa45a6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.MarqueeText
+  speed: 60
+  startDelay: 1.2
+  endDelay: 1.2
+  fadeSeconds: 0.2
 --- !u!1 &2291366280885158638
 GameObject:
   m_ObjectHideFlags: 0
@@ -2614,6 +2648,7 @@ GameObject:
   - component: {fileID: 1552855151486580949}
   - component: {fileID: 4637966980192059690}
   - component: {fileID: 5576898837135998488}
+  - component: {fileID: 4688186111527509435}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -2740,6 +2775,22 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &4688186111527509435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2851204266132034214}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46d03cac3895d304d912d2e86fa45a6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.MarqueeText
+  speed: 60
+  startDelay: 1.2
+  endDelay: 1.2
+  fadeSeconds: 0.2
 --- !u!1 &3061539477618015761
 GameObject:
   m_ObjectHideFlags: 0
@@ -2963,6 +3014,7 @@ GameObject:
   - component: {fileID: 5423050518952996697}
   - component: {fileID: 7696936202461108576}
   - component: {fileID: 8163328738640104299}
+  - component: {fileID: 377586799841174673}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -3089,6 +3141,22 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &377586799841174673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3140292424996932306}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46d03cac3895d304d912d2e86fa45a6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.MarqueeText
+  speed: 60
+  startDelay: 1.2
+  endDelay: 1.2
+  fadeSeconds: 0.2
 --- !u!1 &3522140649958448142
 GameObject:
   m_ObjectHideFlags: 0
@@ -4153,6 +4221,7 @@ GameObject:
   - component: {fileID: 9101042871782075872}
   - component: {fileID: 6648426766182055006}
   - component: {fileID: 6057558629975418613}
+  - component: {fileID: 7296159592150834226}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -4279,6 +4348,22 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &7296159592150834226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5119255469442791194}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46d03cac3895d304d912d2e86fa45a6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.MarqueeText
+  speed: 60
+  startDelay: 1.2
+  endDelay: 1.2
+  fadeSeconds: 0.2
 --- !u!1 &5248133831881552405
 GameObject:
   m_ObjectHideFlags: 0
@@ -5847,6 +5932,7 @@ GameObject:
   - component: {fileID: 4212029283058715138}
   - component: {fileID: 6866011559700685111}
   - component: {fileID: 6652578857545152171}
+  - component: {fileID: 6938648023133964212}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -5973,6 +6059,22 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6938648023133964212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7018248814324317312}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46d03cac3895d304d912d2e86fa45a6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.MarqueeText
+  speed: 60
+  startDelay: 1.2
+  endDelay: 1.2
+  fadeSeconds: 0.2
 --- !u!1 &7102481516181962830
 GameObject:
   m_ObjectHideFlags: 0
@@ -6471,6 +6573,7 @@ GameObject:
   - component: {fileID: 2875405351865155433}
   - component: {fileID: 3733278867715207474}
   - component: {fileID: 2969880298899719837}
+  - component: {fileID: 6386941423283019336}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -6597,6 +6700,22 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6386941423283019336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7598063998590441498}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46d03cac3895d304d912d2e86fa45a6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.MarqueeText
+  speed: 60
+  startDelay: 1.2
+  endDelay: 1.2
+  fadeSeconds: 0.2
 --- !u!1 &7656831870598495335
 GameObject:
   m_ObjectHideFlags: 0
@@ -8214,6 +8333,7 @@ GameObject:
   - component: {fileID: 3170725529651752503}
   - component: {fileID: 6361058998913935562}
   - component: {fileID: 2326249736564648935}
+  - component: {fileID: 4797708868795428170}
   m_Layer: 0
   m_Name: Label
   m_TagString: Untagged
@@ -8340,6 +8460,22 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &4797708868795428170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8663093085628993814}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46d03cac3895d304d912d2e86fa45a6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.MarqueeText
+  speed: 60
+  startDelay: 1.2
+  endDelay: 1.2
+  fadeSeconds: 0.2
 --- !u!1 &8671635882485676862
 GameObject:
   m_ObjectHideFlags: 0

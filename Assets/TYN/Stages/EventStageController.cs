@@ -41,6 +41,25 @@ public class EventStageController : ChoiceStageController
     [Tooltip("多個效果之間用什麼隔開")]
     public string effectSeparator = "、";
 
+    [Header("自選要交出的道具")]
+    [Tooltip("效果是「消耗某類道具」而且勾了 Let Player Choose 時，對話框上的問句。{0} = 還要選幾個")]
+    public string chooseItemPrompt = "要交出哪一個？";
+
+    [Tooltip("選項上每一件道具的寫法。{0} = 名稱、{1} = 身上還有幾個")]
+    public string chooseItemOptionFormat = "{0}（{1}）";
+
+    /// 正在處理的選項（玩家還在挑道具）
+    private EventData.Option choosingOption;
+
+    /// 正在問的是哪一個效果
+    private EventEffect choosingEffect;
+
+    /// 每個效果玩家挑了什麼
+    private readonly Dictionary<EventEffect, List<string>> chosenByEffect = new Dictionary<EventEffect, List<string>>();
+
+    /// 選項框上每一格對應的道具 id
+    private readonly List<string> choiceIds = new List<string>();
+
     [Header("背景")]
     [Tooltip("進場時墊在後面的場景美術。留空會在自己底下找。\n\n" +
              "**先用戶外那張** —— 事件沒有自己的場景，不墊東西的話\n" +
@@ -161,7 +180,7 @@ public class EventStageController : ChoiceStageController
             //
             //    多選項那條（HandleChosen）本來就是「結果文字 ＋ 效果提示」，
             //    兩條各寫一次才會走歪 —— 現在共用 BuildResultBody()。
-            ShowResult(BuildResultBody(data.options[0]));
+            BeginOptionResolution(data.options[0]);
             return;
         }
 
@@ -188,7 +207,14 @@ public class EventStageController : ChoiceStageController
 
     protected override void Unsubscribe()
     {
-        if (Options != null) Options.OnOptionClicked -= HandleChosen;
+        if (Options != null)
+        {
+            Options.OnOptionClicked -= HandleChosen;
+            Options.OnOptionClicked -= HandleItemChosen;
+        }
+        choosingOption = null;
+        choosingEffect = null;
+        chosenByEffect.Clear();
         if (endButton != null) endButton.onClick.RemoveListener(EndEvent);
 
         // ⚠️ 殘留的武裝會打到下一站 —— 玩家在新對話框點第一下就被這一站的
@@ -208,7 +234,138 @@ public class EventStageController : ChoiceStageController
 
         Options?.HideAll();
 
-        ShowResult(BuildResultBody(picked));
+        BeginOptionResolution(picked);
+    }
+
+    // ==========================================
+    // 自選要交出的道具（2026-09-17）
+    // ==========================================
+
+    /// <summary>
+    /// 選了一個選項。效果裡有「讓玩家挑」的，先一件一件問完，再套用效果、播結果。
+    ///
+    /// 【為什麼用同一個選項框】玩家剛剛就是在這裡做選擇的 —— 同一個位置接著問「要給哪一個」，
+    /// 不必學新的介面，也不會出現第二個浮動視窗。
+    /// </summary>
+    private void BeginOptionResolution(EventData.Option option)
+    {
+        choosingOption = option;
+        choosingEffect = null;
+        chosenByEffect.Clear();
+        ContinueChoosing();
+    }
+
+    private void ContinueChoosing()
+    {
+        RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+        EventData.Option option = choosingOption;
+
+        if (option != null && run != null && Options != null)
+        {
+            for (int i = 0; i < option.effects.Count; i++)
+            {
+                EventEffect e = option.effects[i];
+                if (e == null || !e.NeedsChoice) continue;
+
+                List<string> picked;
+                if (!chosenByEffect.TryGetValue(e, out picked))
+                {
+                    picked = new List<string>();
+                    chosenByEffect[e] = picked;
+                }
+                if (picked.Count >= e.amount) continue;
+
+                List<string> candidates = CandidatesFor(run, e.key);
+
+                // 付不起（條件層應該擋掉了）→ 不問，交給效果自己處理
+                if (candidates.Count == 0) break;
+
+                // 只剩一種可以給 → 不必問，直接帶入
+                if (candidates.Count == 1)
+                {
+                    picked.Add(candidates[0]);
+                    ContinueChoosing();
+                    return;
+                }
+
+                AskChoice(e, candidates, run, e.amount - picked.Count);
+                return;
+            }
+        }
+
+        // 全部挑完（或根本不必挑）
+        choosingOption = null;
+        ShowResult(BuildResultBody(option));
+    }
+
+    /// <summary>背包裡帶這個標籤、扣掉已經挑走的還有剩的道具 id（不重複）。</summary>
+    private List<string> CandidatesFor(RunContext run, string tag)
+    {
+        var result = new List<string>();
+        ItemDatabase db = GameFlowManager.Instance != null ? GameFlowManager.Instance.itemDatabase : null;
+        if (db == null) return result;
+
+        for (int i = 0; i < run.inventory.Count; i++)
+        {
+            ItemStack s = run.inventory[i];
+            if (s == null || s.count <= 0 || result.Contains(s.id)) continue;
+
+            ItemData d = db.GetById(s.id);
+            if (d == null || !d.HasTag(tag)) continue;
+            if (Available(run, s.id) <= 0) continue;
+
+            result.Add(s.id);
+        }
+        return result;
+    }
+
+    /// <summary>身上有幾個，扣掉這一次已經挑走的。</summary>
+    private int Available(RunContext run, string id)
+    {
+        int taken = 0;
+        foreach (KeyValuePair<EventEffect, List<string>> kv in chosenByEffect)
+            for (int i = 0; i < kv.Value.Count; i++)
+                if (kv.Value[i] == id) taken++;
+
+        return run.CountOf(id) - taken;
+    }
+
+    private void AskChoice(EventEffect e, List<string> candidates, RunContext run, int remaining)
+    {
+        choosingEffect = e;
+        choiceIds.Clear();
+
+        var texts = new List<string>();
+        for (int i = 0; i < candidates.Count && i < Options.SlotCount; i++)
+        {
+            choiceIds.Add(candidates[i]);
+            texts.Add(string.Format(chooseItemOptionFormat, GameFlowManager.ItemName(candidates[i]), Available(run, candidates[i])));
+        }
+
+        if (!string.IsNullOrEmpty(chooseItemPrompt))
+            PopupService.Instance?.ShowInstant(string.Format(chooseItemPrompt, remaining));
+
+        Options.OnOptionClicked -= HandleChosen;
+        Options.OnOptionClicked -= HandleItemChosen;
+        Options.OnOptionClicked += HandleItemChosen;
+
+        // 挑東西不是闖關，不顯示機率
+        Options.Show(texts, null, DialogueOptionUI.Mode.PlainChoice);
+    }
+
+    private void HandleItemChosen(DialogueOptionUI option)
+    {
+        if (option == null || choosingEffect == null) return;
+        if (option.Index < 0 || option.Index >= choiceIds.Count) return;
+
+        Options.OnOptionClicked -= HandleItemChosen;
+        Options.HideAll();
+
+        List<string> picked;
+        if (chosenByEffect.TryGetValue(choosingEffect, out picked)) picked.Add(choiceIds[option.Index]);
+
+        choosingEffect = null;
+        ContinueChoosing();
     }
 
     /// <summary>
@@ -335,7 +492,11 @@ public class EventStageController : ChoiceStageController
             EventEffect e = option.effects[i];
             if (e == null) continue;
 
-            string note = e.Apply(run);
+            // 玩家挑好了的就照玩家挑的扣；沒挑夠（或不必挑）就照舊自動扣
+            List<string> picked;
+            string note = e.NeedsChoice && chosenByEffect.TryGetValue(e, out picked) && picked.Count >= e.amount
+                ? e.ApplyChosen(run, picked)
+                : e.Apply(run);
             if (!string.IsNullOrEmpty(note)) notes.Add(note);
         }
 

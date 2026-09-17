@@ -43,7 +43,8 @@ namespace EldritchMile.Map3D
         [Range(10f, 70f)] public float fieldOfView = 32f;
 
         [Header("夾住的範圍（階段 3 會用到）")]
-        [Tooltip("左右可以轉多少度。地圖有推進方向，能轉 360 度玩家會迷路")]
+        [Tooltip("左右可以轉多少度。**180 = 不限制，可以繞一整圈**（像轉桌上的地圖）。\n" +
+                 "小於 180 時夾在 Yaw Center 正負這個角度內")]
         [Range(0f, 180f)] public float yawLimit = 40f;
 
         [Tooltip("yaw 的中心。夾住的範圍是 yawCenter 正負 yawLimit")]
@@ -82,7 +83,9 @@ namespace EldritchMile.Map3D
             if (cam == null) cam = GetComponent<Camera>();
             if (cam == null) return;
 
-            yaw = Mathf.Clamp(yaw, yawCenter - yawLimit, yawCenter + yawLimit);
+            // 180 度 = 不限制：繞圈而不是夾住，不然轉到 ±180 會撞牆
+            if (yawLimit >= 179.9f) yaw = Mathf.Repeat(yaw + 180f, 360f) - 180f;
+            else yaw = Mathf.Clamp(yaw, yawCenter - yawLimit, yawCenter + yawLimit);
             pitch = Mathf.Clamp(pitch, pitchLimit.x, pitchLimit.y);
             distance = Mathf.Clamp(distance, distanceLimit.x, Mathf.Max(distanceLimit.y, distanceMaxOverride));
 

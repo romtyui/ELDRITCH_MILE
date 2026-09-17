@@ -2082,8 +2082,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 294244635}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.4266001, y: 0.3394444, z: -0.17670357, w: 0.81949115}
-  m_LocalPosition: {x: -10.5450735, y: 21.297943, z: -10.545074}
+  m_LocalRotation: {x: 0.22194175, y: 0.37147713, z: -0.09193129, w: 0.8968251}
+  m_LocalPosition: {x: -16.262823, y: 12.126038, z: -16.262823}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2099,7 +2099,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -2155,10 +2155,10 @@ MonoBehaviour:
   pivot: {fileID: 1873739739}
   pivotOffset: {x: 0, y: 0, z: 0}
   yaw: 45
-  pitch: 55
+  pitch: 27.8
   distance: 26
   fieldOfView: 32
-  yawLimit: 40
+  yawLimit: 180
   yawCenter: 45
   pitchLimit: {x: 25, y: 70}
   distanceLimit: {x: 8, y: 60}
@@ -2222,6 +2222,7 @@ MonoBehaviour:
   yawPerScreen: 90
   pitchPerScreen: 60
   invertDrag: 1
+  lockPitch: 1
   zoomPerNotch: 2.5
   panPerScreen: 20
   panLimit: 6

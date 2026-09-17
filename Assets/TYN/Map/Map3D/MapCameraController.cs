@@ -43,6 +43,11 @@ namespace EldritchMile.Map3D
         [Tooltip("勾選 = 拖曳方向與地圖轉動方向相反（像抓著地圖轉）")]
         public bool invertDrag = true;
 
+        [Tooltip("**鎖住俯角**：拖曳只轉水平方向，像把地圖放在桌上轉。\n" +
+                 "俯角由 MapCameraRig 的 Pitch 決定（美術調的值），玩家改不動。\n" +
+                 "（2026-09-17 美術：俯角要固定）")]
+        public bool lockPitch = true;
+
         [Header("縮放（滾輪）")]
         [Tooltip("滾一格改變多少距離")]
         public float zoomPerNotch = 2.5f;
@@ -464,7 +469,7 @@ namespace EldritchMile.Map3D
             float sign = invertDrag ? -1f : 1f;
 
             rig.yaw += sign * delta.x / Mathf.Max(1f, Screen.width) * yawPerScreen;
-            rig.pitch -= sign * delta.y / Mathf.Max(1f, Screen.height) * pitchPerScreen;
+            if (!lockPitch) rig.pitch -= sign * delta.y / Mathf.Max(1f, Screen.height) * pitchPerScreen;
             rig.Apply();   // 夾持在 Apply 裡做
         }
 
@@ -493,7 +498,8 @@ namespace EldritchMile.Map3D
             float t = resetSeconds <= 0f ? 1f : Mathf.Clamp01(resetT / resetSeconds);
             float e = Mathf.SmoothStep(0f, 1f, t);
 
-            rig.yaw = Mathf.Lerp(fromYaw, homeYaw, e);
+            // LerpAngle：可以繞一整圈之後，轉到 170 度再歸位不該倒著轉回去
+            rig.yaw = Mathf.LerpAngle(fromYaw, homeYaw, e);
             rig.pitch = Mathf.Lerp(fromPitch, homePitch, e);
             rig.distance = Mathf.Lerp(fromDistance, homeDistance, e);
             // ⚠️ 目標是 followOffset 不是 homeOffset ——
