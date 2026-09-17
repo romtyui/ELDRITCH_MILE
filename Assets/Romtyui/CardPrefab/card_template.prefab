@@ -517,6 +517,10 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.4
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
   cardTooltipSide: 3
 --- !u!114 &2071348053210116029
 MonoBehaviour:

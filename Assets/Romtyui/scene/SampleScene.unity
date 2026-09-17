@@ -3806,6 +3806,10 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
   cardTooltipSide: 3
 --- !u!1 &177232777
 GameObject:
@@ -3879,7 +3883,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2.4, y: -2.13}
+  m_AnchoredPosition: {x: 1.75, y: -2.37}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &181309836
@@ -3902,9 +3906,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '100
-
-'
+  m_text: 9
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3938,8 +3940,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 33
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 4
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -3970,7 +3972,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 99.37886, y: 24.332151, z: 98.4447, w: 22.796982}
+  m_margin: {x: 99.37886, y: 24.332151, z: 98.4447, w: 24.649513}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -6676,6 +6678,10 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
   cardTooltipSide: 3
 --- !u!1 &292422261
 GameObject:
@@ -17055,6 +17061,10 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
   cardTooltipSide: 3
 --- !u!1 &769923248
 GameObject:
@@ -21850,6 +21860,10 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
   cardTooltipSide: 3
 --- !u!1 &952948179
 GameObject:
@@ -28416,6 +28430,10 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
   cardTooltipSide: 3
 --- !u!1 &1261777583
 GameObject:
@@ -29954,6 +29972,10 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
   cardTooltipSide: 3
 --- !u!1 &1330222676
 GameObject:
@@ -43317,6 +43339,10 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
   cardTooltipSide: 3
 --- !u!1 &1786970439
 GameObject:
@@ -47778,6 +47804,10 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
   cardTooltipSide: 3
 --- !u!1 &2029354383
 GameObject:
@@ -48545,6 +48575,10 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
   cardTooltipSide: 3
 --- !u!1 &2053523263
 GameObject:

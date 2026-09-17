@@ -32,6 +32,21 @@ public class CardViewUI : MonoBehaviour
     public Color blockValueColor = new Color32(102, 204, 255, 255);
     public Color counterValueColor = new Color32(255, 212, 90, 255);
 
+    [Header("SAN Description Corruption")]
+    [Tooltip("是否啟用低 SAN 描述亂碼")]
+    public bool enableSanDescriptionCorruption = true;
+
+    [Range(0f, 1f)]
+    [Tooltip("SAN 低於或等於這個比例時，描述變成亂碼。例如 0.3 = 30%")]
+    public float sanCorruptionThreshold = 0.3f;
+
+    [Range(0f, 1f)]
+    [Tooltip("文字被替換成亂碼的比例。1 = 全部亂碼")]
+    public float sanCorruptionAmount = 1f;
+
+    [Tooltip("亂碼可以使用的字元")]
+    public string sanCorruptionCharacters = "▓▒░#@$%&!?※¤§";
+
     [Header("Tooltip Position")]
     public TooltipAnchorSide cardTooltipSide = TooltipAnchorSide.Top;
 
@@ -80,18 +95,10 @@ public class CardViewUI : MonoBehaviour
         if (instance == null || instance.data == null)
             return "";
 
-        string text = instance.data.description;
+        string originalDescription = instance.data.description;
 
-        if (text == null)
-            text = "";
-
-        text = AppendFlagDescription(
-            text,
-            instance.data
-        );
-
-        if (string.IsNullOrWhiteSpace(text))
-            return "";
+        if (originalDescription == null)
+            originalDescription = "";
 
         BattleManager battleManager = GetBattleManager();
 
@@ -111,7 +118,103 @@ public class CardViewUI : MonoBehaviour
             battleManager
         );
 
-        return ReplaceDescriptionTokens(text, instance, context);
+        // 先處理原本卡片描述中的所有 Runtime Token。
+        string runtimeDescription = ReplaceDescriptionTokens(
+            originalDescription,
+            instance,
+            context
+        );
+
+        // 再依照目前 SAN 判定是否需要把效果描述亂碼化。
+        runtimeDescription = ApplySanDescriptionCorruption(
+            runtimeDescription,
+            battleManager
+        );
+
+        // Flag 最後才加到最上方，所以不會一起被亂碼。
+        runtimeDescription = AppendFlagDescription(
+            runtimeDescription,
+            instance.data
+        );
+
+        return runtimeDescription;
+    }
+
+    private string ApplySanDescriptionCorruption(string description, BattleManager battleManager)
+    {
+        if (!enableSanDescriptionCorruption)
+            return description;
+
+        if (string.IsNullOrWhiteSpace(description))
+            return description;
+
+        if (battleManager == null || battleManager.energySystem == null)
+            return description;
+
+        EnergySystem energySystem = battleManager.energySystem;
+
+        if (energySystem.maxEnergy <= 0)
+            return description;
+
+        float sanRatio = energySystem.currentEnergy / (float)energySystem.maxEnergy;
+
+        if (sanRatio > sanCorruptionThreshold)
+            return description;
+
+        float corruptionProgress = Mathf.InverseLerp(sanCorruptionThreshold, 0f, sanRatio);
+        float actualCorruptionAmount = corruptionProgress * sanCorruptionAmount;
+
+        return CorruptDescriptionText(description, actualCorruptionAmount);
+    }
+
+    private string CorruptDescriptionText(string text, float corruptionAmount)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        if (corruptionAmount <= 0f)
+            return text;
+
+        if (string.IsNullOrEmpty(sanCorruptionCharacters))
+            return text;
+
+        char[] characters = text.ToCharArray();
+
+        bool insideRichTextTag = false;
+
+        for (int i = 0; i < characters.Length; i++)
+        {
+            char currentCharacter = characters[i];
+
+            if (currentCharacter == '<')
+            {
+                insideRichTextTag = true;
+                continue;
+            }
+
+            if (currentCharacter == '>')
+            {
+                insideRichTextTag = false;
+                continue;
+            }
+
+            if (insideRichTextTag)
+                continue;
+
+            if (char.IsWhiteSpace(currentCharacter))
+                continue;
+
+            if (currentCharacter == '\n' || currentCharacter == '\r')
+                continue;
+
+            if (UnityEngine.Random.value > corruptionAmount)
+                continue;
+
+            int randomIndex = UnityEngine.Random.Range(0, sanCorruptionCharacters.Length);
+            characters[i] = sanCorruptionCharacters[randomIndex];
+        }
+
+        return new string(characters);
     }
 
     private string ReplaceDescriptionTokens(
