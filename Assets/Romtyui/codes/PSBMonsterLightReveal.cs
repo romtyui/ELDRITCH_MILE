@@ -67,6 +67,30 @@ public class PSBMonsterLightReveal : MonoBehaviour
     [Range(0f, 0.01f)]
     public float endpointEpsilon = 0.0001f;
 
+    [Header("Global Light Color")]
+    [Tooltip("要控制顏色的 Global Light 2D。")]
+    public Light2D globalLight;
+
+    [Tooltip("lightPower 為 0 時的 Global Light 顏色。")]
+    [ColorUsage(false, true)]
+    public Color darkestGlobalLightColor = new Color(0.08f, 0.1f, 0.16f, 1f);
+
+    [Tooltip("lightPower 為 1 時的 Global Light 顏色。")]
+    [ColorUsage(false, true)]
+    public Color brightestGlobalLightColor = Color.white;
+
+    [Tooltip("Global Light 顏色漸變曲線。1 為線性；大於 1 會更快變暗。")]
+    [Min(0.01f)]
+    public float globalLightResponsePower = 1f;
+
+    [Tooltip("lightPower 為 0 時的 Global Light 強度。")]
+    [Min(0f)]
+    public float darkestGlobalLightIntensity = 0.15f;
+
+    [Tooltip("lightPower 為 1 時的 Global Light 強度。")]
+    [Min(0f)]
+    public float brightestGlobalLightIntensity = 1f;
+
     [Header("Freeform Visual Light")]
     [Tooltip("控制怪物照明與溶解區域的 Freeform Light 2D。")]
     public Light2D visualLight;
@@ -262,6 +286,8 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
     private void UpdateVisualLight()
     {
+        UpdateGlobalLight();
+
         if (visualLight == null)
             return;
 
@@ -392,6 +418,17 @@ public class PSBMonsterLightReveal : MonoBehaviour
                 monsterTargets.RemoveAt(i);
             }
         }
+    }
+
+    private void UpdateGlobalLight()
+    {
+        if (globalLight == null)
+            return;
+
+        float globalLightT = Mathf.Pow(Mathf.Clamp01(lightPower), Mathf.Max(0.01f, globalLightResponsePower));
+
+        globalLight.color = Color.Lerp(darkestGlobalLightColor, brightestGlobalLightColor, globalLightT);
+        globalLight.intensity = Mathf.Lerp(Mathf.Max(0f, darkestGlobalLightIntensity), Mathf.Max(0f, brightestGlobalLightIntensity), globalLightT);
     }
 
     public void ClearTargets()
