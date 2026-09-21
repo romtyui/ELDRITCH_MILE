@@ -40,9 +40,10 @@ public class BattleManager : MonoBehaviour
     public PlayerStatusBarUI playerStatusBarUI;
     public TurnEndButtonAnimatorUI turnEndButtonAnimatorUI;
     public TurnPhaseBannerUI turnPhaseBannerUI;
-    [Header("Player Bars UI")]
-    public Image hpFillImage;
-    public Image sanFillImage;
+    public BattleHUDUI battleHUDUI;
+    //[Header("Player Bars UI")]
+    //public Image hpFillImage;
+    //public Image sanFillImage;
     // public EnemyStatusBarUI enemyStatusBarUI; // 之後再做
 
     //[Header("Damage Popup UI")]
@@ -158,6 +159,9 @@ public class BattleManager : MonoBehaviour
                 );
             }
         }
+
+        if (battleHUDUI != null)
+            battleHUDUI.Bind(playerUnit, energySystem);
 
         SpawnEnemiesForBattle();
 
@@ -1503,41 +1507,47 @@ public class BattleManager : MonoBehaviour
         if (handUIController != null)
             handUIController.RefreshHandUI();
     }
+
     private void RefreshPlayerBarsUI()
     {
-        RefreshHpBarUI();
-        RefreshSanBarUI();
+        if (battleHUDUI != null)
+            battleHUDUI.Refresh();
     }
+    //private void RefreshPlayerBarsUI()
+    //{
+    //    RefreshHpBarUI();
+    //    RefreshSanBarUI();
+    //}
 
-    private void RefreshHpBarUI()
-    {
-        if (hpFillImage == null)
-            return;
+    //private void RefreshHpBarUI()
+    //{
+    //    if (hpFillImage == null)
+    //        return;
 
-        if (playerUnit == null)
-        {
-            hpFillImage.fillAmount = 0f;
-            return;
-        }
+    //    if (playerUnit == null)
+    //    {
+    //        hpFillImage.fillAmount = 0f;
+    //        return;
+    //    }
 
-        float maxHp = Mathf.Max(1, playerUnit.maxHp);
-        hpFillImage.fillAmount = Mathf.Clamp01(playerUnit.currentHp / maxHp);
-    }
+    //    float maxHp = Mathf.Max(1, playerUnit.maxHp);
+    //    hpFillImage.fillAmount = Mathf.Clamp01(playerUnit.currentHp / maxHp);
+    //}
 
-    private void RefreshSanBarUI()
-    {
-        if (sanFillImage == null)
-            return;
+    //private void RefreshSanBarUI()
+    //{
+    //    if (sanFillImage == null)
+    //        return;
 
-        if (energySystem == null)
-        {
-            sanFillImage.fillAmount = 0f;
-            return;
-        }
+    //    if (energySystem == null)
+    //    {
+    //        sanFillImage.fillAmount = 0f;
+    //        return;
+    //    }
 
-        float maxSan = Mathf.Max(1, energySystem.maxEnergy);
-        sanFillImage.fillAmount = Mathf.Clamp01(energySystem.currentEnergy / maxSan);
-    }
+    //    float maxSan = Mathf.Max(1, energySystem.maxEnergy);
+    //    sanFillImage.fillAmount = Mathf.Clamp01(energySystem.currentEnergy / maxSan);
+    //}
     public void RefreshStatusUI()
     {
         if (playerStatusBarUI != null)
