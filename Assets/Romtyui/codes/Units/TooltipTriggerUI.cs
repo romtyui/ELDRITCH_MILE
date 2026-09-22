@@ -16,6 +16,9 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
     [Header("Position")]
     public TooltipAnchorSide preferredSide = TooltipAnchorSide.Left;
 
+    [Tooltip("此 Tooltip 額外的位置偏移。X 正數向右，Y 正數向上")]
+    public Vector2 positionOffset = Vector2.zero;
+
     [Header("Open Mode")]
     public TooltipOpenMode openMode = TooltipOpenMode.Hover;
 
@@ -29,13 +32,17 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     private static TooltipTriggerUI currentClickedTooltip;
 
-    public void SetEntries(List<TooltipEntry> newEntries, TooltipAnchorSide side = TooltipAnchorSide.Left)
+    public void SetEntries(List<TooltipEntry> newEntries)
+    {
+        entries = newEntries;
+    }
+
+    public void SetEntries(List<TooltipEntry> newEntries, TooltipAnchorSide side)
     {
         entries = newEntries;
         preferredSide = side;
     }
 
-    // «O¯dÂÂª© SetTooltip¡AÁ×§K EnemyUnit / CardViewUI / StatusIconUI ÂÂ©I¥s³ø¿ù
     public void SetTooltip(string title, string body, string keyword = "")
     {
         List<TooltipEntry> newEntries = new List<TooltipEntry>();
@@ -45,10 +52,10 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
             newEntries.Add(new TooltipEntry(title, body));
 
             if (!string.IsNullOrWhiteSpace(keyword))
-                newEntries.Add(new TooltipEntry("»¡©ú", keyword));
+                newEntries.Add(new TooltipEntry("說明", keyword));
         }
 
-        SetEntries(newEntries, preferredSide);
+        SetEntries(newEntries);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -88,7 +95,6 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
         }
 
         CloseCurrentClickedTooltip();
-
         ShowTooltip();
 
         isOpen = true;
@@ -106,16 +112,14 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
         if (TooltipUI.Instance == null)
             return;
 
-        RectTransform rect = targetRect != null
-            ? targetRect
-            : transform as RectTransform;
+        RectTransform rect = targetRect != null ? targetRect : transform as RectTransform;
 
         if (rect == null)
             return;
 
-        TooltipUI.Instance.Show(entries, rect, preferredSide);
+        bool showClickBlocker = openMode == TooltipOpenMode.Click;
+        TooltipUI.Instance.Show(entries, rect, preferredSide, positionOffset, showClickBlocker);
     }
-
 
     private void OnDestroy()
     {
@@ -151,6 +155,5 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         if (TooltipUI.Instance != null)
             TooltipUI.Instance.Hide();
-        HideTooltip();
     }
 }

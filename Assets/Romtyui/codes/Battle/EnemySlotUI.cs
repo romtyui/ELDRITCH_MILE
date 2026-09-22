@@ -89,16 +89,10 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
         if (visualAnimationController == null)
             visualAnimationController = gameObject.AddComponent<EnemyVisualAnimationController>();
         if (intentTooltipTrigger != null)
-        {
             intentTooltipTrigger.openMode = TooltipOpenMode.Click;
-            intentTooltipTrigger.preferredSide = TooltipAnchorSide.Left;
-        }
 
         if (statusTooltipTrigger != null)
-        {
             statusTooltipTrigger.openMode = TooltipOpenMode.Click;
-            statusTooltipTrigger.preferredSide = TooltipAnchorSide.Left;
-        }
     }
 
     private void ApplyTargetFrameSettings(EnemyData enemyData)
@@ -298,7 +292,7 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
         if (intent == null)
         {
-            intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+            intentTooltipTrigger.SetEntries(entries);
             return;
         }
 
@@ -354,7 +348,7 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
             entries.Add(new TooltipEntry(title, body));
         }
 
-        intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+        intentTooltipTrigger.SetEntries(entries);
     }
     private void RefreshStatusTooltip()
     {
@@ -378,7 +372,7 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
                 entries.Add(BuildStatusTooltipEntry(statusType, amount));
             }
 
-            statusTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+            statusTooltipTrigger.SetEntries(entries);
         }
 
         enemyUnit.RefreshStatusIconUI();

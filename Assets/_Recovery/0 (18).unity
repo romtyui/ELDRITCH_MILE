@@ -3437,7 +3437,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.8639505, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6107,7 +6107,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 292422262}
   preferredSide: 4
-  positionOffset: {x: 120, y: -70}
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -6801,7 +6800,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1378230563}
   preferredSide: 4
-  positionOffset: {x: 160, y: -70}
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -10122,7 +10120,7 @@ Transform:
   m_GameObject: {fileID: 428500116}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -450, y: -270, z: 0}
+  m_LocalPosition: {x: -449.9999, y: -270, z: 0.000015258789}
   m_LocalScale: {x: 1.0000197, y: 1.0000197, z: 1.0000197}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -14725,7 +14723,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1438092641}
   preferredSide: 4
-  positionOffset: {x: 0, y: -70}
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -15962,16 +15959,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 725451374}
-  m_LocalRotation: {x: -0, y: -0, z: 0.5908393, w: -0.8067893}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1294764177}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -1152.433}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -152.26596, y: 154.03627}
+  m_AnchoredPosition: {x: -9.1219, y: 349.5}
   m_SizeDelta: {x: 410.0481, y: 136.19}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &725451376
@@ -16621,7 +16618,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.8639505, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -29449,13 +29446,13 @@ MonoBehaviour:
   maxHp: 50
   currentHp: 0
   block: 0
-  inspectorStatuses: []
   isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
   isCharging: 0
   chargeValue: 0
   chargeTurnsLeft: 0
+  inspectorStatuses: []
   statusIconRoot: {fileID: 1749557557}
   statusIconDatabase: {fileID: 11400000, guid: 5356eca61d8e2cd41a46f703fe013546, type: 2}
   statusIconPrefab: {fileID: 5204375593199812058, guid: 9d62f1c58d1e5094f9dd30d97e685dd4, type: 3}
@@ -29546,8 +29543,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1113497937}
-  preferredSide: 3
-  positionOffset: {x: 100, y: 250}
+  preferredSide: 1
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -31726,11 +31722,6 @@ MonoBehaviour:
   container: {fileID: 1152944229}
   contentRoot: {fileID: 1361829240}
   blockTemplate: {fileID: 230630827076521040, guid: dd90dcd4fc48eb54696c5547db71a122, type: 3}
-  windowBackgroundImage: {fileID: 1108438297}
-  leftBackgroundSprite: {fileID: -278059791, guid: fc9972a299e72f94587f5baccd9908a6, type: 3}
-  rightBackgroundSprite: {fileID: 225308305, guid: 6a598581dfd225b4982bfd196c48887a, type: 3}
-  topBackgroundSprite: {fileID: -278059791, guid: fc9972a299e72f94587f5baccd9908a6, type: 3}
-  bottomBackgroundSprite: {fileID: 225308305, guid: 6a598581dfd225b4982bfd196c48887a, type: 3}
   scrollRect: {fileID: 2087643410}
   viewport: {fileID: 2147460814}
   clickBlocker: {fileID: 1335221999}
@@ -38503,7 +38494,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0.8639505, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -40311,13 +40302,13 @@ MonoBehaviour:
   maxHp: 50
   currentHp: 0
   block: 0
-  inspectorStatuses: []
   isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
   isCharging: 0
   chargeValue: 0
   chargeTurnsLeft: 0
+  inspectorStatuses: []
   statusIconRoot: {fileID: 1702379480}
   statusIconDatabase: {fileID: 11400000, guid: 5356eca61d8e2cd41a46f703fe013546, type: 2}
   statusIconPrefab: {fileID: 5204375593199812058, guid: 9d62f1c58d1e5094f9dd30d97e685dd4, type: 3}
@@ -40415,8 +40406,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 919383248}
-  preferredSide: 3
-  positionOffset: {x: 100, y: 200}
+  preferredSide: 1
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -45498,7 +45488,6 @@ MonoBehaviour:
   maxHp: 100
   currentHp: 0
   block: 0
-  inspectorStatuses: []
   isPlayerUnit: 1
 --- !u!4 &1663680721
 Transform:
@@ -52356,7 +52345,7 @@ MonoBehaviour:
   m_BlendStyleIndex: 2
   m_FalloffIntensity: 1
   m_Color: {r: 0.49411765, g: 0.5372549, b: 0.6784314, a: 0.54509807}
-  m_Intensity: 4.3
+  m_Intensity: 5.01
   m_LightVolumeIntensity: 0
   m_LightVolumeEnabled: 0
   m_ApplyToSortingLayers: 000000002947e1bd5931f213953eb239b55d0a24
@@ -60628,13 +60617,13 @@ MonoBehaviour:
   maxHp: 100
   currentHp: 0
   block: 0
-  inspectorStatuses: []
   isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
   isCharging: 0
   chargeValue: 0
   chargeTurnsLeft: 0
+  inspectorStatuses: []
   statusIconRoot: {fileID: 21368317}
   statusIconDatabase: {fileID: 11400000, guid: 5356eca61d8e2cd41a46f703fe013546, type: 2}
   statusIconPrefab: {fileID: 5204375593199812058, guid: 9d62f1c58d1e5094f9dd30d97e685dd4, type: 3}
@@ -60725,8 +60714,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1487619537}
-  preferredSide: 3
-  positionOffset: {x: 120, y: 0}
+  preferredSide: 1
   openMode: 1
   stopEventPropagation: 0
   entries: []

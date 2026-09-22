@@ -2,6 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public class BattleUnitStatusDebugEntry
+{
+    public StatusType statusType;
+    public int amount;
+}
+
 public class BattleUnit : MonoBehaviour
 {
     public string unitName;
@@ -12,6 +19,9 @@ public class BattleUnit : MonoBehaviour
     public event Action OnHpChanged;
     public event Action OnStatusChanged;
 
+    [Header("Debug - Current Statuses")]
+    [SerializeField] private List<BattleUnitStatusDebugEntry> inspectorStatuses = new List<BattleUnitStatusDebugEntry>();
+
     [Header("Unit Type")]
     public bool isPlayerUnit;
 
@@ -21,6 +31,9 @@ public class BattleUnit : MonoBehaviour
     {
         currentHp = maxHp;
         OnHpChanged?.Invoke();
+
+        OnStatusChanged += RefreshInspectorStatuses;
+        RefreshInspectorStatuses();
     }
 
     public Dictionary<StatusType, int> GetAllStatuses()
@@ -33,7 +46,28 @@ public class BattleUnit : MonoBehaviour
         ResolveRegenerationAtTurnStart();
         ResolveHardenAtTurnStart();
     }
+    [ContextMenu("Refresh Inspector Statuses")]
+    public void RefreshInspectorStatuses()
+    {
+        inspectorStatuses.Clear();
 
+        Array statusValues = Enum.GetValues(typeof(StatusType));
+
+        for (int i = 0; i < statusValues.Length; i++)
+        {
+            StatusType statusType = (StatusType)statusValues.GetValue(i);
+            int amount = GetStatus(statusType);
+
+            if (amount <= 0)
+                continue;
+
+            inspectorStatuses.Add(new BattleUnitStatusDebugEntry
+            {
+                statusType = statusType,
+                amount = amount
+            });
+        }
+    }
     public virtual void OnTurnEnd()
     {
         ResolvePoisonAtTurnStart();
@@ -658,5 +692,10 @@ public class BattleUnit : MonoBehaviour
     protected virtual void Die()
     {
         Debug.Log($"{unitName} 死亡");
+    }
+
+    protected virtual void OnDestroy()
+    {
+        OnStatusChanged -= RefreshInspectorStatuses;
     }
 }

@@ -5,12 +5,12 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-[System.Serializable]
-public class EnemyStatusDebugEntry
-{
-    public StatusType statusType;
-    public int amount;
-}
+//[System.Serializable]
+//public class EnemyStatusDebugEntry
+//{
+//    public StatusType statusType;
+//    public int amount;
+//}
 
 public class EnemyUnit : BattleUnit
 {
@@ -21,9 +21,9 @@ public class EnemyUnit : BattleUnit
     public int chargeValue;
     public int chargeTurnsLeft;
 
-    [Header("Debug - Current Statuses")]
-    [SerializeField]
-    private List<EnemyStatusDebugEntry> inspectorStatuses = new List<EnemyStatusDebugEntry>();
+    //[Header("Debug - Current Statuses")]
+    //[SerializeField]
+    //private List<EnemyStatusDebugEntry> inspectorStatuses = new List<EnemyStatusDebugEntry>();
     [Header("Enemy Status Icon UI")]
     [Tooltip("怪物狀態 Icon 生成位置。建議這個物件上放 Horizontal Layout Group 或 Vertical Layout Group")]
     public Transform statusIconRoot;
@@ -179,7 +179,7 @@ public class EnemyUnit : BattleUnit
 
         RefreshIntentUI();
         RefreshIntentTooltip();
-        RefreshInspectorStatuses();
+        //RefreshInspectorStatuses();
 
         Debug.Log($"[{unitName}] 開始蓄力，蓄力值 = {chargeValue}，倒數 = {chargeTurnsLeft}");
     }
@@ -303,7 +303,7 @@ public class EnemyUnit : BattleUnit
         if (TryGetChargeTooltip(out chargeEntry))
         {
             entries.Add(chargeEntry);
-            intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+            intentTooltipTrigger.SetEntries(entries);
             return;
         }
 
@@ -311,7 +311,7 @@ public class EnemyUnit : BattleUnit
 
         if (intent == null)
         {
-            intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+            intentTooltipTrigger.SetEntries(entries);
             return;
         }
 
@@ -350,7 +350,7 @@ public class EnemyUnit : BattleUnit
             entries.Add(new TooltipEntry(title, body));
         }
 
-        intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+        intentTooltipTrigger.SetEntries(entries);
     }
 
     protected override void Awake()
@@ -367,7 +367,7 @@ public class EnemyUnit : BattleUnit
     {
         OnHpChanged += RefreshHpUI;
         OnHpChanged += RefreshBlockUI;
-        OnStatusChanged += RefreshInspectorStatuses;
+        //OnStatusChanged += RefreshInspectorStatuses;
         OnStatusChanged += RefreshStatusIconUI;
 
         RefreshBlockUI();
@@ -379,7 +379,7 @@ public class EnemyUnit : BattleUnit
     {
         OnHpChanged -= RefreshHpUI;
         OnHpChanged -= RefreshBlockUI;
-        OnStatusChanged -= RefreshInspectorStatuses;
+        //OnStatusChanged -= RefreshInspectorStatuses;
         OnStatusChanged -= RefreshStatusIconUI;
 
         if (blockAnimationCoroutine != null)
@@ -531,28 +531,28 @@ public class EnemyUnit : BattleUnit
             maxHpText.text = maxHp.ToString();
     }
 
-    [ContextMenu("Refresh Inspector Statuses")]
-    public void RefreshInspectorStatuses()
-    {
-        inspectorStatuses.Clear();
+    //[ContextMenu("Refresh Inspector Statuses")]
+    //public void RefreshInspectorStatuses()
+    //{
+    //    inspectorStatuses.Clear();
 
-        Array statusValues = Enum.GetValues(typeof(StatusType));
+    //    Array statusValues = Enum.GetValues(typeof(StatusType));
 
-        for (int i = 0; i < statusValues.Length; i++)
-        {
-            StatusType statusType = (StatusType)statusValues.GetValue(i);
-            int amount = GetStatus(statusType);
+    //    for (int i = 0; i < statusValues.Length; i++)
+    //    {
+    //        StatusType statusType = (StatusType)statusValues.GetValue(i);
+    //        int amount = GetStatus(statusType);
 
-            if (amount <= 0)
-                continue;
+    //        if (amount <= 0)
+    //            continue;
 
-            inspectorStatuses.Add(new EnemyStatusDebugEntry
-            {
-                statusType = statusType,
-                amount = amount
-            });
-        }
-    }
+    //        inspectorStatuses.Add(new EnemyStatusDebugEntry
+    //        {
+    //            statusType = statusType,
+    //            amount = amount
+    //        });
+    //    }
+    //}
     public void RefreshStatusIconUI()
     {
         ClearStatusIconUI();
@@ -906,7 +906,7 @@ public class EnemyUnit : BattleUnit
 
                 entries.Add(new TooltipEntry(title, body));
 
-                intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+                intentTooltipTrigger.SetEntries(entries);
             }
         }
 
