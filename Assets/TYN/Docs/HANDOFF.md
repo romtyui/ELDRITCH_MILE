@@ -2943,3 +2943,50 @@ EXIT 淡出 0.25s → EXIT 完全消失才開始 → HP/SAN 淡入 0.3s → 淡�
 - ⚠️ 已經賣掉的不會回來：這是重新進貨，不是還原購買紀錄
 
 實測：重抽三次，食物每次都不同；遺物兩件固定（原因見上）。
+
+## 交接：美術新增的遺物素材，還沒匯入（2026-09-23）
+
+### 素材在哪
+
+`C:\Users\greyl\Downloads\遺物`（**專案外**，22 個檔、12 MB，還沒複製進 Assets）
+11 件遺物 × 2 張：`<名字>.png`（彩色）與 `<名字>白線.png`。全部 2078×1251（橫的）。
+
+### 對得上的既有資料（`Assets/TYN/Core/Items/`）
+
+| 素材 | ItemData id | 專案裡的名字 |
+|---|---|---|
+| 人魚的畫像 | `relic_mermaid_portrait` | 人魚的畫像 |
+| 人魚肉 | `relic_mermaid_flesh` | 人魚肉 |
+| 損壞的引擎 | `relic_broken_engine` | 損壞的引擎 |
+| 撲克牌 | `relic_playing_cards` | 撲克牌 |
+| 斷裂的魚竿 | `relic_broken_rod` | **斷裂的釣竿**（名字略不同，同一件） |
+| 月之蟾蜍 | `relic_moon_toad` | 月之蟾蜍 |
+| 染血的魚叉 | `relic_bloody_harpoon` | 染血的魚叉 |
+| 燒毀的樂譜 | `relic_burnt_score` | 燒毀的樂譜 |
+| 紅寶石 | `relic_ruby` | 紅寶石 |
+| 螺湮御守 | `relic_rayen_charm` | 螺湮御守 |
+| 誘惑的餌球 | `relic_lure_bulb` | 誘惑的餌球 |
+
+這 11 件目前 **icon 與 shelfIcon 都是空的**，所以快捷欄用預設魚頭圖、貨架是色塊。
+
+### 匯入時要注意
+
+- **哪張放哪一格**（照既有的 `relic_boat_key`、`relic_harpoon`）：
+  `icon` = **白線版**（持有中、快捷欄）、`shelfIcon` = **彩色版**（商店貨架）
+- ⚠️ **素材是橫的 2078×1251，持有欄的格子是方的。** 「貪婪的大口」當初就是為此換成方形裁切版
+  （見上面〈遺物欄 fallbackIcon〉那段）。匯入前要先確認要不要裁方，或讓美術給方形版
+- 匯入設定照現有遺物圖：Sprite（2D and UI）。放 `Assets/TYN/UI/` 底下對應資料夾
+- 素材檔名是中文，複製進專案後 meta 一旦產生就不要再改名
+
+### 順手要處理的兩件事
+
+1. `relic_glowing_fishhead_can`（長名字罐頭，測跑馬燈用的）**現在每間店都會出現** ——
+   遺物池符合條件的只有它和人魚的畫像。不要它出現在正式流程就加 `NoEffect` 標籤。**等使用者決定**
+2. 18 件 Curio 裡只有 `relic_mermaid_portrait` 有效果，其餘都掛 `NoEffect`；
+   效果補上之後要把 `NoEffect` 拿掉，商店才抽得到（`Loot_Sub_Relics` 是排除 `NoEffect` 的）
+
+### 進度狀態
+
+`recovery-progress` 分支**領先 origin 40 個 commit**（還沒 push）。
+工作目錄乾淨；只有 TMP 字型快取、`ProjectVersion.txt`（只差 Unity 修訂號）與 Unity 自動產生的
+`ProjectAuditorSettings.asset` 沒有納入版控。
