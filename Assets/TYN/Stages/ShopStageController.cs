@@ -85,6 +85,18 @@ public class ShopStageController : StageController
 
     private readonly PanelToggle askToggle = new PanelToggle();
 
+    [Header("購買確認")]
+    [Tooltip("點商品之後跳出來的「要買嗎？」視窗。\n\n" +
+             "留空 = 退回舊行為（**點一下直接成交**）。舊行為誤觸就是直接花錢，\n" +
+             "留這條退路只是為了不讓沒接好的場景整個買不了東西")]
+    public ShopPurchasePanelUI purchasePanel;
+
+    [Tooltip("視窗裡問的那句話。{0} = 商品名、{1} = 價格")]
+    public string askFormat = "「{0}」，{1} 塊。要嗎？";
+
+    [Tooltip("錢不夠時視窗裡顯示的話。YES 會同時變灰按不下去")]
+    public string cannotAffordAskLine = "……這個你買不起。";
+
     [Header("台詞")]
     [Tooltip("成交時的備援台詞。{0} = 商品名。\n\n" +
              "**角色本身有 Purchase Lines 的話會優先用角色的** ——\n" +
@@ -200,6 +212,7 @@ public class ShopStageController : StageController
         EldritchMile.UI.SharedExitUI.Instance?.Hide();
 
         askToggle.Set(leaveAskPanel, false);
+        if (purchasePanel != null) purchasePanel.HideImmediate();
 
         // 轉場要用 Immediate —— Hide() 會播縮回去的動作，但 Stage 這一刻就要卸載了，
         // 動作播不完，殘影會被帶到下一個畫面
@@ -290,13 +303,61 @@ public class ShopStageController : StageController
     {
         if (slot == null || slot.IsEmpty || slot.SoldOut || leaving) return;
 
-        string name = GameFlowManager.ItemName(slot.ItemId);
-
         if (run == null)
         {
             Debug.LogWarning("[商店] 沒有 RunContext，買不了東西");
             return;
         }
+
+        // 沒接視窗就退回舊行為：點一下直接成交
+        if (purchasePanel == null)
+        {
+            DoPurchase(slot);
+            return;
+        }
+
+        if (purchasePanel.IsOpen) return;
+
+        string itemName = GameFlowManager.ItemName(slot.ItemId);
+        bool canAfford = run.money >= slot.Price;
+
+        string line = canAfford
+            ? string.Format(askFormat, itemName, slot.Price)
+            : cannotAffordAskLine;
+
+        // ⚠️ 閉包抓的是 slot，不是 id —— 賣掉要標記的是**這一格**。
+        //    視窗開著的時候貨架點不到（Dimmer 吃掉所有點擊），所以不會錯格
+        ShopSlotUI target = slot;
+
+        // EXIT 要收回去：視窗蓋住它之後它收不到 OnPointerExit，會卡在伸出來的狀態
+        if (exitTab != null) exitTab.SetShown(false);
+
+        purchasePanel.Open(
+            GameFlowManager.Item(slot.ItemId),
+            slot.Price,
+            SpeakerName(),
+            line,
+            canAfford,
+            delegate { DoPurchase(target); },
+            null);
+    }
+
+    /// <summary>店主叫什麼。沒有角色資料就用節點的名字。</summary>
+    private string SpeakerName()
+    {
+        CharacterData c = shopkeeper != null ? shopkeeper.Character : null;
+        if (c != null && !string.IsNullOrEmpty(c.displayName)) return c.displayName;
+        return "";
+    }
+
+    /// <summary>
+    /// 真的成交。**錢在這裡才扣** —— 視窗只是問，按了 YES 才動到存檔。
+    /// </summary>
+    private void DoPurchase(ShopSlotUI slot)
+    {
+        if (slot == null || slot.IsEmpty || slot.SoldOut || leaving) return;
+
+        string name = GameFlowManager.ItemName(slot.ItemId);
 
         // ⚠️ 先確認付得起再扣。SpendMoney 本身也是全有或全無，
         //    這裡再判一次是為了「付不起」時要說話而不是靜靜地什麼都沒發生

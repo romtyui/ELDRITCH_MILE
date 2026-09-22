@@ -1,0 +1,251 @@
+using System;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+
+namespace EldritchMile.Shop
+{
+    using EldritchMile.Core;
+
+    /// <summary>
+    /// 點了貨架上的商品之後跳出來的「要買嗎？」視窗。
+    ///
+    /// ────────────────────────────────────────────────────────
+    /// 【為什麼要有這一步】（2026-09-23 美術改版）
+    /// 舊流程是**點一下就成交** —— 扣錢、進背包，中間沒有任何確認。
+    /// 誤觸就是直接花錢，而且玩家沒機會看清楚自己買的是什麼。
+    /// 新流程照美術的示意圖：點商品 → 跳視窗看清楚 → YES 才扣錢。
+    ///
+    /// 【它自己有一層畫布】`Canvas` + `overrideSorting`，排序 550。
+    /// 比 Canvas_HUD（400）高，所以快捷欄、EXIT 都會被蓋住 ——
+    /// 這是故意的：視窗開著的時候不應該還能按到別的東西。
+    /// 滿版的 Dimmer 也會吃掉所有點擊，貨架點不到。
+    ///
+    /// 【商品長什麼樣】分兩種：
+    ///   · 武器（`grantsCard` 有東西）→ 疊出卡牌（卡面／武器／卡框三層）
+    ///   · 其他（遺物、食物）→ 直接顯示彩色圖（`ShelfIcon`）
+    /// 卡牌三層的相對比例抄自 Romtyui 的 `card_template`，但**這裡不壓扁** ——
+    /// 戰鬥裡那個 prefab 把 768x1166 的卡框顯示成接近正方形，
+    /// 美術的示意圖是照卡框原本的長寬比畫的，所以這裡用原比例。
+    ///
+    /// ⚠️ 黑色對話框與右上角的 X 目前是**頂替圖**（美術還沒給）。
+    /// 換圖的時候只要換 sprite，版面不用重排。
+    /// </summary>
+    public class ShopPurchasePanelUI : MonoBehaviour
+    {
+        [Header("元件")]
+        public CanvasGroup group;
+
+        [Tooltip("滿版的吃點擊層。**不能拿掉** —— 沒有它玩家可以在視窗開著時點到貨架")]
+        public Image dimmer;
+
+        [Header("商品外觀")]
+        [Tooltip("武器卡的三層疊在這個節點底下。不是武器時整個關掉")]
+        public RectTransform cardRoot;
+
+        public Image cardFaceImage;
+        public Image cardArtworkImage;
+        public Image cardFrameImage;
+
+        [Tooltip("不是武器時顯示的彩色圖（遺物、食物）。用 ShelfIcon，不是持有欄的白線版")]
+        public Image plainImage;
+
+        [Header("文字")]
+        public TextMeshProUGUI speakerText;
+        public TextMeshProUGUI priceText;
+        public TextMeshProUGUI bodyText;
+
+        [Header("按鈕")]
+        public Button yesButton;
+        public Button noButton;
+
+        [Tooltip("右上角的 X。跟 NO 是同一件事，只是位置不同")]
+        public Button closeButton;
+
+        [Header("動作")]
+        [Min(0f)] public float fadeSeconds = 0.12f;
+
+        [Tooltip("自己這層畫布的排序。要比 Canvas_HUD（400）高，視窗才蓋得住快捷欄與 EXIT")]
+        public int sortingOrder = 550;
+
+        public bool IsOpen { get; private set; }
+
+        private Action onYes;
+        private Action onNo;
+        private Coroutine fade;
+
+        private void Awake()
+        {
+            if (group == null) group = GetComponent<CanvasGroup>();
+
+            // ⚠️ `overrideSorting` 要在**執行時**開。
+            //    prefab 資產裡沒有上層畫布，Unity 會把它自動關掉 ——
+            //    存檔時看起來設好了，載進場景還是 false。
+            var canvas = GetComponent<Canvas>();
+            if (canvas != null)
+            {
+                canvas.overrideSorting = true;
+                canvas.sortingOrder = sortingOrder;
+            }
+
+            if (yesButton != null) yesButton.onClick.AddListener(HandleYes);
+            if (noButton != null) noButton.onClick.AddListener(HandleNo);
+            if (closeButton != null) closeButton.onClick.AddListener(HandleNo);
+
+            HideImmediate();
+        }
+
+        private void OnDestroy()
+        {
+            if (yesButton != null) yesButton.onClick.RemoveListener(HandleYes);
+            if (noButton != null) noButton.onClick.RemoveListener(HandleNo);
+            if (closeButton != null) closeButton.onClick.RemoveListener(HandleNo);
+        }
+
+        /// <summary>
+        /// 打開視窗。
+        /// </summary>
+        /// <param name="canAfford">
+        /// 付不起的時候 YES 會變灰且按不下去 —— **視窗照樣打開**。
+        /// 直接什麼都不發生的話，玩家會以為是點壞了。
+        /// </param>
+        public void Open(ItemData data, int price, string speaker, string line, bool canAfford,
+                         Action yes, Action no)
+        {
+            onYes = yes;
+            onNo = no;
+
+            if (speakerText != null) speakerText.text = speaker ?? "";
+            if (priceText != null) priceText.text = price.ToString();
+            if (bodyText != null) bodyText.text = line ?? "";
+
+            ShowVisual(data);
+
+            if (yesButton != null)
+            {
+                yesButton.interactable = canAfford;
+                var g = yesButton.GetComponent<CanvasGroup>();
+                if (g == null) g = yesButton.gameObject.AddComponent<CanvasGroup>();
+                g.alpha = canAfford ? 1f : 0.4f;
+            }
+
+            IsOpen = true;
+            gameObject.SetActive(true);
+            StartFade(1f, true);
+        }
+
+        public void Close()
+        {
+            if (!IsOpen) return;
+            IsOpen = false;
+            onYes = null;
+            onNo = null;
+            StartFade(0f, false);
+        }
+
+        /// <summary>不播動畫直接收起來。轉場用 —— 動畫播不完會把殘影帶到下一個畫面。</summary>
+        public void HideImmediate()
+        {
+            IsOpen = false;
+            onYes = null;
+            onNo = null;
+            if (fade != null) { StopCoroutine(fade); fade = null; }
+            if (group != null)
+            {
+                group.alpha = 0f;
+                group.blocksRaycasts = false;
+                group.interactable = false;
+            }
+            gameObject.SetActive(false);
+        }
+
+        // ==========================================
+        private void HandleYes()
+        {
+            Action a = onYes;
+            Close();
+            if (a != null) a();
+        }
+
+        private void HandleNo()
+        {
+            Action a = onNo;
+            Close();
+            if (a != null) a();
+        }
+
+        /// <summary>武器就疊卡牌，其他就顯示彩色圖。</summary>
+        private void ShowVisual(ItemData data)
+        {
+            CardData card = data != null ? data.grantsCard : null;
+            CardVisualData vis = card != null ? card.visualData : null;
+
+            bool asCard = vis != null;
+
+            if (cardRoot != null) cardRoot.gameObject.SetActive(asCard);
+            if (plainImage != null) plainImage.gameObject.SetActive(!asCard);
+
+            if (asCard)
+            {
+                Apply(cardFaceImage, vis.cardFaceSprite);
+                Apply(cardArtworkImage, vis.artworkSprite);
+                Apply(cardFrameImage, vis.cardFrameSprite);
+                return;
+            }
+
+            if (plainImage != null)
+            {
+                Sprite s = data != null ? data.ShelfIcon : null;
+                plainImage.sprite = s;
+                plainImage.enabled = s != null;
+            }
+        }
+
+        private static void Apply(Image img, Sprite sprite)
+        {
+            if (img == null) return;
+            img.sprite = sprite;
+            img.enabled = sprite != null;
+        }
+
+        // ==========================================
+        private void StartFade(float target, bool interactive)
+        {
+            if (fade != null) StopCoroutine(fade);
+
+            if (group == null)
+            {
+                gameObject.SetActive(target > 0f);
+                return;
+            }
+
+            group.blocksRaycasts = interactive;
+            group.interactable = interactive;
+            fade = StartCoroutine(FadeTo(target));
+        }
+
+        private IEnumerator FadeTo(float target)
+        {
+            float from = group.alpha;
+
+            if (fadeSeconds > 0f)
+            {
+                float t = 0f;
+                while (t < fadeSeconds)
+                {
+                    // 不吃 timeScale：商店不暫停，但這個視窗的節奏不該被別人影響
+                    t += Time.unscaledDeltaTime;
+                    group.alpha = Mathf.Lerp(from, target, Mathf.Clamp01(t / fadeSeconds));
+                    yield return null;
+                }
+            }
+
+            group.alpha = target;
+            fade = null;
+
+            // 關完才真的停用，不然淡出會被 SetActive(false) 切斷
+            if (target <= 0f) gameObject.SetActive(false);
+        }
+    }
+}

@@ -32,6 +32,10 @@ namespace EldritchMile.Shop
         [Tooltip("價格")]
         public TextMeshProUGUI priceText;
 
+        [Tooltip("價格文字底下那張標籤圖（美術的「價格標」）。跟著價格一起顯示／隱藏 —— "
+                 + "賣掉之後價格會收起來，標籤留著的話架上會浮著一塊空牌子。可留空")]
+        public GameObject priceTag;
+
         [Tooltip("數量。1 個時自動隱藏")]
         public TextMeshProUGUI countText;
 
@@ -100,6 +104,8 @@ namespace EldritchMile.Shop
                 priceText.text = Price.ToString();
             }
 
+            if (priceTag != null) priceTag.SetActive(true);
+
             if (countText != null)
             {
                 countText.gameObject.SetActive(Count > 1);
@@ -151,6 +157,7 @@ namespace EldritchMile.Shop
             if (soldOutOverlay != null) soldOutOverlay.SetActive(false);
             if (labelText != null) labelText.text = "";
             if (priceText != null) priceText.gameObject.SetActive(false);
+            if (priceTag != null) priceTag.SetActive(false);
             if (countText != null) countText.gameObject.SetActive(false);
             if (iconImage != null) iconImage.enabled = false;
 
@@ -168,6 +175,7 @@ namespace EldritchMile.Shop
 
             if (soldOutOverlay != null) soldOutOverlay.SetActive(true);
             if (priceText != null) priceText.gameObject.SetActive(false);
+            if (priceTag != null) priceTag.SetActive(false);
             if (countText != null) countText.gameObject.SetActive(false);
 
             group.alpha = unaffordableAlpha;
