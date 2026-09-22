@@ -1,7 +1,10 @@
 fileFormatVersion: 2
 guid: 6f8a357f319d3bc4fb08fe632c4b7974
 TextureImporter:
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      213: 900269313410012369
+    second: BOOK
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -110,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: "BOOK_\u6309\u9215"
+      name: BOOK
       rect:
         serializedVersion: 2
-        x: 30
-        y: 124
-        width: 2218
-        height: 838
+        x: 32
+        y: 111
+        width: 3168
+        height: 849
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,30 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: df04129bf19d8e040800000000000000
-      internalID: 4677226943297437949
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: "BOOK_\u6536\u8D77"
-      rect:
-        serializedVersion: 2
-        x: 2292
-        y: 106
-        width: 910
-        height: 856
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: a9722c4cad4305a50800000000000000
-      internalID: 6507759575758940058
+      spriteID: 1d41df3bb266e7c00800000000000000
+      internalID: 900269313410012369
       vertices: []
       indices: 
       edges: []
@@ -201,7 +182,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -211,6 +192,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
+      BOOK: 900269313410012369
       "BOOK_\u6309\u9215": 4677226943297437949
       "BOOK_\u6536\u8D77": 6507759575758940058
       "\u5206\u9694\u7DDA_\u77ED": -4038718043549670807
