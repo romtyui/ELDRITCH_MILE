@@ -6107,7 +6107,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 292422262}
   preferredSide: 4
-  positionMode: 0
   positionOffset: {x: -405, y: 340}
   allowAutomaticFallback: 0
   openMode: 1
@@ -6803,7 +6802,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1378230563}
   preferredSide: 4
-  positionMode: 0
   positionOffset: {x: -635, y: 330}
   allowAutomaticFallback: 0
   openMode: 1
@@ -7688,7 +7686,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 0, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14820,7 +14818,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1438092641}
   preferredSide: 4
-  positionMode: 0
   positionOffset: {x: 420, y: 335}
   allowAutomaticFallback: 0
   openMode: 1
@@ -29644,7 +29641,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1113497937}
   preferredSide: 3
-  positionMode: 0
   positionOffset: {x: 165, y: 75}
   allowAutomaticFallback: 0
   openMode: 1
@@ -30688,7 +30684,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -31569,6 +31565,7 @@ RectTransform:
   - {fileID: 134465705}
   - {fileID: 1775657554}
   - {fileID: 567129601}
+  - {fileID: 1152944229}
   - {fileID: 1930022467}
   - {fileID: 778952738}
   - {fileID: 1665138571}
@@ -31577,7 +31574,6 @@ RectTransform:
   - {fileID: 1670107509}
   - {fileID: 106052923}
   - {fileID: 1578066576}
-  - {fileID: 1152944229}
   - {fileID: 462429763}
   - {fileID: 1687150335}
   m_Father: {fileID: 1078236896}
@@ -31855,7 +31851,7 @@ MonoBehaviour:
     oneStatus:
       sprite: {fileID: 469363094, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
       backgroundWidth: 420
-      backgroundHeight: 90
+      backgroundHeight: 160
       backgroundPositionOffset: {x: 0, y: 0}
       windowPositionOffset: {x: 0, y: 0}
     twoStatuses:
@@ -37039,7 +37035,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1382759481}
   preferredSide: 1
-  positionMode: 0
   positionOffset: {x: 160, y: 140}
   allowAutomaticFallback: 0
   openMode: 1
@@ -40634,7 +40629,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 919383248}
   preferredSide: 3
-  positionMode: 0
   positionOffset: {x: -350, y: 140}
   allowAutomaticFallback: 0
   openMode: 1
@@ -60946,7 +60940,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1487619537}
   preferredSide: 3
-  positionMode: 0
   positionOffset: {x: 405, y: 170}
   allowAutomaticFallback: 0
   openMode: 1

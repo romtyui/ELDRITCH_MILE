@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: "\u73FE\u5728\u5361\u7247\u7684\u521D\u59CB\u4F4D\u7F6E\u662F\u4E0D\u56FA\u5B9A\u7684\u57FA\u65BC\u624B\u724C\u529F\u80FD\uFF0C\u6240\u4EE5\u73FE\u5728\u7D66\u4E88\u57FA\u790E\u4F4D\u7F6E\u7684\u529F\u80FD\u53EF\u80FD\u4E0D\u592A\u9069\u7528\u6240\u4EE5\u6211\u60F3\u6539\u6210\u6839\u64DA\u639B\u8457trrigger\u7684\u7269\u4EF6\u52A0\u4E0A\u504F\u79FB\u503C\u53BB\u8ABF\u6574"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -92,11 +92,11 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 19.4
+  m_fontSize: 4.3
   m_fontSizeBase: 11.62
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 18
+  m_fontSizeMin: 3
   m_fontSizeMax: 20
   m_fontStyle: 0
   m_HorizontalAlignment: 1
@@ -131,7 +131,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 12.914734, y: 0, z: 22.29712, w: 0}
+  m_margin: {x: 12.914734, y: 0, z: 22.29712, w: 19.585754}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -202,7 +202,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: "\u73FE\u5728\u5361\u7247\u7684\u521D\u59CB\u4F4D\u7F6E\u662F\u4E0D\u56FA\u5B9A\u7684\u57FA\u65BC\u624B\u724C\u529F\u80FD\uFF0C"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -229,11 +229,11 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 19.25
+  m_fontSize: 9.15
   m_fontSizeBase: 11.62
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 18
+  m_fontSizeMin: 3
   m_fontSizeMax: 20
   m_fontStyle: 0
   m_HorizontalAlignment: 1
@@ -268,7 +268,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 12.2057495, y: 0, z: 23.577637, w: -2.5622864}
+  m_margin: {x: 12.2057495, y: -17.326569, z: 23.577637, w: -2.5622864}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -389,7 +389,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &692691584134639449
 RectTransform:
   m_ObjectHideFlags: 0
@@ -451,8 +451,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
   m_Padding:
-    m_Left: 40
-    m_Right: 20
+    m_Left: 22
+    m_Right: 24
     m_Top: 8
     m_Bottom: 8
   m_ChildAlignment: 0

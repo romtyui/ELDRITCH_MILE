@@ -535,8 +535,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 369921960, guid: 6b5136b93d1d0104b839a45db88c74f4, type: 3}
-  m_Type: 0
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -3192,7 +3192,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 535df2eb1701db14ea6d68a703d853d5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6107,9 +6107,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 292422262}
   preferredSide: 4
-  positionMode: 0
-  positionOffset: {x: -405, y: 340}
-  allowAutomaticFallback: 0
+  positionOffset: {x: 120, y: -70}
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -6803,9 +6801,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1378230563}
   preferredSide: 4
-  positionMode: 0
-  positionOffset: {x: -635, y: 330}
-  allowAutomaticFallback: 0
+  positionOffset: {x: 160, y: -70}
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -8618,8 +8614,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: -5}
-  m_SizeDelta: {x: 20, y: 10}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &387906809
 MonoBehaviour:
@@ -8641,8 +8637,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 369921960, guid: 6b5136b93d1d0104b839a45db88c74f4, type: 3}
-  m_Type: 0
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -12196,7 +12192,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 535df2eb1701db14ea6d68a703d853d5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -14820,9 +14816,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1438092641}
   preferredSide: 4
-  positionMode: 0
-  positionOffset: {x: 420, y: 335}
-  allowAutomaticFallback: 0
+  positionOffset: {x: 0, y: -70}
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -16001,7 +15995,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 535df2eb1701db14ea6d68a703d853d5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -16068,7 +16062,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -1152.433}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 360}
+  m_AnchoredPosition: {x: -152.26596, y: 154.03627}
   m_SizeDelta: {x: 410.0481, y: 136.19}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &725451376
@@ -29644,9 +29638,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1113497937}
   preferredSide: 3
-  positionMode: 0
-  positionOffset: {x: 165, y: 75}
-  allowAutomaticFallback: 0
+  positionOffset: {x: 100, y: 250}
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -30171,7 +30163,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 535df2eb1701db14ea6d68a703d853d5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -30671,8 +30663,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -4.671997}
-  m_SizeDelta: {x: 420, y: 369.34}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 420, y: 360}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1108438297
 MonoBehaviour:
@@ -30688,13 +30680,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -197775689, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
+  m_Sprite: {fileID: 225308305, guid: 6a598581dfd225b4982bfd196c48887a, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -31569,6 +31561,7 @@ RectTransform:
   - {fileID: 134465705}
   - {fileID: 1775657554}
   - {fileID: 567129601}
+  - {fileID: 1152944229}
   - {fileID: 1930022467}
   - {fileID: 778952738}
   - {fileID: 1665138571}
@@ -31577,7 +31570,6 @@ RectTransform:
   - {fileID: 1670107509}
   - {fileID: 106052923}
   - {fileID: 1578066576}
-  - {fileID: 1152944229}
   - {fileID: 462429763}
   - {fileID: 1687150335}
   m_Father: {fileID: 1078236896}
@@ -31826,117 +31818,20 @@ MonoBehaviour:
   contentRoot: {fileID: 1361829240}
   blockTemplate: {fileID: 230630827076521040, guid: dd90dcd4fc48eb54696c5547db71a122, type: 3}
   windowBackgroundImage: {fileID: 1108438297}
-  leftBackgrounds:
-    oneStatus:
-      sprite: {fileID: -662553368, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 480
-      backgroundHeight: 120
-      backgroundPositionOffset: {x: 30, y: 0}
-      windowPositionOffset: {x: 120, y: -100}
-    twoStatuses:
-      sprite: {fileID: -2138697802, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 480
-      backgroundHeight: 200
-      backgroundPositionOffset: {x: 30, y: 0}
-      windowPositionOffset: {x: 120, y: -100}
-    threeStatuses:
-      sprite: {fileID: -397536359, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 480
-      backgroundHeight: 280
-      backgroundPositionOffset: {x: 30, y: 0}
-      windowPositionOffset: {x: 120, y: -100}
-    fourOrMoreStatuses:
-      sprite: {fileID: -197775689, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 480
-      backgroundHeight: 360
-      backgroundPositionOffset: {x: 30, y: 0}
-      windowPositionOffset: {x: 120, y: -100}
-  rightBackgrounds:
-    oneStatus:
-      sprite: {fileID: 469363094, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 90
-      backgroundPositionOffset: {x: 0, y: 0}
-      windowPositionOffset: {x: 0, y: 0}
-    twoStatuses:
-      sprite: {fileID: -2115889288, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 160
-      backgroundPositionOffset: {x: 0, y: 0}
-      windowPositionOffset: {x: 0, y: 0}
-    threeStatuses:
-      sprite: {fileID: 75507214, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 160
-      backgroundPositionOffset: {x: 0, y: 0}
-      windowPositionOffset: {x: 0, y: 0}
-    fourOrMoreStatuses:
-      sprite: {fileID: 393886070, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 160
-      backgroundPositionOffset: {x: 0, y: 0}
-      windowPositionOffset: {x: 0, y: 0}
-  topBackgrounds:
-    oneStatus:
-      sprite: {fileID: 989304125, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 160
-      backgroundPositionOffset: {x: 0, y: 0}
-      windowPositionOffset: {x: 0, y: 0}
-    twoStatuses:
-      sprite: {fileID: -21026367, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 240
-      backgroundPositionOffset: {x: 0, y: 0}
-      windowPositionOffset: {x: 0, y: 70}
-    threeStatuses:
-      sprite: {fileID: 551389312, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 320
-      backgroundPositionOffset: {x: 0, y: 0}
-      windowPositionOffset: {x: 0, y: 160}
-    fourOrMoreStatuses:
-      sprite: {fileID: -1905122736, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 400
-      backgroundPositionOffset: {x: 0, y: 0}
-      windowPositionOffset: {x: 0, y: 240}
-  bottomBackgrounds:
-    oneStatus:
-      sprite: {fileID: -2090021458, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 160
-      backgroundPositionOffset: {x: 15, y: 45}
-      windowPositionOffset: {x: 0, y: 0}
-    twoStatuses:
-      sprite: {fileID: 739636789, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 200
-      backgroundPositionOffset: {x: 15, y: 30}
-      windowPositionOffset: {x: 0, y: 0}
-    threeStatuses:
-      sprite: {fileID: -1052421199, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 260
-      backgroundPositionOffset: {x: 15, y: 30}
-      windowPositionOffset: {x: 0, y: 0}
-    fourOrMoreStatuses:
-      sprite: {fileID: -1411848712, guid: 5e5db654ddf8d3042898d40e7c02a7fa, type: 3}
-      backgroundWidth: 420
-      backgroundHeight: 330
-      backgroundPositionOffset: {x: 15, y: 30}
-      windowPositionOffset: {x: 0, y: 0}
+  leftBackgroundSprite: {fileID: -278059791, guid: fc9972a299e72f94587f5baccd9908a6, type: 3}
+  rightBackgroundSprite: {fileID: 225308305, guid: 6a598581dfd225b4982bfd196c48887a, type: 3}
+  topBackgroundSprite: {fileID: -278059791, guid: fc9972a299e72f94587f5baccd9908a6, type: 3}
+  bottomBackgroundSprite: {fileID: 225308305, guid: 6a598581dfd225b4982bfd196c48887a, type: 3}
   scrollRect: {fileID: 2087643410}
   viewport: {fileID: 2147460814}
   clickBlocker: {fileID: 1335221999}
   tooltipWidth: 420
-  tooltipHeight: 330
-  frameVerticalPadding: 12
+  minHeight: 100
+  maxHeight: 360
+  frameVerticalPadding: 24
   sideOffset: {x: 0, y: 0}
   verticalOffset: {x: 0, y: 20}
   screenPadding: {x: 20, y: 20}
-  useFixedWindowY: 1
-  fixedWindowY: 0
   clampToCanvas: 1
   forceTopLeftPivot: 1
 --- !u!1 &1153238458
@@ -32327,7 +32222,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 535df2eb1701db14ea6d68a703d853d5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -34957,7 +34852,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 535df2eb1701db14ea6d68a703d853d5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -36842,7 +36737,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 535df2eb1701db14ea6d68a703d853d5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -37039,9 +36934,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1382759481}
   preferredSide: 1
-  positionMode: 0
-  positionOffset: {x: 160, y: 140}
-  allowAutomaticFallback: 0
+  positionOffset: {x: 0, y: 0}
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -40031,7 +39924,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 535df2eb1701db14ea6d68a703d853d5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -40634,9 +40527,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 919383248}
   preferredSide: 3
-  positionMode: 0
-  positionOffset: {x: -350, y: 140}
-  allowAutomaticFallback: 0
+  positionOffset: {x: 100, y: 200}
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -51368,7 +51259,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 535df2eb1701db14ea6d68a703d853d5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -59620,7 +59511,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 535df2eb1701db14ea6d68a703d853d5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -60018,8 +59909,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -6.341095}
-  m_SizeDelta: {x: 0, y: -12.6821}
+  m_AnchoredPosition: {x: 0, y: -24.344414}
+  m_SizeDelta: {x: 0, y: -48.6888}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2087643410
 MonoBehaviour:
@@ -60946,9 +60837,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1487619537}
   preferredSide: 3
-  positionMode: 0
-  positionOffset: {x: 405, y: 170}
-  allowAutomaticFallback: 0
+  positionOffset: {x: 120, y: 0}
   openMode: 1
   stopEventPropagation: 0
   entries: []

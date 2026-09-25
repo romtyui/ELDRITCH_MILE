@@ -521,7 +521,7 @@ MonoBehaviour:
   sanCorruptionThreshold: 0.4
   sanCorruptionAmount: 1
   sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
-  cardTooltipSide: 3
+  cardTooltipSide: 2
 --- !u!114 &2071348053210116029
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -535,7 +535,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 4293337803333473100}
-  preferredSide: 1
+  preferredSide: 2
+  positionMode: 1
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []

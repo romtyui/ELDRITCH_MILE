@@ -7,6 +7,11 @@ public enum TooltipOpenMode
     Hover,
     Click
 }
+public enum TooltipPositionMode
+{
+    FixedCanvasPosition,
+    RelativeToTrigger
+}
 
 public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
@@ -14,11 +19,16 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
     public RectTransform targetRect;
 
     [Header("Position")]
+    [Tooltip("這個 Trigger 希望使用的方向")]
     public TooltipAnchorSide preferredSide = TooltipAnchorSide.Left;
+    [Tooltip("Fixed Canvas Position 使用固定 Canvas 座標；Relative To Trigger 根據掛載 Trigger 的物件位置計算")]
+    public TooltipPositionMode positionMode = TooltipPositionMode.FixedCanvasPosition;
 
-    [Tooltip("此 Tooltip 額外的位置偏移。X 正數向右，Y 正數向上")]
+    [Tooltip("TooltipContainer 在 Canvas 中的初始座標。X 正數向右，Y 正數向上")]
     public Vector2 positionOffset = Vector2.zero;
 
+    [Tooltip("空間不足時，是否允許 TooltipUI 自動切換到其他方向")]
+    public bool allowAutomaticFallback = false;
     [Header("Open Mode")]
     public TooltipOpenMode openMode = TooltipOpenMode.Hover;
 
@@ -103,22 +113,16 @@ public class TooltipTriggerUI : MonoBehaviour, IPointerEnterHandler, IPointerExi
         if (stopEventPropagation)
             eventData.Use();
     }
-
     public void ShowTooltip()
     {
-        if (entries == null || entries.Count == 0)
-            return;
-
-        if (TooltipUI.Instance == null)
-            return;
+        if (entries == null || entries.Count == 0) return;
+        if (TooltipUI.Instance == null) return;
 
         RectTransform rect = targetRect != null ? targetRect : transform as RectTransform;
-
-        if (rect == null)
-            return;
+        if (positionMode == TooltipPositionMode.RelativeToTrigger && rect == null) return;
 
         bool showClickBlocker = openMode == TooltipOpenMode.Click;
-        TooltipUI.Instance.Show(entries, rect, preferredSide, positionOffset, showClickBlocker);
+        TooltipUI.Instance.Show(entries, rect, preferredSide, positionMode, positionOffset, showClickBlocker);
     }
 
     private void OnDestroy()
