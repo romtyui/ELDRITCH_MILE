@@ -5,7 +5,8 @@ using UnityEngine;
 public class CameraShake : MonoBehaviour
 {
     public static CameraShake Instance;
-
+    private CameraEdgePan edgePan;
+    private bool restoreEdgePanAfterShake;
     [Header("Shake Targets")]
     public List<Transform> shakeTargets = new();
 
@@ -19,6 +20,7 @@ public class CameraShake : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        edgePan = GetComponent<CameraEdgePan>();
         CacheOriginalPositions();
     }
 
@@ -49,13 +51,17 @@ public class CameraShake : MonoBehaviour
 
     public void Shake(float duration, float strength)
     {
-        if (shakeTargets == null || shakeTargets.Count == 0)
-            return;
+        if (shakeTargets == null || shakeTargets.Count == 0) return;
+
+        if (edgePan != null && edgePan.enabled)
+        {
+            restoreEdgePanAfterShake = true;
+            edgePan.enabled = false;
+        }
 
         CacheOriginalPositions();
 
-        if (shakeCoroutine != null)
-            StopCoroutine(shakeCoroutine);
+        if (shakeCoroutine != null) StopCoroutine(shakeCoroutine);
 
         shakeCoroutine = StartCoroutine(ShakeRoutine(duration, strength));
     }
@@ -94,11 +100,11 @@ public class CameraShake : MonoBehaviour
         foreach (var pair in originalPositions)
         {
             Transform target = pair.Key;
-
-            if (target == null)
-                continue;
-
+            if (target == null) continue;
             target.localPosition = pair.Value;
         }
+
+        if (restoreEdgePanAfterShake && edgePan != null) edgePan.enabled = true;
+        restoreEdgePanAfterShake = false;
     }
 }
