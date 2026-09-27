@@ -1,18 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-2544746370820572933
-MonoBehaviour:
-  m_ObjectHideFlags: 11
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
-  version: 10
 --- !u!21 &2100000
 Material:
   serializedVersion: 8
@@ -20,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MAT_MonsterLightDissolve
-  m_Shader: {fileID: -6465566751694194690, guid: fd7b2e804403510488f043fa21bb3cc0, type: 3}
+  m_Name: blur_M
+  m_Shader: {fileID: -6465566751694194690, guid: 3303c9d90da9ca24092dbf37edf6a809, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -32,7 +19,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: _DissolveScale
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -54,18 +41,18 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _DissolveScale: 5
-    - _EdgeFeather: 0.008
-    - _FeatherOpacityBoost: 1.5
-    - _FeatherWidth: 0.01
-    - _FormBlend: 1
-    - _FormSide: 0
-    - _NoiseStrength: 0.3
-    - _RevealLightIntensity: 8.623629
-    - _RevealRadius: 3.158389
+    - _BlurStrengh: 11.53
+    - _Blur_Strengh: 0.005
+    - _ColorMask: 15
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _UIMaskSoftnessX: 1
+    - _UIMaskSoftnessY: 1
     m_Colors:
     - White: {r: 1, g: 1, b: 1, a: 1}
-    - _Freeform_Light_Dot_Product: {r: 0.2126, g: 0.7152, b: 0.0722, a: 0}
-    - _RevealLightPosition: {r: 0.07000001, g: 2.25, b: 0, a: 0}
+    - _ClipRect: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
