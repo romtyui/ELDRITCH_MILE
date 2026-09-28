@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MAT_MonsterDarkDissolve
-  m_Shader: {fileID: -6465566751694194690, guid: fd7b2e804403510488f043fa21bb3cc0, type: 3}
+  m_Name: BattleGlitchFullscreen_M
+  m_Shader: {fileID: -6465566751694194690, guid: 9efea4d0a4b630c4a842771571020ab5, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -41,31 +41,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _DissolveScale: 5
-    - _EdgeFeather: 0.008
-    - _FeatherOpacityBoost: 1.5
-    - _FeatherWidth: 0.01
-    - _FormBlend: 1
-    - _FormSide: 1
-    - _NoiseStrength: 0.3
-    - _RevealLightIntensity: 9
-    - _RevealRadius: 3.158389
+    - _BlockPower: 3
+    - _Speed: 10
+    - _SplitStrength: 0
     m_Colors:
-    - White: {r: 1, g: 1, b: 1, a: 1}
-    - _Freeform_Light_Dot_Product: {r: 0.2126, g: 0.7152, b: 0.0722, a: 0}
-    - _RevealLightPosition: {r: 0.07000001, g: 2.25, b: 0, a: 0}
+    - _BlockCount: {r: 32, g: 18, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &7314490032534923203
-MonoBehaviour:
-  m_ObjectHideFlags: 11
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
-  version: 10

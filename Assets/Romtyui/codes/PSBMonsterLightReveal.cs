@@ -50,6 +50,32 @@ public class PSBMonsterLightReveal : MonoBehaviour
     [Range(0f, 1f)]
     public float sanRatio = 1f;
 
+    [Header("SAN Glitch")]
+    [Tooltip("提供實際 SAN 數值的 BattleManager。")]
+    public BattleManager glitchBattleManager;
+
+    [Tooltip("全螢幕錯位效果實際使用的材質。")]
+    public Material glitchMaterial;
+
+    [Tooltip("Shader Graph 中 Split Strength 的 Reference。")]
+    public string splitStrengthReference = "_SplitStrength";
+
+    [Range(0f, 1f)]
+    [Tooltip("SAN 低於這個比例後才開始增加錯位。例如 0.3 = 30%。")]
+    public float sanGlitchThreshold = 0.3f;
+
+    [Min(0f)]
+    [Tooltip("SAN 高於門檻時的 Split Strength。")]
+    public float minSplitStrength = 0f;
+
+    [Min(0f)]
+    [Tooltip("SAN 降至 0% 時的 Split Strength。")]
+    public float maxSplitStrength = 0.01f;
+
+    [Min(0.01f)]
+    [Tooltip("錯位增加的曲線；1 代表線性。")]
+    public float glitchResponsePower = 1f;
+
     [Header("Form Blend Threshold")]
     [Tooltip("SAN 低於此比例時，只顯示完整黑暗型態。")]
     [Range(0f, 1f)]
@@ -146,6 +172,7 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
         UpdateVisualLight();
         ApplyShaderValues(CalculateFormBlend());
+        UpdateGlitchStrength();
     }
 
     private void Update()
@@ -155,6 +182,31 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
         float formBlend = CalculateFormBlend();
         ApplyShaderValues(formBlend);
+        UpdateGlitchStrength();
+    }
+
+    private void UpdateGlitchStrength()
+    {
+        if (glitchMaterial == null || string.IsNullOrEmpty(splitStrengthReference)) return;
+        if (!glitchMaterial.HasProperty(splitStrengthReference)) return;
+
+        float strength = minSplitStrength;
+
+        if (glitchBattleManager != null && glitchBattleManager.energySystem != null)
+        {
+            EnergySystem energySystem = glitchBattleManager.energySystem;
+
+            if (energySystem.maxEnergy > 0)
+            {
+                float sanRatio = Mathf.Clamp01(energySystem.currentEnergy / (float)energySystem.maxEnergy);
+                float threshold = Mathf.Clamp01(sanGlitchThreshold);
+                float progress = threshold > 0f ? Mathf.InverseLerp(threshold, 0f, sanRatio) : (sanRatio <= 0f ? 1f : 0f);
+                float response = Mathf.Pow(progress, Mathf.Max(0.01f, glitchResponsePower));
+                strength = Mathf.Lerp(minSplitStrength, maxSplitStrength, response);
+            }
+        }
+
+        glitchMaterial.SetFloat(splitStrengthReference, strength);
     }
 
     private float CalculateFormBlend()
