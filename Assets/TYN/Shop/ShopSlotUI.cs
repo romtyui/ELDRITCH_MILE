@@ -46,6 +46,14 @@ namespace EldritchMile.Shop
                  + "只有帶 Curio 標籤的商品會用這張牌 —— 食物、補給還是走 Icon")]
         public EldritchMile.UI.RelicCardView relicCard;
 
+        [Tooltip("武器用的「牌」（卡面＋武器＋卡框三層，資料來自 CardData.visualData）。"
+                 + "留空則武器在架上只會是一塊色塊")]
+        public EldritchMile.UI.BattleCardView battleCard;
+
+        [Tooltip("**沒有美術時**壓在色塊中間的名字。食物現在都沒有牌面，"
+                 + "不顯示名字的話架上就是一排看不出是什麼的方塊。有圖的商品不會顯示這個")]
+        public TextMeshProUGUI placeholderName;
+
         [Header("樣式")]
         [Tooltip("買不起時整格的透明度")]
         [Range(0.1f, 1f)] public float unaffordableAlpha = 0.45f;
@@ -83,6 +91,9 @@ namespace EldritchMile.Shop
 
         /// <summary>這一格現在是用「牌」在顯示（遺物），不是單張 Icon。染色要染整張牌。</summary>
         private bool showingRelicCard;
+
+        /// <summary>同上，武器的那種牌。</summary>
+        private bool showingBattleCard;
 
         private void Awake()
         {
@@ -125,18 +136,27 @@ namespace EldritchMile.Shop
 
             // 收藏品／遺物擺成一張「牌」（底圖＋圖＋外框），其餘照舊用單張 Icon。
             // 判斷用標籤而不是「有沒有 grantsCard」—— 食物也沒有卡，但不該套遺物框
-            showingRelicCard = relicCard != null && data != null && data.HasTag("Curio");
+            // 武器賣的其實是一張戰鬥卡，架上就直接把那張牌疊出來
+            CardData card = data != null ? data.grantsCard : null;
+            CardVisualData visual = card != null ? card.visualData : null;
 
-            if (showingRelicCard)
+            showingBattleCard = battleCard != null && visual != null;
+            showingRelicCard = !showingBattleCard && relicCard != null && data != null && data.HasTag("Curio");
+
+            if (battleCard != null && !showingBattleCard) battleCard.Hide();
+            if (relicCard != null && !showingRelicCard) relicCard.Hide();
+
+            if (showingBattleCard || showingRelicCard)
             {
-                relicCard.Show(shelf);
+                if (showingBattleCard) battleCard.Show(visual);
+                else relicCard.Show(shelf);
+
                 if (iconImage != null) iconImage.enabled = false;
+                if (placeholderName != null) placeholderName.gameObject.SetActive(false);
                 iconBaseColor = Color.white;
             }
             else
             {
-                if (relicCard != null) relicCard.Hide();
-
                 if (iconImage != null)
                 {
                     if (shelf != null)
@@ -153,6 +173,15 @@ namespace EldritchMile.Shop
 
                     // 底色要在**設定完顏色之後**才記 —— 每件商品的色塊都不一樣
                     iconBaseColor = iconImage.color;
+                }
+
+                // 連色塊都看不出是什麼 —— 沒有美術時把名字壓在上面。
+                // 有圖的商品不顯示：圖本身就說明了是什麼，再壓字只會擋住它
+                if (placeholderName != null)
+                {
+                    bool needName = shelf == null;
+                    placeholderName.gameObject.SetActive(needName);
+                    if (needName) placeholderName.text = data != null ? data.Label : ItemId;
                 }
             }
 
@@ -183,7 +212,10 @@ namespace EldritchMile.Shop
             if (countText != null) countText.gameObject.SetActive(false);
             if (iconImage != null) iconImage.enabled = false;
             if (relicCard != null) relicCard.Hide();
+            if (battleCard != null) battleCard.Hide();
+            if (placeholderName != null) placeholderName.gameObject.SetActive(false);
             showingRelicCard = false;
+            showingBattleCard = false;
 
             group.alpha = 0f;
             group.blocksRaycasts = false;
@@ -271,6 +303,7 @@ namespace EldritchMile.Shop
             if (frameImage != null) frameImage.color = Multiply(frameBaseColor, t);
             if (iconImage != null && iconImage.enabled) iconImage.color = Multiply(iconBaseColor, t);
             if (showingRelicCard && relicCard != null) relicCard.SetTint(t);
+            if (showingBattleCard && battleCard != null) battleCard.SetTint(t);
         }
 
         /// <summary>只乘 RGB，alpha 維持底色的 —— 變暗不該順便改透明度。</summary>

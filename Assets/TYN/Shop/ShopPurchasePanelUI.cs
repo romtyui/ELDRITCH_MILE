@@ -45,12 +45,8 @@ namespace EldritchMile.Shop
         public Image dimmer;
 
         [Header("商品外觀")]
-        [Tooltip("武器卡的三層疊在這個節點底下。不是武器時整個關掉")]
-        public RectTransform cardRoot;
-
-        public Image cardFaceImage;
-        public Image cardArtworkImage;
-        public Image cardFrameImage;
+        [Tooltip("武器用的「牌」（卡面＋武器＋卡框三層）。不是武器時整個關掉")]
+        public EldritchMile.UI.BattleCardView battleCard;
 
         [Tooltip("收藏品／遺物擺成一張「牌」（底圖＋遺物圖＋外框）。留空則退回下面那張單圖")]
         public EldritchMile.UI.RelicCardView relicCard;
@@ -197,18 +193,16 @@ namespace EldritchMile.Shop
             CardData card = data != null ? data.grantsCard : null;
             CardVisualData vis = card != null ? card.visualData : null;
 
-            bool asCard = vis != null;
+            bool asCard = battleCard != null && vis != null;
             bool asRelic = !asCard && relicCard != null && data != null && data.HasTag("Curio");
 
-            if (cardRoot != null) cardRoot.gameObject.SetActive(asCard);
+            if (battleCard != null && !asCard) battleCard.Hide();
             if (relicCard != null && !asRelic) relicCard.Hide();
             if (plainImage != null) plainImage.gameObject.SetActive(!asCard && !asRelic);
 
             if (asCard)
             {
-                Apply(cardFaceImage, vis.cardFaceSprite);
-                Apply(cardArtworkImage, vis.artworkSprite);
-                Apply(cardFrameImage, vis.cardFrameSprite);
+                battleCard.Show(vis);
                 return;
             }
 
@@ -224,13 +218,6 @@ namespace EldritchMile.Shop
                 plainImage.sprite = s;
                 plainImage.enabled = s != null;
             }
-        }
-
-        private static void Apply(Image img, Sprite sprite)
-        {
-            if (img == null) return;
-            img.sprite = sprite;
-            img.enabled = sprite != null;
         }
 
         // ==========================================
