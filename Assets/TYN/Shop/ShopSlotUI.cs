@@ -42,6 +42,10 @@ namespace EldritchMile.Shop
         [Tooltip("售出後蓋上去的東西（打叉、變暗的板子…）。可留空")]
         public GameObject soldOutOverlay;
 
+        [Tooltip("遺物用的「牌」（底圖＋遺物圖＋外框三層）。留空則所有商品都用上面那張 Icon。"
+                 + "只有帶 Curio 標籤的商品會用這張牌 —— 食物、補給還是走 Icon")]
+        public EldritchMile.UI.RelicCardView relicCard;
+
         [Header("樣式")]
         [Tooltip("買不起時整格的透明度")]
         [Range(0.1f, 1f)] public float unaffordableAlpha = 0.45f;
@@ -76,6 +80,9 @@ namespace EldritchMile.Shop
         private Color frameBaseColor = Color.white;
         private Color iconBaseColor = Color.white;
         private bool hovered;
+
+        /// <summary>這一格現在是用「牌」在顯示（遺物），不是單張 Icon。染色要染整張牌。</summary>
+        private bool showingRelicCard;
 
         private void Awake()
         {
@@ -112,26 +119,41 @@ namespace EldritchMile.Shop
                 countText.text = "×" + Count;
             }
 
-            if (iconImage != null)
+            // ⚠️ 貨架用的是**彩色**那一張（ShelfIcon），不是持有欄的白色剪影。
+            //    沒有彩色版時 ShelfIcon 自己會退回 icon，這裡不必再判一次
+            Sprite shelf = data != null ? data.ShelfIcon : null;
+
+            // 收藏品／遺物擺成一張「牌」（底圖＋圖＋外框），其餘照舊用單張 Icon。
+            // 判斷用標籤而不是「有沒有 grantsCard」—— 食物也沒有卡，但不該套遺物框
+            showingRelicCard = relicCard != null && data != null && data.HasTag("Curio");
+
+            if (showingRelicCard)
             {
-                // ⚠️ 貨架用的是**彩色**那一張（ShelfIcon），不是持有欄的白色剪影。
-                //    沒有彩色版時 ShelfIcon 自己會退回 icon，這裡不必再判一次
-                Sprite shelf = data != null ? data.ShelfIcon : null;
+                relicCard.Show(shelf);
+                if (iconImage != null) iconImage.enabled = false;
+                iconBaseColor = Color.white;
+            }
+            else
+            {
+                if (relicCard != null) relicCard.Hide();
 
-                if (shelf != null)
+                if (iconImage != null)
                 {
-                    iconImage.sprite = shelf;
-                    iconImage.color = Color.white;
-                }
-                else
-                {
-                    // 沒有美術 → 用 id 算一個固定顏色的色塊。sprite 維持原樣（通常是圓角方塊）
-                    iconImage.color = PlaceholderColor(ItemId);
-                }
-                iconImage.enabled = true;
+                    if (shelf != null)
+                    {
+                        iconImage.sprite = shelf;
+                        iconImage.color = Color.white;
+                    }
+                    else
+                    {
+                        // 沒有美術 → 用 id 算一個固定顏色的色塊。sprite 維持原樣（通常是圓角方塊）
+                        iconImage.color = PlaceholderColor(ItemId);
+                    }
+                    iconImage.enabled = true;
 
-                // 底色要在**設定完顏色之後**才記 —— 每件商品的色塊都不一樣
-                iconBaseColor = iconImage.color;
+                    // 底色要在**設定完顏色之後**才記 —— 每件商品的色塊都不一樣
+                    iconBaseColor = iconImage.color;
+                }
             }
 
             if (soldOutOverlay != null) soldOutOverlay.SetActive(false);
@@ -160,6 +182,8 @@ namespace EldritchMile.Shop
             if (priceTag != null) priceTag.SetActive(false);
             if (countText != null) countText.gameObject.SetActive(false);
             if (iconImage != null) iconImage.enabled = false;
+            if (relicCard != null) relicCard.Hide();
+            showingRelicCard = false;
 
             group.alpha = 0f;
             group.blocksRaycasts = false;
@@ -246,6 +270,7 @@ namespace EldritchMile.Shop
 
             if (frameImage != null) frameImage.color = Multiply(frameBaseColor, t);
             if (iconImage != null && iconImage.enabled) iconImage.color = Multiply(iconBaseColor, t);
+            if (showingRelicCard && relicCard != null) relicCard.SetTint(t);
         }
 
         /// <summary>只乘 RGB，alpha 維持底色的 —— 變暗不該順便改透明度。</summary>

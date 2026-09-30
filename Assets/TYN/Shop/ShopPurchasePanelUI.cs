@@ -52,7 +52,10 @@ namespace EldritchMile.Shop
         public Image cardArtworkImage;
         public Image cardFrameImage;
 
-        [Tooltip("不是武器時顯示的彩色圖（遺物、食物）。用 ShelfIcon，不是持有欄的白線版")]
+        [Tooltip("收藏品／遺物擺成一張「牌」（底圖＋遺物圖＋外框）。留空則退回下面那張單圖")]
+        public EldritchMile.UI.RelicCardView relicCard;
+
+        [Tooltip("既不是武器也不是遺物時顯示的彩色圖（食物、補給）。用 ShelfIcon，不是持有欄的白線版")]
         public Image plainImage;
 
         [Header("文字")]
@@ -186,22 +189,32 @@ namespace EldritchMile.Shop
             if (a != null) a();
         }
 
-        /// <summary>武器就疊卡牌，其他就顯示彩色圖。</summary>
+        /// <summary>
+        /// 三種長相：武器疊戰鬥卡、收藏品疊遺物牌、其餘（食物、補給）單張彩圖。
+        /// </summary>
         private void ShowVisual(ItemData data)
         {
             CardData card = data != null ? data.grantsCard : null;
             CardVisualData vis = card != null ? card.visualData : null;
 
             bool asCard = vis != null;
+            bool asRelic = !asCard && relicCard != null && data != null && data.HasTag("Curio");
 
             if (cardRoot != null) cardRoot.gameObject.SetActive(asCard);
-            if (plainImage != null) plainImage.gameObject.SetActive(!asCard);
+            if (relicCard != null && !asRelic) relicCard.Hide();
+            if (plainImage != null) plainImage.gameObject.SetActive(!asCard && !asRelic);
 
             if (asCard)
             {
                 Apply(cardFaceImage, vis.cardFaceSprite);
                 Apply(cardArtworkImage, vis.artworkSprite);
                 Apply(cardFrameImage, vis.cardFrameSprite);
+                return;
+            }
+
+            if (asRelic)
+            {
+                relicCard.Show(data.ShelfIcon);
                 return;
             }
 

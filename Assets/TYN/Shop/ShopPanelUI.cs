@@ -34,6 +34,11 @@ namespace EldritchMile.Shop
         public string moneyFormat = "{0}";
 
         [Header("說明框（hover 商品時）")]
+        [Tooltip("要不要顯示 hover 的說明框。\n\n"
+                 + "2026-10-01 先關掉：購買確認視窗已經會顯示品名與說明，"
+                 + "貨架上再飄一個框只是擋住商品。之後想要回來就把這個打勾")]
+        public bool showTooltip = true;
+
         [Tooltip("整個框。留空則不顯示說明。\n" +
                  "⚠️ 框本身不能擋 raycast（CanvasGroup.blocksRaycasts = false）——\n" +
                  "擋到的話框一出現就蓋住格子，格子收到 exit，框消失，然後又 enter……會一直閃")]
@@ -94,6 +99,13 @@ namespace EldritchMile.Shop
         private void HandleSlotHover(ShopSlotUI slot, bool on)
         {
             if (tooltipPanel == null) return;
+
+            if (!showTooltip)
+            {
+                // 中途關掉的話要把已經開著的那個收乾淨
+                if (tooltipPanel.gameObject.activeSelf) HideTooltip();
+                return;
+            }
 
             if (!on)
             {
