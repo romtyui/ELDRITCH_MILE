@@ -91,10 +91,13 @@ public class ShopStageController : StageController
              "留這條退路只是為了不讓沒接好的場景整個買不了東西")]
     public ShopPurchasePanelUI purchasePanel;
 
-    [Tooltip("視窗裡問的那句話。{0} = 商品名、{1} = 價格")]
+    [Tooltip("**備援**的那句話。{0} = 商品名、{1} = 價格。\n\n"
+             + "視窗的說明欄現在顯示的是商品自己的 description（跟貨架 hover 的說明框同一份），"
+             + "只有那件商品**沒有寫說明**時才會退回這一句")]
     public string askFormat = "「{0}」，{1} 塊。要嗎？";
 
-    [Tooltip("錢不夠時視窗裡顯示的話。YES 會同時變灰按不下去")]
+    [Tooltip("錢不夠時**加在說明後面**的一句。YES 會同時變灰按不下去。\n\n"
+             + "是加在後面不是取代 —— 買不起也還是要看得到這東西是幹嘛的")]
     public string cannotAffordAskLine = "……這個你買不起。";
 
     [Header("台詞")]
@@ -318,12 +321,18 @@ public class ShopStageController : StageController
 
         if (purchasePanel.IsOpen) return;
 
+        ItemData data = GameFlowManager.Item(slot.ItemId);
         string itemName = GameFlowManager.ItemName(slot.ItemId);
         bool canAfford = run.money >= slot.Price;
 
-        string line = canAfford
-            ? string.Format(askFormat, itemName, slot.Price)
-            : cannotAffordAskLine;
+        // 說明用商品自己的那一份 —— 跟貨架 hover 的說明框同一個來源（ItemData.description）。
+        // 兩邊各寫一份的話就會有兩個真相，改一邊忘了另一邊是遲早的事
+        string body = data != null ? data.description : "";
+        if (string.IsNullOrEmpty(body)) body = string.Format(askFormat, itemName, slot.Price);
+
+        // 買不起是**加在後面**，不是蓋掉 —— 買不起也還是要看得到這東西是幹嘛的
+        if (!canAfford && !string.IsNullOrEmpty(cannotAffordAskLine))
+            body = string.IsNullOrEmpty(body) ? cannotAffordAskLine : body + "\n" + cannotAffordAskLine;
 
         // ⚠️ 閉包抓的是 slot，不是 id —— 賣掉要標記的是**這一格**。
         //    視窗開著的時候貨架點不到（Dimmer 吃掉所有點擊），所以不會錯格
@@ -333,21 +342,13 @@ public class ShopStageController : StageController
         if (exitTab != null) exitTab.SetShown(false);
 
         purchasePanel.Open(
-            GameFlowManager.Item(slot.ItemId),
+            data,
             slot.Price,
-            SpeakerName(),
-            line,
+            itemName,
+            body,
             canAfford,
             delegate { DoPurchase(target); },
             null);
-    }
-
-    /// <summary>店主叫什麼。沒有角色資料就用節點的名字。</summary>
-    private string SpeakerName()
-    {
-        CharacterData c = shopkeeper != null ? shopkeeper.Character : null;
-        if (c != null && !string.IsNullOrEmpty(c.displayName)) return c.displayName;
-        return "";
     }
 
     /// <summary>

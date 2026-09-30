@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.Serialization;
 
 namespace EldritchMile.Shop
 {
@@ -55,8 +56,15 @@ namespace EldritchMile.Shop
         public Image plainImage;
 
         [Header("文字")]
-        public TextMeshProUGUI speakerText;
+        [Tooltip("商品名。**這裡以前放的是店主的名字** —— 2026-09-30 改成品名：\n\n"
+                 + "視窗的主角是商品，玩家要先看到自己在買什麼；店主是誰旁邊的氣泡已經在講了")]
+        [FormerlySerializedAs("speakerText")]
+        public TextMeshProUGUI titleText;
+
         public TextMeshProUGUI priceText;
+
+        [Tooltip("商品說明。內容跟貨架 hover 的說明框同一份（ItemData.description）——\n"
+                 + "兩邊講不一樣的話就會有兩個真相，改一邊忘了另一邊是遲早的事")]
         public TextMeshProUGUI bodyText;
 
         [Header("按鈕")]
@@ -113,15 +121,15 @@ namespace EldritchMile.Shop
         /// 付不起的時候 YES 會變灰且按不下去 —— **視窗照樣打開**。
         /// 直接什麼都不發生的話，玩家會以為是點壞了。
         /// </param>
-        public void Open(ItemData data, int price, string speaker, string line, bool canAfford,
+        public void Open(ItemData data, int price, string title, string body, bool canAfford,
                          Action yes, Action no)
         {
             onYes = yes;
             onNo = no;
 
-            if (speakerText != null) speakerText.text = speaker ?? "";
+            if (titleText != null) titleText.text = title ?? "";
             if (priceText != null) priceText.text = price.ToString();
-            if (bodyText != null) bodyText.text = line ?? "";
+            if (bodyText != null) bodyText.text = body ?? "";
 
             ShowVisual(data);
 
