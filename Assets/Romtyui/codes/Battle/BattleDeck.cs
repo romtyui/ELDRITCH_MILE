@@ -306,9 +306,22 @@ public class BattleDeck : MonoBehaviour
 
     public CardTransformResult TransformRandomCardInDrawPileByPool(CardTransformPoolData transformPool)
     {
+        CardTransformResult result = PrepareRandomCardTransformByPool(transformPool);
+
+        if (!result.success)
+            return result;
+
+        if (!ApplyPreparedCardTransform(result))
+            result.success = false;
+
+        return result;
+    }
+
+    public CardTransformResult PrepareRandomCardTransformByPool(CardTransformPoolData transformPool)
+    {
         if (transformPool == null)
         {
-            Debug.LogWarning("[BattleDeck] transformPool 是 null，無法變換牌");
+            Debug.LogWarning("[BattleDeck] transformPool 是 null，無法選定變換對象");
             return new CardTransformResult(false);
         }
 
@@ -319,16 +332,15 @@ public class BattleDeck : MonoBehaviour
 
         if (validIndexes.Count == 0)
         {
-            Debug.Log("[BattleDeck] 抽牌堆沒有可變化的牌，嘗試將棄牌堆洗回抽牌堆");
+            Debug.Log("[BattleDeck] 抽牌堆沒有可變換的牌，嘗試將棄牌堆洗回抽牌堆");
 
             ReshuffleDiscardIntoDraw();
-
             validIndexes = GetValidTransformIndexes(transformPool);
         }
 
         if (validIndexes.Count == 0)
         {
-            Debug.Log($"[BattleDeck] 抽牌堆與棄牌堆都沒有可以被變化卡池 {transformPool.transformId} 變換的牌");
+            Debug.Log($"[BattleDeck] 沒有可以被卡池 {transformPool.transformId} 變換的牌");
             RefreshDebugView();
             return new CardTransformResult(false);
         }
@@ -336,33 +348,72 @@ public class BattleDeck : MonoBehaviour
         int selectedListIndex = Random.Range(0, validIndexes.Count);
         int selectedDrawPileIndex = validIndexes[selectedListIndex];
 
-        CardInstance oldCardInstance = drawPile[selectedDrawPileIndex];
+        CardInstance originalInstance = drawPile[selectedDrawPileIndex];
 
-        if (oldCardInstance == null || oldCardInstance.data == null)
+        if (originalInstance == null || originalInstance.data == null)
         {
-            Debug.LogWarning("[BattleDeck] 選到的牌資料是 null");
-            RefreshDebugView();
+            Debug.LogWarning("[BattleDeck] 選中的卡牌資料是 null");
             return new CardTransformResult(false);
         }
 
-        CardData oldCardData = oldCardInstance.data;
+        CardData originalData = originalInstance.data;
 
-        bool hasResult = transformPool.TryGetTransformResult(oldCardData, out CardData newCardData);
-
-        if (!hasResult || newCardData == null)
+        if (!transformPool.TryGetTransformResult(originalData, out CardData resultData) ||
+            resultData == null)
         {
-            Debug.LogWarning("[BattleDeck] 找到候選牌，但沒有取得變換結果");
-            RefreshDebugView();
+            Debug.LogWarning("[BattleDeck] 無法取得變換結果");
             return new CardTransformResult(false);
         }
 
-        drawPile[selectedDrawPileIndex] = new CardInstance(newCardData);
+        // 此時只選定原牌與結果，尚未替換抽牌堆中的卡片。
+        CardTransformResult result = new CardTransformResult(
+            originalData,
+            resultData,
+            transformPool.transformId
+        );
 
-        Debug.Log($"[BattleDeck] 變化卡池 {transformPool.transformId}：{oldCardData.cardName} → {newCardData.cardName}");
+        result.originalCardInstance = originalInstance;
+        result.isApplied = false;
+
+        return result;
+    }
+
+    public bool ApplyPreparedCardTransform(CardTransformResult result)
+    {
+        if (result == null || !result.success ||
+            result.originalCardInstance == null ||
+            result.resultCardData == null)
+        {
+            Debug.LogWarning("[BattleDeck] 沒有有效的待執行變換");
+            return false;
+        }
+
+        if (result.isApplied)
+            return true;
+
+        if (drawPile == null)
+            return false;
+
+        // 使用實際 CardInstance 找位置，避免動畫期間牌堆索引改變。
+        int index = drawPile.IndexOf(result.originalCardInstance);
+
+        if (index < 0 ||
+            result.originalCardInstance.data != result.originalCardData)
+        {
+            Debug.LogWarning("[BattleDeck] 原牌已離開抽牌堆或資料已改變，取消本次變換");
+            return false;
+        }
+
+        drawPile[index] = new CardInstance(result.resultCardData);
+        result.isApplied = true;
+
+        Debug.Log(
+            $"[BattleDeck] 變化卡池 {result.transformPoolId}：" +
+            $"{result.originalCardData.cardName} → {result.resultCardData.cardName}"
+        );
 
         RefreshDebugView();
-
-        return new CardTransformResult(oldCardData, newCardData, transformPool.transformId);
+        return true;
     }
 
     private List<int> GetValidTransformIndexes(CardTransformPoolData transformPool)

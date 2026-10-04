@@ -742,6 +742,7 @@ public class BattleManager : MonoBehaviour
         }
 
 
+
         /*
          * =========================================================
          * 扣除卡牌費用
@@ -780,7 +781,8 @@ public class BattleManager : MonoBehaviour
             handUIController != null)
         {
             Transform parent = null;
-
+            bool keepGodCardInSourceCanvas = false;
+            Vector3 scaleBeforeDetach = playedCardView.transform.localScale;
 
             /*
              * -----------------------------------------------------
@@ -806,9 +808,9 @@ public class BattleManager : MonoBehaviour
                 if (animationData != null &&
                     godCardCorruptionAnimationController != null)
                 {
-                    parent =
-                        godCardCorruptionAnimationController
-                            .AnimationRoot;
+                    // 神牌先留在原 Canvas，移動與震動完成後才交給 Card Root。
+                    parent = playedCardView.transform.parent;
+                    keepGodCardInSourceCanvas = true;
                 }
 
                 /*
@@ -850,10 +852,12 @@ public class BattleManager : MonoBehaviour
              * -----------------------------------------------------
              */
 
-            handUIController.DetachCardViewForPlay(
-                card,
-                parent
-            );
+            handUIController.DetachCardViewForPlay(card, parent);
+            if (keepGodCardInSourceCanvas && playedCardView != null)
+            {
+                playedCardView.transform.localScale = scaleBeforeDetach;
+                Debug.Log($"[GodCardAnimation] Detach 後 Parent = {playedCardView.transform.parent?.name}，localScale = {playedCardView.transform.localScale}");
+            }
         }
 
 

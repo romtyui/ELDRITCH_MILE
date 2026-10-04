@@ -47,4 +47,17 @@ public class TransformRandomCardByPoolEffectData : CardEffectData
 
         return result;
     }
+    public CardTransformResult PrepareTransform(CardResolveContext context)
+    {
+        if (context == null ||
+            context.battleManager == null ||
+            context.battleManager.playerDeck == null ||
+            transformPool == null)
+        {
+            Debug.LogWarning("[TransformRandomCardByPoolEffectData] 無法準備變換，Context、Deck 或 Transform Pool 尚未指定");
+            return new CardTransformResult(false);
+        }
+
+        return context.battleManager.playerDeck.PrepareRandomCardTransformByPool(transformPool);
+    }
 }

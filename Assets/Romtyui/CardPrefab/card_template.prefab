@@ -394,7 +394,7 @@ RectTransform:
   m_GameObject: {fileID: 5875220465785766505}
   m_LocalRotation: {x: -0, y: -0, z: -0.2079117, w: 0.9781476}
   m_LocalPosition: {x: 0, y: 0, z: -10.000023}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.1, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6780422379471587520}
@@ -521,6 +521,8 @@ MonoBehaviour:
   sanCorruptionThreshold: 0.4
   sanCorruptionAmount: 1
   sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 2
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 2
 --- !u!114 &2071348053210116029
 MonoBehaviour:

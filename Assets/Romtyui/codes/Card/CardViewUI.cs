@@ -47,12 +47,64 @@ public class CardViewUI : MonoBehaviour
     [Tooltip("亂碼可以使用的字元")]
     public string sanCorruptionCharacters = "▓▒░#@$%&!?※¤§";
 
+    [Min(0.01f)]
+    [Tooltip("SAN 接近亂碼門檻時的刷新間隔，單位為秒。SAN 越低，間隔會逐漸縮短")]
+    public float sanCorruptionRefreshInterval = 0.5f;
+
+    [Min(0.01f)]
+    [Tooltip("SAN 降到 0 時的刷新間隔，單位為秒。數值越小，亂碼交替越快；實際使用時不會大於起始間隔")]
+    public float sanCorruptionMinRefreshInterval = 0.05f;
+
     [Header("Tooltip Position")]
     public TooltipAnchorSide cardTooltipSide = TooltipAnchorSide.Top;
 
     private BattleManager cachedBattleManager;
     private string lastRuntimeDescription;
+    private float sanCorruptionRefreshTimer;
+    private void Update()
+    {
+        if (!enableSanDescriptionCorruption || CardInstance == null || CardInstance.data == null || descriptionText == null)
+        {
+            sanCorruptionRefreshTimer = 0f;
+            return;
+        }
 
+        BattleManager battleManager = GetBattleManager();
+
+        if (battleManager == null || battleManager.energySystem == null)
+        {
+            sanCorruptionRefreshTimer = 0f;
+            return;
+        }
+
+        EnergySystem energySystem = battleManager.energySystem;
+
+        if (energySystem.maxEnergy <= 0)
+        {
+            sanCorruptionRefreshTimer = 0f;
+            return;
+        }
+
+        float sanRatio = energySystem.currentEnergy / (float)energySystem.maxEnergy;
+        float corruptionProgress = Mathf.InverseLerp(sanCorruptionThreshold, 0f, sanRatio);
+        float actualCorruptionAmount = corruptionProgress * sanCorruptionAmount;
+
+        if (sanRatio > sanCorruptionThreshold || actualCorruptionAmount <= 0f || string.IsNullOrEmpty(sanCorruptionCharacters))
+        {
+            sanCorruptionRefreshTimer = 0f;
+            return;
+        }
+
+        float startInterval = Mathf.Max(0.01f, sanCorruptionRefreshInterval);
+        float minInterval = Mathf.Clamp(sanCorruptionMinRefreshInterval, 0.01f, startInterval);
+        float currentRefreshInterval = Mathf.Lerp(startInterval, minInterval, corruptionProgress);
+
+        sanCorruptionRefreshTimer += Time.deltaTime;
+
+        if (sanCorruptionRefreshTimer < currentRefreshInterval) return;
+
+        RefreshRuntimeDescription();
+    }
     public void Bind(CardInstance instance)
     {
         CardInstance = instance;
@@ -79,9 +131,9 @@ public class CardViewUI : MonoBehaviour
 
     public void RefreshRuntimeDescription()
     {
-        if (CardInstance == null || CardInstance.data == null)
-            return;
+        if (CardInstance == null || CardInstance.data == null) return;
 
+        sanCorruptionRefreshTimer = 0f;
         lastRuntimeDescription = BuildRuntimeDescription(CardInstance);
 
         if (descriptionText != null)

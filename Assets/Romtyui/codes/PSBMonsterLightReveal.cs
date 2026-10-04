@@ -76,6 +76,23 @@ public class PSBMonsterLightReveal : MonoBehaviour
     [Tooltip("錯位增加的曲線；1 代表線性。")]
     public float glitchResponsePower = 1f;
 
+    [Tooltip("Shader Graph 中 San Intensity 的 Reference。")]
+    public string sanIntensityReference = "_SanIntensity";
+
+    [Tooltip("Shader Graph 中 San Hit Pulse 的 Reference。")]
+    public string sanHitPulseReference = "_SanHitPulse";
+
+    [Range(0f, 1f)]
+    [Tooltip("每次 SAN 下降時，短暫故障的最高強度。")]
+    public float sanHitPulseStrength = 0.65f;
+
+    [Min(0.01f)]
+    [Tooltip("短暫故障從最高強度消退至 0 的秒數。")]
+    public float sanHitPulseDuration = 0.45f;
+
+    private int previousSan = -1;
+    private float sanHitPulseRemaining;
+
     [Header("Form Blend Threshold")]
     [Tooltip("SAN 低於此比例時，只顯示完整黑暗型態。")]
     [Range(0f, 1f)]
@@ -167,6 +184,9 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
     private void OnEnable()
     {
+        previousSan = -1;
+        sanHitPulseRemaining = 0f;
+
         RefreshAllTargets();
         PrepareAllTargets();
 
@@ -187,10 +207,10 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
     private void UpdateGlitchStrength()
     {
-        if (glitchMaterial == null || string.IsNullOrEmpty(splitStrengthReference)) return;
-        if (!glitchMaterial.HasProperty(splitStrengthReference)) return;
+        if (glitchMaterial == null) return;
 
         float strength = minSplitStrength;
+        float intensity = 0f;
 
         if (glitchBattleManager != null && glitchBattleManager.energySystem != null)
         {
@@ -198,15 +218,55 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
             if (energySystem.maxEnergy > 0)
             {
-                float sanRatio = Mathf.Clamp01(energySystem.currentEnergy / (float)energySystem.maxEnergy);
+                int currentSan = energySystem.currentEnergy;
+                float currentSanRatio = Mathf.Clamp01(currentSan / (float)energySystem.maxEnergy);
                 float threshold = Mathf.Clamp01(sanGlitchThreshold);
-                float progress = threshold > 0f ? Mathf.InverseLerp(threshold, 0f, sanRatio) : (sanRatio <= 0f ? 1f : 0f);
+                float progress = threshold > 0f ? Mathf.InverseLerp(threshold, 0f, currentSanRatio) : (currentSanRatio <= 0f ? 1f : 0f);
                 float response = Mathf.Pow(progress, Mathf.Max(0.01f, glitchResponsePower));
+
                 strength = Mathf.Lerp(minSplitStrength, maxSplitStrength, response);
+                intensity = response;
+
+                if (currentSanRatio >= threshold)
+                {
+                    sanHitPulseRemaining = 0f;
+                }
+                else if (previousSan >= 0 && currentSan < previousSan)
+                {
+                    sanHitPulseRemaining = Mathf.Max(0.01f, sanHitPulseDuration);
+                }
+
+                previousSan = currentSan;
+            }
+            else
+            {
+                previousSan = -1;
+                sanHitPulseRemaining = 0f;
             }
         }
+        else
+        {
+            previousSan = -1;
+            sanHitPulseRemaining = 0f;
+        }
 
-        glitchMaterial.SetFloat(splitStrengthReference, strength);
+        float pulse = Mathf.Clamp01(sanHitPulseRemaining / Mathf.Max(0.01f, sanHitPulseDuration)) * Mathf.Clamp01(sanHitPulseStrength);
+        sanHitPulseRemaining = Mathf.Max(0f, sanHitPulseRemaining - Time.deltaTime);
+
+        if (!string.IsNullOrEmpty(splitStrengthReference) && glitchMaterial.HasProperty(splitStrengthReference))
+        {
+            glitchMaterial.SetFloat(splitStrengthReference, strength);
+        }
+
+        if (!string.IsNullOrEmpty(sanIntensityReference) && glitchMaterial.HasProperty(sanIntensityReference))
+        {
+            glitchMaterial.SetFloat(sanIntensityReference, intensity);
+        }
+
+        if (!string.IsNullOrEmpty(sanHitPulseReference) && glitchMaterial.HasProperty(sanHitPulseReference))
+        {
+            glitchMaterial.SetFloat(sanHitPulseReference, pulse);
+        }
     }
 
     private float CalculateFormBlend()
