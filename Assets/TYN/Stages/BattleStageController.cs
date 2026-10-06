@@ -78,6 +78,14 @@ public class BattleStageController : StageController
         new TierReward { tier = EldritchMile.Core.EncounterPool.Tier.Boss,   moneyMin = 80, moneyMax = 120 },
     };
 
+
+
+
+    //新增時間26/10/06 by romtyui
+    public RunContext RewardRunContext => run;
+
+    //新增時間26/10/06 by romtyui
+
     [Tooltip("戰後結算怎麼寫。{0} = 金幣數量。留空 = 不播報（錢照給）")]
     public string rewardLineFormat = "戰利品：金幣 ×{0}";
 
@@ -863,19 +871,35 @@ public class BattleStageController : StageController
     private void OnWon()
     {
         // ⚠️ 旗標要在回報之前立 —— 回報會觸發轉場，之後這個物件就沒了
+        //for (int i = 0; i < fightingEnemyIds.Count; i++)
+        //{
+        //    run?.SetFlag(defeatFlagPrefix + fightingEnemyIds[i]);
+        //}
+
+        //GrantBattleReward();
+
+        //Debug.Log($"[戰鬥] 勝利。HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、" +
+        //          $"SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}、牌組 {PlayerVitals.DeckCount} 張");
+
+        //// ⚠️ **不要立刻回報。** 回報會觸發轉場，結算那一行字來不及被讀到。
+        ////    交給下面那支等結算播完、玩家按了離開鍵才走
+        //StartCoroutine(WaitThenLeave());
+
+        //新增時間26/10/06 by romtyui
+        // 必須在回報之前建立戰績旗標。
         for (int i = 0; i < fightingEnemyIds.Count; i++)
         {
             run?.SetFlag(defeatFlagPrefix + fightingEnemyIds[i]);
         }
 
-        GrantBattleReward();
+        // 列表啟動成功時，金幣由「收下」發放。
+        // 列表沒有成功啟動時，保留原本金幣流程。
+        if (battleManager == null || !battleManager.VictoryUsedRewardUI) GrantBattleReward();
 
-        Debug.Log($"[戰鬥] 勝利。HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、" +
-                  $"SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}、牌組 {PlayerVitals.DeckCount} 張");
+        Debug.Log($"[戰鬥] 勝利。HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}、牌組 {PlayerVitals.DeckCount} 張");
 
-        // ⚠️ **不要立刻回報。** 回報會觸發轉場，結算那一行字來不及被讀到。
-        //    交給下面那支等結算播完、玩家按了離開鍵才走
-        StartCoroutine(WaitThenLeave());
+        Report(StageResult.Completed);
+        //新增時間26/10/06 by romtyui
     }
 
     /// <summary>

@@ -27,6 +27,7 @@ public class EnemyFormationSpawner : MonoBehaviour
     [SerializeField] private List<string> debugSpawnedEnemyNames = new();
     [SerializeField] private List<string> debugCandidateNames = new();
     [SerializeField] private string debugSpawnMode;
+    public EnemyFormationData CurrentFormation => debugCurrentFormation;
 
     private readonly List<EnemyUnit> spawnedEnemies = new();
 

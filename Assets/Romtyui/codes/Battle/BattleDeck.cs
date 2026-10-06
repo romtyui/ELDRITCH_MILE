@@ -683,4 +683,23 @@ public class BattleDeck : MonoBehaviour
 
         return 0;
     }
+
+    public bool AddRewardCardToDeck(CardData cardData)
+    {
+        if (cardData == null) return false;
+
+        if (cardData.isToken || cardData.exhaust)
+        {
+            Debug.LogWarning("[BattleDeck] Token 與 Exhaust 卡不加入跨戰鬥武器獎勵。");
+            return false;
+        }
+
+        if (drawPile == null) drawPile = new List<CardInstance>();
+
+        drawPile.Add(new CardInstance(cardData));
+        RefreshDebugView();
+
+        Debug.Log($"[BattleDeck] 領取武器：{cardData.cardName}");
+        return true;
+    }
 }

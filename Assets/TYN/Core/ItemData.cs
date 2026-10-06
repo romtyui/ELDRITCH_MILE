@@ -29,6 +29,13 @@ namespace EldritchMile.Core
         [Tooltip("玩家看到的名字。**這個可以隨時改**，不影響任何存檔或引用")]
         public string displayName = "";
 
+        //新增時間26/10/06 by romtyui
+        [Header("物品等級")]
+        [Min(1)]
+        [Tooltip("物品本身的等級。")]
+        public int tire = 1;
+        //新增時間26/10/06 by romtyui
+
         [Tooltip("**持有中**的樣子 —— 快捷欄（持有遺物 UI）用的就是這一張。\n\n" +
                  "遺物的美術是**白色**那一張（例：`魚頭遺物白色_方形裁切`）——\n" +
                  "「貪婪的大口」就是這樣掛的，其餘遺物照它。\n\n" +

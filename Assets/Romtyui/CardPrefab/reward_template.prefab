@@ -344,6 +344,9 @@ GameObject:
   - component: {fileID: 88012033555905489}
   - component: {fileID: 2406916532516169316}
   - component: {fileID: 4047360527338269075}
+  - component: {fileID: 8966162974106140745}
+  - component: {fileID: 7620218278242918111}
+  - component: {fileID: 8324628556157823513}
   m_Layer: 10
   m_Name: reward_template
   m_TagString: Untagged
@@ -413,6 +416,60 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!225 &8966162974106140745
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5030835810595178804}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &7620218278242918111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5030835810595178804}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58202bf6ca818e04bbba6df9c0db5aef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleRewardEntryUI
+  rowGroup: {fileID: 8966162974106140745}
+  rewardNameText: {fileID: 6309200205912420860}
+  numberText: {fileID: 1184508098611503922}
+  iconImage: {fileID: 7021214428687413309}
+  actionButton: {fileID: 2674441800274686719}
+  buttonImage: {fileID: 7850752919750882997}
+  buttonText: {fileID: 8980230465389073591}
+  receiveButtonSprite: {fileID: 21300000, guid: b081640ab0913c94bb860cb80916c8db, type: 3}
+  chooseButtonSprite: {fileID: 21300000, guid: aef89c44e490d724e84474d24105ec33, type: 3}
+  completedAlpha: 0.35
+--- !u!114 &8324628556157823513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5030835810595178804}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: -1
+  m_PreferredWidth: -1
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &5205991030190326961
 GameObject:
   m_ObjectHideFlags: 0

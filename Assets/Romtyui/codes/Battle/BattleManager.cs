@@ -57,6 +57,15 @@ public class BattleManager : MonoBehaviour
     //[Tooltip("F6 使用。重新載入場景後，是否要套用戰鬥開始前的牌組順序")]
     //public bool pendingRestoreBattleStartDeckSnapshot;
 
+    [Header("Battle Rewards")]
+    [Tooltip("戰鬥勝利後的獎勵畫面。")]
+    public BattleRewardUI battleRewardUI;
+
+    private bool waitingForBattleRewards;
+
+    public bool VictoryUsedRewardUI { get; private set; }
+
+
     [Header("Runtime")]
     public BattlePhase currentPhase = BattlePhase.None;
 
@@ -1647,8 +1656,7 @@ public class BattleManager : MonoBehaviour
     }
     private void EndBattle(bool playerWin)
     {
-        if (currentPhase == BattlePhase.BattleEnded && isChangingTurn)
-            return;
+        if (currentPhase == BattlePhase.BattleEnded && isChangingTurn) return;
 
         currentPhase = BattlePhase.BattleEnded;
         isChangingTurn = true;
@@ -1664,49 +1672,65 @@ public class BattleManager : MonoBehaviour
         {
             Debug.Log("戰鬥勝利");
 
+            EnemyFormationData rewardFormation = enemyFormationSpawner != null ? enemyFormationSpawner.CurrentFormation : null;
+
             CommitCurrentFormation();
 
-            if (autoStartNextBattleOnWin)
-            {
-                StartCoroutine(StartNextBattleAfterDelay());
-            }
-            else
-            {
-                Debug.Log("[BattleManager] autoStartNextBattleOnWin = false，戰鬥勝利後關閉 BattleManager 物件");
-
-                gameObject.SetActive(false);
-            }
             Debug.Log("[BattleManager] 戰鬥勝利");
 
             if (RunStateManager.Instance != null)
             {
-                RunStateManager.Instance.SaveFromBattle(
-                    playerUnit,
-                    energySystem,
-                    playerDeck
-                );
-
+                RunStateManager.Instance.SaveFromBattle(playerUnit, energySystem, playerDeck);
                 RunStateManager.Instance.ClearReservedFormation();
 
                 Debug.Log("[BattleManager] 戰鬥勝利：已保存玩家進度，並清除保留怪物組");
             }
 
-            // ⚠️ 這一行要在 SaveFromBattle() **之後**。
-            // 探索流程端（EldritchMile.Core.BattleStageController）收到訊號就會去讀
-            // RunStateManager 的 HP / SAN / 牌組；早一步發的話會讀到上一場的數值。
-            TutorialEventBus.Raise(TutorialSignals.BattleWon);
+            waitingForBattleRewards = true;
+            VictoryUsedRewardUI = false;
+
+            if (battleRewardUI != null && battleRewardUI.Show(this, rewardFormation, CompleteBattleVictoryAfterRewards))
+            {
+                VictoryUsedRewardUI = true;
+                return;
+            }
+
+            Debug.LogWarning("[BattleManager] 獎勵畫面未啟動，沿用原本勝利流程。");
+            CompleteBattleVictoryAfterRewards();
         }
         else
         {
             Debug.Log("戰鬥失敗");
 
-            if (optionMenuUI != null)
-                optionMenuUI.OpenDeathMenu();
+            if (optionMenuUI != null) optionMenuUI.OpenDeathMenu();
 
-            // 失敗這一支他原本沒有對應的常數，用字面值 —— 與 "Battle_EndTurnPressed" 同一個寫法。
-            // 我方對應的是 EldritchMile.Core.TutorialSignal.BattleLost，**兩邊字串要一致**。
             TutorialEventBus.Raise("BattleLost");
         }
+    }
+
+    public void CompleteBattleVictoryAfterRewards()
+    {
+        if (!waitingForBattleRewards) return;
+
+        waitingForBattleRewards = false;
+
+        if (RunStateManager.Instance != null)
+        {
+            RunStateManager.Instance.SaveFromBattle(playerUnit, energySystem, playerDeck);
+            RunStateManager.Instance.ClearReservedFormation();
+        }
+
+        if (autoStartNextBattleOnWin)
+        {
+            StartCoroutine(StartNextBattleAfterDelay());
+        }
+        else
+        {
+            Debug.Log("[BattleManager] 獎勵結算完成，關閉 BattleManager 物件");
+            gameObject.SetActive(false);
+        }
+
+        TutorialEventBus.Raise(TutorialSignals.BattleWon);
     }
     private void CommitCurrentFormation()
     {
@@ -1778,23 +1802,25 @@ public class BattleManager : MonoBehaviour
     }
     public void RestartNewGame()
     {
-        Debug.Log("[BattleManager] ���s�}�l�s�C��");
+        Debug.Log("[BattleManager] 重新開始新遊戲");
 
         StopAllCoroutines();
+
+        if (battleRewardUI != null) battleRewardUI.CancelWithoutCompletion();
+
+        waitingForBattleRewards = false;
+        VictoryUsedRewardUI = false;
 
         currentPhase = BattlePhase.None;
         isChangingTurn = false;
         isResolvingCard = false;
         battleTurnNumber = 0;
 
-        if (playerUnit != null)
-            playerUnit.FullResetUnit();
+        if (playerUnit != null) playerUnit.FullResetUnit();
 
-        if (energySystem != null)
-            energySystem.ResetEnergy();
+        if (energySystem != null) energySystem.ResetEnergy();
 
-        if (playerDeck != null)
-            playerDeck.ResetForNewGame();
+        if (playerDeck != null) playerDeck.ResetForNewGame();
 
         SpawnEnemiesForBattle();
 
