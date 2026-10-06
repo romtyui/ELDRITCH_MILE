@@ -14,6 +14,9 @@ namespace EldritchMile.Core
     public class MapGenerationSettings : ScriptableObject
     {
         [Header("結構（網格 ＋ 隨機遊走）")]
+        [Tooltip("節點怎麼擺。Grid = 舊的網格（每層一條水平線）；Organic = 放射生長")]
+        public MapLayout layout = MapLayout.Grid;
+
         [Tooltip("總層數，含起點層與最後的 Boss 層。**這就是一場 run 有多長**")]
         [Range(2, 16)] public int mapLayers = 8;
 
@@ -66,6 +69,56 @@ namespace EldritchMile.Core
         };
 
         [Header("版面")]
+        [Header("Organic 擺法（layout = Organic 才生效）")]
+        [Tooltip("扇形張開幾度。越大越像樹冠展開，太大會貼到左右邊界")]
+        [Range(20f, 170f)] public float organicSpread = 110f;
+
+        [Tooltip("中段最多幾個節點。樹狀感來自「中間寬、兩頭窄」")]
+        [Range(2, 7)] public int organicWidthMax = 4;
+
+        [Tooltip("半徑抖動，佔一層間距的比例。**這個值就是在打散水平線** —— 0 會退回並排")]
+        [Range(0f, 0.9f)] public float organicRadialJitter = 0.45f;
+
+        [Tooltip("角度抖動，佔一格角距的比例。讓同一層的節點不要等距排開")]
+        [Range(0f, 0.9f)] public float organicAngleJitter = 0.4f;
+
+        [Tooltip("兩個節點至少要距離多遠（百分比）。太小會擠成一團，太大會生不出節點")]
+        [Range(3f, 20f)] public float organicMinSpacing = 9f;
+
+        [Tooltip("額外橫向連線的機率。這是「選擇更自由」的來源 —— 0 就是純樹、只能往前")]
+        [Range(0f, 1f)] public float organicCrossLink = 0.35f;
+
+        [Header("Terrain 擺法（layout = Terrain 才生效）")]
+        [Tooltip("拿來判斷地形的底圖。要打開 Read/Write。留空則退回 Organic")]
+        public Texture2D terrainMap;
+
+        [Tooltip("亮度低於這個值算水域，不放節點。底圖實測雙峰分在 0.5 左右")]
+        [Range(0f, 1f)] public float waterThreshold = 0.5f;
+
+        [Tooltip("離水多近算「海岸」。真實地圖的聚落多半靠水，這裡加權")]
+        [Range(0f, 30f)] public float coastRange = 8f;
+
+        [Tooltip("海岸的權重倍率。1 = 不特別偏好，3 = 明顯往岸邊聚")]
+        [Range(1f, 6f)] public float coastBias = 2.5f;
+
+        [Tooltip("每個節點要試幾個候選點。越多分佈越均勻（藍雜訊），代價是生成變慢")]
+        [Range(4, 60)] public int candidatesPerNode = 24;
+
+        [Tooltip("連線最長幾 %。太長會出現橫跨半張圖的斜線；太短圖會斷開、節點被丟掉")]
+        [Range(10f, 60f)] public float maxLinkDistance = 22f;
+
+        [Tooltip("Terrain 的連線方式。Triangulation = 現行（密、像網格）；SpanningTree = 稀疏（像道路）")]
+        public TerrainLinkMode linkMode = TerrainLinkMode.Triangulation;
+
+        [Tooltip("SpanningTree 用：主幹之外額外加線的機率。0 = 純樹只有一條路，0.3 左右開始有分岔")]
+        [Range(0f, 1f)] public float extraLinkChance = 0.3f;
+
+        [Tooltip("每一站最多幾條往前的路。太多會變成三角網格，太少會退回一直線")]
+        [Range(1, 5)] public int maxForwardLinks = 2;
+
+        [Tooltip("連線最多容許幾層落差。1 = 只能往前一層，2 = 可以跳一層（路更自由）")]
+        [Range(1, 3)] public int maxLayerJump = 1;
+
         [Tooltip("第一層與最後一層距離上下邊界的百分比")]
         [Range(0f, 30f)] public float verticalMargin = 10f;
 
@@ -118,6 +171,45 @@ namespace EldritchMile.Core
     /// 只有一條路的時候「連線」「可前往／去不了」「選節點」全部沒有作用，
     /// 而那些正是地圖這一層要測的東西。
     /// </summary>
+    /// <summary>
+    /// 節點的擺法。
+    ///
+    /// 【Grid】舊的網格：`yPercent` 是 `layer` 的**純函數**，
+    /// 所以同一層必然落在同一條水平線上 —— 那就是「並排」與「扁平」的來源。
+    /// x 也被吸附到固定欄位，連直的都對齊。
+    ///
+    /// 【Organic】從底部放射生長：半徑隨深度增加、角度隨深度張開，
+    /// 而且**半徑帶抖動**讓相鄰深度的節點互相交錯 —— 沒有水平線，
+    /// 看起來像地圖上散落的地標而不是方格紙。
+    /// </summary>
+    public enum MapLayout
+    {
+        Grid = 0,
+        Organic = 1,
+
+        /// <summary>
+        /// 讀底圖的地形來擺節點：水域不放、海岸邊加權，
+        /// 再用 best-candidate 取樣（藍雜訊）避免擠在一起，
+        /// 最後用 Delaunay 三角化連線 —— **三角化是平面圖，連線保證不交叉**。
+        /// </summary>
+        Terrain = 2,
+    }
+
+    /// <summary>
+    /// Terrain 擺法要怎麼連線。兩種都只用 Delaunay 的邊，所以都不會交叉。
+    /// </summary>
+    public enum TerrainLinkMode
+    {
+        /// <summary>三角化裡所有「跳數差 1」的邊全留。密，看起來像結構圖。</summary>
+        Triangulation = 0,
+
+        /// <summary>
+        /// 每個節點只保證一條主幹出邊，其餘依機率加回。
+        /// 稀疏，看起來像走出來的路。
+        /// </summary>
+        SpanningTree = 1,
+    }
+
     public enum DemoRouteShape
     {
         /// <summary>一層一個節點，前後相連。讀 `demoRouteKinds`。</summary>

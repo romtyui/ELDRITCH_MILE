@@ -2,6 +2,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+// ⚠️ 封存的舊碼。包進 namespace 是為了**不要污染全域命名空間** ——
+//    這裡宣告的 RunNodeData / MapData / ICardInteractable 等等
+//    與正式碼同名，放在全域會蓋掉正式那組，症狀是新檔案裡出現
+//    「MapData 沒有 GetNode」這種完全不會指向這裡的錯誤。
+namespace EldritchMile.Archive
+{
+
 public class ContainerObject : MonoBehaviour, IPointerClickHandler
 {
     [Header("容器設定")]
@@ -48,4 +55,5 @@ public class ContainerObject : MonoBehaviour, IPointerClickHandler
         // 回報探索進度
         if (roomController != null) roomController.ReportInteraction();
     }
+}
 }

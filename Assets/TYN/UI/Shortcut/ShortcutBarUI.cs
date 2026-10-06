@@ -54,6 +54,20 @@ namespace EldritchMile.UI.Shortcut
 
         public ShortcutSlotUI slotPrefab;
 
+        [Header("美術已經排好位置的格子")]
+        [Tooltip("不留空的話，就**不生成新格子**，而是把道具填進這些已經存在的格子。\n\n"
+                 + "【什麼時候用】美術把位置一格一格排好了的時候（食物那三支針筒）。\n"
+                 + "交給 Layout Group 排的話，那份手調的間距就沒了。\n\n"
+                 + "道具比格子多的時候，多出來的**不會顯示** —— 這是刻意的，\n"
+                 + "格數是美術定的（Romtyui 的 ItemInventory.maxItemCount 也是 3）。")]
+        public List<ShortcutSlotUI> fixedSlots = new List<ShortcutSlotUI>();
+
+        [Tooltip("勾選 = 這條欄**一直是展開的**，沒有收合這件事。\n\n"
+                 + "食物那一條就是這種 —— 美術分鏡稿的「碰觸前」已經三格全開，\n"
+                 + "「有碰觸」只是把格子往外推，不是彈出來。\n\n"
+                 + "⚙ 勾了之後 collapsedIcon / 自動收起那三條全部不作用。")]
+        public bool alwaysExpanded = false;
+
         [Header("預設圖")]
         [Tooltip("道具自己沒有 icon 時用這張。食物欄放針管、遺物欄放卡冊。\n\n" +
                  "⚠️ 目前所有道具都還沒有自己的圖 —— 少了這張，整條欄會是一排空框，\n" +
@@ -63,10 +77,25 @@ namespace EldritchMile.UI.Shortcut
         [Tooltip("格子外框。留空就用 SC_Slot prefab 上原本的")]
         public Sprite slotFrame;
 
+        [Tooltip("**固定格子專用**：這一格沒有道具時顯示的圖（空針筒）。\n\n"
+                 + "留空 = 空格子直接關掉。\n"
+                 + "填了 = 格子留著、換成這張 —— 分鏡稿「碰觸前(無食物)」就是這樣，\n"
+                 + "玩家看得出「我最多帶三個、現在還有空位」。")]
+        public Sprite emptySlotIcon;
+
         [Header("說明框（hover 時）")]
         public GameObject tooltipRoot;
         public TextMeshProUGUI tooltipTitle;
         public TextMeshProUGUI tooltipBody;
+
+        [Tooltip("在地圖畫面（或轉場中）點道具時的提示。留空則不提示")]
+        public string mapBlockedMessage = "在地圖上不能使用道具";
+
+        [Tooltip("打牌中（寶箱、人物對話）點道具時的提示。留空則不提示")]
+        public string encounterBlockedMessage = "打牌時不能使用道具";
+
+        [Tooltip("對話節點中點道具時的提示。留空則不提示")]
+        public string dialogueBlockedMessage = "對話中不能使用道具";
 
         [Header("行為")]
         [Tooltip("勾選＝滑鼠移上去就展開；取消＝**點一下開、再點一下關**（美術稿方案 3 的兩種）。\n\n" +
@@ -110,6 +139,9 @@ namespace EldritchMile.UI.Shortcut
 
         private readonly List<ShortcutSlotUI> slots = new List<ShortcutSlotUI>();
         private bool expanded;
+
+        /// Refresh 正在跑。防止 alwaysExpanded 時 Refresh → SetExpanded → Refresh 繞回來
+        private bool refreshing;
         private Coroutine reveal;
 
         private void OnEnable() => Refresh();
@@ -121,36 +153,35 @@ namespace EldritchMile.UI.Shortcut
         /// </param>
         public void Refresh(bool collapseAfter = true)
         {
-            for (int i = 0; i < slots.Count; i++) if (slots[i] != null) Destroy(slots[i].gameObject);
-            slots.Clear();
-
-            RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+            // alwaysExpanded 時，收尾的 SetExpanded(true) 會再打一次 Refresh ——
+            // 這個旗標把那一圈擋掉（見 SetExpanded）
+            refreshing = true;
+            // ── 先把「這一條欄該顯示哪些道具」算出來 ──
+            //    兩種擺法（生成 / 用美術排好的格子）共用同一份結果
+            List<ItemStack> shown = new List<ItemStack>();
             ItemDatabase db = GameFlowManager.Instance != null ? GameFlowManager.Instance.itemDatabase : null;
+            RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
 
-            if (run == null || db == null || expandedRoot == null || slotPrefab == null)
+            if (run != null && db != null)
             {
-                if (collapsedIcon != null) collapsedIcon.SetActive(showWhenEmpty);
-                return;
+                foreach (ItemStack stack in run.inventory)
+                {
+                    if (stack == null || stack.count <= 0) continue;
+
+                    ItemData d = db.GetById(stack.id);
+
+                    // 沒登記的道具（查不到 ItemData）在**有指定標籤**時跳過 ——
+                    // 不知道它是不是食物，硬塞進食物欄會誤導。
+                    // 但它不會消失：F1 除錯面板會把它標成「沒登記」，那才是抓這種錯的地方
+                    if (d == null) continue;
+                    if (!string.IsNullOrEmpty(filterTag) && !d.HasTag(filterTag)) continue;
+
+                    shown.Add(stack);
+                }
             }
 
-            foreach (ItemStack stack in run.inventory)
-            {
-                if (stack == null || stack.count <= 0) continue;
-
-                ItemData d = db.GetById(stack.id);
-
-                // 沒登記的道具（查不到 ItemData）在**有指定標籤**時跳過 ——
-                // 不知道它是不是食物，硬塞進食物欄會誤導。
-                // 但它不會消失：F1 除錯面板會把它標成「沒登記」，那才是抓這種錯的地方
-                if (d == null) continue;
-                if (!string.IsNullOrEmpty(filterTag) && !d.HasTag(filterTag)) continue;
-
-                ShortcutSlotUI s = Instantiate(slotPrefab, expandedRoot);
-                s.Bind(d, stack.count, fallbackIcon, slotFrame);
-                s.OnHoverChanged += HandleSlotHover;
-                s.OnClicked += HandleSlotClicked;
-                slots.Add(s);
-            }
+            if (UsingFixedSlots) RefreshFixed(shown, db);
+            else RefreshSpawned(shown, db, run);
 
             if (collapsedIcon != null)
                 collapsedIcon.SetActive(showWhenEmpty || slots.Count > 0);
@@ -158,11 +189,123 @@ namespace EldritchMile.UI.Shortcut
             // 空的時候要看得出「是真的沒有」，而不是「壞了」——
             // 沒有這個提示的話，展開一個空欄跟功能失效長得一模一樣
             if (slots.Count == 0)
-            {
                 Debug.Log($"[快捷欄] {name}：身上沒有標籤「{filterTag}」的道具，展開會是空的");
+
+            RefreshTooltipAfterRebuild();
+
+            refreshing = false;
+            if (collapseAfter) SetExpanded(alwaysExpanded, true);
+        }
+
+        /// <summary>
+        /// 這條欄用的是美術排好的固定格子嗎。
+        /// <see cref="fixedSlots"/> 有東西就是。
+        /// </summary>
+        public bool UsingFixedSlots
+        {
+            get { return fixedSlots != null && fixedSlots.Count > 0; }
+        }
+
+        /// <summary>
+        /// 【美術排好的固定格子】把道具填進去，多出來的格子關掉。
+        ///
+        /// ⚠️ **這裡絕對不能 Destroy 格子。** 它們是場景裡的物件、位置是美術手調的，
+        /// 砍掉就回不來了（而且下一次 Refresh 會變成空欄）。
+        /// 生成出來的那條路才需要砍，見 <see cref="RefreshSpawned"/>。
+        /// </summary>
+        private void RefreshFixed(List<ItemStack> shown, ItemDatabase db)
+        {
+            DetachHandlers();
+            slots.Clear();
+
+            for (int i = 0; i < fixedSlots.Count; i++)
+            {
+                ShortcutSlotUI s = fixedSlots[i];
+                if (s == null) continue;
+
+                if (i >= shown.Count)
+                {
+                    // 這一格沒東西可放 —— 有空圖就換成空的樣子，沒有才整格關掉
+                    if (emptySlotIcon != null) s.BindEmpty(emptySlotIcon);
+                    else s.gameObject.SetActive(false);
+                    continue;
+                }
+
+                ItemStack stack = shown[i];
+                s.Bind(db.GetById(stack.id), stack.count, fallbackIcon, slotFrame);
+                s.OnHoverChanged += HandleSlotHover;
+                s.OnClicked += HandleSlotClicked;
+                slots.Add(s);
             }
 
-            if (collapseAfter) SetExpanded(false, true);
+            NotifyOverflow(shown.Count - fixedSlots.Count);
+        }
+
+        /// 上一次有幾件塞不下。用來判斷「是不是又多了一件」
+        private int lastOverflow;
+
+        [Header("放不下的時候")]
+        [Tooltip("超過格數時跳給玩家看的提示。{0} = 塞不下幾件。\n\n"
+                 + "留空 = 只寫到 Console，不打擾玩家")]
+        public string overflowMessage = "快捷欄只放得下 {0} 格　多出來的要先用掉一件才拿得到";
+
+        /// <summary>
+        /// 身上的東西比格子多。
+        ///
+        /// ⚠️ **只在「又變多了」的時候才提示。** Refresh 會在每次背包變動、
+        /// 每次換環節時跑；每次都喊的話，玩家一路上會被同一句話洗版，
+        /// 而那句話在第二次之後就不帶新資訊了。
+        ///
+        /// 東西變少（用掉了、塞得下了）時把計數歸零 ——
+        /// 下次再滿出來要重新提醒一次，那時它又是新資訊了。
+        /// </summary>
+        private void NotifyOverflow(int overflow)
+        {
+            if (overflow <= 0) { lastOverflow = 0; return; }
+
+            bool worse = overflow > lastOverflow;
+            lastOverflow = overflow;
+
+            Debug.LogWarning(
+                $"[快捷欄] {name}：有 {overflow} 件「{filterTag}」放不下（只有 {fixedSlots.Count} 格）。\n" +
+                "　東西還在背包裡，只是點不到 —— 先用掉一件就會遞補上來。");
+
+            if (!worse || string.IsNullOrEmpty(overflowMessage)) return;
+
+            Notify(string.Format(overflowMessage, fixedSlots.Count));
+        }
+
+        /// <summary>【生成】舊的做法：依道具數量生格子，交給 Layout Group 排。</summary>
+        private void RefreshSpawned(List<ItemStack> shown, ItemDatabase db, RunContext run)
+        {
+            for (int i = 0; i < slots.Count; i++) if (slots[i] != null) Destroy(slots[i].gameObject);
+            slots.Clear();
+
+            if (run == null || db == null || expandedRoot == null || slotPrefab == null) return;
+
+            for (int i = 0; i < shown.Count; i++)
+            {
+                ShortcutSlotUI s = Instantiate(slotPrefab, expandedRoot);
+                s.Bind(db.GetById(shown[i].id), shown[i].count, fallbackIcon, slotFrame);
+                s.OnHoverChanged += HandleSlotHover;
+                s.OnClicked += HandleSlotClicked;
+                slots.Add(s);
+            }
+        }
+
+        /// <summary>
+        /// 解掉事件訂閱。**固定格子專用** ——
+        /// 生成出來的格子連物件一起砍，訂閱自然消失；固定格子活得比訂閱久，
+        /// 不解的話每次 Refresh 都會多疊一層，點一下會使用好幾次道具。
+        /// </summary>
+        private void DetachHandlers()
+        {
+            for (int i = 0; i < slots.Count; i++)
+            {
+                if (slots[i] == null) continue;
+                slots[i].OnHoverChanged -= HandleSlotHover;
+                slots[i].OnClicked -= HandleSlotClicked;
+            }
         }
 
         // ==========================================
@@ -175,7 +318,10 @@ namespace EldritchMile.UI.Shortcut
             // 症狀是「看得到欄位但點不到」，因為根本沒有東西可以點。
             //
             // 放在展開的時機而不是每幀 —— 只有要看的時候才重建，代價可以忽略
-            if (on && !expanded) Refresh(false);
+            // 常駐的欄沒有「收起來」這件事 —— 任何要求收合的呼叫都當成展開
+            if (alwaysExpanded) on = true;
+
+            if (on && !expanded && !refreshing) Refresh(false);
 
             expanded = on;
 
@@ -262,9 +408,69 @@ namespace EldritchMile.UI.Shortcut
         /// 舊的 `UnityEngine.Input` 編得過但執行時會洗版例外（見 RunDebugPanel）。
         /// 沒有滑鼠時 `Mouse.current` 是 null，那不是錯誤。
         /// </summary>
+        /// 上一次看到的背包長相。變了就重建
+        private int inventorySignature = int.MinValue;
+
+        /// 距離上次檢查過了多久
+        private float pollTimer;
+
+        [Tooltip("多久檢查一次背包有沒有變（秒）。0 = 每一幀都查")]
+        [Min(0f)] public float pollSeconds = 0.2f;
+
+        /// <summary>
+        /// 背包變了就重建。
+        ///
+        /// 【為什麼是輪詢而不是訂事件】`RunContext` 沒有「背包變動」的事件，
+        /// 而會動背包的路有好幾條（事件的 GrantItem、寶箱的 LootService、
+        /// 商店、快捷欄自己用掉一個…）。要改成事件就得每一條都補通知，
+        /// 漏一條就是「撿到東西但欄位沒更新」——那正是這個 bug。
+        ///
+        /// 【為什麼原本沒事】舊的欄是**點開才展開**的，`SetExpanded(true)` 會先
+        /// `Refresh(false)`，等於每次要看的時候都重讀。食物欄改成常駐之後
+        /// 那個時機沒有了，於是只在 `OnEnable` 建一次 —— 之後撿什麼都不會變。
+        ///
+        /// 代價是每 0.2 秒掃一次背包（通常個位數個疊），可以忽略。
+        /// </summary>
+        private void PollInventory()
+        {
+            if (pollSeconds > 0f)
+            {
+                pollTimer += Time.unscaledDeltaTime;
+                if (pollTimer < pollSeconds) return;
+                pollTimer = 0f;
+            }
+
+            RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+
+            int sig = 17;
+            if (run != null)
+            {
+                for (int i = 0; i < run.inventory.Count; i++)
+                {
+                    ItemStack st = run.inventory[i];
+                    if (st == null) continue;
+                    sig = sig * 31 + (st.id != null ? st.id.GetHashCode() : 0);
+                    sig = sig * 31 + st.count;
+                }
+            }
+
+            if (sig == inventorySignature) return;
+
+            bool first = inventorySignature == int.MinValue;
+            inventorySignature = sig;
+
+            // 第一次不用喊 —— 那是正常的初始化，不是「背包變了」
+            if (!first)
+                Debug.Log($"[快捷欄] {name}：背包變了，重建格子");
+
+            Refresh(!expanded && !alwaysExpanded);
+        }
+
         private void Update()
         {
-            if (!expanded || openOnHover) return;
+            PollInventory();
+
+            if (!expanded || openOnHover || alwaysExpanded) return;
 
             // ── 1. 滑鼠離開整條欄超過緩衝時間 ──
             if (!pointerInside)
@@ -303,6 +509,7 @@ namespace EldritchMile.UI.Shortcut
         public void OnPointerClick(PointerEventData eventData)
         {
             if (openOnHover) return;    // hover 模式下點擊不該再切換，會打架
+            if (alwaysExpanded) return; // 常駐的欄沒有開關可切
 
             // **關著才開。** 開著時點空白處不收 ——
             // 收起來交給那三條（離開、閒置、點外面）。
@@ -314,7 +521,8 @@ namespace EldritchMile.UI.Shortcut
         // ==========================================
         private void HandleSlotHover(ShortcutSlotUI s)
         {
-            if (!s.IsHovered) { HideTooltip(); return; }
+            // 空格子（沒有道具）不顯示說明 —— 以前會跳出「（沒登記的道具）」
+            if (!s.IsHovered || s.Item == null) { HideTooltip(); return; }
 
             if (tooltipRoot == null) return;
             tooltipRoot.SetActive(true);
@@ -364,6 +572,14 @@ namespace EldritchMile.UI.Shortcut
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
             if (run == null) return;
 
+            // ── 不能吃的時機：地圖、轉場、打牌、對話（2026-09-13／09-15 試玩回饋）──
+            string blocked = BlockedReason();
+            if (blocked != null)
+            {
+                Notify(blocked);
+                return;
+            }
+
             // ── 有代價的食物：付不起就**整個不發生** ──
             //
             // 【為什麼要在消耗之前檢查】`PlayerVitals.SpendHp` 付不起時會安靜地回 false，
@@ -377,7 +593,7 @@ namespace EldritchMile.UI.Shortcut
                 Debug.Log($"[快捷欄]「{d.Label}」現在用不起 —— " +
                           $"代價 HP -{d.hpCost}／SAN -{d.sanCost}，" +
                           $"目前 HP {PlayerVitals.Hp}、SAN {PlayerVitals.San}");
-                PopupService.Instance?.ShowInstant($"{d.Label}　現在承受不起");
+                Notify($"{d.Label}　現在承受不起");
                 return;
             }
 
@@ -395,14 +611,64 @@ namespace EldritchMile.UI.Shortcut
             //    寫帳面的話玩家會以為系統壞了（「明明說 +35 怎麼沒變」）。
             int hp0 = PlayerVitals.Hp, san0 = PlayerVitals.San;
 
+            // ── 戰鬥中的 HP 要走戰鬥單位，不能走 PlayerVitals ──
+            //
+            // PlayerVitals 寫的是 RunStateManager 的存檔值，而戰鬥中的血量在
+            // `BattleUnit.currentHp` —— 直接寫存檔值的話血條不會動，
+            // 而且戰鬥結束回存時整筆會被戰鬥單位的值蓋掉，等於白吃。
+            //
+            // 走 `Heal` / `TakeDamage` 則是他的正規入口：血條、狀態、
+            // 傷害修正都會照常跑。
+            BattleUnit unit = BattlePlayerUnit();
+            int battleHp0 = unit != null ? unit.currentHp : 0;
+
             // 先給再扣。反過來的話「回大量 HP、扣中等 SAN」那種食物
             // 會在 HP 很低時被自己的代價擋掉，而它本來就是要救命的
-            if (d.hpRestore > 0) PlayerVitals.HealHp(d.hpRestore);
-            if (d.sanRestore > 0) PlayerVitals.RestoreSan(d.sanRestore);
-            if (d.hpCost > 0) PlayerVitals.SpendHp(d.hpCost);
-            if (d.sanCost > 0) PlayerVitals.SpendSan(d.sanCost);
+            if (unit != null)
+            {
+                if (d.hpRestore > 0) unit.Heal(d.hpRestore);
 
-            int dHp = PlayerVitals.Hp - hp0, dSan = PlayerVitals.San - san0;
+                // ⚠️ TakeDamage 會被格擋吸收 —— 帶著格擋吃「奢侈的血塊」等於免費。
+                //    這是刻意接受的：直接改 currentHp 會跳過他的通知，血條不會更新
+                if (d.hpCost > 0) unit.TakeDamage(d.hpCost);
+            }
+            else
+            {
+                if (d.hpRestore > 0) PlayerVitals.HealHp(d.hpRestore);
+                if (d.hpCost > 0) PlayerVitals.SpendHp(d.hpCost);
+            }
+
+            // ── SAN：戰鬥中走 EnergySystem ──
+            //
+            // ⚠️ 舊版這裡只寫 run 級的值，理由是「EnergySystem 每回合重設」—— **那是錯的。**
+            //    有 run 狀態時 BattleManager 不會重設它（他那句「SAN 值不重製」），
+            //    戰鬥中的 SAN 就是 EnergySystem。只寫存檔值的話血條不動，
+            //    而且戰鬥結束 SaveFromBattle() 會用 EnergySystem 的值蓋回去 —— 等於白吃。
+            //    （2026-09-13 試玩回報「戰鬥中吃食物 SAN 沒反應」）
+            EnergySystem energy = unit != null ? BattleEnergy() : null;
+            int battleSan0 = energy != null ? energy.currentEnergy : 0;
+
+            if (energy != null)
+            {
+                if (d.sanRestore > 0) energy.GainEnergy(d.sanRestore);
+                if (d.sanCost > 0) energy.Spend(Mathf.Min(d.sanCost, energy.currentEnergy));
+            }
+            else
+            {
+                if (d.sanRestore > 0) PlayerVitals.RestoreSan(d.sanRestore);
+                if (d.sanCost > 0) PlayerVitals.SpendSan(d.sanCost);
+            }
+
+            int dHp = unit != null ? unit.currentHp - battleHp0 : PlayerVitals.Hp - hp0;
+            int dSan = energy != null ? energy.currentEnergy - battleSan0 : PlayerVitals.San - san0;
+
+            // 播報用「現在畫面上那一份」的數值 —— 戰鬥中講存檔值的話，
+            // 玩家看到的數字會跟血條對不起來（試玩回報的「紀錄的數值與戰鬥不同步」）
+            int hpNow = unit != null ? unit.currentHp : PlayerVitals.Hp;
+            int hpMax = unit != null ? unit.maxHp : PlayerVitals.MaxHp;
+            int sanNow = energy != null ? energy.currentEnergy : PlayerVitals.San;
+            int sanMax = energy != null ? energy.maxEnergy : PlayerVitals.MaxSan;
+            bool ready = unit != null || PlayerVitals.IsReady;
 
             if (dHp == 0 && dSan == 0)
             {
@@ -410,26 +676,104 @@ namespace EldritchMile.UI.Shortcut
                 // 所以講清楚是「滿了」還是「系統還沒初始化」
                 Debug.LogWarning(
                     $"[快捷欄]「{d.Label}」吃下去了，但 HP／SAN 完全沒有變動。\n" +
-                    (PlayerVitals.IsReady
-                        ? $"　目前 HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}"
+                    (ready
+                        ? $"　目前 HP {hpNow}/{hpMax}、SAN {sanNow}/{sanMax}"
                           + " —— 應該是已經滿了，或這件道具的回復值本來就是 0。"
                         : "　⚠️ 這場 run 的 HP／SAN **還沒初始化**（見 PlayerVitals 的警告）。"));
             }
 
-            Debug.Log($"[快捷欄] 使用「{d.Label}」"
+            Debug.Log($"[快捷欄] 使用「{d.Label}」" + (unit != null ? "（戰鬥中）" : "")
                       + (d.hpRestore > 0 ? $"　HP +{d.hpRestore}" : "")
                       + (d.sanRestore > 0 ? $"　SAN +{d.sanRestore}" : "")
                       + (d.hpCost > 0 ? $"　HP -{d.hpCost}" : "")
                       + (d.sanCost > 0 ? $"　SAN -{d.sanCost}" : "")
-                      + $"　→ HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}"
-                      + $"　SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}");
+                      + $"　→ HP {hpNow}/{hpMax}　SAN {sanNow}/{sanMax}");
 
-            PopupService.Instance?.ShowInstant(UsedTextFor(d, dHp, dSan));
+            Notify(UsedTextFor(d, dHp, dSan, hpNow, hpMax, sanNow, sanMax, ready));
 
             // 用完就重建 —— 數量要跟著變，用光了那一格要消失
             Refresh(false);
 
             OnItemUsed?.Invoke(d);
+        }
+
+        /// <summary>
+        /// 現在正在戰鬥的話，回傳玩家的戰鬥單位；不在戰鬥中回傳 null。
+        ///
+        /// 用 `FindFirstObjectByType` 而不是快取 —— 戰鬥的 Stage 是動態載入的，
+        /// 快捷欄活得比它久，抓一次存起來下一場就是空參照了。
+        /// 這只在點下去的那一刻跑一次，不是每幀。
+        /// </summary>
+        private static BattleUnit BattlePlayerUnit()
+        {
+            BattleManager bm = Object.FindFirstObjectByType<BattleManager>();
+            if (bm == null) return null;
+
+            BattleUnit u = bm.playerUnit;
+            return u != null && u.isActiveAndEnabled ? u : null;
+        }
+
+        /// <summary>戰鬥中的 SAN（隊友那邊叫 Energy）。不在戰鬥中回傳 null。</summary>
+        private static EnergySystem BattleEnergy()
+        {
+            if (BattlePlayerUnit() == null) return null;
+            BattleManager bm = Object.FindFirstObjectByType<BattleManager>();
+            return bm != null ? bm.energySystem : null;
+        }
+
+        /// <summary>
+        /// 現在不能吃的話，回傳要跟玩家說的話（可能是空字串 = 不說）；可以吃回傳 null。
+        ///
+        ///   · 地圖／轉場：黑幕中途吃下去，結果會落在戰鬥單位還是存檔值說不準
+        ///   · 打牌中：對話框是 HoldOpen，吃的播報會跟打牌的文字搶同一個框
+        ///   · 對話節點：人物對話中不該能邊聊邊吃（2026-09-15）
+        /// </summary>
+        private string BlockedReason()
+        {
+            GameFlowManager g = GameFlowManager.Instance;
+            if (g != null && (g.IsTransitioning || (g.mapOverlay != null && g.mapOverlay.IsOpen)))
+                return mapBlockedMessage ?? "";
+
+            DialogueEncounterController enc = DialogueEncounterController.Instance;
+            if (enc != null && enc.IsActive) return encounterBlockedMessage ?? "";
+
+            if (Object.FindFirstObjectByType<DialogueStageController>() != null)
+                return dialogueBlockedMessage ?? "";
+
+            return null;
+        }
+
+        /// <summary>
+        /// 給玩家看的一句話。**走 Toast，不走對話框** ——
+        /// 對話框要點才會關，在地圖上它還在地圖底下看不到（見 ToastUI 的說明）。
+        /// 場上沒有 Toast 才退回對話框。
+        /// </summary>
+        private static void Notify(string message)
+        {
+            if (string.IsNullOrEmpty(message)) return;
+            if (!EldritchMile.UI.ToastUI.TryShow(message)) PopupService.Instance?.ShowInstant(message);
+        }
+
+        /// <summary>
+        /// 重建格子之後，重新決定說明框要不要留著。
+        ///
+        /// 【為什麼需要】（2026-09-15「吃完食物 tooltip 沒消失」）吃掉最後一個之後，
+        /// 那一格被換成空針筒或關掉 —— 滑鼠沒動，所以**不會有 OnPointerExit**，
+        /// 說明框就停在上一件道具的內容上。重建完主動看一次：
+        /// 滑鼠還停在一格有東西的上面就換成它的說明，否則收掉。
+        /// </summary>
+        private void RefreshTooltipAfterRebuild()
+        {
+            for (int i = 0; i < slots.Count; i++)
+            {
+                ShortcutSlotUI s = slots[i];
+                if (s != null && s.IsHovered && s.Item != null && s.gameObject.activeInHierarchy)
+                {
+                    HandleSlotHover(s);
+                    return;
+                }
+            }
+            HideTooltip();
         }
 
         /// <summary>
@@ -440,11 +784,34 @@ namespace EldritchMile.UI.Shortcut
         {
             if (d.hpCost <= 0 && d.sanCost <= 0) return true;
 
-            // 還沒進過戰鬥時 HP／SAN 尚未初始化。那時扣不動，也不該讓玩家白白用掉
-            if (!PlayerVitals.IsReady) return false;
+            // ⚠️ 戰鬥中要看戰鬥單位的血，不是存檔值 ——
+            //    存檔值在戰鬥期間不會跟著扣，拿它判斷會允許玩家把自己吃死
+            BattleUnit unit = BattlePlayerUnit();
+            if (unit != null)
+            {
+                if (d.hpCost > 0 && unit.currentHp - d.hpCost <= 0) return false;
+            }
+            else
+            {
+                // 還沒進過戰鬥時 HP／SAN 尚未初始化。那時扣不動，也不該讓玩家白白用掉
+                if (!PlayerVitals.IsReady) return false;
+                if (d.hpCost > 0 && PlayerVitals.Hp - d.hpCost <= 0) return false;
+            }
 
-            if (d.hpCost > 0 && PlayerVitals.Hp - d.hpCost <= 0) return false;
-            if (d.sanCost > 0 && PlayerVitals.San - d.sanCost <= 0) return false;
+            if (d.sanCost > 0)
+            {
+                // 戰鬥中的 SAN 在 EnergySystem，理由同上面的 HP
+                EnergySystem energy = BattleEnergy();
+                if (energy != null)
+                {
+                    if (energy.currentEnergy - d.sanCost <= 0) return false;
+                }
+                else
+                {
+                    if (!PlayerVitals.IsReady) return false;
+                    if (PlayerVitals.San - d.sanCost <= 0) return false;
+                }
+            }
 
             return true;
         }
@@ -456,7 +823,8 @@ namespace EldritchMile.UI.Shortcut
         /// 帳面是 +35、實際是 +0 —— 照抄帳面的話玩家會以為系統壞了。
         /// 講「HP 100/100（已滿）」他就知道是自己已經滿了。
         /// </summary>
-        private static string UsedTextFor(ItemData d, int dHp, int dSan)
+        private static string UsedTextFor(ItemData d, int dHp, int dSan,
+            int hpNow, int hpMax, int sanNow, int sanMax, bool ready)
         {
             var bits = new List<string>();
             if (dHp != 0) bits.Add($"HP {dHp:+#;-#;0}");
@@ -464,14 +832,13 @@ namespace EldritchMile.UI.Shortcut
 
             if (bits.Count == 0)
             {
-                return PlayerVitals.IsReady
-                    ? $"{d.Label}　（HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、"
-                      + $"SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}，沒有變化）"
+                return ready
+                    ? $"{d.Label}　（HP {hpNow}/{hpMax}、SAN {sanNow}/{sanMax}，沒有變化）"
                     : $"{d.Label}　（沒有變化）";
             }
 
             return $"{d.Label}　{string.Join("　", bits.ToArray())}"
-                 + $"　→　HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}　SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}";
+                 + $"　→　HP {hpNow}/{hpMax}　SAN {sanNow}/{sanMax}";
         }
     }
 }

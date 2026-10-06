@@ -1,6 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// ⚠️ ExplorationCardEffectData 還住在 _Archive 底下，但這裡是正式碼 ——
+//    也就是說那個資料夾其實沒有真的封存完。要嘛把它搬出來，
+//    要嘛接受這條 using。先接受，搬檔案的風險留給有空的時候。
+using EldritchMile.Archive;
+
 [CreateAssetMenu(menuName = "CardGame/Card Data Explore")]
 public class CardDataExplore : ScriptableObject
 {

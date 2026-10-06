@@ -71,9 +71,29 @@ public abstract class ChoiceStageController : StageController
     // ==========================================
     // 生命週期
     // ==========================================
+    /// <summary>
+    /// 這個環節要不要顯示右下角共用的 EXIT。預設不要 —— 事件、機率對話各有自己的收尾。
+    /// 對話節點打開（2026-09-15）。
+    /// </summary>
+    protected virtual bool UsesSharedExit { get { return false; } }
+
+    /// <summary>
+    /// 點了共用的 EXIT。預設：打牌中就先收掉打牌，然後直接結束這個環節回地圖。
+    /// </summary>
+    protected virtual void OnSharedExitClicked()
+    {
+        DialogueEncounterController enc = DialogueEncounterController.Instance;
+        if (enc != null && enc.IsActive) enc.EndEncounter(false);
+
+        Finish();
+    }
+
     public override void OnStageEnter(RunContext run)
     {
         phase = Phase.Intro;
+
+        // 點 EXIT 先確認（2026-09-15：對話節點也要確認面板）
+        if (UsesSharedExit) EldritchMile.UI.SharedExitUI.Instance?.ShowWithConfirm(OnSharedExitClicked);
 
         if (PopupService.Instance == null)
         {
@@ -149,6 +169,7 @@ public abstract class ChoiceStageController : StageController
     public override IEnumerator OnStageExit()
     {
         if (PopupService.Instance != null) PopupService.Instance.OnAllClosed -= HandleAllClosed;
+        if (UsesSharedExit) EldritchMile.UI.SharedExitUI.Instance?.Hide();
 
         Unsubscribe();
         Options?.HideAll();
@@ -233,6 +254,8 @@ public abstract class ChoiceStageController : StageController
     {
         if (phase == Phase.Done) return;
         phase = Phase.Done;
+
+        if (UsesSharedExit) EldritchMile.UI.SharedExitUI.Instance?.Hide();
 
         if (PopupService.Instance != null) PopupService.Instance.OnAllClosed -= HandleAllClosed;
 

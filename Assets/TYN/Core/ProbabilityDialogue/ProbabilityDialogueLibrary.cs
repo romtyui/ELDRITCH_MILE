@@ -37,6 +37,14 @@ namespace EldritchMile.Core.ProbabilityDialogue
         [Tooltip("所有對話事件。順序不影響行為")]
         public List<Entry> entries = new List<Entry>();
 
+        [Tooltip("全部演過之後要不要重播。\n\n"
+                 + "【為什麼預設開著】once 的本意是「優先給沒看過的」，不是\n"
+                 + "「看完就沒了」。關掉的話對話庫演完，遭遇節點會變成\n"
+                 + "**走上去什麼都沒發生** —— 那看起來就是壞掉。\n\n"
+                 + "⚠️ 取消勾選 = 演完就真的沒了。那時 Stage 上的\n"
+                 + "Default Dialogue 一定要填，不然節點會是空的。")]
+        public bool replayWhenExhausted = true;
+
         [Tooltip("把每次的挑選過程印到 Console。查「為什麼那段對話沒出來」時打開")]
         public bool verbose = false;
 
@@ -102,9 +110,35 @@ namespace EldritchMile.Core.ProbabilityDialogue
                 total += e.weight;
             }
 
+            // ── 全部演過了 ──
+            //
+            // 這時候還是要給玩家一段對話。空手回去的話，遭遇節點會變成
+            // 「走上去、黑一下、什麼都沒有」，玩家只會覺得是 bug。
+            // 重播看過的至少是完整的一段體驗，而且機率牌每次抽的手牌不同，
+            // 同一段對話重玩的結果本來就不一樣 —— 不是純粹的複製貼上。
+            if (candidates.Count == 0 && replayWhenExhausted)
+            {
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    Entry e = entries[i];
+                    if (e == null || e.dialogue == null) continue;
+                    if (string.IsNullOrEmpty(e.dialogue.eventId)) continue;
+                    if (e.weight <= 0f) continue;
+
+                    candidates.Add(e);
+                    total += e.weight;
+                }
+
+                if (candidates.Count > 0)
+                    Debug.Log($"[對話庫] {name}：{candidates.Count} 段全部演過了，改成重播。");
+            }
+
             if (candidates.Count == 0)
             {
-                if (verbose) Debug.Log("[對話庫] 沒有任何合格的對話");
+                Debug.LogWarning(
+                    $"[對話庫] {name}：抽不到任何對話。\n" +
+                    "　遭遇節點會變成空的（走上去什麼都沒發生）——\n" +
+                    "　要嘛把 Replay When Exhausted 打開，要嘛在 Stage 上填 Default Dialogue。");
                 return null;
             }
 

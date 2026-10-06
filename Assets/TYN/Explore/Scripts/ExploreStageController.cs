@@ -33,6 +33,17 @@ namespace EldritchMile.Explore
                  "所以標籤本身只需要單擊，不必再做二次點擊")]
         public Button exitTag;
 
+        [Tooltip("和寶箱打牌時，點空白處（不是對象大圖、對話框、手牌）就結束打牌，並藏起「結束」鍵。\n" +
+                 "（2026-09-15）判定掛在對話框後面的壓黑層上，見 DimmerClickEndsEncounter")]
+        public bool clickOutsideEndsEncounter = true;
+
+        [Tooltip("開箱成功後，再點一下對話框就結算（播出拿到什麼）並離開寶箱畫面。\n" +
+                 "（2026-09-15）跟事件、對話的「點對話框就離開」同一套")]
+        public bool settleByDialogueClick = true;
+
+        [Tooltip("開箱成功之後多久內的點擊不算數（秒）—— 成功那一刻隨手一點不會直接跳過結果")]
+        [Min(0f)] public float settleDismissGrace = 0.35f;
+
         [Tooltip("離開前的確認面板。\n" +
                  "若上面掛了 FadePanel 就會用淡入（與 MapBanner 外觀一致），否則直接 SetActive")]
         public GameObject continueAskPanel;
@@ -159,6 +170,15 @@ namespace EldritchMile.Explore
                 exitTag.onClick.AddListener(ShowContinueAsk);
             }
 
+            // 右下角共用的 EXIT（2026-09-15 改版）。有它就不用上方那顆書籤
+            if (EldritchMile.UI.SharedExitUI.Instance != null)
+            {
+                // ⚠️ 不走 ShowContinueAsk：那一支在對話框開著、或打牌中會**延後**到關掉才跳 ——
+                //    玩家在寶箱畫面點 EXIT 會什麼都看不到（2026-09-15 回報）。
+                //    點 EXIT 是玩家明確要走，確認面板立刻出來（它在 HUD 畫布上，不會被寶箱蓋住）
+                EldritchMile.UI.SharedExitUI.Instance.ShowWithConfirm(LeaveFromSharedExit);
+                if (exitTag != null) exitTag.gameObject.SetActive(false);
+            }
         }
 
         public override IEnumerator OnStageReady()
@@ -173,6 +193,7 @@ namespace EldritchMile.Explore
         public override IEnumerator OnStageExit()
         {
             if (exitTag != null) exitTag.onClick.RemoveListener(ShowContinueAsk);
+            EldritchMile.UI.SharedExitUI.Instance?.Hide();
 
             if (room != null) room.OnRoomCleared -= HandleRoomCleared;
 
@@ -335,6 +356,9 @@ namespace EldritchMile.Explore
 
             continueAskShown = true;
             SetContinueAskVisible(true);
+
+            // 面板蓋上來之後標籤收不到 OnPointerExit，不收會卡在伸出來的狀態
+            EldritchMile.UI.SharedExitUI.Instance?.Retract();
         }
 
         /// <summary>
@@ -454,6 +478,9 @@ namespace EldritchMile.Explore
             // 先開手牌區再 Begin —— 手牌區在 Start 才訂閱事件，
             // 順序反了就會漏掉第一次的 OnHandChanged，卡片畫不出來。
             HandUI?.Show();
+
+            // 點空白處就能離開的話，「結束」鍵就多餘了
+            HandUI?.SetEndButtonVisible(!clickOutsideEndsEncounter);
 
             Encounter.OnEncounterEnded -= HandleEncounterEnded;
             Encounter.OnEncounterEnded += HandleEncounterEnded;
@@ -584,6 +611,17 @@ namespace EldritchMile.Explore
             pendingLootName = containerName;
             pendingLoot.Clear();
             if (items != null) pendingLoot.AddRange(items);
+
+            // ── 開箱成功 → 再點一下對話框就結算並離開寶箱畫面（2026-09-15）──
+            //
+            // 跟事件、對話的「點對話框就離開」同一套（PopupService.ArmDismiss）：
+            // 保護期內的誤觸不算、打字中的點擊只快轉；文字播完後的下一次點擊才結束打牌，
+            // HandleEncounterEnded 會接著播出拿到什麼。
+            //
+            // ⚠️ 只在**成功**這個時間點武裝。沒成功的話打牌還要繼續（蓄意失敗是合法策略），
+            //    點對話框只是推進文字，不能把整個環節結束掉。
+            if (settleByDialogueClick && Encounter != null && Encounter.IsActive && PopupService.Instance != null)
+                PopupService.Instance.ArmDismiss(settleDismissGrace, EndEncounter);
         }
 
         private void HandleTargetViewClicked(EncounterTargetView view)
@@ -682,6 +720,10 @@ namespace EldritchMile.Explore
         {
             if (Encounter == null) return;
 
+            // 不管是點對話框、點空白處、EXIT 還是手牌用盡結束的，都把「點對話框就結算」的武裝解掉 ——
+            // 殘留的話，下一次打開對話框的第一下會被當成結算吃掉
+            PopupService.Instance?.CancelDismiss();
+
             Encounter.OnEncounterEnded -= HandleEncounterEnded;
 
             // ⚠️ 一定要清掉。DialogueEncounterController 常駐場景，而本控制器住在
@@ -713,6 +755,9 @@ namespace EldritchMile.Explore
             }
 
             currentEncounterTarget = null;
+
+            // ⚠️ 還原「結束」鍵 —— 手牌區是場景常駐的，對話節點的打牌還要用它
+            HandUI?.SetEndButtonVisible(true);
             HandUI?.Hide();
 
             // 打牌期間壓下來的開箱結果，現在才播報
@@ -762,6 +807,19 @@ namespace EldritchMile.Explore
         public void RequestExit()
         {
             ReportComplete(StageResult.Completed);
+        }
+
+        /// <summary>
+        /// 共用 EXIT 的確認面板按了「是」。打牌中就先把打牌收掉再走 ——
+        /// 不收的話手牌區、HoldOpen 的對話框會留到下一站。
+        /// </summary>
+        private void LeaveFromSharedExit()
+        {
+            if (Encounter != null && Encounter.IsActive) Encounter.EndEncounter();
+
+            continueAskShown = false;
+            SetContinueAskVisible(false);
+            RequestExit();
         }
     }
 }

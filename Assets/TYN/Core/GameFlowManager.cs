@@ -211,8 +211,22 @@ namespace EldritchMile.Core
                  "留空 = 不顯示地點卡，退回單純的黑幕停頓")]
         public MapBannerUI titleBanner;
 
-        [Tooltip("總開關。取消勾選就回到只有黑幕停頓的版本")]
+        [Tooltip("總開關。取消勾選就回到只有黑幕停頓的版本。\n" +
+                 "節點名稱（戰鬥、遭遇…）與事件名稱（無人的小船…）都由這一格管。\n" +
+                 "（2026-09-14 文案要求先關掉）")]
         public bool showTitleCards = true;
+
+        [Header("輪迴")]
+        [Tooltip("新的一輪要不要帶入遺產道具（MetaProgressData.legacyItemIds）。\n\n" +
+                 "**預設不帶** —— 目前體驗以單輪為主，遺物、道具、數值都不延續到下一輪。\n" +
+                 "遺產機制設計好之後再打開。統計與遊玩紀錄不受這一格影響，一律保留")]
+        public bool inheritLegacyItems = false;
+
+        [Header("通知")]
+        [Tooltip("事件結果裡要不要顯示「【深淵】的侵蝕度 +5%」這類提示。\n\n" +
+                 "**關掉只是不講，侵蝕度照樣會累積**，條件判斷也照常。\n" +
+                 "（2026-09-14 文案要求先不要顯示）")]
+        public bool showCorruptionNotices = false;
 
         [Serializable]
         public class NodeTitle
@@ -326,7 +340,12 @@ namespace EldritchMile.Core
         {
             IsTransitioning = true;
 
-            Run = RunContext.CreateNew(Meta);
+            // ⚠️ 上一輪的東西要先全部清掉（2026-09-14 試玩回報「新一輪沿用舊的 HP／SAN／牌組」）
+            ResetRunLevelState();
+
+            // 遺產道具預設**不繼承**（2026-09-15：遺物與道具不能帶到新一輪）。
+            // Meta 本身照樣保留 —— 統計與遊玩紀錄都在裡面
+            Run = RunContext.CreateNew(inheritLegacyItems ? Meta : null);
             Run.AddMoney(startingMoney);
 
             // HP／SAN 不存在 RunContext 裡 —— 它們歸 RunStateManager（戰鬥端）持有，
@@ -347,6 +366,9 @@ namespace EldritchMile.Core
             EncounterPlanner.AssignEnemies(
                 Run.mapData, encounterPool, Run,
                 new System.Random(Run.runSeed ^ 1), itemDatabase);
+
+            // 遊玩紀錄從這裡開始（地圖與敵人都排好了，種子與節點數才是最終的）
+            RunRecorder.BeginRun(Run, Meta);
 
             Debug.Log(
                 $"[Flow] 開始新的一場 run（seed {Run.runSeed}）：" +
@@ -372,6 +394,34 @@ namespace EldritchMile.Core
             yield return OpenMapRoutine();
         }
 
+        /// <summary>
+        /// 把「活得比一場 run 久」的東西歸零。**開新的一輪之前呼叫。**
+        ///
+        /// ────────────────────────────────────────────────────────
+        /// 【為什麼會漏】
+        ///   · `RunStateManager` 是 **DontDestroyOnLoad**，HP／SAN／牌組／戰鬥快照都存在它身上
+        ///   · 而 `PlayerVitals.EnsureInitialized` 的規則是「**已經有值就不覆蓋**」
+        ///     （為了讀檔續玩）—— 兩個加起來，新的一輪會直接沿用上一輪的血量與牌組
+        ///   · 下面幾個 static 與佇列欄位同理：Stage 會卸載，static 不會
+        ///
+        /// ⚠️ **遺產（Meta）不在這裡清** —— 那是刻意留給下一輪的（見 RunContext.CreateNew）。
+        /// </summary>
+        private void ResetRunLevelState()
+        {
+            if (RunStateManager.Instance != null)
+            {
+                RunStateManager.Instance.ClearAllRunData();
+                RunStateManager.Instance.ClearReservedEncounter();
+            }
+
+            PendingEvent = null;
+            stageAfterEvent = StageType.None;
+            stageAfterBattle = StageType.None;
+
+            BattleStageController.PendingEnemyId = null;
+            ProbabilityDialogueStageController.PendingDialogue = null;
+        }
+
         private IEnumerator EnterNodeRoutine(RunNodeData node)
         {
             IsTransitioning = true;
@@ -391,6 +441,7 @@ namespace EldritchMile.Core
             // 前置，不覆蓋。玩家不會因為運氣好觸發了事件反而少玩到一間房。
             StageType nodeStage = StageTypeForNode(node);
             EventData ev = PickEventForNode();
+            RunRecorder.NodeEntered(Run, node, ev);
 
             string card;
 
@@ -516,6 +567,7 @@ namespace EldritchMile.Core
             IsTransitioning = true;
 
             Debug.Log($"[Flow] {currentStage} 完成：{result}");
+            RunRecorder.StageCompleted(Run, currentStage, result);
 
             // ── 事件播完 → 接回原本那個節點，而不是收工回地圖 ──
             if (currentStage == StageType.Event && stageAfterEvent != StageType.None)
@@ -577,6 +629,7 @@ namespace EldritchMile.Core
             if (result == StageResult.PlayerDied || result == StageResult.RunFinished)
             {
                 Run?.ContributeToMeta(Meta, result);
+                RunRecorder.EndRun(Run, Meta, result);
 
                 // ── 結局：打完 Boss 或中途死掉，都先演一段再回主選單 ──
                 //
@@ -690,6 +743,21 @@ namespace EldritchMile.Core
             }
 
             currentStage = next;
+
+            // ⚠️ **每次換站都把對話框的推進鎖解開。**
+            //
+            // 結算那一頁會鎖住點擊推進（見 DialogueBoxUI.LockAdvance），
+            // 讓玩家只能用離開鍵收掉。但只要有任何一條離場路徑忘了解鎖，
+            // 下一站的對話就會整個點不動 —— 而那看起來像「遊戲當掉」，
+            // 幾乎不可能聯想到是上一站沒收乾淨。
+            //
+            // 與其在每個 Stage 控制器的每個出口各補一次（漏一個就出事），
+            // 在這個唯一的換站點統一收。各控制器自己那份解鎖留著沒關係，
+            // 那是早一點解、這裡是保底。
+            // 取消「再點一下就離開」的武裝並解鎖推進。
+            // 殘留的訂閱會打到下一站 —— 玩家在新對話框點第一下就被上一站的
+            // 離開邏輯吃掉，而那完全不會報錯
+            PopupService.Instance?.CancelDismiss();
 
             if (next != StageType.None && stageHost != null)
             {

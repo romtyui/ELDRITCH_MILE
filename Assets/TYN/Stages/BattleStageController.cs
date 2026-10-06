@@ -81,6 +81,22 @@ public class BattleStageController : StageController
     [Tooltip("戰後結算怎麼寫。{0} = 金幣數量。留空 = 不播報（錢照給）")]
     public string rewardLineFormat = "戰利品：金幣 ×{0}";
 
+    [Tooltip("戰後專屬的離開鍵。**結算播完才會出現**，按了才回地圖。\n\n" +
+             "【為什麼要有】原本是「給錢 → 立刻回報完成」——\n" +
+             "`ShowText` 只是把結算排進佇列，而回報會立刻觸發轉場，\n" +
+             "所以那一行字根本來不及被讀到（甚至根本沒顯示）。\n\n" +
+             "留空 = 退回舊行為（給完錢直接回地圖）。\n" +
+             "跟事件、機率對話的離開鍵是同一套做法。")]
+    public UnityEngine.UI.Button endButton;
+
+        [Tooltip("改成「再點一下對話框就離開」，不用畫面上另一顆離開鍵。保護期內的點擊不算，避免把結算跳掉")]
+        [Min(0f)] public float dismissGrace = 0.35f;
+
+
+    [Tooltip("**只在沒有 End Button 時**才用到：結算播完再等幾秒才回地圖。\n" +
+             "0 = 不等（那就等於看不到結算）")]
+    [Min(0f)] public float rewardAutoSeconds = 2f;
+
     [System.Serializable]
     public class FormationOverride
     {
@@ -154,11 +170,23 @@ public class BattleStageController : StageController
         reported = false;
         fightingEnemyIds.Clear();
 
+        SetEndButtonVisible(false);
+        if (endButton != null)
+        {
+            endButton.onClick.RemoveListener(LeaveBattle);
+            endButton.onClick.AddListener(LeaveBattle);
+        }
+
         if (battleManager == null) battleManager = GetComponentInChildren<BattleManager>(true);
 
         // 接上宿主場景的東西。**一定要在 StartBattle 之前** ——
         // 相機沒綁好的話第一幀就會用錯的排序畫出來
         BindToHostScene();
+
+        // 怪物的狀態／意圖說明框會跑到右上角：說明框在 Overlay 畫布、怪物圖示在 Camera 畫布，
+        // 兩邊座標系不同（見 TooltipCanvasBridge 的說明）。這裡在我方補一層轉接
+        if (GetComponent<EldritchMile.UI.TooltipCanvasBridge>() == null)
+            gameObject.AddComponent<EldritchMile.UI.TooltipCanvasBridge>();
 
         // ⚠️ 訂閱要在 StartBattle 之前 —— 一場空的戰鬥（沒有敵人）
         //    有可能在同一幀就結束，晚訂就收不到了
@@ -186,11 +214,59 @@ public class BattleStageController : StageController
         // Unity 就會在對的時機呼叫 Start()，而且只呼叫一次。
         // 順序也才對 —— 先 ReserveEnemies 再啟用，他才撈得到我們預約的對手。
         battleManager.gameObject.SetActive(true);
+
+        StartCoroutine(RefreshSanLightAfterStart());
+    }
+
+    /// <summary>
+    /// 開場後補一次「怪物明暗依 SAN」的刷新。
+    ///
+    /// ────────────────────────────────────────────────────────
+    /// 【症狀】試玩回報「怪物一開場就是黑色型態」—— 黑色型態應該是 SAN 越低越明顯。
+    ///
+    /// 【實測】SAN 100/100，但 `PSBMonsterLightReveal.lightPower` 卡在 **0.20**
+    /// （`EnergyLightPowerBinder.minLightPower`），黑色那層 alpha 0.95。
+    ///
+    /// 【原因】Binder 只在 `OnEnable` 與 `OnEnergyChanged` 時計算。
+    /// 它跟 BattleManager 在同一個物件上，我們 SetActive 的當下 OnEnable 就跑了 ——
+    /// 那時 run 的 SAN 還沒套進來。之後 `RunStateManager.ApplyToBattle()` 直接改
+    /// `currentEnergy`，**不會發 OnEnergyChanged**，所以 Binder 一直停在開場那個值，
+    /// 直到玩家第一次花 SAN 才跳回正確的亮度。
+    ///
+    /// 【為什麼修在這裡】那三支都是 Romtyui 的檔案。這裡只是在他的流程跑完之後
+    /// 多叫一次他本來就公開的 `RefreshLightPower()`，不改他的任何行為。
+    /// 根治的做法（ApplyToBattle 之後發事件）要跟他討論。
+    ///
+    /// 等兩幀：第一幀 BattleManager.Start() 才會跑。這時畫面還在黑幕底下，玩家看不到跳動。
+    /// </summary>
+    private IEnumerator RefreshSanLightAfterStart()
+    {
+        yield return null;
+        yield return null;
+        RefreshSanLight();
+    }
+
+    public override IEnumerator OnStageReady()
+    {
+        yield return base.OnStageReady();
+
+        // 保底：黑幕淡出後再對一次，萬一 StartBattle 比兩幀還晚才套用 SAN
+        RefreshSanLight();
+    }
+
+    private void RefreshSanLight()
+    {
+        EnergyLightPowerBinder binder = GetComponentInChildren<EnergyLightPowerBinder>(true);
+        if (binder != null && binder.isActiveAndEnabled) binder.RefreshLightPower();
     }
 
     public override IEnumerator OnStageExit()
     {
         TutorialEventBus.OnSignalRaised -= HandleSignal;
+
+        if (endButton != null) endButton.onClick.RemoveListener(LeaveBattle);
+        SetEndButtonVisible(false);
+
         UnbindFromHostScene();
         yield break;
     }
@@ -797,7 +873,9 @@ public class BattleStageController : StageController
         Debug.Log($"[戰鬥] 勝利。HP {PlayerVitals.Hp}/{PlayerVitals.MaxHp}、" +
                   $"SAN {PlayerVitals.San}/{PlayerVitals.MaxSan}、牌組 {PlayerVitals.DeckCount} 張");
 
-        Report(StageResult.Completed);
+        // ⚠️ **不要立刻回報。** 回報會觸發轉場，結算那一行字來不及被讀到。
+        //    交給下面那支等結算播完、玩家按了離開鍵才走
+        StartCoroutine(WaitThenLeave());
     }
 
     /// <summary>
@@ -846,6 +924,81 @@ public class BattleStageController : StageController
         }
     }
 
+    /// <summary>
+    /// 等結算播完，把離開鍵放出來；按了才回地圖。
+    ///
+    /// ────────────────────────────────────────────────────────
+    /// 【為什麼要等 `PopupService.IsIdle`】結算是排進佇列的，
+    /// 而且戰鬥端在勝利當下還有自己的收尾（死亡動畫、存檔）。
+    /// 用固定秒數等的話快的機器會太久、慢的機器會太短。
+    ///
+    /// 【為什麼是輪詢而不是訂 `OnAllClosed`】那個事件要玩家**點擊推進**、
+    /// 而且佇列剛好空掉時才發 —— 用它的話離開鍵要多點一下才出現。
+    /// 事件那邊也是同一個理由用輪詢。
+    ///
+    /// 沒有離開鍵時退回「等幾秒就走」，那是給還沒接鈕的過渡期用的。
+    /// </summary>
+    private IEnumerator WaitThenLeave()
+    {
+        while (PopupService.Instance != null && !PopupService.Instance.IsIdle) yield return null;
+
+        // ⚠️ 出口是**對話框本身**，不是畫面上另一顆鈕。
+        //    玩家回報離開鍵「不方便、找不到」——對話框是他們一路點過來的地方。
+        //    保護期見 PopupService.ArmDismiss
+        if (PopupService.Instance != null)
+        {
+            SetEndButtonVisible(false);
+            PopupService.Instance.ArmDismiss(dismissGrace, LeaveBattle);
+            yield break;
+        }
+
+        float t = 0f;
+        while (t < rewardAutoSeconds) { t += Time.unscaledDeltaTime; yield return null; }
+
+        Report(StageResult.Completed);
+    }
+
+    private void SetEndButtonVisible(bool visible)
+    {
+        if (endButton == null) return;
+        endButton.gameObject.SetActive(visible);
+
+        if (!visible) return;
+
+        // ⚠️ **這一段是為了不要再卡死一次。**
+        //
+        // 戰鬥這一站掛在 `WorldRoot`（不是 Canvas）底下，所以鈕上的 Canvas
+        // 會是**根 Canvas**，`renderMode` 才會真的生效 —— 從別的 Stage 複製
+        // 過來的鈕帶著 WorldSpace，整顆就跑到世界座標去了，畫面上完全看不到，
+        // 而玩家會卡在「結算播完但沒有出口」。
+        //
+        // 事件與機率對話沒事，是因為它們掛在 `Canvas_Stage` 底下（巢狀）。
+        // 光看 prefab 看不出這個差別 —— 所以在這裡量一次，出事就會有一行紅字。
+        var rt = endButton.transform as RectTransform;
+        if (rt == null) return;
+
+        var corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+
+        Canvas cv = endButton.GetComponentInParent<Canvas>();
+        bool overlay = cv != null && cv.renderMode == RenderMode.ScreenSpaceOverlay;
+        bool onScreen = corners[2].x > 0f && corners[2].y > 0f
+                     && corners[0].x < Screen.width && corners[0].y < Screen.height;
+
+        if (overlay && onScreen) return;
+
+        Debug.LogError(
+            "[戰鬥] 離開鍵放出來了，但**玩家看不到它** —— 這一站會卡死。\n" +
+            $"　Canvas renderMode = {(cv == null ? "沒有 Canvas" : cv.renderMode.ToString())}"
+            + $"（要 ScreenSpaceOverlay）、isRoot = {(cv != null && cv.isRootCanvas)}\n" +
+            $"　鈕的角落 {corners[0]} ~ {corners[2]}，螢幕 {Screen.width}x{Screen.height}\n" +
+            "　⚠️ Stage_Battle 掛在 WorldRoot 底下，所以鈕上的 Canvas 是**根 Canvas**，" +
+            "renderMode 會真的生效。從 Stage_Event 之類的地方複製鈕過來時要記得改。", this);
+    }
+
+    /// <summary>玩家按了離開。這是戰鬥勝利之後唯一的出口。</summary>
+    private void LeaveBattle() => Report(StageResult.Completed);
+
     private void OnLost()
     {
         Debug.Log("[戰鬥] 失敗 —— 這場 run 結束，走遺產結算");
@@ -860,6 +1013,10 @@ public class BattleStageController : StageController
     {
         if (reported) return;
         reported = true;
+
+        // ⚠️ **一定要解開。** 留著的話下一站的對話整個點不動 ——
+        //    而且那時看起來會像「遊戲卡住了」，很難聯想到是上一站沒收乾淨
+        if (PopupService.Instance != null) PopupService.Instance.CancelDismiss();
 
         TutorialEventBus.OnSignalRaised -= HandleSignal;
         ReportComplete(result);

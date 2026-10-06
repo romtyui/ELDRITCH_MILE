@@ -60,6 +60,10 @@ public class ProbabilityDialogueStageController : StageController
              "不建議，但至少不會卡住玩家")]
     public Button endButton;
 
+        [Tooltip("改成「再點一下對話框就離開」，不用畫面上另一顆離開鍵。保護期內的點擊不算，避免把結算跳掉")]
+        [Min(0f)] public float dismissGrace = 0.35f;
+
+
     [Tooltip("**只在沒有 End Button 時**才用得到：結束後最少停留幾秒，這段時間內點擊無效 ——\n" +
              "不然玩家在判定瞬間的那一下點擊會直接把結果跳掉")]
     [Min(0f)] public float endMinSeconds = 0.8f;
@@ -91,8 +95,14 @@ public class ProbabilityDialogueStageController : StageController
             endButton.onClick.AddListener(Report);
         }
 
+        // 右下角共用的 EXIT ＋ 確認面板。
+        // ⚠️ 地圖上的「遭遇／對話」節點實際載入的是**這個** Stage（GameFlowManager.dialogueNodeStage），
+        //    不是 DialogueStageController —— 只加在那邊的話對話節點永遠看不到 EXIT（2026-09-15 回報）
+        EldritchMile.UI.SharedExitUI.Instance?.ShowWithConfirm(LeaveFromSharedExit);
+
         if (backdrop == null) backdrop = GetComponentInChildren<StageBackdrop>(true);
-        backdrop?.Spawn();
+        // 擺設隨機開關，用節點的種子（同一站重進長一樣）
+        backdrop?.Spawn(run != null && run.pendingNode != null ? run.pendingNode.dressingSeed : 0, false);
 
         if (view == null) view = GetComponentInChildren<ProbabilityDialogueView>(true);
 
@@ -193,10 +203,11 @@ public class ProbabilityDialogueStageController : StageController
     {
         while (PopupService.Instance != null && !PopupService.Instance.IsIdle) yield return null;
 
-        if (endButton != null)
+        // ⚠️ 出口是對話框本身。玩家回報離開鍵「不方便、找不到」
+        if (PopupService.Instance != null)
         {
-            // 出口只有這一顆鈕 —— 不逾時、不吃隨便一下點擊
-            SetEndButtonVisible(true);
+            SetEndButtonVisible(false);
+            PopupService.Instance.ArmDismiss(dismissGrace, Report);
             yield break;
         }
 
@@ -242,7 +253,20 @@ public class ProbabilityDialogueStageController : StageController
     {
         if (reported) return;
         reported = true;
+        EldritchMile.UI.SharedExitUI.Instance?.Hide();
         ReportComplete(StageResult.Completed);
+    }
+
+    /// <summary>
+    /// 共用 EXIT 的確認按了「是」：中途離開這段對話。
+    ///
+    /// ⚠️ **不標記成演過** —— 沒演完就走的話，這段對話之後還可以再遇到。
+    /// 「再點一下對話框就離開」的武裝要先解掉，不然會跟這一次離開疊在一起。
+    /// </summary>
+    private void LeaveFromSharedExit()
+    {
+        PopupService.Instance?.CancelDismiss();
+        Report();
     }
 
     public override IEnumerator OnStageExit()
@@ -251,6 +275,11 @@ public class ProbabilityDialogueStageController : StageController
 
         if (endButton != null) endButton.onClick.RemoveListener(Report);
         SetEndButtonVisible(false);
+        EldritchMile.UI.SharedExitUI.Instance?.Hide();
+
+        // ⚠️ 殘留的武裝會打到下一站 —— 玩家在新對話框點第一下就被這一站的
+        //    離開邏輯吃掉，而且完全不會報錯
+        PopupService.Instance?.CancelDismiss();
 
         // Detach 會把 HoldOpen / 立繪還回去（見那一支的說明），
         // 這裡再讓對話框自己收掉 —— 不收的話它會一路留到下一站

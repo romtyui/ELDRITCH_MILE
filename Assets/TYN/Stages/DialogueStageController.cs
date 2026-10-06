@@ -29,6 +29,9 @@ using EldritchMile.UI;
 /// </summary>
 public class DialogueStageController : ChoiceStageController
 {
+    /// 對話節點也用右下角共用的 EXIT（2026-09-15）
+    protected override bool UsesSharedExit { get { return true; } }
+
     public override StageType Stage => StageType.Dialogue;
 
     [System.Serializable]

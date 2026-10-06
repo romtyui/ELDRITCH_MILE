@@ -958,10 +958,12 @@ MonoBehaviour:
   roomRoot: {fileID: 7317945159859054323}
   roomLibrary: {fileID: 11400000, guid: e084caf92c615374b8e8565ba03b1c97, type: 2}
   exitTag: {fileID: 4453551890473637009}
+  clickOutsideEndsEncounter: 1
   continueAskPanel: {fileID: 3421436478176035620}
   askOnRoomCleared: 0
   explorationDeck: {fileID: 4677082942379712021}
   cardsPerEncounter: 5
+  outOfCardsText: "\u624B\u4E0A\u5DF2\u7D93\u6C92\u6709\u724C\u4E86\u3002\u9019\u9593\u5C4B\u5B50\u88E1\u80FD\u8A66\u7684\u90FD\u8A66\u904E\u4E86\u3002"
 --- !u!114 &4677082942379712021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1010,7 +1012,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1728290024676504876
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1027,8 +1029,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 550, y: 0}
-  m_SizeDelta: {x: 150, y: 405}
+  m_AnchoredPosition: {x: 3, y: 0}
+  m_SizeDelta: {x: 175, y: 435}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &562032950186822789
 CanvasRenderer:

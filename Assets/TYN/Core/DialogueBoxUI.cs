@@ -318,6 +318,21 @@ namespace EldritchMile.Core
         ///
         /// HoldOpen 期間不關閉 —— 打牌時對象大圖就在框裡，關掉玩家就沒東西可打了。
         /// </summary>
+        /// <summary>
+        /// 鎖住「點一下就關掉」。**結算那一頁用的。**
+        ///
+        /// 【為什麼需要】推進鍵是蓋住整個對話框的透明 Button ——
+        /// 玩家在結算跳出來的當下隨手一點，就把「拿到了什麼」整頁跳掉了，
+        /// 而那正好是他最需要看的一頁。鎖住之後這一頁只能由離開鍵收掉。
+        ///
+        /// 【為什麼不是直接停用 advanceButton】停用會連同 raycast 一起沒掉，
+        /// 底下的東西就變成點得到了（專案裡踩過的坑 1）。在這裡擋掉才乾淨。
+        ///
+        /// ⚠️ **打字中的快轉不受影響** —— 鎖的是「關掉」不是「快轉」。
+        /// 連字都不能快轉的話，讀得快的人只能乾等。
+        /// </summary>
+        public bool LockAdvance { get; set; }
+
         public void Advance()
         {
             if (!IsShowing) return;
@@ -327,6 +342,8 @@ namespace EldritchMile.Core
                 SkipTyping();
                 return;
             }
+
+            if (LockAdvance) return;
 
             if (!HoldOpen) Hide();
             OnAdvanced?.Invoke();

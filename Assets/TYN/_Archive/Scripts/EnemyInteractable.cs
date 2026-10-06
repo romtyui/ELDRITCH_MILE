@@ -2,6 +2,14 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
+// ⚠️ 這一批是封存的舊碼，包進 namespace 是為了**不要污染全域命名空間**。
+//    它們宣告的 RunNodeData / MapData 與 EldritchMile.Core 那組同名，
+//    放在全域的話會蓋掉正式那組 —— 症狀是新檔案裡「MapData 沒有 GetNode」
+//    這種看起來莫名其妙的錯誤，而且完全不會指向這裡。
+//    （MapView.cs 第 9 行早就記過這個坑）
+namespace EldritchMile.Archive
+{
+
 // 1. 定義一個介面，讓未來的寶箱、NPC 也能通用卡牌互動邏輯
 // 【修改】將回傳值改為 bool，讓卡牌系統知道檢定是否成功
 public interface ICardInteractable
@@ -105,4 +113,5 @@ public class EnemyInteractable : MonoBehaviour, IPointerClickHandler, ICardInter
         Debug.Log("[EnemyInteractable] 模擬使用 60% 的卡牌進行檢定...");
         OnCardPlayed(0.6f);
     }
+}
 }

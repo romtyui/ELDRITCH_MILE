@@ -93,6 +93,50 @@ namespace EldritchMile.Core
         [Tooltip("GrantFromTable：要抽的戰利品表。跟寶箱／商店用的是同一種資產")]
         public LootTable table;
 
+        [Tooltip("ConsumeItemByTag 專用：**讓玩家自己挑**要交出哪一個（用選項框列出背包裡符合標籤的東西）。\n" +
+                 "取消勾選 = 照舊自動扣。\n\n" +
+                 "（2026-09-17 文案：《貪吃鬼》這類事件，要給出的食物可以自選）\n" +
+                 "⚠️ 只有事件（EventStageController）會問；別的地方套用這個效果時仍然自動扣")]
+        public bool letPlayerChoose = true;
+
+        /// <summary>套用前要不要先讓玩家挑。</summary>
+        public bool NeedsChoice
+        {
+            get { return kind == Kind.ConsumeItemByTag && letPlayerChoose && amount > 0 && !string.IsNullOrEmpty(key); }
+        }
+
+        /// <summary>
+        /// 玩家已經挑好了：每一筆扣 1 個，回傳提示（「失去 奢侈的血塊、生日蛋糕 ×2」）。
+        /// 付不起的那一筆會被跳過 —— 條件層應該已經擋掉了，這裡只是不讓它扣成負數。
+        /// </summary>
+        public string ApplyChosen(RunContext run, List<string> chosenIds)
+        {
+            if (run == null || chosenIds == null) return "";
+
+            var order = new List<string>();
+            var counts = new Dictionary<string, int>();
+
+            for (int i = 0; i < chosenIds.Count; i++)
+            {
+                string id = chosenIds[i];
+                if (string.IsNullOrEmpty(id) || !run.ConsumeItem(id, 1)) continue;
+
+                if (!counts.ContainsKey(id)) { counts[id] = 0; order.Add(id); }
+                counts[id]++;
+            }
+
+            if (order.Count == 0) return "";
+
+            var names = new List<string>();
+            for (int i = 0; i < order.Count; i++)
+            {
+                string n = GameFlowManager.ItemName(order[i]);
+                names.Add(counts[order[i]] > 1 ? n + " ×" + counts[order[i]] : n);
+            }
+
+            return "失去 " + string.Join("、", names.ToArray());
+        }
+
         /// <summary>
         /// 套用這個效果，回傳**要給玩家看的一行提示**（沒有就回空字串）。
         ///
@@ -153,6 +197,10 @@ namespace EldritchMile.Core
                 {
                     int actual = run.AddCorruption(key, amount);
                     if (actual == 0) return "";
+
+                    // 文案要求先不顯示侵蝕度的提示 —— 數值照加，只是不講（開關在 GameFlowManager）
+                    if (GameFlowManager.Instance != null && !GameFlowManager.Instance.showCorruptionNotices)
+                        return "";
 
                     // 已經 98% 時再 +5，玩家該看到的是 +2 —— 用實際變動量，不是傳入值
                     return $"【{CorruptionLabel(key)}】的侵蝕度 {actual:+#;-#;0}%";
@@ -325,6 +373,13 @@ namespace EldritchMile.Core
                  "⚠️ 關掉的理由請寫進 Notes —— 不寫的話下一個人只會看到一個 0，\n" +
                  "不知道是「效果還沒接」還是「企劃決定不要」。")]
         [Min(0f)] public float weight = 1f;
+
+        [Header("背景擺設")]
+        [Tooltip("勾起來：這個事件的背景**全部擺設都顯示**，包括平常一律關掉的那些" +
+                 "（例如戶外路中間的魚頭）。\n\n" +
+                 "不勾：照平常隨機開關，只給特定事件看的擺設不會出現。\n" +
+                 "哪些擺設算「只給特定事件看」，在背景 prefab 的 SceneDressing 上勾 Only When Show All。")]
+        public bool showAllDressing = false;
 
         [Header("內容")]
         [TextArea(4, 12)]

@@ -56,6 +56,96 @@ namespace EldritchMile.Core
         /// 而 `Drain()` 只有玩家**點擊推進**時才會被呼叫。
         /// 想在「最後一句打完的當下」做事（例如顯示結束鍵），用這個。
         /// </summary>
+        /// <summary>
+        /// 鎖住點擊推進 —— 結算那一頁只能由離開鍵收掉。
+        /// 見 <see cref="DialogueBoxUI.LockAdvance"/>。
+        ///
+        /// ⚠️ **離開那一站時記得解開。** 留著的話下一站的對話會整個點不動。
+        /// </summary>
+        /// <summary>解開推進鎖。給 `?.` 用的方法版 —— null 條件運算子不能接屬性 setter。</summary>
+        public void SetAdvanceUnlocked() { LockAdvance = false; }
+
+        /// 目前掛著的「再點一下就離開」。重新武裝時要先停掉舊的
+        private Coroutine dismissRoutine;
+
+        /// <summary>
+        /// 武裝「玩家再點一下對話框就離開」。
+        ///
+        /// ────────────────────────────────────────────────────────
+        /// 【為什麼不直接解鎖就好】結算是**排在最後**播的，而推進鍵是蓋住整個
+        /// 對話框的透明 Button。玩家為了把最後一句打完而點的那一下，
+        /// 會在同一瞬間被當成「我看完了」——「拿到什麼」就這樣被跳掉。
+        /// 那正是當初改成離開鍵的原因。
+        ///
+        /// 【所以這裡保留一小段保護期】`grace` 內鎖住推進，之後才解鎖。
+        /// 玩家感覺不到延遲（0.35 秒），但那一下誤觸被吃掉了。
+        ///
+        /// 【為什麼回到點對話框】玩家回報離開鍵「不方便、找不到」——
+        /// 對話框本來就是他們一路點過來的地方，手已經在那裡了。
+        ///
+        /// ⚠️ 對話框如果已經收起來了（自動推進或被別的東西關掉），
+        /// 就沒有東西可以點 —— 那時直接離開，不然玩家會卡住。
+        /// </summary>
+        public void ArmDismiss(float grace, Action onDismiss)
+        {
+            CancelDismiss();
+            if (onDismiss == null) return;
+
+            dismissRoutine = StartCoroutine(DismissRoutine(grace, onDismiss));
+        }
+
+        /// <summary>取消武裝。離開這一站時一定要呼叫，不然殘留的訂閱會打到下一站。</summary>
+        public void CancelDismiss()
+        {
+            if (dismissRoutine != null) { StopCoroutine(dismissRoutine); dismissRoutine = null; }
+            if (dialogueBox != null) dialogueBox.OnAdvanced -= HandleDismissAdvance;
+
+            pendingDismiss = null;
+            LockAdvance = false;
+        }
+
+        private Action pendingDismiss;
+
+        private System.Collections.IEnumerator DismissRoutine(float grace, Action onDismiss)
+        {
+            // 保護期：這段時間內點下去不算數
+            LockAdvance = true;
+
+            float t = 0f;
+            while (t < grace) { t += Time.unscaledDeltaTime; yield return null; }
+
+            LockAdvance = false;
+
+            if (dialogueBox == null || !dialogueBox.IsShowing)
+            {
+                // 沒有對話框可以點 —— 直接走，不要讓玩家對著空畫面按
+                dismissRoutine = null;
+                onDismiss();
+                yield break;
+            }
+
+            pendingDismiss = onDismiss;
+            dialogueBox.OnAdvanced -= HandleDismissAdvance;
+            dialogueBox.OnAdvanced += HandleDismissAdvance;
+            dismissRoutine = null;
+        }
+
+        private void HandleDismissAdvance()
+        {
+            if (dialogueBox != null) dialogueBox.OnAdvanced -= HandleDismissAdvance;
+
+            Action go = pendingDismiss;
+            pendingDismiss = null;
+            if (go != null) go();
+        }
+
+
+        public bool LockAdvance
+        {
+            get { return dialogueBox != null && dialogueBox.LockAdvance; }
+            set { if (dialogueBox != null) dialogueBox.LockAdvance = value; }
+        }
+
         public bool IsIdle => !HasPending && (dialogueBox == null || !dialogueBox.IsTyping);
 
         private void Awake()

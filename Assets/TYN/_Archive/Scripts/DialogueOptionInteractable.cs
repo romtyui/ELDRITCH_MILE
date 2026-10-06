@@ -1,5 +1,12 @@
 using UnityEngine;
 using UnityEngine.Events;
+
+// ⚠️ 封存的舊碼。包進 namespace 是為了**不要污染全域命名空間** ——
+//    這裡宣告的 RunNodeData / MapData / ICardInteractable 等等
+//    與正式碼同名，放在全域會蓋掉正式那組，症狀是新檔案裡出現
+//    「MapData 沒有 GetNode」這種完全不會指向這裡的錯誤。
+namespace EldritchMile.Archive
+{
 using UnityEngine.UI; // 為了使用預設 Text
 using TMPro; // 為了使用 TextMeshPro
 
@@ -102,4 +109,5 @@ public class DialogueOptionInteractable : MonoBehaviour, ICardInteractable
         // 恢復原本的文字 (可選：如果你希望重置後變回原本的名字)
         UpdateOptionText(optionTitle, Color.black); // 預設顏色可以自己改
     }
+}
 }

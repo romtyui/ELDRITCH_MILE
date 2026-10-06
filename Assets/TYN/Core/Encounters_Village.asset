@@ -13,24 +13,25 @@ MonoBehaviour:
   m_Name: Encounters_Village
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.EncounterPool
   entries:
-  - note: "\u6F01\u6751\u5E38\u898B\u3002\u8207\u53E6\u5916\u5169\u96BB\u540C\u968E\uFF0C\u6A5F\u5236\u4E0D\u540C"
+  - note: "\u4E00\u822C\u6230\u3002minnow 20 \u8840\u3001coral_paguroidea 60 \u8840\uFF0C\u7B49\u6A5F\u7387"
     enemyId: coral_paguroidea
     weight: 10
     tier: 0
     conditions: []
-  - note: "\u6F01\u6751\u5E38\u898B\u3002\u540C\u4E0A"
+  - note: "\u83C1\u82F1\u3002\u8D70 formationOverrides \u64FA\u6210\u300C\u96DC\u9B5A\uFF0B\u796D\u53F8\uFF0B\u96DC\u9B5A\u300D\u4E09\u96BB\u9B5A"
     enemyId: fish_priest
     weight: 10
-    tier: 0
+    tier: 1
     conditions: []
-  - note: "\u6F01\u6751\u5E38\u898B\u3002\u540C\u4E0A"
+  - note: "\u83C1\u82F1\uFF08\u80D6\u9B5A\u4EBA\uFF09\u300280 \u8840\uFF0C\u76EE\u524D\u53EA\u6709\u55AE\u96BB\u7684
+      formation"
     enemyId: tua_khoo_tai
     weight: 10
-    tier: 0
+    tier: 1
     conditions: []
-  - note: "\u96DC\u9B5A\u3002\u6B0A\u91CD\u4F4E\u4E00\u9EDE\uFF0C\u7576\u8ABF\u5291\u7528"
+  - note: "\u4E00\u822C\u6230\u3002minnow 20 \u8840\u3001coral_paguroidea 60 \u8840\uFF0C\u7B49\u6A5F\u7387"
     enemyId: minnow
-    weight: 5
+    weight: 10
     tier: 0
     conditions: []
   guaranteed:

@@ -55,6 +55,15 @@
 | 寶箱不再蓋住矮櫃：挪位子 ＋ 保留區安全網 | `SpawnSlot.reserveSize`、`contentFootprint` |
 | 菁英補回三隻（祭司＋兩隻雜魚） | `BattleStageController.formationOverrides` |
 | 純敘述事件不再吞掉 `resultText`（結尾的謝謝測試） | `EventStageController.BuildResultBody` |
+| TYN 的貼圖依用途調 maxTextureSize（1015 → 187 MB） | 卡牌／地圖圖示 512、UI／立繪 1024、背景 2048 |
+| **WebGL 出包成功，下載量約 68 MB**（可以上 itch） | `C:\Build\WebGL_v0.1.0` |
+| 戰後先看結算、按離開鍵才回地圖 | `BattleStageController.endButton` |
+| 修戰後卡死：離開鍵是根 Canvas，WorldSpace 跑到畫面外 | `EndButtonCanvas` 改 Overlay ＋ 加一道螢幕座標檢查 |
+| 三顆離開鍵改成抄 `EndEncounterButton`（(794,0) 280×120） | ⚠️ 與快捷欄重疊，見那一節 |
+| 快捷欄補上缺的針管框與遺物預設圖 | `slotFrame` / `fallbackIcon` |
+| 快捷欄改版：格子照 `遺物儲存_框` 93×59、開 preserveAspect | tooltip 保留，戰鬥裡那份不動 |
+| 快捷欄**位置**也搬到跟戰鬥面板一致（針筒右上、遺物頂端） | 遺物欄的感應邊改成 `Top` |
+| 格子改成**直接複製**戰鬥那份（`SC_Slot_Food` / `SC_Slot_Relic`） | 拔掉他的元件換我方的、補 raycast 圖與數量 |
 
 ### 遺物的兩張圖
 
@@ -195,6 +204,359 @@ y −4.60 ~ 6.60　　x −9.96 ~ 9.96
 
 > 地圖用的是**戶外**那張、探索用的是**中屋**那張，所以畫面內容本來就不同；
 > 統一的是「怎麼擺」，不是「擺什麼」。
+
+### 快捷欄的格子直接複製戰鬥那份（2026-08-30）
+
+前兩版是「照數字重做」，怎麼調都還是不像。改成**直接把他的格子複製出來**：
+
+| 新 prefab | 複製自 | icon | frame |
+|---|---|---|---|
+| `SC_Slot_Food` | `Props_Panel/Prop_1` | `針筒`（`針管_未使用_0`） | `Image` |
+| `SC_Slot_Relic` | `Relics_Panel/relics` | `Image`（`魚頭遺物白色_0`） | `Frame of remains`（`遺物儲存_框_0`） |
+
+複製之後做三件事：
+1. **拔掉 Romtyui 的 `ItemSlotUI`**，換上我方的 `ShortcutSlotUI`
+2. 根物件補一個 **alpha 0 的 Image** —— 他的格子根沒有 Image，
+   沒有的話整格收不到點擊（交接文件「坑 1」：要隱形就調 alpha，不是停用）
+3. 補一個 `Count` 文字（數量），他的沒有
+
+⚠️ **`fallbackIcon` / `slotFrame` 兩格清空了** ——
+圖已經畫在格子裡，再從外面塞會把他的美術覆蓋掉。
+
+格子是 **100 × 100**（他的尺寸），食物的間距 **−5**（他的 y 間距是 95，格子 100，
+所以是刻意稍微疊著的）。
+
+#### 位置
+
+| | 螢幕範圍 |
+|---|---|
+| 針筒欄 | x **1778~1920**　y 477~976（上緣照 `Props_Panel` 的 976） |
+| 遺物欄 | x **1436~1719**　y 516~1080（上緣照 `Relics_Panel` 的 1080） |
+
+欄位比面板高，是因為**必須涵蓋展開區** —— 五格 × 95（或 108）比他的三格長。
+
+#### 跟 ExitTab 的關係
+
+`ExitTab_Zone`（商店的書籤，`SlideOutTab` 滑出後）在 **x 1490~2050、y 40~190** ——
+兩條欄最低點都在 y 477 以上，**理論上不衝突**。
+如果實際還是撞到，八成是別的東西（例如展開後超出欄位、或商店自己的貨架）。
+
+### 快捷欄搬到跟戰鬥面板同一個位置（2026-08-30，位置沿用至今）
+
+上一版只改了**格子的長相**，沒改**位置** —— 所以看起來還是兩回事。
+量出 Romtyui 面板在 1920×1080 底下的實際範圍之後搬過去：
+
+| | Romtyui 的面板 | 我方的欄（現在） |
+|---|---|---|
+| **針筒／食物** | `Props_Panel` x **1778~1920**、y **674~976**（142×302，直的 3 格） | x 1778~1920、y 636~976 |
+| **遺物** | `Relics_Panel` x **1436~1719**、y **956~1080**（283×124，收合的儲存區） | x 1436~1719、y 636~1080 |
+
+> 我方的欄比面板高，是因為**欄位的 RectTransform 必須涵蓋「收合圖示 ＋ 展開區」** ——
+> 只蓋收合圖示的話，滑鼠往下移到格子上就會被判成「離開」，欄位在你正要點的瞬間收掉。
+> （`ShortcutBarUI.OnPointerEnter` 的註解講的就是這件事。）
+
+#### ⚠️ 遺物欄的感應邊改成 `Top`
+
+遺物那條搬到 x 1436~1719 之後**離右緣 201px**，
+原本 `EdgeRevealUI.edge = Right` 的感應區（右緣 67px）會落在**針筒欄**上 ——
+變成「滑到右邊叫出來的是食物，遺物永遠叫不出來」。
+它的上緣貼齊 y = 1080，所以改成 `Top`。
+
+#### 版面確認
+
+| | 範圍 | |
+|---|---|---|
+| 針筒欄 | x 1778~1920　y 636~976 | |
+| 遺物欄 | x 1436~1719　y 636~1080 | 與針筒 x 不重疊 ✓ |
+| 離開鍵 | x 1460~1740　y 360~480 | 比兩條欄最低點（636）還低 ✓ |
+
+### 快捷欄改版：格子的長相（2026-08-30）
+
+**做法：一個資料來源、兩個視圖。**
+`RunContext.inventory` 是唯一真相；我方快捷欄（戰鬥外）與 Romtyui 的
+`Props_Panel` / `Relics_Panel`（戰鬥內）都是它的視圖。
+**戰鬥裡那份完全沒動** —— 那是他們的，而且在戰鬥裡本來就正常。
+
+| | 之前 | 現在 |
+|---|---|---|
+| 格子尺寸 | 88 × 60 | **93 × 59**（照 `遺物儲存_框` 的 92.90 × 58.98） |
+| 圖示 | 撐滿格子 | 內縮 8/6、**開 `preserveAspect`** |
+| 間距 | 預設 | 5（框 59 ＋ 間隔 ≈ 64，照分鏡的 y 間距） |
+| 食物的預設圖 | `針管_未使用` | **`針管_已使用`** |
+| 遺物的預設圖 | NULL（空白） | `魚頭遺物白色_方形裁切` |
+| 欄位本體 | 120 × 400 | 105 × 340 |
+
+⚠️ **`preserveAspect` 是關鍵** —— 針管是長條（212×61）、遺物是方的，
+不開的話兩種圖在同一個格子裡會一個被壓扁、一個被拉長。
+
+⚠️ **食物用「已使用」那張是對的，不是打錯。**
+分鏡裡「碰觸前(無食物)」用 `針管_未使用`、「有食物(1個)」用 `針管_已使用` ——
+命名反直覺，但那是他們的資料。而我方的格子**只有身上有這件東西才會生出來**，
+所以每一格都對應「有食物」的狀態。
+
+✅ **tooltip 那一組（`tooltipRoot` / `tooltipTitle` / `tooltipBody`）完全沒動** ——
+Romtyui 的分鏡裡沒有說明框，那是我方要保留的部分。
+
+#### 順帶：跟離開鍵的間距變寬了
+
+欄位從 120 縮到 105 寬 → 現在佔 **x 1775~1880**（原本 1760~1880）。
+離開鍵是 x 1460~1740 → 間距從 20px 變成 **35px**。
+
+### ✅ WebGL 出包成功（2026-08-30）
+
+`C:\Build\WebGL_v0.1.0`
+
+| 檔 | 大小 |
+|---|---|
+| `.data.unityweb` | **59.1 MB** |
+| `.wasm.unityweb` | 8.5 MB |
+| framework / loader | 0.2 MB |
+| **合計下載量** | **約 68 MB** |
+
+**這個大小放 itch 沒問題**（單檔上限 1 GB，瀏覽器遊戲 68 MB 偏大但可以接受）。
+
+⚠️ 我先前估「200~350 MB」是**估錯了**，因為漏算三件事：
+1. **只有被場景引用到的資產才會打包** —— 專案裡 1 GB 的貼圖大部分沒被引用
+2. **Brotli 壓得很兇**
+3. WebGL 的貼圖格式與 Standalone 不同
+
+→ **所以 `Assets/Romtyui` 那 1023 MB 不再是出包的阻礙**，
+要不要調是「載入速度」與「記憶體」的取捨，不是「能不能上架」。
+
+#### 上 itch 的做法
+
+1. 把 `WebGL_v0.1.0` **整個資料夾壓成 zip**（`index.html` 要在 zip 的**根目錄**）
+2. 上傳後勾 **「This file will be played in the browser」**
+3. 視窗尺寸填 **1920 × 1080**（專案的參考解析度）
+
+⚠️ **`decompressionFallback` 一定要維持 `true`** ——
+itch 是靜態檔案伺服、不會送 `Content-Encoding: br`，
+沒有那個 fallback 的話 Brotli 檔在瀏覽器直接載不起來（白畫面，而且看不出原因）。
+
+#### 兩個踩過的坑
+
+1. **Scripts Only Build 勾著** → build 只跑 872 毫秒、資料夾是空的。
+   那是 Build Settings 裡的 checkbox，跟程式無關。
+2. **從 MCP 直接呼叫 `BuildPipeline.BuildPlayer` 會炸**
+   （`TypeInitializationException: 'Styles'` —— 建置進度 UI 在非 GUI 情境初始化 `GUIStyle`），
+   而且**還是回報 `Succeeded`**，只是什麼都沒產出。
+   要嘛排進 `EditorApplication.delayCall`，要嘛直接在編輯器裡按 Build。
+
+### 離開鍵改成抄打牌那顆（2026-08-30）
+
+三顆全部照 `DialogueUI/EncounterUI/EndEncounterButton` 重做：
+
+| | 值 |
+|---|---|
+| anchor / pivot | (0.5, 0.5) 畫面中心 |
+| 位置 / 大小 | **(794, 0)　280 × 120** |
+| 底圖 | 內建 `UISprite`（Sliced, border 10）、黑色 alpha 0.835 |
+| 轉場 | ColorTint，highlighted 0.961、pressed 0.784、fade 0.1 |
+| 文字 | 24pt 白、置中、LiberationSans SDF |
+
+1920×1080 下三顆都落在 **x 1614~1894、y 480~600**（右緣、垂直置中）。
+
+> 文字用「離開」不是「結束」—— 打牌那顆是「結束這一輪出牌」，
+> 這三顆是「離開這一站」，語意不同。
+
+#### ⚠️ 但這個位置跟快捷欄重疊
+
+| | 範圍 | |
+|---|---|---|
+| 離開鍵 | x 1614~1894　y 480~600 | |
+| `ShortcutBar_Food` | x 1760~1880　y 150~550 | **⚠️ 重疊** |
+| `ShortcutBar_Relic` | x 1760~1880　y 570~970 | **⚠️ 重疊** |
+
+- **Battle**：快捷欄本來就收起來（`visibleInStages` 沒有 Battle）→ **不衝突** ✓
+- **Event / ProbabilityDialogue**：快捷欄會出現，而且 `EdgeRevealUI` 的感應區
+  就在右緣 67px —— 玩家把滑鼠移過去按離開鍵的**那個動作本身**就會把快捷欄叫出來。
+
+> 這不是新問題：`EndEncounterButton` 本來就在那裡，探索打牌時已經有同樣的張力。
+> 但現在三個環節都會撞到，值得一起決定。
+> 可能的方向：離開鍵往左移一點（x 700 → 1520~1800 仍會撞）、
+> 或往上／往下避開兩條欄的 y、或快捷欄改到左邊。**這是版面決定，等美術組。**
+
+### 離開鍵統一位置（2026-08-30，已被上面那一節取代）
+
+三顆全部對齊到 **左下 (60, 430)、300×92、文字「離開」**：
+
+| Stage | 之前 | 現在 |
+|---|---|---|
+| Event | (60, 430)「**結束**」 | (60, 430)「離開」 |
+| ProbabilityDialogue | (60, 430)「離開」 | 不變 |
+| Battle | **(60, 60)** | **(60, 430)** |
+
+商店的**書籤式**出口（`ExitTab_Zone`，右下角滑出）**不列入統一** ——
+那是另一種語彙（滑鼠靠近才出現的頁籤），照使用者指示保留。
+
+⚠️ 戰鬥畫面左側有「書／包包」（`bag_Panel/root`），(60, 430) **可能會壓到它**。
+編輯器裡量不準（Canvas 在 edit mode 不會重排），要進 Play 看一眼。
+要挪的話**三顆要一起挪**，不然又不一致了。
+
+> 之後如果三顆常常要一起改，值得把離開鍵抽成一個常駐 HUD 元件
+> （像 `StageTitleBanner` 那樣），由 Stage 去要它顯示 —— 那時位置就只有一份。
+
+### 快捷欄補上缺的美術
+
+兩條欄各缺一半，所以看起來不像同一套：
+
+| | 之前 | 現在 |
+|---|---|---|
+| 食物欄 `slotFrame` | **NULL**（只有針管，沒有格線） | `遺物儲存_框` |
+| 遺物欄 `fallbackIcon` | **NULL**（⛔ 沒有自己圖示的遺物整格空白） | `魚頭遺物白色_方形裁切` |
+
+### ✅ 更正：`遺物儲存區` / `遺物儲存_框` **有人用**
+
+我前幾輪寫「那兩張還沒有人用」是錯的 ——
+**Romtyui 在 `Stage_Battle` 的 `Relics_Panel` 已經用了**，而且做得比我們完整：
+
+| 面板 | 內容 |
+|---|---|
+| `Props_Panel` | `ItemInventory` ＋ 3 格 `Prop_N`（`ItemSlotUI`），每格一支**針管**（未使用／已使用兩種圖） |
+| `Relics_Panel` | `RelicsInventory` ＋ `遺物儲存區` 底圖 ＋ `遺物儲存_框` 格線 ＋ 遺物白圖 |
+
+而且兩個面板底下都有 **`動畫效果演示`** 的分鏡：
+「碰觸前(無食物)」「有食物(1個)」「一般狀態(滑鼠沒有碰到)」
+「點開一般狀態(有五個遺物)」「滑動(有五個遺物)」—— 連游標位置都畫了。
+
+**那就是美術組要的互動規格**，比我們現在這條「點邊緣展開」的欄位完整得多。
+
+#### 要搬過來的話
+
+我方的 `ShortcutBarUI` 讀的是 `RunContext.inventory`，**戰鬥內外都能用**；
+Romtyui 的面板讀的是他們的 `ItemInventory` / `RelicsInventory`，**只活在戰鬥裡**。
+所以不是「把面板搬過來」，是**照他們的分鏡重做我方那條欄的版型**：
+
+1. 格子尺寸與間距照 `遺物儲存_框`（83×52）
+2. 展開／收合的動線照「點開 → 滑動」那兩張分鏡
+3. 針管的「未使用／已使用」兩張圖接到「這一格有沒有東西」
+
+⚠️ **tooltip 他們沒有做** —— 分鏡裡沒有說明框。
+我方的 `ShortcutBarUI` 有（`tooltipRoot` / `tooltipTitle` / `tooltipBody`），那一塊要自己保留。
+
+⚠️ 美術在 `Assets/Romtyui/UI/` 與 `Assets/TYN/ART/` **各有一份**（重複）。
+我方用的是 TYN 那一份（也是我調過尺寸的那一份）。
+
+### ⛔ 戰後卡死：離開鍵跑到世界座標去了（2026-08-30）
+
+**症狀**：結算出現了、點掉對話框之後**卡住，沒有出口**。
+
+**成因**：`StageHost` 不是每個 Stage 都掛在同一個地方 ——
+
+| Stage | 掛在哪 | 父層鏈上有 Canvas |
+|---|---|---|
+| Menu / Dialogue / Shop / **Event** / **ProbabilityDialogue** | `[UI_ROOT]/Canvas_Stage` | **有** |
+| **Explore / SpecialEvent / Battle** | `[STAGE_HOST]/WorldRoot` | **沒有** |
+
+Canvas 有沒有上層 Canvas，行為完全不同：
+
+- **巢狀** Canvas → `renderMode` 被忽略，跟著最上層走
+- **根** Canvas → `renderMode` **真的生效**
+
+我把離開鍵從 `Stage_Event` 複製到 `Stage_Battle`，它序列化的 `renderMode`
+是 **WorldSpace**。在事件那邊是巢狀所以沒事；到了戰鬥變成根 Canvas，
+整顆鈕就跑到世界座標 **(60, 424)** —— 相機只看得到 x −8.9~8.9、y −4~6，
+**永遠看不到，也點不到**。
+
+而 `WaitThenLeave` 在有 `endButton` 時是**不逾時**的（出口只有那顆鈕），
+所以就真的卡死了。
+
+#### 修法
+
+戰鬥的離開鍵改成**自己一層** `EndButtonCanvas`：
+`ScreenSpaceOverlay` ＋ `CanvasScaler`（1920×1080, match 0.5）＋ `GraphicRaycaster`，
+order 200（壓過戰鬥自己的 UI，最高 55）。鈕是它的子物件，
+所以 anchor／位置照常有意義（左下 60, 60）。
+
+`SetEndButtonVisible` 開關的是**鈕**，Canvas 常駐 ——
+關掉 Canvas 的話子物件的 layout 不會跑。
+
+#### 而且加了一道「不要再卡死一次」的檢查
+
+放出離開鍵的當下會量它的螢幕座標，只要**不是 Overlay 或不在畫面內**
+就印一行紅字說明原因。這種錯誤原本完全無聲 ——
+鈕「顯示」了、程式也認為一切正常，只有玩家卡在那裡。
+
+> ✅ 順帶查證：`Stage_Event` 與 `Stage_ProbabilityDialogue` 的離開鍵**沒有這個問題**，
+> 因為它們掛在 `Canvas_Stage` 底下（巢狀）。`SpecialEvent` 雖然也在 WorldRoot，
+> 但它沒有離開鍵（走 `BeginOutro` 自動結束）。
+
+⚠️ **以後在 Explore / SpecialEvent / Battle 這三個 Stage 裡加任何 UI 都要注意這件事** ——
+它們沒有父層 Canvas，所有 Canvas 都是根 Canvas。
+
+### 戰後先看結算，按離開鍵才回地圖（2026-08-30）
+
+原本是「給錢 → 立刻 `Report(Completed)`」。
+`ShowText` 只是把結算**排進佇列**，而回報會立刻觸發轉場 ——
+所以那一行「戰利品：金幣 ×N」根本來不及被讀到。
+
+現在：
+
+```
+立旗標 → 給錢並播結算 → 等 PopupService 播完 → 出現離開鍵 → 按了才回地圖
+```
+
+⚠️ **等的是 `PopupService.IsIdle`，不是固定秒數。**
+戰鬥端在勝利當下還有自己的收尾（死亡動畫、存檔），
+固定秒數在快的機器上太久、慢的機器上太短。
+
+⚠️ **輪詢而不是訂 `OnAllClosed`** —— 那個事件要玩家**點擊推進**、
+而且佇列剛好空掉時才發，用它的話離開鍵要多點一下才出現。
+事件那邊也是同一個理由用輪詢。
+
+`endButton` 沿用 `Stage_Event` 那顆（文字改「離開」），
+**Canvas order 200** —— 要壓過戰鬥自己的 UI（`BattleUICanvas` 2、`AnimCanvas` 55）。
+
+留空 `endButton` 會退回「結算播完再等 `rewardAutoSeconds` 秒就走」，
+那是給還沒接鈕的過渡期用的。
+
+> 這下四個環節的收尾都一致了：**事件、機率對話、神牌、戰鬥** ——
+> 都是「結算是最後一頁 → 專屬的離開鍵 → 玩家按了才走」。
+
+### 貼圖尺寸調過了（2026-08-30）—— TYN 1015 MB → 187 MB
+
+依使用者指定（卡牌 512、地圖圖示 512、房間背景 2048、UI 1024），
+其餘由我照「畫面上實際多大」歸類：
+
+| 資料夾 | maxSize | 之前 → 之後 |
+|---|---|---|
+| `ART/卡牌` | **512** | 334 → **21 MB** |
+| `Map/ART/節點` | **512** | 222 → **14 MB** |
+| `ART/遺物` | 512 | 136 → **7.7 MB** |
+| `ART/資源`（金幣） | 512 | 5.7 → 2.0 MB |
+| `UI/**` | 1024 | 77 → **30 MB** |
+| `ART/角色`（立繪） | 1024 | 121 → **30 MB** |
+| `ART/物件`（寶箱） | 1024 | 30 → 8.4 MB |
+| `Explore/Art/EnemyShape` | 1024 | 11 → 2.9 MB |
+| `Map`（裝飾） | 1024 | 10 → 4.0 MB |
+
+**沒動的**（背景類，照指定維持 2048）：
+`Menu`（封面）26 MB、`Map/ART/漁村地圖` 4 MB、`Explore/Art/AnimBG` 2.2 MB、
+`ART/食物` 0.4 MB（本來就小）。
+
+**合計 1015 MB → 187 MB（省 82%）。**
+
+> 附帶好處：縮小之後有些圖的邊長變成 4 的倍數，壓縮就生效了 ——
+> 例如 `快艇鑰匙` 2048×1233（RGBA32）→ 512×308（**DXT5**）0.40 MB。
+
+⚠️ `Map/ART/節點` 第一次跑成了 1024 —— 因為我的資料夾清單裡
+`Assets/TYN/Map`（1024）排在 `Map/ART/節點`（512）後面，後者被蓋掉了。
+已修正。**改這種批次設定時要注意「後面的規則會蓋掉前面的」。**
+
+#### 「資料夾裡的東西會不會全部被包進去」—— 不會
+
+**只有被 Build Settings 裡的場景引用到的資產才會進 build。**
+沒有人用的圖就算躺在 `Assets/` 底下也不會被打包。
+
+實證：這一次 build 的 used-assets 清單裡，`_Archive` 出現了 52 筆，
+但**全部都是 `.cs`**，一張貼圖都沒有 —— `_Archive/images/sea` 那 28 MB
+（water1/2/3）完全沒進去。
+
+⚠️ **腳本是例外**：`.cs` 只要在編譯範圍內就會進組件，不管有沒有人用。
+要真的排除得靠 asmdef 或整個移出 `Assets/`。
+
+⛔ **還沒動的：`Assets/Romtyui` 1023 MB、`Assets/rafterYi` 155 MB。**
+那是隊友的資料夾，要先問過。整包最大的一塊還在那裡。
 
 ### ⛔ 貼圖的「Compressed」是假的 —— 整包 818 MB 的原因（2026-08-30）
 
@@ -1541,3 +1903,1122 @@ Artwork 拉成滿版與卡框重合、兩層都開 `preserveAspect`。
 
 **能離線驗的就不要開 Play。**
 但**版面與位置驗不了** —— 那一類（房間 slot 對位、對話框版型）只能用眼睛看。
+
+
+---
+
+## 快捷欄：改用美術貼進場景的那一份（2026-08-30）
+
+**做法變了。** 前三次都在「照數字重做一個長得像的」，怎麼調都不對。
+這次是使用者**直接把 Romtyui 的 `Relics_Panel` / `Props_Panel` 複製貼進場景**，
+位置尺寸一次就對了，我只負責接功能。
+
+### 現在的結構
+
+```
+[UI_ROOT]/Canvas_HUD
+  ├─ Relics_Panel   (x 1435~1719, y 955~1080)  ShortcutBarUI  filterTag=Curio
+  │    ├─ Image            ← 收合圖示（遺物儲存區）
+  │    ├─ relics (關)      ← 格子模板，當 slotPrefab 用
+  │    ├─ ExpandedRoot     ← VerticalLayoutGroup, spacing -35
+  │    ├─ 動畫效果演示 (關) ← 美術分鏡稿，留著參考
+  │    └─ Tooltip (關)
+  └─ Props_Panel    (x 1778~1920, y 674~976)   ShortcutBarUI  filterTag=Food
+       ├─ Prop_1/2/3       ← 固定三格，常駐顯示
+       ├─ 動畫效果演示 (關)
+       └─ Tooltip (關)
+```
+
+### 兩條欄的互動方式**不一樣**（照分鏡稿）
+
+| | 分鏡稿依據 | 實作 |
+|---|---|---|
+| 食物 | `碰觸前(無食物)` 就三格全開；`有碰觸` 只把格子左移 41px | `alwaysExpanded = true` + `fixedSlots` |
+| 遺物 | `一般狀態` 一個圖示 →`點開` 五格往下排 | 舊的收合／展開，`slotPrefab = relics` |
+
+為此在 `ShortcutBarUI` 加了三個東西：
+* `fixedSlots` —— 用美術排好的格子，不生成、不交給 Layout Group
+* `alwaysExpanded` —— 沒有收合這件事
+* `emptySlotIcon` —— 空格子換成空針筒**而不是消失**（分鏡稿裡空著也看得到三支）
+
+`ShortcutSlotUI` 加了 `BindEmpty()`。
+
+### 踩到的坑（都排除了）
+
+1. **整組 `raycastTarget` 全是 `false`** —— 貼進來時完全點不到。
+   食物讓 `針筒` 收事件（它才畫在正確位置，根物件的 rect 反而偏左），
+   遺物讓 `Frame of remains` 收。
+2. **`Prop_N/Image` 是不透明紅色又沒有圖** —— 那是 Romtyui 標記
+   「還沒決定有道具時長怎樣」的佔位色。格子一打開就是三個紅方塊。
+   改成 alpha 0（**不是停用**，坑 1）。
+3. **`slot.frame` 不接食物的底圖** —— `Bind()` 會 `frame.sprite = slotFrame`，
+   接了就會把他的美術洗掉。遺物那邊有接，但 `slotFrame` 填回原本那張。
+4. **`SetParent` 搬 Tooltip 沒生效，物件跟著舊欄一起被刪** ——
+   當下有印出「搬好了」但我沒驗證父層。後來整個重建。
+   ⚠️ **改完一定要存檔後再從記憶體複查一次**，印出來的不等於存進去的。
+5. **改元件欄位只 `MarkSceneDirty` 不夠**，要 `EditorUtility.SetDirty(元件)`，
+   不然 `SaveOpenScenes` 不會把那個欄位寫進去（第 4 點就是這樣掉的）。
+
+### 命名注意
+
+`ItemSlotUI` 的對應是 `empty = 針管_未使用_0`、`filled = 針管_已使用_0`。
+「未使用 / 已使用」讀起來跟直覺相反，但**照他的資料走**，不要自己對調。
+
+### 分站顯示
+
+兩個面板的 `UIPanel.visibleInStages` =
+`None / Explore / Shop / Dialogue / ProbabilityDialogue / Event / SpecialEvent`。
+**Battle 與 Menu 不在裡面** —— 戰鬥中不能吃東西是確認過的需求。
+
+### 還沒做
+
+* 分鏡稿的「點開 → 滑動」轉場，目前仍是 `staggerSeconds` 逐格淡入
+* 遺物超過 5 個時的排版（VerticalLayoutGroup 會繼續往下長，但會超出畫面）
+* 空格子的 hover 目前沒有回饋（`BindEmpty` 之後 `Item` 是 null）
+
+
+### 食物欄的數量規則（2026-08-30 定案）
+
+**一「種」食物佔一針，數量用數字標。** 麵包x3 + 魚x1 = 佔兩針，第一針顯示「3」。
+
+超過三種時：多出來的**留在背包裡但點不到**，並跳一行提示
+（`ShortcutBarUI.overflowMessage`）。提示**只在「又多了一件」時才播** ——
+Refresh 每次背包變動、每次換環節都會跑，每次都喊會變洗版。
+
+其他兩個被否決的方案：
+* 一「件」佔一針、滿三針就撿不到 —— 跟 Romtyui 的 `maxItemCount = 3` 一致，
+  但寶箱開出食物會直接消失，玩家會覺得被吃掉
+* 超過就往下長 —— 不會遺失，但會長出美術沒畫的第 4、5 格
+
+### 機率卡的黑字（2026-08-30）
+
+`PD_Card.prefab` 的 `Value` 文字色是 `(0,0,0,1)` 純黑 → 改白色。
+
+⚠️ **這個從來沒修好過。** commit `f081335` 的標題寫「機率字級與黑字」，
+但那次實際只改了 `PD_Answer.prefab` 的字級（29→58），卡片顏色沒動。
+還原 `8455b11` 也沒碰到它（只動 EventScene.unity 與 SC_Slot prefab，
+而 `PD_Card.prefab` 最後一次修改是 `13f6dd8`，比還原基準 `f398cad` 還早）。
+
+⚠️ 那個 `Value` 的錨點是 `(0,0)~(1,0)`、pivot `(0.5,0)`，在卡片**底部**。
+如果使用者看到的黑字在左上角，那是另一個物件，要再查。
+
+### ⚠️ heredoc 吃反斜線（補充既有的那一條）
+
+這個環境的 bash heredoc **不管有沒有用引號包住 delimiter，都會吃掉一層反斜線**。
+所以 python 腳本裡寫 `\n` 出來會變成真換行 → `error CS1010`。
+**一律用 `BS = chr(92)` 再串接**，不要寫任何字面上的反斜線。
+這一輪又踩了兩次。
+
+
+### 結算那一頁不能被點掉（2026-08-30）
+
+對話框的推進鍵是**蓋住整個對話框的透明 Button** —— 玩家在結算跳出來的當下
+隨手一點，就把「拿到了什麼」整頁跳掉了，而那正好是他最需要看的一頁。
+
+`DialogueBoxUI.LockAdvance` 鎖住「點一下就關掉」，出口只剩離開鍵。
+戰鬥、事件、機率對話三站放出離開鍵的同時一起鎖。
+
+* **打字中的快轉不受影響** —— 鎖的是「關掉」不是「快轉」
+* **不是停用 advanceButton** —— 停用會連 raycast 一起沒掉，底下的東西就變成
+  點得到了（坑 1）。在 `Advance()` 裡擋才乾淨
+
+⚠️ **解鎖統一在 `GameFlowManager` 換站的那一點做**（`SetAdvanceUnlocked()`）。
+在每個控制器的每個出口各補一次的話，漏一個就會讓下一站的對話整個點不動，
+而那看起來像「遊戲當掉」，幾乎不可能聯想到是上一站沒收乾淨。
+
+### 用過的針筒突出回不去（2026-08-30）
+
+`homePos` 那個坑換了個地方冒出來。
+
+`HandleSlotClicked` 用完道具會 `Refresh(false)` → 固定格子被**重新 `Bind`**
+→ 原本的 `homeCaptured = false`。但這一刻格子**正被推在外面**，
+於是下一次 `EnsureHome()` 把「推出去的位置」記成原位，格子再也回不來，
+而且每用一次就再往外跑一截。
+
+修法：`Bind` / `BindEmpty` 改成「已經量過就別重量，改成 `RestoreHome()` 歸位」。
+滑鼠還停在上面時維持推出狀態，等 `OnPointerExit` 才收回來
+（不然格子會在游標底下自己跳回去）。
+
+⚠️ **生成式的格子沒這個問題**，因為它們每次都是全新物件。
+固定格子活得比 Bind 久，才會累積 —— 這類 bug 只會在固定格子上出現。
+
+
+### 遭遇對話：拆掉 Gatekeeper，改成演完會重播（2026-08-30）
+
+**Gatekeeper 從來就不在對話庫裡** —— 它是 Stage 上的 `defaultDialogue`，
+也就是「`Pick()` 抽不到東西時的墊底」。
+
+對話庫 `PDialogueLibrary_Village` 只有 2 段、而且都是 `once`：
+
+| 第幾次走到遭遇節點 | 演什麼 |
+|---|---|
+| 1 | 魔術表演 或 有魚 |
+| 2 | 剩下那一段 |
+| 3 以後 | **Gatekeeper，每次都是它** |
+
+所以它是唯一會無限重複的一段 —— 難怪 OOC 特別刺眼。
+
+處理：
+1. `Stage_ProbabilityDialogue.prefab` 的 `defaultDialogue` 清空
+2. 資產搬到 `Assets/TYN/_Archive/ProbabilityDialogue/`（沒有任何資產還引用它）
+3. `ProbabilityDialogueLibrary` 加 `replayWhenExhausted`（**預設開**）
+
+⚠️ **只拆 Gatekeeper 不加重播的話，第 3 次以後那個節點會是空的** ——
+`Pick()` 回 null、`defaultDialogue` 也 null，控制器直接回報完成，
+玩家走上去畫面閃一下什麼都沒發生。實測對照組確認過。
+
+`once` 的本意是「優先給沒看過的」，不是「看完就沒了」。
+重播也不算複製貼上 —— 機率牌每次抽的手牌不同，同一段的結果會不一樣。
+
+### 遭遇節點的實際出現率（300 張地圖模擬）
+
+設定：`mapLayers = 8`、`dialogueChance = 0.15`
+
+* 整張地圖平均 **2.61** 個遭遇節點
+* 但玩家一趟只走一條路 → 實際踩到平均 **0.98** 個
+  * **31% 的 run 一個都遇不到**
+  * 47% 遇到 1 個
+  * 21% 遇到 2 個以上
+
+所以重播幾乎看不到（要 3 個以上才會重複）。
+反過來說 **有三分之一的測試者不會體驗到遭遇對話** ——
+要讓它一定出現的話得調 `dialogueChance` 或把 Dialogue 放進保證清單，
+但保證清單只保證「地圖上有」，不保證「玩家走的那條路上有」。
+
+
+## 戰鬥中的食物與遺物（2026-08-30）
+
+**改用我方的快捷欄，藏掉他的 Props_Panel / Relics_Panel。**
+
+兩套面板在螢幕上位置完全重疊（我們本來就是照他的排版做的），
+所以只能留一套。留我方的理由：我方的欄直接讀 `RunContext`，
+不需要 `ItemEffectData` 資產就能正確顯示；他那套要填滿必須先建效果資產。
+
+### 為什麼他那兩個面板一直是空的
+
+```
+食物 → 需要 ItemData.battleItemEffect
+       12 件食物全部是 null（欄位根本沒被序列化過）
+遺物 → 需要 ItemData.relicEffect
+       全部 {fileID: 0}
+```
+
+⚠️ 更正先前的紀錄：`ItemEffectData` **有**兩個子類別
+（`HealItemEffectData`、`GainTemporaryStrengthItemEffectData`），
+只是專案裡一個資產都沒建。
+
+### 藏掉他的面板不影響遺物效果
+
+`BattleStageController` 抓 `ItemInventory` / `RelicsInventory` 用的是
+`GetComponentInChildren<T>(true)`（includeInactive），關掉之後仍然抓得到 ——
+**驗過**。遺物效果照樣由他的 `RelicsInventory` 觸發，只是不顯示。
+
+### 戰鬥中的 HP 要走 BattleUnit
+
+`ShortcutBarUI.HandleSlotClicked` 現在會先找 `BattleManager.playerUnit`：
+
+* **有**（在戰鬥中）→ `unit.Heal()` / `unit.TakeDamage()`
+* **沒有** → 照舊走 `PlayerVitals`
+
+⚠️ **不能在戰鬥中走 PlayerVitals** —— 它寫的是 `RunStateManager` 的存檔值，
+戰鬥中的血在 `BattleUnit.currentHp`。直接寫存檔值的話血條不會動，
+而且戰鬥結束回存時整筆會被戰鬥單位的值蓋掉，等於白吃。
+
+⚠️ `TakeDamage` 會被格擋吸收 —— 帶著格擋吃「奢侈的血塊」等於免費。
+刻意接受：直接改 `currentHp` 會跳過他的通知，血條不會更新。
+
+### ⚠️ 戰鬥中的 SAN 是「回合行動點」，不是 run 級理智值
+
+`EnergySystem.currentEnergy` **每回合都會 `ResetEnergy()`**
+（`BattleManager` 1680 / 1734 行）。所以食物的 `sanRestore` 在戰鬥中
+只寫 run 級的 `PlayerVitals`，**不碰 EnergySystem** —— 往它加數字下一回合就被重設。
+
+這一條要跟 Romtyui 確認：SAN 到底是 run 級資源還是回合資源？
+目前兩邊的語意對不起來（我方 0~100，他的 `maxEnergy` 預設 3 且每回合重設）。
+
+## 敵人分階（2026-08-30 定案）
+
+| enemyId | 血 | 階級 |
+|---|---|---|
+| minnow | 20 | Minion |
+| coral_paguroidea | 60 | Minion |
+| fish_priest | 50 | **Elite**（走 override 擺成「雜魚＋祭司＋雜魚」三隻魚）|
+| tua_khoo_tai | 80 | **Elite**（胖魚人）|
+
+⚠️ `tua_khoo_tai` 目前只有單隻的 formation，菁英會變成 1 隻。
+要跟 `fish_priest` 一樣是多隻的話，得請 Romtyui 補一個 formation 資產。
+
+## 商店金幣跑出畫面（2026-08-30）
+
+`MoneyText` 原本錨在畫面正中央再往左偏 760。`Canvas_Stage` 是
+`ScaleWithScreenSize / match 0.5`，**畫面比例一變，中央到邊緣的距離就跟著變**：
+
+```
+itch 常見的 960x600 內嵌（16:10）
+  scaleFactor = √(960/1920) × √(600/1080) = 0.527
+  畫面在參考單位下只有 1821 寬 → 半寬 910
+  文字左緣在 -920  →  出界 10 單位
+```
+
+改成錨在左上角、距角落固定 (40, 35)。1920x1080 下位置完全相同。
+
+⚠️ **這類「錨在中央 + 大偏移」的元件都有同樣的風險**，
+之後排 UI 時貼邊的東西一律錨到對應的角落。
+
+## 游標（2026-08-30）
+
+`Assets/TYN/UI/cursor_mat/` 三張原本 524x698 → 現在 **48x64**。
+
+* 524 遠超過 Unity 對 `Cursor.SetCursor` 的 128x128 文件上限，
+  也超過 Chrome 對 CSS 自訂游標的 128x128 上限
+* WebGL 的 `CursorMode.Auto` 會變成 canvas 的 `cursor: url(...)`，
+  而**瀏覽器在自訂游標圖會超出視窗邊界時會整張不畫、退回預設箭頭** ——
+  圖有 524px 寬，畫面邊緣就有五百多 px 的帶狀區域游標會變箭頭
+* 美術參考圖《游標在畫面上的樣子》裡游標約 40px 高，48x64 最接近
+* 同時取消壓縮：DXT 會把半透明邊緣壓出色塊，游標邊緣特別明顯
+
+## ⚠️ 離開遊戲鍵在 WebGL 上不可能有反應
+
+`Assets/Romtyui/codes/Units/OptionMenuUI.cs:158`
+
+```csharp
+public void QuitGame() {
+#if UNITY_EDITOR
+    UnityEditor.EditorApplication.isPlaying = false;
+#else
+    Application.Quit();     // ← WebGL 上是空操作
+#endif
+}
+```
+
+瀏覽器不允許腳本關閉分頁。exe 版正常。
+**這是 Romtyui 的檔案，還沒動** —— 要嘛 WebGL 時藏起來，要嘛改成「回主選單」。
+
+
+## 地圖擺法：Organic（2026-09-11）
+
+戰鬥組回饋「太扁平、一直線、並排、選擇不自由」。查出來根因在
+`MapGenerator.MakeNode`：
+
+```csharp
+yPercent = margin + 間距 * layer   // ← y 是 layer 的純函數
+xPercent = 固定欄位 + 抖動 ±5%
+```
+
+**同一層必然落在同一條水平線上**，x 又吸附到 gridColumns 個欄位。
+所以那不是參數沒調好，是演算法本身就是一張方格紙。
+
+### 新的 Organic 擺法
+
+`MapGenerationSettings.layout` 切換（`Grid` = 舊的，`Organic` = 新的）。
+舊的完全沒動，切回去只要改一個下拉選單。
+
+做法：從底部原點放射生長
+* 半徑隨深度增加 → 深度仍然對應推進方向，玩家看得出往哪走
+* 角度隨深度張開 → 樹冠展開
+* **半徑帶抖動** → 相鄰深度互相交錯，水平線消失（這一條就是解掉「並排」的關鍵）
+* Poisson 排斥（`organicMinSpacing`）→ 疏密不均，像散落的地標
+* 寬度走鐘形（起點窄 → 中段最寬 → Boss 收成 1）→ 樹狀擴散
+
+連線三條規則，順序不能反：
+1. 每個上層節點至少一個父親（否則是走不到的死節點）
+2. 每個下層節點至少一個孩子（否則是進去出不來的死路）
+3. 其餘看 `organicCrossLink` 加 —— 路徑會**重新匯合**，這是「選擇更自由」的來源
+
+⚠️ 連線挑對象時**照距離排序不是角度**。半徑抖動之後角度最近的可能離很遠，
+連下去就是橫穿整張圖的線 —— 第一次出圖就是死在這裡。
+另外有長度上限（1.8 個層距）與交叉檢查。
+
+### 200 張圖的實測
+
+| | Grid | Organic |
+|---|---|---|
+| 同層 y 分散度 | **0.00**（完全並排） | **3.74** |
+| 平均出度 | 1.14 | **1.33** |
+| 每張圖交叉 | — | 1.12 處 |
+| 平均連線長 | — | 15.9% |
+| 死路節點 | 0 | 0 |
+
+### 還沒解決的
+
+* 偶爾會有一條特別長的斜線（連通性 fallback 走到最後一層時）
+* 「樹狀」在 45 度俯視下不太讀得出來 —— 地圖被轉了 45 度，
+  地圖空間的「往前」在畫面上是斜的
+* 節點分佈偏中段，上下兩端偏空
+
+
+## 地圖擺法：Terrain（2026-09-11）
+
+戰鬥組要「更像真實地圖、有地形影響、不要擠在一起」。
+關鍵發現：**底圖已經畫了地形，但生成器完全沒在看它**。
+
+取樣 4096 點，亮度是乾淨的雙峰：水域 6%（0.1~0.3）、
+海岸與等高線 7%、陸地 82%（0.8~0.9）。切在 0.5 就能分水陸。
+
+### 三個步驟，各解一個抱怨
+
+| 步驟 | 解決 |
+|---|---|
+| 適宜度圖：水域不放、海岸加權（多源 BFS 距離變換） | 「像真實的地圖」 |
+| best-candidate 取樣（藍雜訊） | 「擠在一起」 |
+| Delaunay 三角化 + BFS 跳數分層 | 連線不交叉、選擇自由 |
+
+業界對照：這是 Amit Patel（Red Blob Games）Polygonal Map Generation
+的簡化版 —— 他用 Poisson disc 取點、Voronoi/Delaunay 建拓撲。
+差別是我們的地形不是程式生成的，而是**直接讀美術畫好的底圖**。
+
+### ⚠️ 分層一定要用「圖上的跳數」而不是直線距離
+
+第一版照直線距離分桶，結果一個節點的三角化鄰居常常全落在同一桶 ——
+那個節點就沒有往前的邊，只好補一條最近的，而補出來的線不在三角圖上，
+**平面性就破了**。實測：三角化本身 0 交叉，補完洞變 3.5 處。
+
+改用 BFS 跳數之後在定義上不可能發生：跳數 k 的節點一定有一個鄰居是 k-1。
+連線只留「跳數差 1」，不需要補洞，也就完全不會交叉。
+
+### ⚠️ BFS 保證「有前」但不保證「有後」
+
+BFS 樹的葉子沒有 k+1 的鄰居 → 走進去出不來。實測 200 張圖有 405 個。
+`EnsureReachesGoal` 由深往淺傳播「能不能到終點」，到不了的往
+**三角化鄰居**裡能到終點的連（只往已確定能到的連，所以不會有迴圈；
+只連三角化的邊，所以平面性保住）。
+
+### 200 張圖實測
+
+| | Grid | Organic | Terrain |
+|---|---|---|---|
+| 同層 y 分散度 | 0.00 | 3.74 | 不適用（無層線） |
+| 平均出度 | 1.14 | 1.33 | **1.73** |
+| 每張圖交叉 | — | 1.12 | **0.00** |
+| 節點落在水裡 | — | — | **0** |
+| 死路 / 走不到 | 0 / 0 | 0 / 0 | **0 / 0** |
+
+### 還沒解決
+
+* **連線太密，看起來像三角網格不像道路**（40 節點 / 69 條邊）。
+  `PruneLinks` 幾乎沒作用 —— 大多數節點只有一條入邊，
+  「不能剪掉別人唯一入邊」的保護擋住了絕大部分剪枝，
+  而且 `EnsureReachesGoal` 在剪完之後又補回來。
+  **正解應該是反過來**：先建生成樹（每個節點恰好一條入邊），
+  再依機率加回有限的額外邊。那是標準做法，這一版做反了。
+* 層數只有 4~5，設定是 8。Delaunay 圖的直徑約 sqrt(N)，
+  要 8 層得要 N≈50 以上，但那樣節點太多。
+* 仍有橫跨半張圖的長邊（三角化外圍的邊本來就長）。
+
+
+## Terrain 的第二種連法：SpanningTree（2026-09-11）
+
+`MapGenerationSettings.linkMode` 切換，**Triangulation（現版）保留不動**。
+
+### 為什麼「事後剪枝」行不通
+
+上一版的 `PruneLinks` 幾乎無效（68 → 69 條，等於沒剪）。原因：
+剪枝要保護「別人唯一的入邊」，而多數節點本來就只有一條入邊。
+**順序要反過來** —— 先只連必要的，再依機率加回。
+
+### SpanningTree 的三步
+
+1. **主幹**：每個非終點節點挑一條「跳數 +1 且最近」的出邊 → 不會有死路
+2. **補入邊**：沒人連進來的，從跳數 -1 的最近鄰居拉一條 → 不會走不到
+3. **額外**：其餘依 `extraLinkChance` 加回，受 `maxForwardLinks` 限制 → 這才是「選擇」
+
+⚠️ 步驟 1 只保證「有比自己深的鄰居就連過去」，但 BFS 樹的葉子整圈鄰居
+都不比自己深 —— 那還是死路。**`EnsureReachesGoal` 不能省**，
+少了它實測有 1046 個死路節點。
+
+### ⚠️ 真正的關鍵是「連線長度上限」，不是連法
+
+只換連法效果很有限（69 → 56 條，看起來幾乎一樣）。
+真正的問題是 **40 個節點只有 4 層**，每層 10 個，
+所以「下一層」的鄰居常常隔了半張圖 —— 那些長邊才是視覺噪音。
+
+加上 `maxLinkDistance`（預設 22%）濾掉長邊之後：
+
+| | 濾之前 | 濾之後 |
+|---|---|---|
+| 層數 | 4.0 | **7.9**（設定 8） |
+| 平均線長 | 15.9% | 14.2% |
+| 節點 | 40.0 | 38.6（斷開的被丟掉） |
+
+**副作用是好的**：邊短了要走更多步才到得了對岸，BFS 跳數自然變多，
+一場 run 的長度終於對上設計值。
+
+⚠️ 濾完圖可能斷開。`LayersByHops` **故意不把 hop < 0 補值** ——
+那是「連不到起點」的記號，呼叫端靠它把那些點丟掉。硬留著就是走不到的節點。
+
+### 現況（150 張圖）
+
+節點 38.6　層數 7.9　連線 60.2　出度 1.55　平均線長 14.2%
+交叉 0.11　水裡 10　死路 0　走不到 0
+
+仍有的問題：
+* 還是偏密，外圍仍有幾條長邊（`EnsureReachesGoal` 補出來的）
+* 交叉從 0.00 變 0.11、水裡從 0 變 10 —— 都是補邊與邊界取樣造成的小回歸
+
+
+## 弧線連線與玩家視角操作（2026-09-12）
+
+### ⚠️ useDemoRoute 會完全跳過 layout
+
+`Generate()` 的分派是「固定路線優先」：
+
+```
+if (useDemoRoute)          → GenerateDemoRoute   ← 在這裡就 return 了
+else if (layout == Terrain) → GenerateTerrain
+```
+
+查了半天「為什麼 Terrain 沒生效」，答案是 `useDemoRoute = True`。
+**改 layout 之前先確認這個開關**。目前已關閉，出測試版時要決定開不開。
+
+⚠️ 另外 `MapGenerationSettings` 的欄位跨 session 會掉。
+直接改欄位 + `SetDirty` 不夠可靠，要用
+`SerializedObject` + `ApplyModifiedPropertiesWithoutUndo` + `SaveAssetIfDirty`。
+
+### 連線改成弧線
+
+`lineBend`（0.15）＋ `lineSegments`（14），二次貝茲，
+控制點往垂直方向偏。彎哪一邊由兩端座標決定 —— 固定的，
+不然重建地圖時線會左右亂跳。
+
+⚠️ **`LineRenderer.alignment` 一定要是 `TransformZ`，不能用預設的 `View`。**
+`View` 會讓線永遠轉向面對相機 —— 俯視時線會「立起來」變成緞帶，
+相機一轉整條線跟著扭。這個 bug 在直線時看不太出來，弧線會很明顯。
+
+為了讓法線朝上，線物件要轉 -90 度（local +Z → world +Y），
+所以世界座標 (x, ?, z) 要寫成 local (x, -z, 0)。這個換算不直覺。
+
+**弧線不會額外變形** —— 它躺在地面上，透視怎麼壓底圖就怎麼壓它。
+
+### 玩家視角操作（MapCameraController）
+
+| 操作 | 行為 |
+|---|---|
+| 左鍵拖曳 | 旋轉（yaw 夾 ±40°、pitch 25~70°） |
+| 滾輪 | 縮放（改距離，不改 FOV —— 改 FOV 會變形） |
+| 右鍵／中鍵拖曳 | 平移（夾在中心 6 單位內） |
+| `ResetView()` | 回到預設視角 |
+
+設計理由：這張地圖是**桌上的一張紙**，不是 Google Maps。
+玩家看到傾斜的紙第一個念頭是「轉過來看」，不是「推走」。
+平移留給右鍵。
+
+⚠️ **旋轉一定要夾住**。地圖有推進方向，能轉 360 度的話玩家會轉到
+上下顛倒再也分不出哪邊是前面。也**一定要有歸位鈕** ——
+任何自由視角都必須有回家的路。
+
+⚠️ **拖曳與點擊要分得開**。節點是左鍵點的，而左鍵也用來轉視角。
+沒有位移門檻（`dragThreshold` 6px）的話，玩家想轉視角會誤觸節點 ——
+而進關卡是不可逆的。所以改成「放開才算點，且拖曳過就不算」。
+
+### 「每條路都走得到 Boss」驗證（200 張圖）
+
+```
+平均 Boss 節點數   1.00     最深層節點數   1.00
+有多個/沒有 Boss   0 張      走不到 Boss    0 個
+```
+
+是結構上保證的：層數 = BFS 跳數，最深的點唯一，
+`EnsureReachesGoal` 逼每個節點都通到它。不是運氣。
+
+
+## 3D 地圖接上遊戲流程（2026-09-12）
+
+```
+[MAP_OVERLAY]                    ← MapView3D 掛在這（平面版 MapView 停用但留著）
+   MapPanel
+      MapSurface (RawImage)      ← 顯示 MapRT，滿版，raycastTarget = false
+      map_image (straight) (關)  ← 平面版的底圖
+      MapContainer (關)          ← 平面版的節點容器
+      TooltipAnchor              ← 說明框貼的位置（世界轉螢幕之後移到這）
+      MapBanner / 離開鍵         ← 不動，疊在 RawImage 上面
+[MAP_3D]                          ← 世界空間，不參與滑動
+   World / MapCamera(+Rig+Controller) → MapRT
+```
+
+⚠️ **`MapSurface` 的 `raycastTarget` 要關掉**。`MapView3D` 自己用
+`Physics.Raycast` 打射線，不吃 uGUI 事件；開著的話會擋住 Banner 上的離開鍵。
+
+⚠️ **地圖相機的背景要全透明**，`StageBackdrop` 才透得出來。
+不然地圖外圍是一片純色，看不到場景美術。
+
+⚠️ **複製元件之後要把來源那份移除**。`[MAP_3D]` 上留著一份 MapView3D 的話
+會跟覆蓋層那份搶著跑 `Update()` 與射線偵測。
+
+### 節點隱形的 bug
+
+`SpriteFor` 拿不到圖時回傳 null → `icon.enabled = false` → 節點隱形，
+但連線照畫 —— 看起來就是「線連到空氣」。實測 40 個節點有 7 個隱形
+（6 商店 + 1 特殊事件）。平面版的 `PrefabFor` 本來就有退路，3D 版漏了。
+
+**每一條分支都要有退路**，最後再退到 `spriteEvent`，還是 null 就報警告。
+
+### 美術缺口（要跟美術確認）
+
+`Assets/TYN/Map/ART/節點/` 裡**沒有商店、特殊事件、對話的專用圖示**。
+目前拿現成素材當佔位：
+
+| 種類 | 佔位用 | 依據 |
+|---|---|---|
+| 商店 | `屋子` | 使用者附的示意圖裡有黑色小屋 |
+| 特殊事件 | `地圖物件_平地_紅` | 示意圖裡有紅色菱形 |
+| 對話 | `地圖物件_一般探索` | 沒有更好的，先借事件的 |
+
+
+## 地圖視角第二版（2026-09-13）
+
+### 操作配置換過了
+
+| 操作 | 行為 |
+|---|---|
+| **左鍵拖曳** | **平移**（放手會自己飄回去） |
+| **右鍵／中鍵拖曳** | **旋轉** |
+| 滾輪 / 左下滑桿 | 縮放 |
+| 左鍵短按 | 選節點 |
+
+⚠️ 左鍵同時是選節點的鍵，所以**左鍵上的手勢必須是安全的**：
+誤觸平移只要放手就會飄回去，誤觸旋轉則會留在歪掉的角度回不來。
+一開始做成「左鍵旋轉」，實測後換過來。
+
+### 鏡頭追隨目前節點
+
+`followCurrentNode` / `followSmooth`（0.35 秒）。
+`MapView3D.SyncState` 在換節點時把 `followTarget` 指過去。
+
+⚠️ **追隨與手動平移要拆成兩個變數**（`followOffset` / `panOffset`），
+合成之後才寫進 `rig.pivotOffset`。混在同一個變數裡的話，
+平移歸位會把追隨的位移一起歸掉 —— 鏡頭會彈回地圖中心而不是回到玩家身上。
+
+開場還沒選過節點時 `followTarget` 是 null，鏡頭停在地圖中心（縱覽全局）。
+
+### 平移自動歸位
+
+`panReturnDelay`（1.2 秒）後開始飄，`panReturnSmooth`（0.6 秒）飄完。
+
+玩家推開地圖看遠處，看完十之八九想回到自己身上。要他手動推回來是多餘的
+操作，而且**推不準** —— 沒有人能把地圖推回正中央。
+
+### 左下角縮放滑桿
+
+`MapPanel/ZoomSlider`，右邊 = 拉近。
+
+⚠️ **`syncingSlider` 旗標不能省** —— 擋掉「滑桿改距離 → 距離回寫滑桿 →
+又觸發一次」的互相觸發。沒有它的話滾輪縮放會跟滑桿打架，數值會抖。
+
+⚠️ **滑鼠壓在 UI 上時不要動鏡頭**（`EventSystem.IsPointerOverGameObject`）。
+滑桿蓋在 MapSurface 上面，沒有這道判斷的話拖滑桿會**同時**把地圖拖走。
+
+
+## 離開鍵改成「點對話框就離開」（2026-09-13）
+
+玩家回報離開鍵**不方便、找不到**。事件／特殊事件／對話／戰鬥結算四處
+統一改成：結算播完之後，**再點一下對話框就離開**，跟翻頁同一個手勢。
+
+### ⚠️ 不能只是把 LockAdvance 拿掉
+
+當初鎖住是有原因的：結算排在**最後**播，而推進鍵是蓋住整個對話框的透明
+Button。玩家為了把最後一句打完而點的那一下，會在同一瞬間被當成
+「我看完了」——「拿到什麼」就這樣被跳掉。
+
+所以 `PopupService.ArmDismiss(grace, onDismiss)` 保留了保護：
+`grace`（0.35 秒）內鎖住推進，之後才解鎖並訂閱 `OnAdvanced`。
+玩家感覺不到延遲，但那一下誤觸被吃掉了。
+
+⚠️ 對話框如果已經收起來（自動推進、或被別的東西關掉），就沒有東西可以點 ——
+`ArmDismiss` 那時**直接離開**，不然玩家會對著空畫面按。
+
+⚠️ **離站一定要 `CancelDismiss()`**。殘留的訂閱會打到下一站 ——
+玩家在新對話框點第一下就被上一站的離開邏輯吃掉，而且完全不會報錯。
+補在三處的 `Unsubscribe` / `OnStageExit` / `Report`，以及
+`GameFlowManager` 換站那一點（保底）。
+
+### 離開鍵沒有刪除
+
+`endButton` 欄位留著，只是不再主動 `SetActive(true)`。
+要改回去的話把 `ArmDismiss` 那幾行換回 `SetEndButtonVisible(true)` 即可。
+
+
+## 把 Romtyui 的戰鬥系統重新打包成 Stage_Battle_v2（2026-09-13）
+
+他的戰鬥系統活在 `Assets/Romtyui/scene/SampleScene.unity` 的
+**`BattleSystemPrefab`**（那不是 prefab 資產，只是一個同名的場景物件）。
+我們的 `Stage_Battle.prefab` 是打包過去的副本，所以他一改就要重新打包。
+
+### 結構比對（濾掉 _Runtime 之後）
+
+| | 數量 |
+|---|---|
+| 他有我們沒有 | 19 條路徑 |
+| 我們有他沒有 | 15 條路徑 |
+
+他新增的：
+* `BattleUICanvas/DeckViewerPanel/BookRoot ` ＋ 5 個子物件 —— **牌組檢視器（翻頁的書）**
+* `Target Frame` × 3（每個怪物站位一個）
+* `lamp_Panel/Root/` 底下的 指針 / 按鈕 / 血條框
+* 幾個意圖說明與怪物位置的錨點
+
+我們有他沒有的，扣掉**我方 4 個**（見下）之後幾乎都是**他改過名字**的
+（`Image (3)` → `指針`、`GameObject (1)` → 具名錨點…），不是刪除。
+
+### ⚠️ 打包時一定要補回的我方 7 項
+
+1. `Global Light 2D`　2. `Global Volume`　3. `Global Volume (1)`
+   —— 少了這三個**戰鬥場景會沒有渲染**（先前查過的坑）
+4. `EndButtonCanvas`（含 EndButton）
+5. `BattleStageController` ＋ 全部設定（tierRewards 3 筆、formationOverrides 1 筆、
+   rewardLineFormat、defeatFlagPrefix、dismissGrace…）
+6. `Props_Panel` / `Relics_Panel` **關閉**（我們改用 Canvas_HUD 那一套）
+7. 刪掉 `_Runtime` 殘骸
+
+⚠️ **複製 `BattleStageController` 過去之後，物件參照還指著舊實體**，
+要重新指向新副本裡的 `battleManager` / `endButton` / `godCardAnimationCanvas`。
+不重指的話會指到已經被刪掉的物件，而且不會報錯。
+
+### 做法：新檔案，不覆蓋
+
+存成 **`Stage_Battle_v2.prefab`**，`StageHost.stages[6].prefab` 指過去。
+舊的 `Stage_Battle.prefab` 原封不動留著 —— 要退回只要把那一格改回去。
+
+⚠️ `customParent = WorldRoot` 必須保留。戰鬥掛在 `WorldRoot` 不是
+`Canvas_Stage`，換 prefab 時很容易忘記檢查這一格。
+
+### 打包後驗證
+
+```
+Transform 450 → 516        BookRoot 1 個   Target Frame 3 個
+我方 4 個物件全在          遺失腳本 0      _Runtime 0
+BattleStageController 設定全數保留，三個物件參照都重新指好
+EnemyFormationSpawner slots 3　BattleManager.playerUnit ✔
+ItemInventory ✔　RelicsInventory ✔
+```
+
+⚠️ 疊加開啟他的場景之後**沒有存檔就關掉**，他的 SampleScene 沒有被動到。
+
+## 試玩回饋修正（2026-09-13 ~ 09-14）
+
+### 查到的根本原因（先看這段）
+
+| 回報 | 真正的原因 | 修法 |
+|---|---|---|
+| 卡牌上 `{counter}`、穿刺的 `{damage}` 不見 | 6 張卡的 `effects` 在**編輯器記憶體裡是 null**（GUID、fileID 全對）。合併 Romtyui 進度時卡牌先被載入、效果資產後到，快取住了 null。效果是 null 的話那張牌**打出去也沒有效果** | 不是程式問題。重新載入那 6 張卡就好（重開 Unity 也會好）。**正式包不受影響** |
+| 怪物一開場就是黑色型態 | SAN 100/100 但 `lightPower` 卡在 0.20：Binder 在 OnEnable 算一次，之後 `ApplyToBattle` 改 SAN 不發事件 | `BattleStageController` 開場補叫 `RefreshLightPower()`（見該方法註解） |
+| 進出節點沒有黑幕 | `[SYSTEM]/ScreenFader` 從 **08-14 Phase4** 起就是停用的 → `Instance` 是 null → 所有淡入淡出都跳過 | 重新啟用。實測開機淡出 alpha 1 → 0 正常 |
+| 繞一圈回到原節點 | `EnsureReachesGoal` 補邊時可能連回「走得回自己」的節點。300 張圖 271 張有迴圈 | 補邊加 `CanReach` 檢查；找不到合法出口的死路節點整個拿掉（`RemoveStrandedNodes`） |
+| 戰鬥中吃食物 HP/SAN 沒反應 | SAN 只寫存檔值；戰鬥中的 SAN 是 `EnergySystem`，戰鬥結束 `SaveFromBattle` 會蓋回去 | 戰鬥中走 `EnergySystem.GainEnergy`。播報改用畫面上那一份數值 |
+
+⚠️ **「EnergySystem 每回合重設所以不能加 SAN」是錯的**（之前的註解這樣寫）。
+有 run 狀態時 BattleManager 不會重設它 —— 戰鬥中的 SAN 就是 EnergySystem。
+
+### 地圖
+
+- **說明框顯示在棋子頭頂**：`MapTooltipUI` 新增 `AboveNode` 模式；鏡頭移動時每幀跟著走（`Follow`）。
+  文案沿用平面版 `MapView` 的六筆，已複製到 `MapView3D.nodeTooltipTexts`。
+  去不了、走過的節點也會顯示說明（但只有可前往的會抬起來）。
+- ⚠️ **3D 版漏抄了 `SetSuppressed(false)`** —— 地圖第一次收起來之後說明框就永遠開不了。已補在 `OnOpened`。
+- ⚠️ **第一次 hover 沒有框、第二次才有**：`MapTooltipUI` 在場景裡是停用存檔的，
+  它的 `Awake` 會在第一次 `Show()` 呼叫 `SetActive(true)` 的**當下**才跑，
+  而 `Awake` 裡的「開場先藏起來」會立刻把框關回去。已用 `activatingForShow` 擋掉。
+  **任何「停用存檔、Awake 裡會把自己關掉」的 UI 都有這個坑。**
+- **走過的節點半透明**：`MapNode3D.visitedAlpha`（預設 0.4）。
+- **玩家棋子**：`MapView3D.playerSprite`（`地圖物件_玩家`）。沿著**跟連線同一條弧線**滑到下一站，移動時鏡頭追棋子。
+  控制點由 `CurveControl` 統一算，連線與棋子不會分岔。
+- **地圖上不能吃東西**（轉場中也不行），提示文字在 `ShortcutBarUI.mapBlockedMessage`。
+- 順手修：`BuildLines` 沒把線加進 `lines`，換一場 run 舊線會留在地上。
+
+地圖生成驗證（300 張）：
+
+```
+            迴圈   死路   走不到   沒有 Boss   平均節點
+修正前      271     0       0        0          39.5
+修正後        0     0       0        0          37.4（最少 20）
+```
+
+仍有約 1.1 條／圖「往較淺層走」的邊 —— 不是迴圈（走不回原點），只是地理上往回。
+
+### 室外背景的擺設開關
+
+- 以前**只有探索房間**會隨機開關擺設；事件、機率對話的戶外背景是 `StageBackdrop` 生成的，沒人呼叫 `Apply`，所以永遠全亮。
+- 現在 `StageBackdrop.Spawn(seed, showAll)` 會套用；種子用節點的 `dressingSeed`（同一站重進長一樣）。
+- `SceneDressing.Piece.onlyWhenShowAll`：只有「全部顯示」時才出現。**魚頭、魚頭2、魚頭3 已勾**（三個並排在路中間，x 39%／49%／59%）。
+- `EventData.showAllDressing`：勾了的事件背景全部顯示（含魚頭）。**目前沒有任何事件勾** —— 要全亮的是哪一個事件待確認（《好餓好餓的貪吃鬼》的內容跟魚頭有關，可能是它）。
+- ⚠️ 每一件都先擲骰再判斷，勾 `onlyWhenShowAll` 不會讓其他擺設的結果位移。
+
+### 商店
+
+- hover 商品顯示名稱與說明，擺在格子正上方（放不下換下方）。框是從快捷欄的 Tooltip 複製的，掛在 `Stage_Shop/.../Shelf/ShopTooltip`。
+- ⚠️ 框的 `blocksRaycasts` 一定要關，否則框蓋住格子 → exit → 框消失 → enter …… 會一直閃。
+
+### 其他
+
+- `Room_Village_Outdoor.prefab` 裡面放的是 **`Art_Village_MiddleRoom`**，不是戶外那張。名字與內容不符，待美術確認是不是放錯。
+- 用 MCP 在 Play 模式測試時：編輯器沒有焦點**不會跑幀**（frameCount 停在 2），要先 `Application.runInBackground = true`。
+  另外 `DebugJumpToStage` 是 `[Conditional("UNITY_EDITOR")]`，從 execute_code 呼叫會被編譯器拿掉，要用反射叫 `DebugJumpRoutine`。
+
+## 第二輪試玩回饋（2026-09-14）
+
+### 一條路到不了 Boss
+
+**原因**：BFS 最深那一層平均有 2.4 個節點，以前**全部都變成 Boss**。每個節點都走得到「某一個」Boss，
+但玩家看到的是遠方那一個 —— 岔路選到另一邊，就到不了看到的那個，而且每個 Boss 都會結束 run。
+
+**修法**：`CollapseToSingleBoss` 只留「走得到它的節點最多」的那一個，其他降級成一般節點並補邊接過去，
+補不到的由 `RemoveStrandedNodes`（終點改成看 Boss）拿掉。
+
+⚠️ `MapData.IsFinalLayer` 改成**有 Boss 就以 Boss 為終點**。只留一個 Boss 之後最深層還有一般節點，
+照層數判斷的話走到那裡 run 會莫名結束。
+
+```
+300 張圖：Boss 恰好 1 個　走不到 Boss 0　死路 0　迴圈 0　走不到的節點 0　平均 36 個節點（最少 20）
+```
+
+### 新一輪沿用上一輪的 HP／SAN／牌組
+
+**原因**：`RunStateManager` 是 DontDestroyOnLoad，而 `PlayerVitals.EnsureInitialized` 「已經有值就不覆蓋」。
+
+**修法**：`GameFlowManager.ResetRunLevelState()` 在開新一輪之前清掉 RunStateManager（含戰鬥快照、保留怪物組）、
+`PendingEvent`、`stageAfterEvent／Battle`、`BattleStageController.PendingEnemyId`、`ProbabilityDialogueStageController.PendingDialogue`。
+遺產（Meta）刻意不清。
+
+實測：第一輪改成 HP 60／SAN 70／牌組 9 張／殘留敵人 → 開新一輪 → HP 100／SAN 100／8 張／null。
+
+### 開關
+
+| 項目 | 位置 | 現在 |
+|---|---|---|
+| 侵蝕度提示（「【深淵】的侵蝕度 +5%」） | `GameFlowManager.showCorruptionNotices` | 關（數值照樣累積） |
+| 進節點／事件的地點卡 | `GameFlowManager.showTitleCards` | 關 |
+| 事件背景全部顯示（含魚頭） | `EventData.showAllDressing` | 只有《好餓好餓的貪吃鬼》勾 |
+| 探索的戶外房間 | `RoomLibrary` 的 `Room_Village_Outdoor` weight | 0（文案：探索目前只有屋內） |
+
+### 探索的 HP／SAN 顯示
+
+`Canvas_HUD/Vitals_HUD`：從戰鬥的 `lamp_Panel/Root` 複製外觀，拿掉結束回合鍵、動畫、教學錨點等戰鬥專用元件，
+改掛 `VitalsHudUI` 讀 `PlayerVitals`。位置與戰鬥那顆燈相同（右下）。
+`UIPanel.visibleInStages` 只有 **Explore** —— 其他環節可能有位置衝突，待討論。
+
+### 地圖
+
+- 說明框改成商店／遺物同款（深色底 0.05／0.88、標題白 22、內文淺灰 17），寬 240、高度跟著文字。
+- 玩家棋子 = 一般節點的 75%（`MapView3D.playerHeightOfNode`，用倍率是為了節點改大小時跟著變）。
+
+## 遊玩紀錄、輪迴、地圖開場縱覽（2026-09-15）
+
+### 探索 HP／SAN 顯示關掉部分子物件是否安全
+
+安全。`VitalsHudUI` 只用 `血量`、`san條`、`HP_Root/HP`、`SanRoot/SAN` 四個，關掉的是
+`燈光`、`指針`、`按鈕`、`火`、`燈杖`，都沒有被參照。
+⚠️ 就算之後把那四個也關掉也不會報錯（對停用物件設值沒問題、參照是空的會跳過），只是不會顯示；
+**刪掉**的話參照會變成空的，一樣不會報錯但數值就不顯示了。
+
+### 遺物、道具不帶到新一輪
+
+- 本來就沒有帶：每一輪都 `new RunContext`，背包是新的；遺產清單 `legacyItemIds` 也從來沒有人寫入。
+- 為了之後做遺產機制時不會不小心打開，改成明確的開關 `GameFlowManager.inheritLegacyItems`（預設關）。
+- 實測：第一輪背包放生日蛋糕 ×2、血腥魚叉 ×1 → 開新一輪 → 背包空、HP 100、牌組 8 張。
+
+### 遊玩紀錄（RunRecorder）
+
+**每一場一個 JSON**：`persistentDataPath/RunHistory/run_日期_時間_種子.json`
+（Windows：`%USERPROFILE%/AppData/LocalLow/LightCat/ELDRITCH_MILE/RunHistory`）
+
+| 什麼時候寫 | 記什麼 |
+|---|---|
+| 開局 | 版本、平台、**地圖種子**、節點數、起始 HP／SAN／錢／背包／戰鬥牌組 |
+| 每進一站 | 節點 id、種類、層、敵人、插播的事件，與當下狀態 |
+| 每個環節結束 | 環節、結果（Completed／PlayerDied…），與結束後的狀態 |
+| 結束 | 結果：`PlayerDied`／`RunFinished`／`Abandoned_NewRun`（沒打完就開新局）／`Abandoned_Quit`（關遊戲） |
+
+- **有種子就能重現地圖**：丟回 `MapGenerator.Generate(settings, seed)`。
+- Meta（PlayerPrefs）另外留最多 200 筆**精簡摘要** —— WebGL 不保證檔案寫得進去，這一份是保底。
+- 格式規則：**只加欄位，不改名、不刪**，舊紀錄才讀得回來。寫檔失敗只會警告，不影響遊戲。
+- 戰鬥**中途**的 HP／SAN 不會即時進紀錄（讀的是回存值），但戰鬥結束那一筆是準的。
+
+實測：開局寫入檔案（種子、37 個節點、起始牌組 8 張）；開新局時上一場標成 `Abandoned_NewRun`、Meta 摘要 +1。
+
+### 地圖開場縱覽
+
+每一場**第一次**打開地圖：
+
+1. 地圖滑下來之前（黑幕中）就把鏡頭擺到看得到整張圖的距離 —— 玩家第一眼就是全圖
+2. 滑完之後停 `introHoldSeconds`（1.5 秒）
+3. 平滑拉近到起點的棋子（`introMoveSeconds` 1.4 秒），之後照常追隨
+4. 停留期間點一下或滾輪 → 直接開始拉近；期間不吃拖曳與縮放
+
+實測：距離 36（全圖）→ 停 1.5 秒 → 1.4 秒內拉到 26（平常的距離）並停在起點。
+
+- 距離自動算（依節點範圍、俯角、長寬比），超過縮放上限時會**暫時**放寬（`MapCameraRig.distanceMaxOverride`，不存檔）。
+- 還沒出發時鏡頭追的是起點的棋子，不再是地圖中心。
+- 開關：`MapView3D.playIntroOnNewMap`。
+
+## EXIT 改版、HP/SAN 輪流顯示、打牌點空白處離開（2026-09-15）
+
+### 右下角共用 EXIT（`Canvas_HUD/Exit_Shared`，`SharedExitUI`）
+
+探索、商店、對話節點**共用同一顆**。Stage 進場 `SharedExitUI.Instance.Show(按下去做什麼)`、離場 `Hide()`。
+
+- 外觀沿用商店那一套（SlideOutTab 滑出 ＋ HoverCrossfadeImage 兩張圖替換）：底圖 `EXIT_人v2`、hover `EXIT`。
+  ⚠️ **兩張圖長寬比不同**（3.23 vs 4.13），各自依原比例、靠右對齊，不是同尺寸 —— 等 `EXIT` 也出 v2 再對齊。
+- 縮著時露出約 120px，伸出時整塊可見（離右緣 16px）。感應區加寬到蓋住伸出後的整塊，避免游標在招牌左半邊時縮回去而閃爍。
+- 對話框開著 → `aboveDialogueY`（400）；關著 → `bottomY`（40）。實測對話框開著時 EXIT 下緣 412、對話框上緣 380。
+- 舊的：探索上方書籤 `ExitTag`（UIPanel 環節清空並停用）、商店 `ExitTab_Zone`（停用）。場上沒有共用 EXIT 時商店會退回舊的那顆。
+- 對話節點：`ChoiceStageController.UsesSharedExit`，只有 `DialogueStageController` 打開。點下去：打牌中先結束打牌 → `Finish()` 回地圖（**沒有確認面板**）。
+
+### HP／SAN 只在數值變動時出現（`VitalsHudUI.pulseOnChange`）
+
+實測（HP 100 → 85）：
+
+```
+EXIT 淡出 0.25s → EXIT 完全消失才開始 → HP/SAN 淡入 0.3s → 淡入完成才跑數字 100→85（0.8s）
+→ 停 1.5s → 淡出 0.3s → EXIT 淡回來
+```
+
+過程中又變了一次：不重播淡入，從目前顯示的數字接著跑。秒數都在 Inspector 調。
+關掉部分子物件（燈光、指針、按鈕、火、燈杖）不影響 —— 程式只用血量、san條、HP、SAN。
+
+### 食物
+
+- **不能吃的時機**：地圖、轉場、打牌中（寶箱／人物）、對話節點。文字在 `ShortcutBarUI` 的三個 `*BlockedMessage`。
+- **提示改走 Toast**（`Canvas_Tooltip/Toast`，`ToastUI`）：自己會消失、不用點、不擋滑鼠、蓋在地圖之上。
+  原因：以前走對話框 —— 在地圖上對話框（101）在地圖（300）底下看不到也點不到；打牌中對話框是 HoldOpen 點不掉。
+  實測：地圖上點蛋糕 → Toast「在地圖上不能使用道具」、蛋糕沒被吃、對話框沒被打開。
+- **吃完說明框沒消失**：吃掉最後一個之後那格被換掉，滑鼠沒動所以沒有 OnPointerExit。現在每次重建格子後重新判斷一次（`RefreshTooltipAfterRebuild`），空格子也不再顯示「沒登記的道具」。
+
+### 和寶箱打牌：點空白處離開（`DimmerClickEndsEncounter`，掛在 `DialogueUI/BLACK`）
+
+打牌時點在對象大圖、對話框、手牌上會被它們自己收走；**穿過去落到壓黑層的就是空白處**。
+- 選著牌時第一下只取消選取（兩段式出牌點偏不會直接結束整個環節）
+- 探索會藏起「結束」鍵（`ExploreStageController.clickOutsideEndsEncounter`），打牌結束時還原 —— 對話節點的打牌還在用那顆
+- ⚠️ 這一項**還沒在 Play 模式實際點過**（要真的開一個寶箱），請實測
+
+## 確認面板移到 HUD、遭遇節點的 EXIT、build 版戰鬥外框與神牌動畫（2026-09-15）
+
+### 在寶箱畫面點 EXIT，詢問面板出不來
+
+兩個原因疊在一起：
+1. 探索的 `ContinueAskPanel` 在 **Canvas_Stage（100）**，對話框是 **DialogueUI（101）**，寶箱大圖又在對話框裡 —— 面板就算開了也被蓋住
+2. `ShowContinueAsk` 在「對話框開著或打牌中」會**延後到關掉才跳** —— 寶箱畫面兩個條件都成立
+
+**修法**：共用的確認面板 `Canvas_HUD/ExitConfirmPanel`（HUD 是 400，蓋得過對話框與寶箱），由 `SharedExitUI.ShowWithConfirm` 開關。
+點 EXIT 是玩家明確要走，面板**立刻**出來；按「是」時打牌中會先結束打牌再離開。
+⚠️ 面板要是 EXIT 的**兄弟**不是子物件 —— 放在底下的話 EXIT 淡出時會把面板一起淡掉、一起關掉點擊。
+
+探索、商店、對話、遭遇節點**全部**走這一塊。各 prefab 自己的詢問面板保留，只在場上沒有共用 EXIT 時才用得到。
+
+### 遭遇／對話節點看不到 EXIT
+
+地圖的 Dialogue 節點實際載入的是 `GameFlowManager.dialogueNodeStage` = **ProbabilityDialogue**，
+上一輪只加在 `DialogueStageController`。現在 `ProbabilityDialogueStageController` 也有 EXIT ＋ 確認。
+中途離開**不標記成演過**，那段對話之後還可以再遇到。
+
+實測：遭遇節點進場 EXIT 可見（對話框開著所以在 y=400）→ 點下去確認面板在 Canvas_HUD 最上層 → 按「否」留在原地。
+
+### build 版戰鬥外框是螢光藍綠
+
+**在 1920×1200（16:10）重現**：戰鬥背景只蓋 16:9 那一塊，上下多出的地方露出淺灰色，
+被戰鬥的 `Global Volume (1)`（colorFilter 藍綠 ＋ saturation 0 ＋ Bloom 10.36）染成螢光藍綠。
+關掉那個 Volume 邊條變淺灰 —— 顏色來自後製，露出來是因為長寬比。編輯器 Game 視窗是 16:9 所以一直沒看到。
+（品質設定只有一個 PC 等級，編輯器與 build 用同一個管線，不是品質差異。）
+
+**修法**：場景根的 `LetterboxBars`（Overlay 畫布排序 **-100**）把 16:9 以外蓋黑。
+- Overlay 畫在相機與後製之後 → 蓋得住被染色的那一塊
+- 排序比所有遊戲 UI 低（戰鬥最低的 SceneCanvas 是 0）→ 手牌、書、血條伸進邊條不會被蓋
+- 不擋滑鼠；解析度改變時自動重排；比 16:9 寬時改成左右黑邊
+- `UIPanel.visibleInStages` 目前只有 **Battle**，其他環節要黑邊的話加進清單即可
+
+實測 1920×1200：上下各 60px 黑邊，UI 照常在上面。
+
+### build 版觸手動畫變很小
+
+`Stage_Battle_v2/BattleContentRoot/AnimCanvas`（神牌動畫的畫布）是 **ConstantPixelSize**，
+其他戰鬥畫布都是 ScaleWithScreenSize 1920×1080 —— build 解析度不是 1920×1080 時，只有它不跟著縮放。
+已改成 ScaleWithScreenSize 1920×1080、match 0.5。1920×1080 下外觀不變。
+⚠️ **還沒在 build 實際看過**；Romtyui 的 SampleScene 裡同一個畫布也是 ConstantPixelSize，要跟他說。
+
+### 測試時動過編輯器的 Game 視窗
+
+為了重現，暫時把 Game 視窗改成 1920×1200，測完已改回 1920×1080 並移除測試用尺寸。
+
+## build 回饋：護盾圖示、怪物說明框、地圖背景、寶箱結算（2026-09-15）
+
+### 戰鬥看不到 HP 右側的護盾圖示
+
+兩個原因：
+1. 護盾的數字（`BlockText`）右緣在燈 `Root` 中心 +266.5，而燈的半寬只有 242.1 —— **16:9 時就已經超出畫面右緣** 24px
+2. `lamp_Panel` 是「撐滿父物件 ＋ 負的 sizeDelta」的錨法，寬度 ＝ 畫布寬 − 1435.8。16:10 時畫布邏輯寬變 1821 → 燈只剩 385 寬，整顆往外推
+
+**修法**（`Stage_Battle_v2`）：`lamp_Panel` 改成釘在右下角、固定 484.2×417.6（1920×1080 時位置完全不變）；
+`Root` 往左移 36.4（超出的 24.4 ＋ 邊距 12）。實測 1920×1200 下護盾圖示 x 1830–1906，完整在畫面內。
+
+⚠️ **修 prefab 的坑**：`PrefabUtility.LoadPrefabContents` 開出來的 prefab **沒有畫布大小**，
+撐滿錨法的 `rect.size` 會讀到 sizeDelta 本身（負數）。第一次照它量就把 lamp 存壞了（已從 git 還原重做）。
+要算撐滿錨法的實際大小，得自己用參考解析度 1920×1080 換算。
+
+### 怪物的狀態／意圖說明框跑到右上角
+
+**不是 build 限定**，編輯器也一樣。三層問題：
+
+1. **畫布座標系不同**：說明框在 `BattleUICanvas`（Overlay，像素），怪物圖示在 `monsterCanvas`（Camera，世界座標）。
+   `TooltipUI.Reposition` 用 `CalculateRelativeRectTransformBounds` 直接換算 —— 不處理座標系差異
+2. **說明框錨點的座標是壞的**：`怪物說明位置1~3`、`意圖說明位置1~3` 的 anchoredPosition 是 (1358421, 574126) 這種數字。
+   **Romtyui 的 SampleScene 裡就是這個值**（不是打包造成的）
+3. 意圖牌在執行時會被移到怪物頭上，錨點擺在 prefab 裡的位置跟不過去
+
+**修法（我方）**：
+- `TooltipCanvasBridge`（`BattleStageController` 進場時自動掛上）：畫布座標系不同的觸發器，在說明框畫布上放一個看不見的替身，
+  每幀跟著真正的圖示（圖示 → 螢幕 → 說明框畫布），觸發器改指替身。座標系相同時不作用
+- `Stage_Battle_v2`：`怪物說明位置N` 歸零到怪物圖中心；三個 `意圖UI` 觸發器的 `targetRect` 清空（量自己，跟著意圖牌走）
+- ⚠️ 替身第一版拿「觸發器的畫布」相機去換算 `targetRect`，但兩者可以在不同畫布 —— 要看**被量的那個矩形**在哪
+
+實測 1920×1200：意圖說明框出現在怪物頭上的意圖牌旁（原本在右上角）。
+⚠️ 說明框會稍微蓋到意圖牌：`TooltipUI` 的 container 量出來約 100×100，比實際畫出來的框小，擺位時算不準 —— 那是他那邊的排版。
+
+**要跟 Romtyui 說**：SampleScene 那六個錨點座標要修；`Reposition` 最好先換成螢幕座標再換回來，那樣這層轉接就可以拿掉。
+
+### 地圖背後不是黑色
+
+不是戰鬥殘留 —— 是**地圖自己的背景** `[MAP_OVERLAY]` 的 StageBackdrop（戶外那張、壓暗），
+3D 地圖的 MapCamera 清成 alpha 0，地面以外是透明的，所以透出來。
+**修法**：MapCamera 背景改成不透明黑（alpha 1）。要恢復那張壓暗的村莊背景，把 alpha 改回 0 即可。
+
+### 寶箱打牌：點對話框就結算並離開
+
+開箱成功（`DeferLootReport`）的當下武裝「再點一下對話框就結算」（`PopupService.ArmDismiss`，保護期 0.35 秒）。
+沒成功時點對話框只是推進文字，不會結束 —— 蓄意失敗仍是合法策略。任何方式結束打牌都會解除武裝。
+點空白處結束打牌的功能保留。
+
+實測：開始打牌（結束鍵已藏）→ 模擬開箱成功 → 保護期後點一下對話框 → 打牌結束、手牌收起、結束鍵還原、對話框顯示「打開了 …　· 測試道具」。
+
+## 地圖俯角固定、事件自選食物、長名字跑馬燈（2026-09-17）
+
+### 地圖：俯角固定，像轉桌上的地圖
+
+- 俯角由 `MapCameraRig.pitch` 決定（美術設定 **27.8**），玩家拖曳改不動（`MapCameraController.lockPitch`，預設開）
+- 旋轉只有水平方向；`MapCameraRig.yawLimit` 設成 **180 = 不限制，可以繞一整圈**（小於 180 時照舊夾住）
+- 繞圈用 `Mathf.Repeat` 換算，不會轉到 ±180 撞牆；歸位改用 `LerpAngle`，轉到背面再歸位不會倒著轉一大圈
+
+實測：水平＋垂直同時拖曳 6 次，yaw 45 → −9 → −63 → −117 → −171 → 135 → 81，pitch 全程 27.8。
+
+### 事件：要交出的食物可以自選
+
+`EventEffect.letPlayerChoose`（`ConsumeItemByTag` 專用，**預設開**）。選了會消耗道具的選項之後：
+
+1. 對話框問「要交出哪一個？」（`EventStageController.chooseItemPrompt`）
+2. **同一個選項框**列出背包裡符合標籤的道具「名稱（數量）」（`chooseItemOptionFormat`）
+3. 要交幾個就問幾次（扣掉已經挑走的）；只剩一種可以給時不問、直接帶入
+4. 挑完才套用效果、播結果
+
+實測《好餓好餓的貪吃鬼》（背包有生日蛋糕 ×2、工業酒精 ×1）：
+「給他吃的」→ 問「要交出哪一個？」→ 列出 [生日蛋糕（2）][工業酒精（1）] → 選工業酒精 →
+結果「（失去 工業酒精、獲得 貪婪的大口）」，蛋糕仍是 2。
+
+⚠️ 只有事件（`EventStageController`）會問；別的地方（例如機率對話）套用同一種效果時仍然自動扣。
+⚠️ 可選的道具超過選項框的格數時只列得出前幾種。
+
+### 長名字跑馬燈（`MarqueeText`）
+
+掛在 TMP 文字上。文字比框長時，執行時**自動在外面包一層遮罩容器**（`<名字>_Marquee`，大小位置照抄原文字框），
+然後：停 1.2 秒 → 往左捲到看見結尾 → 停 1.2 秒 → 淡出、回到開頭、淡入 → 重來。放得下就完全維持原本的樣子（對齊、換行都不變）。
+換了文字會自動重新判斷。速度與停頓都在 Inspector 調。
+
+目前掛在**商店 8 格的商品名**上。其他地方要用就直接掛上去，不必改 prefab 階層。
+
+實測：把一格改成「超級無敵霹靂好吃的深海祭司特製發光魚頭罐頭（限量版）」（寬 728，框 310）→ 捲動中、超出的部分被遮掉；其他短名字維持置中不動。
+
+## 長名字罐頭（測試用遺物）與商店重抽鈕（2026-09-18）
+
+### 新遺物
+
+`Assets/TYN/Core/Items/Item_relic_glowing_fishhead_can.asset`
+- id `relic_glowing_fishhead_can`、名字「超級無敵霹靂好吃的深海祭司特製發光魚頭罐頭（限量版）」、售價 88
+- 標籤 `Curio` + `Uncommon`，已登記進 `ItemDatabase`（33 → 34 筆）
+- **沒有效果**（`relicEffect` 是空的），美術也還沒有
+
+⚠️ **它現在每間店都會出現。** 商店的遺物來自 `Loot_Sub_Relics`（條件：有 `Curio`、沒有 `EventOnly` 與 `NoEffect`），
+符合的只有「人魚的畫像」與這一罐，而商店固定抽 2 件不重複 —— 兩件都會上架。
+不想讓它出現在正式流程就加 `NoEffect` 標籤（照舊留在資料庫、F1 仍給得出來）；要留下來就補效果與美術。
+
+### F1 面板：重抽商品
+
+`RunDebugPanel` 在**人在商店時**多一顆「重抽商品」。按一次換一批貨（`ShopStageController.DebugRestock`）。
+- 貨是照節點種子抽的，同一間店重進本來永遠同一批 —— 重抽鈕在種子裡多混一個遞增的鹽
+- ⚠️ 已經賣掉的不會回來：這是重新進貨，不是還原購買紀錄
+
+實測：重抽三次，食物每次都不同；遺物兩件固定（原因見上）。
+
+## 交接：美術新增的遺物素材（2026-09-23，已匯入）
+
+22 張新素材已匯入 `Assets/TYN/ART/遺物/`，11 件遺物的 `icon`／`shelfIcon` 都接上了，
+持有欄的遺物格子改成等比例顯示。以下是過程中量到、之後會再用到的東西。
+
+### 素材來源與重複檔
+
+來源 `C:\Users\greyl\Downloads\遺物` 共 30 個檔，其中 **8 個跟專案裡的完全相同**（MD5 逐一比對過）：
+快艇鑰匙、快艇鑰匙白色、釣竿、釣竿白色、魚叉、魚叉白色、魚頭遺物白色、貪食魚頭。
+**這 8 個跳過沒有重新匯入** —— 重匯會換掉 GUID，既有的 4 件遺物引用就斷了。實際新增 22 張。
+
+⚠️ 貪食魚頭／魚頭遺物白色是 2894×4093（直的），跟其他遺物的 2078×1251 不一致。
+使用者已知，會請美術重出，**先不要自己裁**。
+
+### 素材與資料的對照（`Assets/TYN/Core/Items/`）
+
+| 素材 | ItemData id | 專案裡的名字 |
+|---|---|---|
+| 人魚的畫像 | `relic_mermaid_portrait` | 人魚的畫像 |
+| 人魚肉 | `relic_mermaid_flesh` | 人魚肉 |
+| 損壞的引擎 | `relic_broken_engine` | 損壞的引擎 |
+| 撲克牌 | `relic_playing_cards` | 撲克牌 |
+| 斷裂的魚竿 | `relic_broken_rod` | **斷裂的釣竿**（名字略不同，同一件） |
+| 月之蟾蜍 | `relic_moon_toad` | 月之蟾蜍 |
+| 染血的魚叉 | `relic_bloody_harpoon` | 染血的魚叉 |
+| 燒毀的樂譜 | `relic_burnt_score` | 燒毀的樂譜 |
+| 紅寶石 | `relic_ruby` | 紅寶石 |
+| 螺湮御守 | `relic_rayen_charm` | 螺湮御守 |
+| 誘惑的餌球 | `relic_lure_bulb` | 誘惑的餌球 |
+
+哪張放哪一格（照既有的 `relic_boat_key`、`relic_harpoon`）：
+`icon` = **白線版**（持有中、快捷欄）、`shelfIcon` = **彩色版**（商店貨架）。
+
+匯入設定跟既有遺物圖一致：Sprite（Single）、maxTextureSize 512、alphaIsTransparency、
+無 mipmap、Clamp。匯入後 sprite 都是 512×308。
+
+### ⚠️ 尺寸：**不用裁方**（前一版這裡寫錯了）
+
+這一段原本寫「持有欄的格子是方的、素材是橫的，匯入前要裁方」—— **那是錯的**。實測：
+
+| | 尺寸 | 比例 |
+|---|---|---|
+| 素材 | 2078×1251（匯入後 512×308） | **1.661** |
+| 遺物框 `遺物儲存_框` | 415×246 | **1.687** |
+| 持有欄圖片區（`relics` 格子的 Icon） | 69.74×39.78 | 1.753 |
+| 商店貨架 Icon（`Stage_Shop`／`ShopSlotUI.iconImage`） | 240×160 | 1.500 |
+
+美術是**照著遺物框的比例畫的**（1.661 vs 1.687，只差 1.5%），所以橫的才是對的。
+「貪婪的大口」當初要換方形裁切版，是因為**那張圖本身是直的（0.707）**，不是因為格子是方的。
+
+### 顯示設定改了什麼
+
+- **商店貨架**：`preserveAspect` 本來就是開的，沒動
+- **持有欄**：`relics` 格子的 Icon，`preserveAspect` False → **True**
+  （記在 `EventScene.unity` 的 prefab override 裡）。
+  改之前圖被橫向拉寬 5.5%；改之後等比例縮成 66.1×39.78，大小幾乎沒變
+- 白線版的內容畫得比彩色版大很多（佔畫布 78–93% vs 47–64%）——**這是對的**：
+  白線顯示在 70px 的小格子、彩色顯示在 240px 的貨架，各自等比例剛好
+
+### 量到但沒動的兩個比例問題
+
+1. **遺物框自己被壓扁 7%**：Frame 的 rect 是 92.90×58.98（1.575），原圖是 1.687。
+   要修就把高度改成 92.90 / 1.687 ≒ 55.07
+2. **食物欄的針筒也是拉伸的**：rect 212.12×60.84（3.486），`針管_未使用` 是 335×59（5.678）。
+   打開 `preserveAspect` 會讓針筒縮小，那是美術排好的版面，動之前先問
+
+### 順手要處理的兩件事
+
+1. `relic_glowing_fishhead_can`（長名字罐頭，測跑馬燈用的）**現在每間店都會出現** ——
+   遺物池符合條件的只有它和人魚的畫像。不要它出現在正式流程就加 `NoEffect` 標籤。**等使用者決定**
+2. 18 件 Curio 裡只有 `relic_mermaid_portrait` 有效果，其餘都掛 `NoEffect`；
+   效果補上之後要把 `NoEffect` 拿掉，商店才抽得到（`Loot_Sub_Relics` 是排除 `NoEffect` 的）
+
+### 進度狀態
+
+`recovery-progress` 分支**領先 origin 41 個 commit**（還沒 push）。
+未納入版控的只有 TMP 字型快取、`ProjectVersion.txt`（只差 Unity 修訂號）與
+Unity 自動產生的 `ProjectAuditorSettings.asset`。

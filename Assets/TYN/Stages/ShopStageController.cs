@@ -85,6 +85,21 @@ public class ShopStageController : StageController
 
     private readonly PanelToggle askToggle = new PanelToggle();
 
+    [Header("購買確認")]
+    [Tooltip("點商品之後跳出來的「要買嗎？」視窗。\n\n" +
+             "留空 = 退回舊行為（**點一下直接成交**）。舊行為誤觸就是直接花錢，\n" +
+             "留這條退路只是為了不讓沒接好的場景整個買不了東西")]
+    public ShopPurchasePanelUI purchasePanel;
+
+    [Tooltip("**備援**的那句話。{0} = 商品名、{1} = 價格。\n\n"
+             + "視窗的說明欄現在顯示的是商品自己的 description（跟貨架 hover 的說明框同一份），"
+             + "只有那件商品**沒有寫說明**時才會退回這一句")]
+    public string askFormat = "「{0}」，{1} 塊。要嗎？";
+
+    [Tooltip("錢不夠時**加在說明後面**的一句。YES 會同時變灰按不下去。\n\n"
+             + "是加在後面不是取代 —— 買不起也還是要看得到這東西是幹嘛的")]
+    public string cannotAffordAskLine = "……這個你買不起。";
+
     [Header("台詞")]
     [Tooltip("成交時的備援台詞。{0} = 商品名。\n\n" +
              "**角色本身有 Purchase Lines 的話會優先用角色的** ——\n" +
@@ -105,6 +120,30 @@ public class ShopStageController : StageController
 
     private RunContext run;
     private bool leaving;
+
+    /// 除錯重抽按了幾次。混進亂數種子裡，見 ShopSeed()
+    private int restockSalt;
+
+    /// <summary>
+    /// **除錯用**：換一批商品。F1 面板的「重抽商品」按這裡。
+    ///
+    /// 【為什麼需要】貨是照節點的種子抽的 —— 同一間店重進永遠是同一批。
+    /// 要驗某一件商品（例如長名字的跑馬燈）就得一直換節點，很花時間。
+    ///
+    /// ⚠️ 已經賣掉的不會回來：這裡是重新進貨，不是還原這一站的購買紀錄。
+    /// </summary>
+    public void DebugRestock()
+    {
+        if (shelf == null)
+        {
+            Debug.LogWarning("[商店] 沒有貨架可以重抽");
+            return;
+        }
+
+        restockSalt++;
+        StockShelf();
+        Debug.Log($"[商店] 除錯重抽第 {restockSalt} 次");
+    }
 
     // ==========================================
     public override void OnStageEnter(RunContext context)
@@ -146,6 +185,15 @@ public class ShopStageController : StageController
 
         askToggle.Set(leaveAskPanel, false);
 
+        // 右下角共用的 EXIT（2026-09-15 改版：探索、商店、對話同一顆）。
+        // 有它就把 prefab 自己那顆關掉，沒有才退回舊的
+        if (EldritchMile.UI.SharedExitUI.Instance != null)
+        {
+            // 確認面板改用共用的那一塊（跟 EXIT 同一個畫布），按「是」就開始離開
+            EldritchMile.UI.SharedExitUI.Instance.ShowWithConfirm(BeginLeave);
+            if (exitTab != null) exitTab.gameObject.SetActive(false);
+        }
+
         StockShelf();
     }
 
@@ -164,8 +212,10 @@ public class ShopStageController : StageController
         if (exitButton != null) exitButton.onClick.RemoveListener(AskLeave);
         if (confirmLeaveButton != null) confirmLeaveButton.onClick.RemoveListener(ConfirmLeave);
         if (cancelLeaveButton != null) cancelLeaveButton.onClick.RemoveListener(CancelLeave);
+        EldritchMile.UI.SharedExitUI.Instance?.Hide();
 
         askToggle.Set(leaveAskPanel, false);
+        if (purchasePanel != null) purchasePanel.HideImmediate();
 
         // 轉場要用 Immediate —— Hide() 會播縮回去的動作，但 Stage 這一刻就要卸載了，
         // 動作播不完，殘影會被帶到下一個畫面
@@ -243,6 +293,9 @@ public class ShopStageController : StageController
             seed ^= node.nodeId.GetHashCode();
         }
 
+        // 除錯重抽用的鹽。不混這個的話，同一個節點按幾次都是同一批貨
+        if (restockSalt != 0) seed ^= restockSalt * 7919;
+
         return seed;
     }
 
@@ -253,13 +306,59 @@ public class ShopStageController : StageController
     {
         if (slot == null || slot.IsEmpty || slot.SoldOut || leaving) return;
 
-        string name = GameFlowManager.ItemName(slot.ItemId);
-
         if (run == null)
         {
             Debug.LogWarning("[商店] 沒有 RunContext，買不了東西");
             return;
         }
+
+        // 沒接視窗就退回舊行為：點一下直接成交
+        if (purchasePanel == null)
+        {
+            DoPurchase(slot);
+            return;
+        }
+
+        if (purchasePanel.IsOpen) return;
+
+        ItemData data = GameFlowManager.Item(slot.ItemId);
+        string itemName = GameFlowManager.ItemName(slot.ItemId);
+        bool canAfford = run.money >= slot.Price;
+
+        // 說明用商品自己的那一份 —— 跟貨架 hover 的說明框同一個來源（ItemData.description）。
+        // 兩邊各寫一份的話就會有兩個真相，改一邊忘了另一邊是遲早的事
+        string body = data != null ? data.description : "";
+        if (string.IsNullOrEmpty(body)) body = string.Format(askFormat, itemName, slot.Price);
+
+        // 買不起是**加在後面**，不是蓋掉 —— 買不起也還是要看得到這東西是幹嘛的
+        if (!canAfford && !string.IsNullOrEmpty(cannotAffordAskLine))
+            body = string.IsNullOrEmpty(body) ? cannotAffordAskLine : body + "\n" + cannotAffordAskLine;
+
+        // ⚠️ 閉包抓的是 slot，不是 id —— 賣掉要標記的是**這一格**。
+        //    視窗開著的時候貨架點不到（Dimmer 吃掉所有點擊），所以不會錯格
+        ShopSlotUI target = slot;
+
+        // EXIT 要收回去：視窗蓋住它之後它收不到 OnPointerExit，會卡在伸出來的狀態
+        if (exitTab != null) exitTab.SetShown(false);
+
+        purchasePanel.Open(
+            data,
+            slot.Price,
+            itemName,
+            body,
+            canAfford,
+            delegate { DoPurchase(target); },
+            null);
+    }
+
+    /// <summary>
+    /// 真的成交。**錢在這裡才扣** —— 視窗只是問，按了 YES 才動到存檔。
+    /// </summary>
+    private void DoPurchase(ShopSlotUI slot)
+    {
+        if (slot == null || slot.IsEmpty || slot.SoldOut || leaving) return;
+
+        string name = GameFlowManager.ItemName(slot.ItemId);
 
         // ⚠️ 先確認付得起再扣。SpendMoney 本身也是全有或全無，
         //    這裡再判一次是為了「付不起」時要說話而不是靜靜地什麼都沒發生
@@ -335,6 +434,7 @@ public class ShopStageController : StageController
         // ⚠️ 面板會蓋在標籤上，蓋住之後標籤收不到 OnPointerExit，
         //    不主動收的話它會一直卡在伸出來的狀態
         exitTab?.SetShown(false);
+        EldritchMile.UI.SharedExitUI.Instance?.Retract();
 
         askToggle.Set(leaveAskPanel, true);
     }
@@ -356,6 +456,7 @@ public class ShopStageController : StageController
         leaving = true;
 
         if (exitButton != null) exitButton.interactable = false;
+        EldritchMile.UI.SharedExitUI.Instance?.Hide();   // 說再見的那一秒不該還點得到
 
         if (string.IsNullOrEmpty(farewellLine))
         {
