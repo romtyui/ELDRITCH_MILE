@@ -158,6 +158,9 @@ public class DeckViewerUI : MonoBehaviour
     [SerializeField] private int currentPageIndex = 0;
     [SerializeField] private int totalPageCount = 1;
 
+
+    private bool openingTabAnimationPending;
+
     private readonly List<CardViewUI> spawnedCards = new();
 
     private void Awake()
@@ -263,29 +266,79 @@ public class DeckViewerUI : MonoBehaviour
 
     public void Open(DeckViewMode mode)
     {
+        bool wasOpen = panelRoot != null && panelRoot.activeInHierarchy;
         currentMode = mode;
 
-        if (resetPageWhenSwitchTab)
-            currentPageIndex = 0;
+        if (resetPageWhenSwitchTab) currentPageIndex = 0;
 
-        if (panelRoot != null)
-            panelRoot.SetActive(true);
+        openingTabAnimationPending = true;
 
-        Debug.Log($"[DeckViewerUI] Open {currentMode}");
+        if (panelRoot != null) panelRoot.SetActive(true);
 
         Refresh();
+
+        if (!wasOpen) ResetTabButtonsToBasePosition();
+
+        openingTabAnimationPending = false;
+
+        AnimateTabButton(DeckViewMode.DrawPile, drawPileButton, currentMode == DeckViewMode.DrawPile);
+        AnimateTabButton(DeckViewMode.DiscardPile, discardPileButton, currentMode == DeckViewMode.DiscardPile);
+        AnimateTabButton(DeckViewMode.ExhaustPile, exhaustPileButton, currentMode == DeckViewMode.ExhaustPile);
+        AnimateTabButton(DeckViewMode.Hand, handButton, currentMode == DeckViewMode.Hand);
+
+        Debug.Log($"[DeckViewerUI] Open {currentMode}");
     }
 
+
+    private void ResetTabButtonsToBasePosition()
+    {
+        ResetTabButtonToBasePosition(DeckViewMode.DrawPile, drawPileButton, drawPileButtonBasePosition);
+        ResetTabButtonToBasePosition(DeckViewMode.DiscardPile, discardPileButton, discardPileButtonBasePosition);
+        ResetTabButtonToBasePosition(DeckViewMode.ExhaustPile, exhaustPileButton, exhaustPileButtonBasePosition);
+        ResetTabButtonToBasePosition(DeckViewMode.Hand, handButton, handButtonBasePosition);
+    }
+
+    private void ResetTabButtonToBasePosition(DeckViewMode mode, Button button, Vector2 basePosition)
+    {
+        Coroutine currentCoroutine = GetTabMoveCoroutine(mode);
+
+        if (currentCoroutine != null)
+            StopCoroutine(currentCoroutine);
+
+        SetTabMoveCoroutine(mode, null);
+
+        if (button == null)
+            return;
+
+        RectTransform rect = button.transform as RectTransform;
+
+        if (rect != null)
+            rect.anchoredPosition = basePosition;
+    }
+
+    public void ReplayCurrentTabAnimation()
+    {
+        if (!isActiveAndEnabled) return;
+        if (panelRoot != null && !panelRoot.activeInHierarchy) return;
+
+        openingTabAnimationPending = false;
+        ResetTabButtonsToBasePosition();
+
+        AnimateTabButton(DeckViewMode.DrawPile, drawPileButton, currentMode == DeckViewMode.DrawPile);
+        AnimateTabButton(DeckViewMode.DiscardPile, discardPileButton, currentMode == DeckViewMode.DiscardPile);
+        AnimateTabButton(DeckViewMode.ExhaustPile, exhaustPileButton, currentMode == DeckViewMode.ExhaustPile);
+        AnimateTabButton(DeckViewMode.Hand, handButton, currentMode == DeckViewMode.Hand);
+    }
     public void Close()
     {
+        openingTabAnimationPending = false;
+        ResetTabButtonsToBasePosition();
+
         ClearCards();
         ClearBookSlots();
 
-        if (emptyMessageRoot != null)
-            emptyMessageRoot.SetActive(false);
-
-        if (panelRoot != null)
-            panelRoot.SetActive(false);
+        if (emptyMessageRoot != null) emptyMessageRoot.SetActive(false);
+        if (panelRoot != null) panelRoot.SetActive(false);
     }
 
     public void SetDisplayMode(DeckViewerDisplayMode mode)
@@ -574,62 +627,25 @@ public class DeckViewerUI : MonoBehaviour
         int exhaustCount = GetPileCount(DeckViewMode.ExhaustPile);
         int handCount = GetPileCount(DeckViewMode.Hand);
 
-        // =====================================================
-        // 標籤名稱
-        // =====================================================
+        // 標籤名稱。
+        if (drawPileButtonText != null) drawPileButtonText.text = drawPileLabel;
+        if (discardPileButtonText != null) discardPileButtonText.text = discardPileLabel;
+        if (exhaustPileButtonText != null) exhaustPileButtonText.text = exhaustPileLabel;
+        if (handButtonText != null) handButtonText.text = handLabel;
 
-        if (drawPileButtonText != null)
-            drawPileButtonText.text = drawPileLabel;
+        // 標籤目前數量。
+        if (drawPileButtonCountText != null) drawPileButtonCountText.text = drawCount.ToString();
+        if (discardPileButtonCountText != null) discardPileButtonCountText.text = discardCount.ToString();
+        if (exhaustPileButtonCountText != null) exhaustPileButtonCountText.text = exhaustCount.ToString();
+        if (handButtonCountText != null) handButtonCountText.text = handCount.ToString();
 
-        if (discardPileButtonText != null)
-            discardPileButtonText.text = discardPileLabel;
+        if (openingTabAnimationPending || (panelRoot != null && !panelRoot.activeInHierarchy)) return;
 
-        if (exhaustPileButtonText != null)
-            exhaustPileButtonText.text = exhaustPileLabel;
-
-        if (handButtonText != null)
-            handButtonText.text = handLabel;
-
-        // =====================================================
-        // 標籤目前數量
-        // =====================================================
-
-        if (drawPileButtonCountText != null)
-            drawPileButtonCountText.text = drawCount.ToString();
-
-        if (discardPileButtonCountText != null)
-            discardPileButtonCountText.text = discardCount.ToString();
-
-        if (exhaustPileButtonCountText != null)
-            exhaustPileButtonCountText.text = exhaustCount.ToString();
-
-        if (handButtonCountText != null)
-            handButtonCountText.text = handCount.ToString();
-
-        // =====================================================
-        // 標籤只控制 Y 位移動畫。
-        // 不修改 Image / Name Text / Count Text 顏色。
-        // =====================================================
-
-        SetTabVisual(
-            DeckViewMode.DrawPile,
-            drawPileButton
-        );
-
-        SetTabVisual(
-            DeckViewMode.DiscardPile,
-            discardPileButton
-        );
-
-        SetTabVisual(
-            DeckViewMode.ExhaustPile,
-            exhaustPileButton
-        );
-
-        SetTabVisual(
-            DeckViewMode.Hand,
-            handButton
-        );
+        // 標籤只控制 Y 位移動畫，不修改圖片與文字顏色。
+        SetTabVisual(DeckViewMode.DrawPile, drawPileButton);
+        SetTabVisual(DeckViewMode.DiscardPile, discardPileButton);
+        SetTabVisual(DeckViewMode.ExhaustPile, exhaustPileButton);
+        SetTabVisual(DeckViewMode.Hand, handButton);
     }
 
     private void SetTabVisual(

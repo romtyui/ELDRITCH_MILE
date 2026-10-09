@@ -54,26 +54,15 @@ public class PSBMonsterLightReveal : MonoBehaviour
     [Tooltip("提供實際 SAN 數值的 BattleManager。")]
     public BattleManager glitchBattleManager;
 
-    [Tooltip("全螢幕錯位效果實際使用的材質。")]
+    [Tooltip("全螢幕故障效果實際使用的材質。")]
     public Material glitchMaterial;
 
-    [Tooltip("Shader Graph 中 Split Strength 的 Reference。")]
-    public string splitStrengthReference = "_SplitStrength";
-
     [Range(0f, 1f)]
-    [Tooltip("SAN 低於這個比例後才開始增加錯位。例如 0.3 = 30%。")]
+    [Tooltip("SAN 低於這個比例後才開始增加故障。例如 0.3 = 30%。")]
     public float sanGlitchThreshold = 0.3f;
 
-    [Min(0f)]
-    [Tooltip("SAN 高於門檻時的 Split Strength。")]
-    public float minSplitStrength = 0f;
-
-    [Min(0f)]
-    [Tooltip("SAN 降至 0% 時的 Split Strength。")]
-    public float maxSplitStrength = 0.01f;
-
     [Min(0.01f)]
-    [Tooltip("錯位增加的曲線；1 代表線性。")]
+    [Tooltip("故障增加的曲線；1 代表線性。")]
     public float glitchResponsePower = 1f;
 
     [Tooltip("Shader Graph 中 San Intensity 的 Reference。")]
@@ -90,8 +79,79 @@ public class PSBMonsterLightReveal : MonoBehaviour
     [Tooltip("短暫故障從最高強度消退至 0 的秒數。")]
     public float sanHitPulseDuration = 0.45f;
 
+    [Header("New Glitch Material")]
+
+    [Tooltip("Shader Graph 中 Stripe Density 的 Reference。")]
+    public string stripeDensityReference = "_StripeDensity";
+
+    [Min(0f)]
+    [Tooltip("故障強度為 0 時的條紋密度。")]
+    public float minStripeDensity = 0f;
+
+    [Min(0f)]
+    [Tooltip("故障強度為 1 時的條紋密度。")]
+    public float maxStripeDensity = 0.12f;
+
+    [Tooltip("Shader Graph 中 Update Rate 的 Reference。")]
+    public string updateRateReference = "_UpdateRate";
+
+    [Min(0f)]
+    [Tooltip("故障強度為 0 時的條紋更新速度。")]
+    public float minUpdateRate = 1f;
+
+    [Min(0f)]
+    [Tooltip("故障強度為 1 時的條紋更新速度。")]
+    public float maxUpdateRate = 4f;
+
+    [Tooltip("Shader Graph 中 RGB Blend 的 Reference。")]
+    public string rgbBlendReference = "_RGBBlend";
+
+    [Range(0f, 1f)]
+    [Tooltip("故障強度為 0 時的 RGB 混合程度。")]
+    public float minRgbBlend = 0f;
+
+    [Range(0f, 1f)]
+    [Tooltip("故障強度為 1 時的 RGB 混合程度。")]
+    public float maxRgbBlend = 0.5f;
+
+    [Tooltip("Shader Graph 中 RGB Speed 的 Reference。")]
+    public string rgbSpeedReference = "_RGBSpeed";
+
+    [Min(0f)]
+    [Tooltip("故障強度為 0 時的 RGB 變化速度。")]
+    public float minRgbSpeed = 1f;
+
+    [Min(0f)]
+    [Tooltip("故障強度為 1 時的 RGB 變化速度。")]
+    public float maxRgbSpeed = 8f;
+
+    [Tooltip("Shader Graph 中 RGB Split Amount 的 Reference。")]
+    public string rgbSplitAmountReference = "_RGBSplitAmount";
+
+    [Min(0f)]
+    [Tooltip("故障強度為 0 時的 RGB 錯位幅度。")]
+    public float minRgbSplitAmount = 0f;
+
+    [Min(0f)]
+    [Tooltip("故障強度為 1 時的 RGB 錯位幅度。")]
+    public float maxRgbSplitAmount = 0.05f;
+
+    [Tooltip("Shader Graph 中 Noise Amount 的 Reference。")]
+    public string noiseAmountReference = "_NoiseAmount";
+
+    [Min(0f)]
+    [Tooltip("故障強度為 0 時的噪點強度。")]
+    public float minNoiseAmount = 0f;
+
+    [Min(0f)]
+    [Tooltip("故障強度為 1 時的噪點強度。")]
+    public float maxNoiseAmount = 0.01f;
+
     private int previousSan = -1;
     private float sanHitPulseRemaining;
+
+    // 同一個缺少的 Shader 屬性只提示一次，避免每幀刷滿 Console。
+    private readonly HashSet<string> missingGlitchProperties = new();
 
     [Header("Form Blend Threshold")]
     [Tooltip("SAN 低於此比例時，只顯示完整黑暗型態。")]
@@ -116,7 +176,8 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
     [Tooltip("lightPower 為 0 時的 Global Light 顏色。")]
     [ColorUsage(false, true)]
-    public Color darkestGlobalLightColor = new Color(0.08f, 0.1f, 0.16f, 1f);
+    public Color darkestGlobalLightColor =
+        new Color(0.08f, 0.1f, 0.16f, 1f);
 
     [Tooltip("lightPower 為 1 時的 Global Light 顏色。")]
     [ColorUsage(false, true)]
@@ -154,10 +215,10 @@ public class PSBMonsterLightReveal : MonoBehaviour
     [Min(0f)]
     public float maxLightFalloff = 0.65f;
 
-    [Tooltip("Falloff 是否使用原始 SAN 比例控制。建議開啟，才能準確到達最小值與最大值。")]
+    [Tooltip("Falloff 是否使用原始 SAN 比例控制。")]
     public bool useSanRatioForFalloff = true;
 
-    [Tooltip("Falloff 反應曲線。1 = 線性；大於 1 時，SAN 降低後 Falloff 會更快縮小。")]
+    [Tooltip("Falloff 反應曲線。1 = 線性。")]
     [Min(0.01f)]
     public float falloffResponsePower = 1f;
 
@@ -197,7 +258,6 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
     private void Update()
     {
-        // 先更新 Freeform Light，接著把這一幀的實際強度傳給 Shader。
         UpdateVisualLight();
 
         float formBlend = CalculateFormBlend();
@@ -207,33 +267,55 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
     private void UpdateGlitchStrength()
     {
-        if (glitchMaterial == null) return;
+        if (glitchMaterial == null)
+            return;
 
-        float strength = minSplitStrength;
         float intensity = 0f;
 
-        if (glitchBattleManager != null && glitchBattleManager.energySystem != null)
+        if (glitchBattleManager != null &&
+            glitchBattleManager.energySystem != null)
         {
-            EnergySystem energySystem = glitchBattleManager.energySystem;
+            EnergySystem energySystem =
+                glitchBattleManager.energySystem;
 
             if (energySystem.maxEnergy > 0)
             {
                 int currentSan = energySystem.currentEnergy;
-                float currentSanRatio = Mathf.Clamp01(currentSan / (float)energySystem.maxEnergy);
-                float threshold = Mathf.Clamp01(sanGlitchThreshold);
-                float progress = threshold > 0f ? Mathf.InverseLerp(threshold, 0f, currentSanRatio) : (currentSanRatio <= 0f ? 1f : 0f);
-                float response = Mathf.Pow(progress, Mathf.Max(0.01f, glitchResponsePower));
 
-                strength = Mathf.Lerp(minSplitStrength, maxSplitStrength, response);
+                float currentSanRatio = Mathf.Clamp01(
+                    currentSan / (float)energySystem.maxEnergy
+                );
+
+                float threshold = Mathf.Clamp01(
+                    sanGlitchThreshold
+                );
+
+                float progress = threshold > 0f
+                    ? Mathf.InverseLerp(
+                        threshold,
+                        0f,
+                        currentSanRatio
+                    )
+                    : (currentSanRatio <= 0f ? 1f : 0f);
+
+                float response = Mathf.Pow(
+                    progress,
+                    Mathf.Max(0.01f, glitchResponsePower)
+                );
+
                 intensity = response;
 
                 if (currentSanRatio >= threshold)
                 {
                     sanHitPulseRemaining = 0f;
                 }
-                else if (previousSan >= 0 && currentSan < previousSan)
+                else if (
+                    previousSan >= 0 &&
+                    currentSan < previousSan
+                )
                 {
-                    sanHitPulseRemaining = Mathf.Max(0.01f, sanHitPulseDuration);
+                    sanHitPulseRemaining =
+                        Mathf.Max(0.01f, sanHitPulseDuration);
                 }
 
                 previousSan = currentSan;
@@ -250,23 +332,108 @@ public class PSBMonsterLightReveal : MonoBehaviour
             sanHitPulseRemaining = 0f;
         }
 
-        float pulse = Mathf.Clamp01(sanHitPulseRemaining / Mathf.Max(0.01f, sanHitPulseDuration)) * Mathf.Clamp01(sanHitPulseStrength);
-        sanHitPulseRemaining = Mathf.Max(0f, sanHitPulseRemaining - Time.deltaTime);
+        float pulse =
+            Mathf.Clamp01(
+                sanHitPulseRemaining /
+                Mathf.Max(0.01f, sanHitPulseDuration)
+            ) *
+            Mathf.Clamp01(sanHitPulseStrength);
 
-        if (!string.IsNullOrEmpty(splitStrengthReference) && glitchMaterial.HasProperty(splitStrengthReference))
+        sanHitPulseRemaining = Mathf.Max(
+            0f,
+            sanHitPulseRemaining - Time.deltaTime
+        );
+
+        // 保留原本寫入 Shader Graph 的兩個 SAN 參數。
+        SetNewGlitchFloat(sanIntensityReference, intensity);
+        SetNewGlitchFloat(sanHitPulseReference, pulse);
+
+        // 新材質的其他參數同時受持續故障和受傷脈衝影響。
+        float newMaterialStrength =
+            Mathf.Clamp01(intensity + pulse);
+
+        SetNewGlitchFloat(
+            stripeDensityReference,
+            Mathf.Lerp(
+                minStripeDensity,
+                maxStripeDensity,
+                newMaterialStrength
+            )
+        );
+
+        SetNewGlitchFloat(
+            updateRateReference,
+            Mathf.Lerp(
+                minUpdateRate,
+                maxUpdateRate,
+                newMaterialStrength
+            )
+        );
+
+        SetNewGlitchFloat(
+            rgbBlendReference,
+            Mathf.Lerp(
+                minRgbBlend,
+                maxRgbBlend,
+                newMaterialStrength
+            )
+        );
+
+        SetNewGlitchFloat(
+            rgbSpeedReference,
+            Mathf.Lerp(
+                minRgbSpeed,
+                maxRgbSpeed,
+                newMaterialStrength
+            )
+        );
+
+        SetNewGlitchFloat(
+            rgbSplitAmountReference,
+            Mathf.Lerp(
+                minRgbSplitAmount,
+                maxRgbSplitAmount,
+                newMaterialStrength
+            )
+        );
+
+        SetNewGlitchFloat(
+            noiseAmountReference,
+            Mathf.Lerp(
+                minNoiseAmount,
+                maxNoiseAmount,
+                newMaterialStrength
+            )
+        );
+    }
+
+    private void SetNewGlitchFloat(
+        string propertyReference,
+        float value
+    )
+    {
+        if (glitchMaterial == null ||
+            string.IsNullOrEmpty(propertyReference))
         {
-            glitchMaterial.SetFloat(splitStrengthReference, strength);
+            return;
         }
 
-        if (!string.IsNullOrEmpty(sanIntensityReference) && glitchMaterial.HasProperty(sanIntensityReference))
+        if (!glitchMaterial.HasProperty(propertyReference))
         {
-            glitchMaterial.SetFloat(sanIntensityReference, intensity);
+            if (missingGlitchProperties.Add(propertyReference))
+            {
+                Debug.LogWarning(
+                    $"[PSBMonsterLightReveal] 材質 {glitchMaterial.name} " +
+                    $"找不到 Shader 屬性 {propertyReference}。請檢查 " +
+                    "Shader Graph Blackboard 的 Reference。",
+                    this
+                );
+            }
+
+            return;
         }
 
-        if (!string.IsNullOrEmpty(sanHitPulseReference) && glitchMaterial.HasProperty(sanHitPulseReference))
-        {
-            glitchMaterial.SetFloat(sanHitPulseReference, pulse);
-        }
+        glitchMaterial.SetFloat(propertyReference, value);
     }
 
     private float CalculateFormBlend()
@@ -290,7 +457,6 @@ public class PSBMonsterLightReveal : MonoBehaviour
                 : 0f;
         }
 
-        // 使用線性過渡，讓變化平均分布在 SAN 25%～75%。
         return Mathf.InverseLerp(
             start,
             end,
@@ -384,7 +550,6 @@ public class PSBMonsterLightReveal : MonoBehaviour
 
             spriteRenderer.enabled = visible;
 
-            // 不再用 SpriteRenderer Alpha 控制型態。
             Color color = spriteRenderer.color;
             color.a = 1f;
             spriteRenderer.color = color;
@@ -406,16 +571,12 @@ public class PSBMonsterLightReveal : MonoBehaviour
         float clampedLightPower = Mathf.Clamp01(lightPower);
         float clampedSanRatio = Mathf.Clamp01(sanRatio);
 
-        // 控制 Light 2D 強度。
         visualLight.intensity = Mathf.Lerp(
             minLightIntensity,
             maxLightIntensity,
             clampedLightPower
         );
 
-        // Falloff 建議使用原始 SAN。
-        // 這樣 SAN 0% 一定會到 minLightFalloff，
-        // SAN 100% 一定會到 maxLightFalloff。
         float falloffInput = useSanRatioForFalloff
             ? clampedSanRatio
             : clampedLightPower;
@@ -446,8 +607,7 @@ public class PSBMonsterLightReveal : MonoBehaviour
             falloffT
         );
 
-        // 這個屬性只對 Point Light 有明確作用。
-        // 保留是為了相容舊設定，但不控制 Freeform Falloff。
+        // 保留原程式對 Point Light 半徑的相容設定。
         visualLight.pointLightOuterRadius = Mathf.Lerp(
             minLightOuterRadius,
             maxLightOuterRadius,
@@ -463,7 +623,8 @@ public class PSBMonsterLightReveal : MonoBehaviour
         if (normalRoot == null && darkRoot == null)
         {
             Debug.LogWarning(
-                "[PSBMonsterLightReveal] normalRoot 和 darkRoot 都是 null，無法註冊怪物。"
+                "[PSBMonsterLightReveal] normalRoot 和 darkRoot " +
+                "都是 null，無法註冊怪物。"
             );
 
             return;
@@ -481,7 +642,9 @@ public class PSBMonsterLightReveal : MonoBehaviour
             ApplyShaderValues(CalculateFormBlend());
 
             Debug.Log(
-                $"[PSBMonsterLightReveal] 已存在，刷新怪物 roots：normal = {GetName(normalRoot)}, dark = {GetName(darkRoot)}"
+                $"[PSBMonsterLightReveal] 已存在，刷新怪物 roots：" +
+                $"normal = {GetName(normalRoot)}, " +
+                $"dark = {GetName(darkRoot)}"
             );
 
             return;
@@ -498,7 +661,9 @@ public class PSBMonsterLightReveal : MonoBehaviour
         ApplyShaderValues(CalculateFormBlend());
 
         Debug.Log(
-            $"[PSBMonsterLightReveal] 自動註冊怪物 roots：normal = {GetName(normalRoot)}, dark = {GetName(darkRoot)}"
+            $"[PSBMonsterLightReveal] 自動註冊怪物 roots：" +
+            $"normal = {GetName(normalRoot)}, " +
+            $"dark = {GetName(darkRoot)}"
         );
     }
 
@@ -512,10 +677,7 @@ public class PSBMonsterLightReveal : MonoBehaviour
             MonsterRevealTarget target = monsterTargets[i];
 
             if (target == null)
-            {
-                monsterTargets.RemoveAt(i);
                 continue;
-            }
 
             bool sameNormal =
                 normalRoot != null &&
@@ -537,10 +699,22 @@ public class PSBMonsterLightReveal : MonoBehaviour
         if (globalLight == null)
             return;
 
-        float globalLightT = Mathf.Pow(Mathf.Clamp01(lightPower), Mathf.Max(0.01f, globalLightResponsePower));
+        float globalLightT = Mathf.Pow(
+            Mathf.Clamp01(lightPower),
+            Mathf.Max(0.01f, globalLightResponsePower)
+        );
 
-        globalLight.color = Color.Lerp(darkestGlobalLightColor, brightestGlobalLightColor, globalLightT);
-        globalLight.intensity = Mathf.Lerp(Mathf.Max(0f, darkestGlobalLightIntensity), Mathf.Max(0f, brightestGlobalLightIntensity), globalLightT);
+        globalLight.color = Color.Lerp(
+            darkestGlobalLightColor,
+            brightestGlobalLightColor,
+            globalLightT
+        );
+
+        globalLight.intensity = Mathf.Lerp(
+            Mathf.Max(0f, darkestGlobalLightIntensity),
+            Mathf.Max(0f, brightestGlobalLightIntensity),
+            globalLightT
+        );
     }
 
     public void ClearTargets()
@@ -618,14 +792,16 @@ public class PSBMonsterLightReveal : MonoBehaviour
             if (!material.HasProperty(FormBlendId))
             {
                 Debug.LogWarning(
-                    $"[PSBMonsterLightReveal] {spriteRenderer.name} 的材質 {material.name} 沒有 _FormBlend。"
+                    $"[PSBMonsterLightReveal] {spriteRenderer.name} " +
+                    $"的材質 {material.name} 沒有 _FormBlend。"
                 );
             }
 
             if (!material.HasProperty(RevealLightIntensityId))
             {
                 Debug.LogWarning(
-                    $"[PSBMonsterLightReveal] {spriteRenderer.name} 的材質 {material.name} 沒有 _RevealLightIntensity。"
+                    $"[PSBMonsterLightReveal] {spriteRenderer.name} " +
+                    $"的材質 {material.name} 沒有 _RevealLightIntensity。"
                 );
             }
         }

@@ -48,6 +48,8 @@ public class EnemyUnit : BattleUnit
     public AnimatedNumberTextUI hpNumberAnimator;
 
     [Header("HP UI")]
+    [Tooltip("目前使用的血條填充 Image，Image Type 設為 Filled。不使用血條時可以留空。")]
+    public Image hpFillImage;
     public TMP_Text currentHpText;
     public TMP_Text maxHpText;
 
@@ -520,17 +522,31 @@ public class EnemyUnit : BattleUnit
     {
         if (hpNumberAnimator != null)
         {
-            hpNumberAnimator.SetValue(currentHp);
+            hpNumberAnimator.SetValue(currentHp, maxHp);
         }
         else if (currentHpText != null)
         {
             currentHpText.text = currentHp.ToString();
         }
 
-        if (maxHpText != null)
-            maxHpText.text = maxHp.ToString();
+        if (maxHpText != null) maxHpText.text = maxHp.ToString();
+        if (hpFillImage != null) hpFillImage.fillAmount = maxHp > 0 ? Mathf.Clamp01((float)currentHp / maxHp) : 0f;
     }
+    public void PrepareForUIReplacement()
+    {
+        if (blockAnimationCoroutine != null)
+        {
+            StopCoroutine(blockAnimationCoroutine);
+            blockAnimationCoroutine = null;
+        }
 
+        if (blockRoot != null) blockRoot.SetActive(false);
+        isBlockUIVisible = false;
+
+        ClearStatusIconUI();
+
+        if (hpNumberAnimator != null) hpNumberAnimator.SetValueImmediate(currentHp, maxHp);
+    }
     //[ContextMenu("Refresh Inspector Statuses")]
     //public void RefreshInspectorStatuses()
     //{

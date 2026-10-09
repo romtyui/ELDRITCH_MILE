@@ -137,6 +137,9 @@ public class DeckViewerBlur : MonoBehaviour
         blurBackground.texture = capturedScreen;
         targetPanel.SetActive(true);
         captureRoutine = null;
+
+        DeckViewerUI viewer = targetPanel.GetComponentInChildren<DeckViewerUI>(true);
+        if (viewer != null) viewer.ReplayCurrentTabAnimation();
     }
 
     private IEnumerator CaptureBackgroundRoutine(GameObject panelToExclude)

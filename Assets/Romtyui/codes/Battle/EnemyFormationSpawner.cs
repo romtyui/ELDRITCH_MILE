@@ -151,10 +151,26 @@ public class EnemyFormationSpawner : MonoBehaviour
         return selectedEntry.formation;
     }
 
+    private bool IsBossFormation(EnemyFormationData formation)
+    {
+        if (formation == null || encounterPool == null || encounterPool.entries == null) return false;
+
+        for (int i = 0; i < encounterPool.entries.Count; i++)
+        {
+            EnemyEncounterPoolEntry entry = encounterPool.entries[i];
+
+            if (entry == null || entry.formation != formation) continue;
+
+            return entry.isBoss;
+        }
+
+        Debug.LogWarning($"[EnemyFormationSpawner] EncounterPool 找不到組合：{formation.formationName}，使用一般 UI", this);
+        return false;
+    }
+
     public void SpawnFormation(EnemyFormationData formation)
     {
-        if (formation == null)
-            return;
+        if (formation == null) return;
 
         debugCurrentFormation = formation;
         debugSpawnedEnemyNames.Clear();
@@ -163,12 +179,13 @@ public class EnemyFormationSpawner : MonoBehaviour
 
         spawnedEnemies.Clear();
 
+        bool useBossUI = IsBossFormation(formation);
+
         for (int i = 0; i < formation.enemies.Count; i++)
         {
             EnemySpawnEntry entry = formation.enemies[i];
 
-            if (entry == null)
-                continue;
+            if (entry == null) continue;
 
             if (entry.enemyData == null)
             {
@@ -184,10 +201,9 @@ public class EnemyFormationSpawner : MonoBehaviour
 
             EnemySlotUI slot = enemySlots[entry.spawnIndex];
 
-            if (slot == null)
-                continue;
+            if (slot == null) continue;
 
-            EnemyUnit enemy = slot.SpawnEnemy(entry.enemyData);
+            EnemyUnit enemy = slot.SpawnEnemy(entry.enemyData, useBossUI);
 
             if (enemy != null)
             {

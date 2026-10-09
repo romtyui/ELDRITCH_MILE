@@ -4,10 +4,51 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.U2D.Animation;
 using UnityEngine.UI;
+using TMPro;
 using static EnemyData;
+
 
 public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnterHandler, UnityEngine.EventSystems.IPointerExitHandler
 {
+    [System.Serializable]
+    public class EnemyUIReferences
+    {
+        [Tooltip("整套資訊 UI 的根物件，不要包含怪物 VisualRoot、Slot 本身或鎖定框。")]
+        public GameObject root;
+
+        [Header("Name")]
+        public TMP_Text nameText;
+
+        [Header("HP")]
+        public TMP_Text currentHpText;
+        public TMP_Text maxHpText;
+        //public AnimatedNumberTextUI hpNumberAnimator;
+        public Image hpFillImage;
+
+        [Header("Block")]
+        public GameObject blockRoot;
+        public Image blockImage;
+        public TMP_Text blockText;
+        public Animator blockAnimator;
+
+        [Header("Intent")]
+        public Image intentImage;
+        public TMP_Text intentDamageText;
+        public TooltipTriggerUI intentTooltipTrigger;
+
+        [Header("Status")]
+        [Tooltip("只放動態生成的狀態圖示，不要指定整個資訊 UI Root。")]
+        public Transform statusIconRoot;
+        public TooltipTriggerUI statusTooltipTrigger;
+    }
+
+    [Header("Normal / Boss UI")]
+    public EnemyUIReferences normalUI = new EnemyUIReferences();
+    public EnemyUIReferences bossUI = new EnemyUIReferences();
+
+    [Header("UI Runtime")]
+    [SerializeField] private bool currentUsesBossUI;
+
     [Header("Slot Refs")]
     public Image slotImage;
     public EnemyUnit enemyUnit;
@@ -117,7 +158,66 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
         targetFrameImage.raycastTarget = false;
     }
 
-    public EnemyUnit SpawnEnemy(EnemyData enemyData)
+    private void ApplyUIReferences(bool useBossUI)
+    {
+        EnemyUIReferences selectedUI = useBossUI ? bossUI : normalUI;
+
+        if (selectedUI == null || selectedUI.root == null)
+        {
+            Debug.LogWarning($"[EnemySlotUI] {(useBossUI ? "Boss" : "一般")} UI Root 沒有指定，改用一般 UI", this);
+            selectedUI = normalUI;
+            useBossUI = false;
+        }
+
+        if (selectedUI == null || selectedUI.root == null)
+        {
+            Debug.LogError("[EnemySlotUI] 一般 UI Root 沒有指定，無法切換 UI", this);
+            return;
+        }
+
+        if (enemyUnit != null) enemyUnit.PrepareForUIReplacement();
+
+        if (normalUI != null && normalUI.root != null) normalUI.root.SetActive(false);
+        if (bossUI != null && bossUI.root != null) bossUI.root.SetActive(false);
+
+        currentUsesBossUI = useBossUI;
+
+        intentTooltipTrigger = selectedUI.intentTooltipTrigger;
+        statusTooltipTrigger = selectedUI.statusTooltipTrigger;
+        statusIconRoot = selectedUI.statusIconRoot;
+
+        if (intentTooltipTrigger != null) intentTooltipTrigger.openMode = TooltipOpenMode.Click;
+        if (statusTooltipTrigger != null) statusTooltipTrigger.openMode = TooltipOpenMode.Click;
+
+        if (enemyUnit != null)
+        {
+            enemyUnit.currentHpText = selectedUI.currentHpText;
+            enemyUnit.maxHpText = selectedUI.maxHpText;
+            enemyUnit.hpFillImage = selectedUI.hpFillImage;
+
+            if (enemyUnit.hpNumberAnimator != null) enemyUnit.hpNumberAnimator.valueText = selectedUI.currentHpText;
+
+            enemyUnit.blockRoot = selectedUI.blockRoot;
+            enemyUnit.blockImage = selectedUI.blockImage;
+            enemyUnit.blockText = selectedUI.blockText;
+            enemyUnit.blockAnimator = selectedUI.blockAnimator;
+
+            enemyUnit.intentImage = selectedUI.intentImage;
+            enemyUnit.intentDamageText = selectedUI.intentDamageText;
+            enemyUnit.intentTooltipTrigger = selectedUI.intentTooltipTrigger;
+
+            enemyUnit.statusIconRoot = selectedUI.statusIconRoot;
+            enemyUnit.statusIconDatabase = statusIconDatabase;
+            enemyUnit.statusIconPrefab = statusIconPrefab;
+            enemyUnit.hideStatusRootWhenEmpty = hideStatusRootWhenEmpty;
+        }
+
+        if (selectedUI.blockRoot != null) selectedUI.blockRoot.SetActive(false);
+
+        selectedUI.root.SetActive(true);
+    }
+
+    public EnemyUnit SpawnEnemy(EnemyData enemyData, bool useBossUI = false)
     {
         if (enemyData == null)
         {
@@ -133,11 +233,18 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
         ClearVisual();
 
+        ApplyUIReferences(useBossUI);
+
         ApplyDataToImage(enemyData);
         ApplyDataToEnemyUnit(enemyData);
         ApplyTargetFrameSettings(enemyData);
         SpawnVisual(enemyData);
         BindTargetFrameBones(enemyData);
+
+        EnemyUIReferences selectedUI = currentUsesBossUI ? bossUI : normalUI;
+
+        if (selectedUI != null && selectedUI.nameText != null) selectedUI.nameText.text = enemyData.unitName;
+        if (enemyUnit != null && enemyUnit.hpNumberAnimator != null) enemyUnit.hpNumberAnimator.SetValueImmediate(enemyUnit.currentHp, enemyUnit.maxHp);
 
         RefreshIntentTooltip();
         RefreshStatusTooltip();
@@ -496,8 +603,13 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
             enemyUnit.currentHp = 0;
             enemyUnit.RefreshAllUI();
             enemyUnit.ClearStatusIconUI();
+            enemyUnit.PrepareForUIReplacement();
         }
 
+        if (normalUI != null && normalUI.root != null) normalUI.root.SetActive(false);
+        if (bossUI != null && bossUI.root != null) bossUI.root.SetActive(false);
+
+        currentUsesBossUI = false;
 
         gameObject.SetActive(false);
     }
