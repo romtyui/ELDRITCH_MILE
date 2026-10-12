@@ -416,7 +416,16 @@ public class BattleStageController : StageController
     }
 
     /// <summary>
-    /// 戰鬥的選項選單有音量控制，指的是 `SampleScene` 那顆 BGMManager。
+    /// 把**全域的**齒輪功能表接進這一場戰鬥。
+    ///
+    /// 【它為什麼不在 prefab 裡了】（2026-10-12 組員要求）
+    /// 齒輪與功能表原本是戰鬥 Stage 的一部分，所以只有打仗時才有。
+    /// 現在整組搬到場景層的 `SystemMenu`，探索、商店、地圖、對話一律都在。
+    /// 搬出去之後這邊斷了兩條線，要在進場時補回來：
+    ///   · `BattleManager.optionMenuUI` —— 戰鬥失敗時靠它叫出死亡選單。
+    ///     他那邊是 `if (optionMenuUI != null)`，所以沒接不會噴錯，
+    ///     而是**死了之後什麼都不會發生** —— 這種靜默的壞法最難查，所以這裡一定要接。
+    ///   · `OptionMenuUI.controlledAudioSources` —— 音量滑桿要控的是場景那顆 BGM。
     ///
     /// 【為什麼不把 BGMManager 包進 prefab】場景裡已經有一顆在播同一首曲子了。
     /// 包進來會變成兩個 AudioSource 播同一首、相位差幾毫秒，聽起來像破音；
@@ -424,8 +433,20 @@ public class BattleStageController : StageController
     /// </summary>
     private void BindBgmToOptionMenu()
     {
-        OptionMenuUI menu = GetComponentInChildren<OptionMenuUI>(true);
-        if (menu == null) return;
+        // 先問場景層的那一顆；真的沒有才退回全場搜尋（例如單獨開戰鬥場景測試時）
+        OptionMenuUI menu = EldritchMile.UI.SystemMenuUI.Instance != null
+            ? EldritchMile.UI.SystemMenuUI.Instance.option
+            : FindFirstObjectByType<OptionMenuUI>(FindObjectsInactive.Include);
+
+        if (menu == null)
+        {
+            Debug.LogWarning(
+                "[戰鬥] 場景裡找不到齒輪功能表（SystemMenu）"
+                + "—— 戰鬥失敗時不會跳死亡選單，音量滑桿也不會作用。", this);
+            return;
+        }
+
+        if (battleManager != null) battleManager.optionMenuUI = menu;
 
         AudioSource bgm = null;
         foreach (AudioSource src in FindObjectsByType<AudioSource>(FindObjectsInactive.Include))
