@@ -43,6 +43,12 @@ public class SpecialEventStageController : ChoiceStageController
              + "左手 = offers[0]、右手 = offers[1]")]
     public EldritchMile.UI.AltarEventView altarView;
 
+    [Tooltip("跳過節點的環境敘述，進來就直接問「你願意相信嗎?」。"
+             + "取消勾選 = 照舊先播 Intro Lines 再問。"
+             + "⚠️ 敘述是用對話框播的，而對話框後面那層全螢幕壓黑會吃掉所有點擊 —— "
+             + "敘述還開著的時候 YES / NO 是按不到的，這也是為什麼預設跳過")]
+    public bool skipIntroLines = true;
+
     [Header("可挑的牌")]
     [Tooltip("最多三張 —— 對話框只有三個選項槽")]
     public List<Offer> offers = new List<Offer>();
@@ -66,6 +72,11 @@ public class SpecialEventStageController : ChoiceStageController
     protected override void OnPrepare(RunContext context)
     {
         run = context;
+
+        // 換一份空的，不要去動原本那個 List —— 這是 prefab 實例，
+        // 但清掉共用的 List 還是容易在編輯器裡造成「我明明填了卻不見了」的困惑
+        if (skipIntroLines && introLines != null && introLines.Count > 0)
+            introLines = new System.Collections.Generic.List<Line>();
     }
 
     protected override void ShowOptions(RunContext context)

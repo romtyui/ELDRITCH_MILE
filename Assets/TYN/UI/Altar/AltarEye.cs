@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace EldritchMile.UI
 {
@@ -99,9 +100,18 @@ namespace EldritchMile.UI
             // Overlay 畫布要傳 null 當相機 —— 傳了相機反而會算錯
             Camera cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
 
+            // ⚠️ 一定要走 Input System 的 Mouse.current。
+            //    這個專案的 activeInputHandler 是「新 Input System」，
+            //    舊的 UnityEngine.Input.mousePosition 執行時會直接丟 InvalidOperationException。
+            //    沒有滑鼠（手把、觸控）時 Mouse.current 是 null，那不是錯誤，眼球維持不動就好。
+            Mouse mouse = Mouse.current;
+            if (mouse == null) return;
+
+            Vector2 mouseScreen = mouse.position.ReadValue();
+
             Vector2 mouseLocal;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    canvasRect, Input.mousePosition, cam, out mouseLocal)) return;
+                    canvasRect, mouseScreen, cam, out mouseLocal)) return;
 
             // 眼睛自己在畫布上的位置
             Vector2 eyeLocal;
