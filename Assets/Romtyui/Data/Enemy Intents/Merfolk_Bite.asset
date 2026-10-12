@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 57ce995f04a5e894cbd0e62549d564bd, type: 3}
-  m_Name: "\u534A\u4EBA\u9B5A\u653B\u64CA"
+  m_Name: Merfolk_Bite
   m_EditorClassIdentifier: Assembly-CSharp::EnemyIntentData
   intentName: test
   description: 
@@ -18,4 +18,5 @@ MonoBehaviour:
   damageTextOverride: 6
   actions:
   - {fileID: 11400000, guid: 639d54c19520ba2498a891a09f08a5e0, type: 2}
+  - {fileID: 11400000, guid: 6c55841d33f4a9e4aa5e457e2346a3fe, type: 2}
   animationType: 1

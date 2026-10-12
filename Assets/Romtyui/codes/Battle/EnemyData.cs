@@ -51,6 +51,9 @@ public class EnemyData : ScriptableObject
     {
         public StatusType statusType;
         public int amount = 1;
+
+        [Tooltip("具有額外行為的狀態資料。寄居狩獵需要指定；力量、中毒、初始護盾、護盾保留等既有狀態可留空。")]
+        public BattleStatusBehaviourData statusBehaviour;
     }
 
     [Header("Starting Statuses")]

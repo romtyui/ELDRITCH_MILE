@@ -237,6 +237,9 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
         ApplyDataToImage(enemyData);
         ApplyDataToEnemyUnit(enemyData);
+
+        if (enemyUnit != null) enemyUnit.InitializeStartingStatusAbilities(enemyData);
+
         ApplyTargetFrameSettings(enemyData);
         SpawnVisual(enemyData);
         BindTargetFrameBones(enemyData);
@@ -516,8 +519,19 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
             case StatusType.Harden:
                 return "硬化";
+
             case StatusType.Regeneration:
                 return "再生";
+
+            case StatusType.InitialBlock:
+                return "初始護盾";
+
+            case StatusType.RetainBlock:
+                return "護盾保留";
+
+            case StatusType.HermitHunt:
+                return "寄居狩獵";
+
             default:
                 return statusType.ToString();
         }
@@ -525,6 +539,13 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
     private string GetStatusDescription(StatusType statusType, int amount)
     {
+        if (enemyUnit != null)
+        {
+            string behaviourDescription = enemyUnit.GetStatusBehaviourDescription(statusType, amount);
+
+            if (!string.IsNullOrWhiteSpace(behaviourDescription)) return behaviourDescription;
+        }
+
         switch (statusType)
         {
             case StatusType.Strength:
@@ -544,13 +565,25 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
             case StatusType.Poison:
                 return $"回合開始時受到 {amount} 點傷害，之後中毒層數減少。";
+
             case StatusType.Harden:
                 return $"每回合開始時，獲得 {amount} 點護盾。";
+
             case StatusType.Regeneration:
                 {
                     int percent = amount * 5;
                     return $"每回合開始時，恢復自身最大生命值 {percent}% 的生命。\n受到生命傷害時，層數減少 1。";
                 }
+
+            case StatusType.InitialBlock:
+                return $"出場時獲得 {amount} 點基礎護盾，只觸發一次。";
+
+            case StatusType.RetainBlock:
+                return "自身回合開始時不清除護盾。失去此狀態後，恢復原本的清除規則。";
+
+            case StatusType.HermitHunt:
+                return "自身回合結束時依護盾量選擇下一個意圖。需要指定寄居狩獵狀態資料。";
+
             default:
                 return $"目前層數：{amount}";
         }

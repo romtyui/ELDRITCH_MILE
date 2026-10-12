@@ -112,47 +112,60 @@ public class RelicsRuntime : MonoBehaviour, IModifierProvider
     // Modifier Provider
     // =========================================================
 
+    private bool CanApplyPlayerRelicModifier(ModifierQuery query)
+    {
+        if (query == null) return false;
+
+        switch (query.type)
+        {
+            case ModifierType.DamageDealt:
+            case ModifierType.HealingDone:
+            case ModifierType.CounterDamage:
+                return query.source != null && query.source.isPlayerUnit;
+
+            case ModifierType.DamageReceived:
+            case ModifierType.HealingReceived:
+            case ModifierType.BlockGain:
+                return query.target != null && query.target.isPlayerUnit;
+
+            default:
+                return true;
+        }
+    }
+
     public void CollectModifiers(ModifierQuery query, List<ModifierValue> results)
     {
-        if (query == null || results == null)
-            return;
-
-        if (relicsInventory == null)
-            return;
+        if (query == null || results == null) return;
+        if (!CanApplyPlayerRelicModifier(query)) return;
+        if (relicsInventory == null) return;
 
         IReadOnlyList<ScriptableObject> currentRelics = relicsInventory.CurrentRelics;
 
-        if (currentRelics == null)
-            return;
+        if (currentRelics == null) return;
 
         for (int relicIndex = 0; relicIndex < currentRelics.Count; relicIndex++)
         {
             ScriptableObject relicObject = currentRelics[relicIndex];
 
-            if (relicObject == null)
-                continue;
+            if (relicObject == null) continue;
 
             IRelicsEffectSource effectSource = relicObject as IRelicsEffectSource;
 
-            if (effectSource == null)
-                continue;
+            if (effectSource == null) continue;
 
             IReadOnlyList<RelicsEffectData> effects = effectSource.RelicsEffects;
 
-            if (effects == null)
-                continue;
+            if (effects == null) continue;
 
             for (int effectIndex = 0; effectIndex < effects.Count; effectIndex++)
             {
                 RelicsEffectData effect = effects[effectIndex];
 
-                if (effect == null)
-                    continue;
+                if (effect == null) continue;
 
                 RelicsModifierEffectData modifierEffect = effect as RelicsModifierEffectData;
 
-                if (modifierEffect == null)
-                    continue;
+                if (modifierEffect == null) continue;
 
                 modifierEffect.CollectModifiers(query, results, relicObject);
             }

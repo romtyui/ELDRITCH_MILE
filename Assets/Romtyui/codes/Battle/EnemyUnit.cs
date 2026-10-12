@@ -21,6 +21,9 @@ public class EnemyUnit : BattleUnit
     public int chargeValue;
     public int chargeTurnsLeft;
 
+
+    private readonly Dictionary<StatusType, BattleStatusBehaviourData> statusBehaviours = new Dictionary<StatusType, BattleStatusBehaviourData>();
+    private bool statusIntentPending;
     //[Header("Debug - Current Statuses")]
     //[SerializeField]
     //private List<EnemyStatusDebugEntry> inspectorStatuses = new List<EnemyStatusDebugEntry>();
@@ -496,17 +499,15 @@ public class EnemyUnit : BattleUnit
 
     public void AdvanceIntent()
     {
-        if (intents == null || intents.Count == 0)
+        if (intents == null || intents.Count == 0) return;
+
+        if (!isCharging && !chargeBrokenStunQueued && HasStatusIntentController())
+        {
+            statusIntentPending = true;
             return;
+        }
 
-        currentIntentIndex++;
-
-        if (currentIntentIndex >= intents.Count)
-            currentIntentIndex = 0;
-
-        RefreshIntentUI();
-
-        OnIntentChanged?.Invoke();
+        AdvanceDefaultIntent();
     }
 
     public void RefreshAllUI()
@@ -546,6 +547,132 @@ public class EnemyUnit : BattleUnit
         ClearStatusIconUI();
 
         if (hpNumberAnimator != null) hpNumberAnimator.SetValueImmediate(currentHp, maxHp);
+    }
+
+    public void InitializeStartingStatusAbilities(EnemyData enemyData)
+    {
+        statusBehaviours.Clear();
+        statusIntentPending = false;
+
+        if (enemyData != null && enemyData.startingStatuses != null)
+        {
+            for (int i = 0; i < enemyData.startingStatuses.Count; i++)
+            {
+                EnemyData.StartingStatusEntry entry = enemyData.startingStatuses[i];
+
+                if (entry == null) continue;
+                if (entry.amount <= 0) continue;
+                if (entry.statusBehaviour == null) continue;
+
+                BattleStatusBehaviourData behaviour = entry.statusBehaviour;
+
+                if (behaviour.SupportedStatus != entry.statusType)
+                {
+                    Debug.LogWarning($"[EnemyUnit] {unitName} 的 {entry.statusType} 指定了不相符的狀態資料 {behaviour.name}");
+                    continue;
+                }
+
+                statusBehaviours[entry.statusType] = behaviour;
+            }
+        }
+
+        ResolveInitialBlockOnSpawn();
+
+        foreach (KeyValuePair<StatusType, BattleStatusBehaviourData> pair in statusBehaviours)
+        {
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+
+            pair.Value.OnSpawn(this);
+        }
+
+        RefreshAllUI();
+    }
+
+    public bool TrySetStatusIntent(EnemyIntentData intent)
+    {
+        if (intent == null) return false;
+        if (intents == null) return false;
+
+        int intentIndex = intents.IndexOf(intent);
+
+        if (intentIndex < 0)
+        {
+            Debug.LogWarning($"[EnemyUnit] {unitName} 的狀態指定意圖 {intent.name} 沒有放入怪物的 Intents");
+            return false;
+        }
+
+        currentIntentIndex = intentIndex;
+        RefreshIntentUI();
+        OnIntentChanged?.Invoke();
+
+        return true;
+    }
+
+    private bool HasStatusIntentController()
+    {
+        foreach (KeyValuePair<StatusType, BattleStatusBehaviourData> pair in statusBehaviours)
+        {
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+            if (pair.Value.ControlsNextIntent(this)) return true;
+        }
+
+        return false;
+    }
+
+    private void AdvanceDefaultIntent()
+    {
+        if (intents == null || intents.Count == 0) return;
+
+        currentIntentIndex++;
+
+        if (currentIntentIndex >= intents.Count) currentIntentIndex = 0;
+
+        RefreshIntentUI();
+        OnIntentChanged?.Invoke();
+    }
+
+    
+    public override void OnTurnEnd()
+    {
+        base.OnTurnEnd();
+
+        if (!statusIntentPending) return;
+
+        statusIntentPending = false;
+
+        if (currentHp <= 0) return;
+        if (!gameObject.activeInHierarchy) return;
+        if (isCharging || chargeBrokenStunQueued || stayOnCurrentIntentThisTurn) return;
+
+        bool hasController = false;
+
+        foreach (KeyValuePair<StatusType, BattleStatusBehaviourData> pair in statusBehaviours)
+        {
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+            if (!pair.Value.ControlsNextIntent(this)) continue;
+
+            hasController = true;
+
+            if (pair.Value.TrySelectNextIntentAtTurnEnd(this)) return;
+        }
+
+        if (hasController)
+        {
+            Debug.LogWarning($"[EnemyUnit] {unitName} 的狀態未能選出下一個意圖，改用原本的循環意圖");
+        }
+
+        AdvanceDefaultIntent();
+    }
+
+    public string GetStatusBehaviourDescription(StatusType statusType, int amount)
+    {
+        if (!statusBehaviours.TryGetValue(statusType, out BattleStatusBehaviourData behaviour)) return "";
+        if (behaviour == null) return "";
+
+        return behaviour.GetDescription(this, amount);
     }
     //[ContextMenu("Refresh Inspector Statuses")]
     //public void RefreshInspectorStatuses()

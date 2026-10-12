@@ -27,6 +27,8 @@ public class BattleUnit : MonoBehaviour
 
     [SerializeField] private Dictionary<StatusType, int> statuses = new();
 
+    private bool initialBlockResolved;
+
     protected virtual void Awake()
     {
         currentHp = maxHp;
@@ -97,6 +99,7 @@ public class BattleUnit : MonoBehaviour
     public virtual void ClearAllStatuses()
     {
         statuses.Clear();
+        initialBlockResolved = false;
         OnStatusChanged?.Invoke();
 
         Debug.Log($"{unitName} 的所有狀態已清除");
@@ -113,7 +116,19 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 已完全重置");
     }
+    public void ResolveInitialBlockOnSpawn()
+    {
+        if (initialBlockResolved) return;
+        if (currentHp <= 0) return;
 
+        initialBlockResolved = true;
+
+        int initialBlock = GetStatus(StatusType.InitialBlock);
+
+        if (initialBlock <= 0) return;
+
+        GainBlock(initialBlock);
+    }
     public virtual void DealDamageTo(BattleUnit target, int baseDamage)
     {
         if (target == null)
@@ -130,6 +145,29 @@ public class BattleUnit : MonoBehaviour
         target.TakeDamage(damage, this);
 
         Debug.Log($"{unitName} 對 {target.unitName} 造成 {damage} 傷害");
+    }
+    public virtual void DealDamageTo(BattleUnit target, int baseDamage, bool ignoreBlock, bool doubleDamageAgainstBlock)
+    {
+        if (target == null) return;
+
+        if (!ignoreBlock && !doubleDamageAgainstBlock)
+        {
+            DealDamageTo(target, baseDamage);
+            return;
+        }
+
+        bool targetHadBlock = target.block > 0;
+
+        int damage = ModifyOutgoingDamage(baseDamage);
+        damage = target.ModifyIncomingDamage(damage);
+
+        if (doubleDamageAgainstBlock && targetHadBlock) damage *= 2;
+
+        damage = Mathf.Max(0, damage);
+
+        target.TakeDamage(damage, this, ignoreBlock);
+
+        Debug.Log($"{unitName} 對 {target.unitName} 造成 {damage} 傷害，穿透：{ignoreBlock}，破盾加倍：{doubleDamageAgainstBlock && targetHadBlock}");
     }
 
     public virtual int ModifyOutgoingDamage(int damage)
@@ -507,6 +545,8 @@ public class BattleUnit : MonoBehaviour
 
     public virtual void ResetBlock()
     {
+        if (HasStatus(StatusType.RetainBlock)) return;
+
         block = 0;
         OnHpChanged?.Invoke();
     }

@@ -31,6 +31,13 @@ public class TooltipBackgroundVariant
     [Header("Window Position")]
     [Tooltip("調整整個 TooltipContainer 的位置")]
     public Vector2 windowPositionOffset = Vector2.zero;
+
+    [Header("Scroll View Top / Bottom")]
+    [Tooltip("Scroll View 的 RectTransform Top。正值讓上邊緣往內縮，使用絕對值設定。")]
+    public float scrollViewTop = 0f;
+
+    [Tooltip("Scroll View 的 RectTransform Bottom。正值讓下邊緣往內縮，使用絕對值設定。")]
+    public float scrollViewBottom = 0f;
 }
 
 [System.Serializable]
@@ -106,6 +113,8 @@ public class TooltipUI : MonoBehaviour
     [Header("Scroll Rect")]
     public ScrollRect scrollRect;
     public RectTransform viewport;
+    [Tooltip("要調整 Top／Bottom 的 Scroll View RectTransform。請指定 Scroll View 本身，不是 Content 或 Viewport。")]
+    public RectTransform scrollViewRect;
 
     [Header("Click Blocker")]
     public GameObject clickBlocker;
@@ -534,8 +543,23 @@ public class TooltipUI : MonoBehaviour
 
     private void ApplyWindowVariant(TooltipBackgroundVariant variant)
     {
-        if (variant == null || windowBackgroundImage == null)
-            return;
+        if (variant == null) return;
+
+        if (scrollViewRect != null)
+        {
+            Vector2 offsetMin = scrollViewRect.offsetMin;
+            Vector2 offsetMax = scrollViewRect.offsetMax;
+
+            offsetMin.y = variant.scrollViewBottom;
+            offsetMax.y = -variant.scrollViewTop;
+
+            scrollViewRect.offsetMin = offsetMin;
+            scrollViewRect.offsetMax = offsetMax;
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(scrollViewRect);
+        }
+
+        if (windowBackgroundImage == null) return;
 
         if (variant.sprite != null)
         {
@@ -545,20 +569,13 @@ public class TooltipUI : MonoBehaviour
 
         RectTransform backgroundRect = windowBackgroundImage.rectTransform;
 
-        // Background 頂端固定，高度只往下增加
+        // Background 頂端固定，高度只往下增加。
         backgroundRect.anchorMin = new Vector2(0.5f, 1f);
         backgroundRect.anchorMax = new Vector2(0.5f, 1f);
         backgroundRect.pivot = new Vector2(0.5f, 1f);
 
-        backgroundRect.SetSizeWithCurrentAnchors(
-            RectTransform.Axis.Horizontal,
-            Mathf.Max(1f, variant.backgroundWidth)
-        );
-
-        backgroundRect.SetSizeWithCurrentAnchors(
-            RectTransform.Axis.Vertical,
-            Mathf.Max(1f, variant.backgroundHeight)
-        );
+        backgroundRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Max(1f, variant.backgroundWidth));
+        backgroundRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(1f, variant.backgroundHeight));
 
         backgroundRect.anchoredPosition = variant.backgroundPositionOffset;
     }
