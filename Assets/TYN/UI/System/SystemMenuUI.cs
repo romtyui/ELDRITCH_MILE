@@ -35,6 +35,12 @@ namespace EldritchMile.UI
         [Tooltip("左上角的齒輪。想在某些畫面藏起來時用 SetGearVisible()")]
         public GameObject gearButton;
 
+        [Header("回到主畫面")]
+        [Tooltip("把功能表的「回到主畫面」改接到 GameFlowManager.GoToMenu()。"
+                 + "原本是 SceneManager.LoadScene(\"test_Scene\")，但 build settings 裡只有 EventScene，"
+                 + "那顆按下去只會噴「場景沒加進 build」。本專案的主選單是 EventScene 裡的一個 Stage，不是獨立場景。")]
+        public bool rerouteMainMenuToFlow = true;
+
         /// <summary>功能表現在開著嗎。別處要擋輸入時可以看這個。</summary>
         public bool IsOpen
         {
@@ -61,9 +67,43 @@ namespace EldritchMile.UI
                 Debug.LogWarning($"[系統選單]「{name}」底下沒有 OptionMenuUI，齒輪按了不會有事", this);
         }
 
+        /// <summary>
+        /// 接在 Start 而不是 Awake：要等 <see cref="OptionMenuUI"/> 自己的 Awake
+        /// 先把它的 ReturnToMainMenu 掛上去，才有東西可以拆。
+        /// </summary>
+        private void Start()
+        {
+            if (!rerouteMainMenuToFlow) return;
+            if (option == null || option.mainMenuButton == null) return;
+
+            option.mainMenuButton.onClick.RemoveListener(option.ReturnToMainMenu);
+            option.mainMenuButton.onClick.AddListener(GoToMenuViaFlow);
+        }
+
         private void OnDestroy()
         {
             if (Instance == this) Instance = null;
+
+            if (option != null && option.mainMenuButton != null)
+                option.mainMenuButton.onClick.RemoveListener(GoToMenuViaFlow);
+        }
+
+        /// <summary>
+        /// 回主選單。**不換場景** —— 主選單是 EventScene 裡的一個 Stage。
+        /// </summary>
+        private void GoToMenuViaFlow()
+        {
+            option.Close();
+
+            var flow = EldritchMile.Core.GameFlowManager.Instance;
+
+            if (flow == null)
+            {
+                Debug.LogWarning("[系統選單] 場上沒有 GameFlowManager，回不了主選單", this);
+                return;
+            }
+
+            flow.GoToMenu();
         }
 
         private void Update()

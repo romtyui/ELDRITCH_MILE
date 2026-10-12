@@ -276,6 +276,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.SystemMenuUI
   option: {fileID: 3042484289700612786}
   gearButton: {fileID: 8266610153749325114}
+  rerouteMainMenuToFlow: 1
 --- !u!1 &1619802909492742459
 GameObject:
   m_ObjectHideFlags: 0
@@ -1865,7 +1866,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &4716993632720615930
 RectTransform:
   m_ObjectHideFlags: 0
