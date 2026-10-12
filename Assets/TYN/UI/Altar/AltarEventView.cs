@@ -42,6 +42,10 @@ namespace EldritchMile.UI
         [Header("眼睛")]
         public AltarEye eye;
 
+        [Header("氣氛")]
+        [Tooltip("背景壓暗那一層。留空會在同一個物件上找。沒有的話只是不壓暗，流程照跑")]
+        public AltarMood mood;
+
         [Header("問句與 YES / NO")]
         public CanvasGroup promptGroup;
         public TextMeshProUGUI promptText;
@@ -73,6 +77,8 @@ namespace EldritchMile.UI
                 promptGroup.interactable = false;
             }
 
+            if (mood == null) mood = GetComponent<AltarMood>();
+
             if (yesButton != null) yesButton.onClick.AddListener(HandleYes);
             if (noButton != null) noButton.onClick.AddListener(HandleNo);
 
@@ -103,15 +109,19 @@ namespace EldritchMile.UI
             if (promptGroup != null) { promptGroup.alpha = 0f; promptGroup.blocksRaycasts = false; }
 
             if (promptText != null) promptText.text = promptLine;
+            if (mood != null) mood.SetPhase(AltarMood.Phase.Hidden);
 
             // 1. 兩隻手伸出來 —— 這段不能互動
+            // 背景在手進來之前**先**開始壓暗。等手到了才暗會看起來像兩件事
+            if (mood != null) mood.SetPhase(AltarMood.Phase.Reaching);
             if (leftHand != null) leftHand.ReachIn(0f);
             if (rightHand != null) rightHand.ReachIn(handStagger);
 
-            float wait = (leftHand != null ? leftHand.reachSeconds : 0f) + handStagger + pauseBeforePrompt;
+            float wait = (leftHand != null ? leftHand.ReachSeconds : 0f) + handStagger + pauseBeforePrompt;
             yield return new WaitForSecondsRealtime(wait);
 
-            // 2. 問那句話
+            // 2. 問那句話。問話的同時再壓深一點，視線收到中間
+            if (mood != null) mood.SetPhase(AltarMood.Phase.Asking);
             yield return FadePrompt(1f, true);
 
             flow = null;
@@ -159,7 +169,8 @@ namespace EldritchMile.UI
                 yield return FadePrompt(1f, false);   // 只是字，不收點擊
             }
 
-            // 3. 現在才開放點手
+            // 3. 現在才開放點手。暗角同時收緊 —— 只剩兩隻手看得清楚
+            if (mood != null) mood.SetPhase(AltarMood.Phase.Picking);
             if (leftHand != null) leftHand.SetPickable(true);
             if (rightHand != null) rightHand.SetPickable(true);
         }
@@ -174,11 +185,12 @@ namespace EldritchMile.UI
         private IEnumerator NoRoutine()
         {
             yield return FadePrompt(0f, false);
+            if (mood != null) mood.SetPhase(AltarMood.Phase.Leaving);
 
             if (leftHand != null) leftHand.Withdraw();
             if (rightHand != null) rightHand.Withdraw();
 
-            yield return new WaitForSecondsRealtime(leftHand != null ? leftHand.reachSeconds * 0.8f : 0.5f);
+            yield return new WaitForSecondsRealtime(leftHand != null ? leftHand.ReachSeconds * 0.8f : 0.5f);
 
             var h = OnDeclined;
             if (h != null) h();
@@ -198,7 +210,11 @@ namespace EldritchMile.UI
             if (other != null) other.Withdraw();
 
             yield return FadePrompt(0f, false);
+            if (mood != null) mood.SetPhase(AltarMood.Phase.Granting);
+
             yield return hand.PlayGrant();
+
+            if (mood != null) mood.SetPhase(AltarMood.Phase.Leaving);
 
             var h = OnHandChosen;
             if (h != null) h(index);
