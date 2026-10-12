@@ -37,6 +37,12 @@ public class SpecialEventStageController : ChoiceStageController
         [TextArea(2, 3)] public string takenText = "";
     }
 
+    [Header("祭壇演出（2026-10-12 美術改版）")]
+    [Tooltip("接上去就改用祭壇的兩隻手來選，不再用對話框的三個選項。"
+             + "留空 = 回到舊的對話框選單（其他特殊事件還是用得到）。"
+             + "左手 = offers[0]、右手 = offers[1]")]
+    public EldritchMile.UI.AltarEventView altarView;
+
     [Header("可挑的牌")]
     [Tooltip("最多三張 —— 對話框只有三個選項槽")]
     public List<Offer> offers = new List<Offer>();
@@ -65,6 +71,26 @@ public class SpecialEventStageController : ChoiceStageController
     protected override void ShowOptions(RunContext context)
     {
         if (context != null) run = context;
+
+        // ── 祭壇：兩隻手伸出來 → 問「你願意相信嗎?」→ 相信才能點手 ──
+        if (altarView != null)
+        {
+            if (offers.Count == 0)
+            {
+                Debug.LogWarning("[特殊事件] 祭壇沒有設定任何可給的牌，直接離開");
+                BeginOutro();
+                return;
+            }
+
+            altarView.OnHandChosen -= HandleHandChosen;
+            altarView.OnHandChosen += HandleHandChosen;
+            altarView.OnDeclined -= HandleDeclined;
+            altarView.OnDeclined += HandleDeclined;
+
+            altarView.Begin();
+            return;
+        }
+
         if (Options == null) { BeginOutro(); return; }
 
         var texts = new List<string>();
@@ -93,13 +119,45 @@ public class SpecialEventStageController : ChoiceStageController
     protected override void Unsubscribe()
     {
         if (Options != null) Options.OnOptionClicked -= HandleChosen;
+
+        if (altarView != null)
+        {
+            altarView.OnHandChosen -= HandleHandChosen;
+            altarView.OnDeclined -= HandleDeclined;
+        }
+    }
+
+    /// <summary>玩家在祭壇選了某一隻手。左手 = offers[0]、右手 = offers[1]。</summary>
+    private void HandleHandChosen(int index)
+    {
+        GrantOffer(index);
+    }
+
+    /// <summary>
+    /// 玩家說不。**什麼都不給，直接離開** —— 組員定的。
+    /// 收尾台詞照常播，所以玩家不會覺得事件被硬切掉。
+    /// </summary>
+    private void HandleDeclined()
+    {
+        Debug.Log("[特殊事件] 玩家拒絕了祭壇，沒有拿牌");
+        BeginOutro();
     }
 
     private void HandleChosen(DialogueOptionUI option)
     {
-        if (option == null || option.Index < 0 || option.Index >= offers.Count) return;
+        if (option == null) return;
+        GrantOffer(option.Index);
+    }
 
-        Offer o = offers[option.Index];
+    /// <summary>
+    /// 真的把牌發出去並接上收尾。對話框選單與祭壇兩條路共用這一支 ——
+    /// 發牌的規則只能有一份。
+    /// </summary>
+    private void GrantOffer(int index)
+    {
+        if (index < 0 || index >= offers.Count) return;
+
+        Offer o = offers[index];
         if (o == null || (o.card == null && o.battleCard == null)) return;
 
         // ── 戰鬥牌庫（神牌走這一支）──
