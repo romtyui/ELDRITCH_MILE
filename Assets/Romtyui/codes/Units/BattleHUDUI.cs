@@ -8,19 +8,22 @@ public class BattleHUDUI : MonoBehaviour
     public BattleUnit battleUnit;
     public EnergySystem energySystem;
 
+    [Header("Number Animation")]
     public AnimatedNumberTextUI hpNumberAnimator_HP;
     public AnimatedNumberTextUI hpNumberAnimator_SAN;
 
-    [Header("HP TMP")]
+    [Header("HP UI")]
     public TMP_Text currentHpText;
     public TMP_Text maxHpText;
+    public Image hpFillImage;
 
-    [Header("Energy TMP")]
+    [Header("SAN UI")]
     public TMP_Text currentEnergyText;
     public TMP_Text maxEnergyText;
+    public Image sanFillImage;
 
     [Header("Block UI")]
-    [Tooltip("整個護盾 UI Root，建議是包含 Image 和 Text 的父物件")]
+    [Tooltip("整個護盾 UI Root，建議包含 Image、Text 和 Block Bar")]
     public GameObject blockRoot;
 
     [Tooltip("護盾圖片")]
@@ -28,6 +31,13 @@ public class BattleHUDUI : MonoBehaviour
 
     [Tooltip("護盾數值文字")]
     public TMP_Text blockText;
+
+    [Tooltip("護盾 Bar 的 Fill Image")]
+    public Image blockFillImage;
+
+    [Tooltip("護盾 Bar 使用的虛擬最大值，只影響 fillAmount，不會限制實際 Block")]
+    [Min(1)]
+    public int blockBarVirtualMax = 50;
 
     [Tooltip("沒有護盾時是否隱藏整個護盾 UI")]
     public bool hideBlockWhenZero = true;
@@ -93,17 +103,32 @@ public class BattleHUDUI : MonoBehaviour
     {
         if (battleUnit == null)
         {
-            Debug.LogWarning("[BattleHUDUI] battleUnit 沒有指定");
+            if (currentHpText != null)
+                currentHpText.text = "0";
+
+            if (maxHpText != null)
+                maxHpText.text = "0";
+
+            if (hpFillImage != null)
+                hpFillImage.fillAmount = 0f;
+
             RefreshBlock();
             return;
         }
 
-        if (currentHpText != null)
+        if (hpNumberAnimator_HP != null)
             hpNumberAnimator_HP.SetValue(battleUnit.currentHp);
-        //currentHpText.text = battleUnit.currentHp.ToString();
+        else if (currentHpText != null)
+            currentHpText.text = battleUnit.currentHp.ToString();
 
         if (maxHpText != null)
             maxHpText.text = battleUnit.maxHp.ToString();
+
+        if (hpFillImage != null)
+        {
+            float maxHp = Mathf.Max(1, battleUnit.maxHp);
+            hpFillImage.fillAmount = Mathf.Clamp01(battleUnit.currentHp / maxHp);
+        }
 
         RefreshBlock();
     }
@@ -112,25 +137,36 @@ public class BattleHUDUI : MonoBehaviour
     {
         if (energySystem == null)
         {
-            Debug.LogWarning("[BattleHUDUI] energySystem 沒有指定");
+            if (currentEnergyText != null)
+                currentEnergyText.text = "0";
+
+            if (maxEnergyText != null)
+                maxEnergyText.text = "0";
+
+            if (sanFillImage != null)
+                sanFillImage.fillAmount = 0f;
+
             return;
         }
 
-        if (currentEnergyText != null)
-             hpNumberAnimator_SAN.SetValue(energySystem.currentEnergy);
-            //currentEnergyText.text = energySystem.currentEnergy.ToString();
+        if (hpNumberAnimator_SAN != null)
+            hpNumberAnimator_SAN.SetValue(energySystem.currentEnergy);
+        else if (currentEnergyText != null)
+            currentEnergyText.text = energySystem.currentEnergy.ToString();
 
         if (maxEnergyText != null)
             maxEnergyText.text = energySystem.maxEnergy.ToString();
+
+        if (sanFillImage != null)
+        {
+            float maxSan = Mathf.Max(1, energySystem.maxEnergy);
+            sanFillImage.fillAmount = Mathf.Clamp01(energySystem.currentEnergy / maxSan);
+        }
     }
 
     public void RefreshBlock()
     {
-        int block = 0;
-
-        if (battleUnit != null)
-            block = battleUnit.block;
-
+        int block = battleUnit != null ? battleUnit.block : 0;
         bool shouldShow = block > 0 || !hideBlockWhenZero;
 
         if (blockRoot != null)
@@ -138,5 +174,11 @@ public class BattleHUDUI : MonoBehaviour
 
         if (blockText != null)
             blockText.text = $"{blockTextPrefix}{block}{blockTextSuffix}";
+
+        if (blockFillImage != null)
+        {
+            float virtualMax = Mathf.Max(1, blockBarVirtualMax);
+            blockFillImage.fillAmount = Mathf.Clamp01(block / virtualMax);
+        }
     }
 }

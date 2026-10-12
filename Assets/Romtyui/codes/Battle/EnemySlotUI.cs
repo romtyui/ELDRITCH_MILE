@@ -4,10 +4,51 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.U2D.Animation;
 using UnityEngine.UI;
+using TMPro;
 using static EnemyData;
+
 
 public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnterHandler, UnityEngine.EventSystems.IPointerExitHandler
 {
+    [System.Serializable]
+    public class EnemyUIReferences
+    {
+        [Tooltip("整套資訊 UI 的根物件，不要包含怪物 VisualRoot、Slot 本身或鎖定框。")]
+        public GameObject root;
+
+        [Header("Name")]
+        public TMP_Text nameText;
+
+        [Header("HP")]
+        public TMP_Text currentHpText;
+        public TMP_Text maxHpText;
+        //public AnimatedNumberTextUI hpNumberAnimator;
+        public Image hpFillImage;
+
+        [Header("Block")]
+        public GameObject blockRoot;
+        public Image blockImage;
+        public TMP_Text blockText;
+        public Animator blockAnimator;
+
+        [Header("Intent")]
+        public Image intentImage;
+        public TMP_Text intentDamageText;
+        public TooltipTriggerUI intentTooltipTrigger;
+
+        [Header("Status")]
+        [Tooltip("只放動態生成的狀態圖示，不要指定整個資訊 UI Root。")]
+        public Transform statusIconRoot;
+        public TooltipTriggerUI statusTooltipTrigger;
+    }
+
+    [Header("Normal / Boss UI")]
+    public EnemyUIReferences normalUI = new EnemyUIReferences();
+    public EnemyUIReferences bossUI = new EnemyUIReferences();
+
+    [Header("UI Runtime")]
+    [SerializeField] private bool currentUsesBossUI;
+
     [Header("Slot Refs")]
     public Image slotImage;
     public EnemyUnit enemyUnit;
@@ -89,16 +130,10 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
         if (visualAnimationController == null)
             visualAnimationController = gameObject.AddComponent<EnemyVisualAnimationController>();
         if (intentTooltipTrigger != null)
-        {
             intentTooltipTrigger.openMode = TooltipOpenMode.Click;
-            intentTooltipTrigger.preferredSide = TooltipAnchorSide.Left;
-        }
 
         if (statusTooltipTrigger != null)
-        {
             statusTooltipTrigger.openMode = TooltipOpenMode.Click;
-            statusTooltipTrigger.preferredSide = TooltipAnchorSide.Left;
-        }
     }
 
     private void ApplyTargetFrameSettings(EnemyData enemyData)
@@ -123,7 +158,66 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
         targetFrameImage.raycastTarget = false;
     }
 
-    public EnemyUnit SpawnEnemy(EnemyData enemyData)
+    private void ApplyUIReferences(bool useBossUI)
+    {
+        EnemyUIReferences selectedUI = useBossUI ? bossUI : normalUI;
+
+        if (selectedUI == null || selectedUI.root == null)
+        {
+            Debug.LogWarning($"[EnemySlotUI] {(useBossUI ? "Boss" : "一般")} UI Root 沒有指定，改用一般 UI", this);
+            selectedUI = normalUI;
+            useBossUI = false;
+        }
+
+        if (selectedUI == null || selectedUI.root == null)
+        {
+            Debug.LogError("[EnemySlotUI] 一般 UI Root 沒有指定，無法切換 UI", this);
+            return;
+        }
+
+        if (enemyUnit != null) enemyUnit.PrepareForUIReplacement();
+
+        if (normalUI != null && normalUI.root != null) normalUI.root.SetActive(false);
+        if (bossUI != null && bossUI.root != null) bossUI.root.SetActive(false);
+
+        currentUsesBossUI = useBossUI;
+
+        intentTooltipTrigger = selectedUI.intentTooltipTrigger;
+        statusTooltipTrigger = selectedUI.statusTooltipTrigger;
+        statusIconRoot = selectedUI.statusIconRoot;
+
+        if (intentTooltipTrigger != null) intentTooltipTrigger.openMode = TooltipOpenMode.Click;
+        if (statusTooltipTrigger != null) statusTooltipTrigger.openMode = TooltipOpenMode.Click;
+
+        if (enemyUnit != null)
+        {
+            enemyUnit.currentHpText = selectedUI.currentHpText;
+            enemyUnit.maxHpText = selectedUI.maxHpText;
+            enemyUnit.hpFillImage = selectedUI.hpFillImage;
+
+            if (enemyUnit.hpNumberAnimator != null) enemyUnit.hpNumberAnimator.valueText = selectedUI.currentHpText;
+
+            enemyUnit.blockRoot = selectedUI.blockRoot;
+            enemyUnit.blockImage = selectedUI.blockImage;
+            enemyUnit.blockText = selectedUI.blockText;
+            enemyUnit.blockAnimator = selectedUI.blockAnimator;
+
+            enemyUnit.intentImage = selectedUI.intentImage;
+            enemyUnit.intentDamageText = selectedUI.intentDamageText;
+            enemyUnit.intentTooltipTrigger = selectedUI.intentTooltipTrigger;
+
+            enemyUnit.statusIconRoot = selectedUI.statusIconRoot;
+            enemyUnit.statusIconDatabase = statusIconDatabase;
+            enemyUnit.statusIconPrefab = statusIconPrefab;
+            enemyUnit.hideStatusRootWhenEmpty = hideStatusRootWhenEmpty;
+        }
+
+        if (selectedUI.blockRoot != null) selectedUI.blockRoot.SetActive(false);
+
+        selectedUI.root.SetActive(true);
+    }
+
+    public EnemyUnit SpawnEnemy(EnemyData enemyData, bool useBossUI = false)
     {
         if (enemyData == null)
         {
@@ -139,11 +233,21 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
         ClearVisual();
 
+        ApplyUIReferences(useBossUI);
+
         ApplyDataToImage(enemyData);
         ApplyDataToEnemyUnit(enemyData);
+
+        if (enemyUnit != null) enemyUnit.InitializeStartingStatusAbilities(enemyData);
+
         ApplyTargetFrameSettings(enemyData);
         SpawnVisual(enemyData);
         BindTargetFrameBones(enemyData);
+
+        EnemyUIReferences selectedUI = currentUsesBossUI ? bossUI : normalUI;
+
+        if (selectedUI != null && selectedUI.nameText != null) selectedUI.nameText.text = enemyData.unitName;
+        if (enemyUnit != null && enemyUnit.hpNumberAnimator != null) enemyUnit.hpNumberAnimator.SetValueImmediate(enemyUnit.currentHp, enemyUnit.maxHp);
 
         RefreshIntentTooltip();
         RefreshStatusTooltip();
@@ -298,7 +402,7 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
         if (intent == null)
         {
-            intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+            intentTooltipTrigger.SetEntries(entries);
             return;
         }
 
@@ -354,7 +458,7 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
             entries.Add(new TooltipEntry(title, body));
         }
 
-        intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+        intentTooltipTrigger.SetEntries(entries);
     }
     private void RefreshStatusTooltip()
     {
@@ -378,7 +482,7 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
                 entries.Add(BuildStatusTooltipEntry(statusType, amount));
             }
 
-            statusTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+            statusTooltipTrigger.SetEntries(entries);
         }
 
         enemyUnit.RefreshStatusIconUI();
@@ -415,8 +519,19 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
             case StatusType.Harden:
                 return "硬化";
+
             case StatusType.Regeneration:
                 return "再生";
+
+            case StatusType.InitialBlock:
+                return "初始護盾";
+
+            case StatusType.RetainBlock:
+                return "護盾保留";
+
+            case StatusType.HermitHunt:
+                return "寄居狩獵";
+
             default:
                 return statusType.ToString();
         }
@@ -424,6 +539,13 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
     private string GetStatusDescription(StatusType statusType, int amount)
     {
+        if (enemyUnit != null)
+        {
+            string behaviourDescription = enemyUnit.GetStatusBehaviourDescription(statusType, amount);
+
+            if (!string.IsNullOrWhiteSpace(behaviourDescription)) return behaviourDescription;
+        }
+
         switch (statusType)
         {
             case StatusType.Strength:
@@ -443,13 +565,25 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
             case StatusType.Poison:
                 return $"回合開始時受到 {amount} 點傷害，之後中毒層數減少。";
+
             case StatusType.Harden:
                 return $"每回合開始時，獲得 {amount} 點護盾。";
+
             case StatusType.Regeneration:
                 {
                     int percent = amount * 5;
                     return $"每回合開始時，恢復自身最大生命值 {percent}% 的生命。\n受到生命傷害時，層數減少 1。";
                 }
+
+            case StatusType.InitialBlock:
+                return $"出場時獲得 {amount} 點基礎護盾，只觸發一次。";
+
+            case StatusType.RetainBlock:
+                return "自身回合開始時不清除護盾。失去此狀態後，恢復原本的清除規則。";
+
+            case StatusType.HermitHunt:
+                return "自身回合結束時依護盾量選擇下一個意圖。需要指定寄居狩獵狀態資料。";
+
             default:
                 return $"目前層數：{amount}";
         }
@@ -502,8 +636,13 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
             enemyUnit.currentHp = 0;
             enemyUnit.RefreshAllUI();
             enemyUnit.ClearStatusIconUI();
+            enemyUnit.PrepareForUIReplacement();
         }
 
+        if (normalUI != null && normalUI.root != null) normalUI.root.SetActive(false);
+        if (bossUI != null && bossUI.root != null) bossUI.root.SetActive(false);
+
+        currentUsesBossUI = false;
 
         gameObject.SetActive(false);
     }

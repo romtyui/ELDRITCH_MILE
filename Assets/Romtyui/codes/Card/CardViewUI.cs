@@ -32,12 +32,79 @@ public class CardViewUI : MonoBehaviour
     public Color blockValueColor = new Color32(102, 204, 255, 255);
     public Color counterValueColor = new Color32(255, 212, 90, 255);
 
+    [Header("SAN Description Corruption")]
+    [Tooltip("是否啟用低 SAN 描述亂碼")]
+    public bool enableSanDescriptionCorruption = true;
+
+    [Range(0f, 1f)]
+    [Tooltip("SAN 低於或等於這個比例時，描述變成亂碼。例如 0.3 = 30%")]
+    public float sanCorruptionThreshold = 0.3f;
+
+    [Range(0f, 1f)]
+    [Tooltip("文字被替換成亂碼的比例。1 = 全部亂碼")]
+    public float sanCorruptionAmount = 1f;
+
+    [Tooltip("亂碼可以使用的字元")]
+    public string sanCorruptionCharacters = "▓▒░#@$%&!?※¤§";
+
+    [Min(0.01f)]
+    [Tooltip("SAN 接近亂碼門檻時的刷新間隔，單位為秒。SAN 越低，間隔會逐漸縮短")]
+    public float sanCorruptionRefreshInterval = 0.5f;
+
+    [Min(0.01f)]
+    [Tooltip("SAN 降到 0 時的刷新間隔，單位為秒。數值越小，亂碼交替越快；實際使用時不會大於起始間隔")]
+    public float sanCorruptionMinRefreshInterval = 0.05f;
+
     [Header("Tooltip Position")]
     public TooltipAnchorSide cardTooltipSide = TooltipAnchorSide.Top;
 
     private BattleManager cachedBattleManager;
     private string lastRuntimeDescription;
+    private float sanCorruptionRefreshTimer;
+    private void Update()
+    {
+        if (!enableSanDescriptionCorruption || CardInstance == null || CardInstance.data == null || descriptionText == null)
+        {
+            sanCorruptionRefreshTimer = 0f;
+            return;
+        }
 
+        BattleManager battleManager = GetBattleManager();
+
+        if (battleManager == null || battleManager.energySystem == null)
+        {
+            sanCorruptionRefreshTimer = 0f;
+            return;
+        }
+
+        EnergySystem energySystem = battleManager.energySystem;
+
+        if (energySystem.maxEnergy <= 0)
+        {
+            sanCorruptionRefreshTimer = 0f;
+            return;
+        }
+
+        float sanRatio = energySystem.currentEnergy / (float)energySystem.maxEnergy;
+        float corruptionProgress = Mathf.InverseLerp(sanCorruptionThreshold, 0f, sanRatio);
+        float actualCorruptionAmount = corruptionProgress * sanCorruptionAmount;
+
+        if (sanRatio > sanCorruptionThreshold || actualCorruptionAmount <= 0f || string.IsNullOrEmpty(sanCorruptionCharacters))
+        {
+            sanCorruptionRefreshTimer = 0f;
+            return;
+        }
+
+        float startInterval = Mathf.Max(0.01f, sanCorruptionRefreshInterval);
+        float minInterval = Mathf.Clamp(sanCorruptionMinRefreshInterval, 0.01f, startInterval);
+        float currentRefreshInterval = Mathf.Lerp(startInterval, minInterval, corruptionProgress);
+
+        sanCorruptionRefreshTimer += Time.deltaTime;
+
+        if (sanCorruptionRefreshTimer < currentRefreshInterval) return;
+
+        RefreshRuntimeDescription();
+    }
     public void Bind(CardInstance instance)
     {
         CardInstance = instance;
@@ -64,9 +131,9 @@ public class CardViewUI : MonoBehaviour
 
     public void RefreshRuntimeDescription()
     {
-        if (CardInstance == null || CardInstance.data == null)
-            return;
+        if (CardInstance == null || CardInstance.data == null) return;
 
+        sanCorruptionRefreshTimer = 0f;
         lastRuntimeDescription = BuildRuntimeDescription(CardInstance);
 
         if (descriptionText != null)
@@ -80,10 +147,10 @@ public class CardViewUI : MonoBehaviour
         if (instance == null || instance.data == null)
             return "";
 
-        string text = instance.data.description;
+        string originalDescription = instance.data.description;
 
-        if (string.IsNullOrWhiteSpace(text))
-            return "";
+        if (originalDescription == null)
+            originalDescription = "";
 
         BattleManager battleManager = GetBattleManager();
 
@@ -103,7 +170,103 @@ public class CardViewUI : MonoBehaviour
             battleManager
         );
 
-        return ReplaceDescriptionTokens(text, instance, context);
+        // 先處理原本卡片描述中的所有 Runtime Token。
+        string runtimeDescription = ReplaceDescriptionTokens(
+            originalDescription,
+            instance,
+            context
+        );
+
+        // 再依照目前 SAN 判定是否需要把效果描述亂碼化。
+        runtimeDescription = ApplySanDescriptionCorruption(
+            runtimeDescription,
+            battleManager
+        );
+
+        // Flag 最後才加到最上方，所以不會一起被亂碼。
+        runtimeDescription = AppendFlagDescription(
+            runtimeDescription,
+            instance.data
+        );
+
+        return runtimeDescription;
+    }
+
+    private string ApplySanDescriptionCorruption(string description, BattleManager battleManager)
+    {
+        if (!enableSanDescriptionCorruption)
+            return description;
+
+        if (string.IsNullOrWhiteSpace(description))
+            return description;
+
+        if (battleManager == null || battleManager.energySystem == null)
+            return description;
+
+        EnergySystem energySystem = battleManager.energySystem;
+
+        if (energySystem.maxEnergy <= 0)
+            return description;
+
+        float sanRatio = energySystem.currentEnergy / (float)energySystem.maxEnergy;
+
+        if (sanRatio > sanCorruptionThreshold)
+            return description;
+
+        float corruptionProgress = Mathf.InverseLerp(sanCorruptionThreshold, 0f, sanRatio);
+        float actualCorruptionAmount = corruptionProgress * sanCorruptionAmount;
+
+        return CorruptDescriptionText(description, actualCorruptionAmount);
+    }
+
+    private string CorruptDescriptionText(string text, float corruptionAmount)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        if (corruptionAmount <= 0f)
+            return text;
+
+        if (string.IsNullOrEmpty(sanCorruptionCharacters))
+            return text;
+
+        char[] characters = text.ToCharArray();
+
+        bool insideRichTextTag = false;
+
+        for (int i = 0; i < characters.Length; i++)
+        {
+            char currentCharacter = characters[i];
+
+            if (currentCharacter == '<')
+            {
+                insideRichTextTag = true;
+                continue;
+            }
+
+            if (currentCharacter == '>')
+            {
+                insideRichTextTag = false;
+                continue;
+            }
+
+            if (insideRichTextTag)
+                continue;
+
+            if (char.IsWhiteSpace(currentCharacter))
+                continue;
+
+            if (currentCharacter == '\n' || currentCharacter == '\r')
+                continue;
+
+            if (UnityEngine.Random.value > corruptionAmount)
+                continue;
+
+            int randomIndex = UnityEngine.Random.Range(0, sanCorruptionCharacters.Length);
+            characters[i] = sanCorruptionCharacters[randomIndex];
+        }
+
+        return new string(characters);
     }
 
     private string ReplaceDescriptionTokens(
@@ -270,6 +433,32 @@ public class CardViewUI : MonoBehaviour
         });
     }
 
+    private string AppendFlagDescription(string description, CardData cardData)
+    {
+        if (cardData == null)
+            return description;
+
+        List<string> flags = new List<string>();
+
+        if (cardData.exhaust)
+            flags.Add("消耗");
+
+        if (cardData.ethereal)
+            flags.Add("虛無");
+
+        if (cardData.retain)
+            flags.Add("保留");
+
+        if (flags.Count == 0)
+            return description;
+
+        string flagLine = string.Join(" ", flags);
+
+        if (string.IsNullOrWhiteSpace(description))
+            return flagLine;
+
+        return flagLine + "\n" + description;
+    }
     private void AddProviderValue(
         Dictionary<string, string> values,
         CardDescriptionValueProvider provider,

@@ -106,6 +106,15 @@ namespace EldritchMile.Core
         [Header("除錯")]
         public int runSeed;
 
+        //新增時間26/10/06 by romtyui
+        [Header("戰鬥獎勵確認")]
+        [Tooltip("本趟旅程不再確認放棄目前這筆武器獎勵。")]
+        public bool skipWeaponRewardAbandonConfirmation;
+
+        [Tooltip("本趟旅程不再確認放棄剩餘獎勵並離開戰鬥。")]
+        public bool skipBattleRewardExitConfirmation;
+        //新增時間26/10/06 by romtyui
+
         public RunNodeData CurrentNode => mapData.CurrentNode;
 
         // ==========================================

@@ -11,6 +11,65 @@ public enum TooltipAnchorSide
     Bottom
 }
 
+[System.Serializable]
+public class TooltipBackgroundVariant
+{
+    [Header("Background Image")]
+    public Sprite sprite;
+
+    [Header("Background Image Size")]
+    [Tooltip("只調整背景圖片寬度")]
+    [Min(1f)] public float backgroundWidth = 420f;
+
+    [Tooltip("只調整背景圖片高度")]
+    [Min(1f)] public float backgroundHeight = 160f;
+
+    [Header("Background Image Position")]
+    [Tooltip("只調整 windowBackgroundImage 的位置")]
+    public Vector2 backgroundPositionOffset = Vector2.zero;
+
+    [Header("Window Position")]
+    [Tooltip("調整整個 TooltipContainer 的位置")]
+    public Vector2 windowPositionOffset = Vector2.zero;
+
+    [Header("Scroll View Top / Bottom")]
+    [Tooltip("Scroll View 的 RectTransform Top。正值讓上邊緣往內縮，使用絕對值設定。")]
+    public float scrollViewTop = 0f;
+
+    [Tooltip("Scroll View 的 RectTransform Bottom。正值讓下邊緣往內縮，使用絕對值設定。")]
+    public float scrollViewBottom = 0f;
+}
+
+[System.Serializable]
+public class TooltipBackgroundSpritesByCount
+{
+    [Tooltip("1 個狀態")]
+    public TooltipBackgroundVariant oneStatus = new TooltipBackgroundVariant();
+
+    [Tooltip("2 個狀態")]
+    public TooltipBackgroundVariant twoStatuses = new TooltipBackgroundVariant();
+
+    [Tooltip("3 個狀態")]
+    public TooltipBackgroundVariant threeStatuses = new TooltipBackgroundVariant();
+
+    [Tooltip("4 個以上狀態")]
+    public TooltipBackgroundVariant fourOrMoreStatuses = new TooltipBackgroundVariant();
+
+    public TooltipBackgroundVariant GetVariant(int statusCount)
+    {
+        if (statusCount <= 1)
+            return oneStatus;
+
+        if (statusCount == 2)
+            return twoStatuses;
+
+        if (statusCount == 3)
+            return threeStatuses;
+
+        return fourOrMoreStatuses;
+    }
+}
+
 public class TooltipUI : MonoBehaviour
 {
     public static TooltipUI Instance;
@@ -20,16 +79,67 @@ public class TooltipUI : MonoBehaviour
     public RectTransform contentRoot;
     public TooltipBlockUI blockTemplate;
 
+    [Header("Window Background")]
+    [Tooltip("TooltipContainer 底下的 Background Image")]
+    public Image windowBackgroundImage;
+
+    [Tooltip("Tooltip 顯示在目標左側時，依狀態數量使用的背景")]
+    public TooltipBackgroundSpritesByCount leftBackgrounds = new TooltipBackgroundSpritesByCount();
+
+    [Tooltip("Tooltip 顯示在目標右側時，依狀態數量使用的背景")]
+    public TooltipBackgroundSpritesByCount rightBackgrounds = new TooltipBackgroundSpritesByCount();
+
+    [Tooltip("Tooltip 顯示在目標上方時，依狀態數量使用的背景")]
+    public TooltipBackgroundSpritesByCount topBackgrounds = new TooltipBackgroundSpritesByCount();
+
+    [Tooltip("Tooltip 顯示在目標下方時，依狀態數量使用的背景")]
+    public TooltipBackgroundSpritesByCount bottomBackgrounds = new TooltipBackgroundSpritesByCount();
+    //[Header("Window Background")]
+    //[Tooltip("TooltipContainer 底下的 Background Image")]
+    //public Image windowBackgroundImage;
+
+    //[Tooltip("Tooltip 顯示在目標左側時使用的背景")]
+    //public Sprite leftBackgroundSprite;
+
+    //[Tooltip("Tooltip 顯示在目標右側時使用的背景")]
+    //public Sprite rightBackgroundSprite;
+
+    //[Tooltip("Tooltip 顯示在目標上方時使用的背景")]
+    //public Sprite topBackgroundSprite;
+
+    //[Tooltip("Tooltip 顯示在目標下方時使用的背景")]
+    //public Sprite bottomBackgroundSprite;
+
+    [Header("Scroll Rect")]
+    public ScrollRect scrollRect;
+    public RectTransform viewport;
+    [Tooltip("要調整 Top／Bottom 的 Scroll View RectTransform。請指定 Scroll View 本身，不是 Content 或 Viewport。")]
+    public RectTransform scrollViewRect;
+
+    [Header("Click Blocker")]
+    public GameObject clickBlocker;
+
+    [Header("Fixed Window Size")]
+    [Min(1f)] public float tooltipWidth = 420f;
+    [Min(1f)] public float tooltipHeight = 330f;
+
+    [Tooltip("TooltipContainer 中除了 Content 以外占用的上下總高度")]
+    [Min(0f)] public float frameVerticalPadding = 24f;
+
     [Header("Position")]
     public Vector2 sideOffset = new Vector2(20f, 0f);
     public Vector2 verticalOffset = new Vector2(0f, 20f);
     public Vector2 screenPadding = new Vector2(20f, 20f);
 
-    [Header("Clamp")]
-    [Tooltip("是否強制讓 Tooltip 留在 Canvas 畫面內")]
-    public bool clampToCanvas = true;
+    [Header("Fixed Window Height")]
+    [Tooltip("Left、Right 方向的 Tooltip 是否使用固定Y座標")]
+    public bool useFixedWindowY = true;
 
-    [Tooltip("顯示時是否強制修正 container 的 Anchor / Pivot。建議打開")]
+    [Tooltip("TooltipContainer 固定的頂端Y座標")]
+    public float fixedWindowY = 0f;
+
+    [Header("Clamp")]
+    public bool clampToCanvas = true;
     public bool forceTopLeftPivot = true;
 
     private Canvas rootCanvas;
@@ -44,11 +154,18 @@ public class TooltipUI : MonoBehaviour
 
         CacheCanvasRefs();
         SetupContainerTransform();
-
-        Hide();
+        SetupScrollRect();
 
         if (blockTemplate != null)
             blockTemplate.gameObject.SetActive(false);
+
+        Hide();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     private void CacheCanvasRefs()
@@ -64,28 +181,41 @@ public class TooltipUI : MonoBehaviour
 
     private void SetupContainerTransform()
     {
-        if (container == null)
+        if (container == null || !forceTopLeftPivot)
             return;
 
-        if (!forceTopLeftPivot)
-            return;
-
-        // 這裡很重要：
-        // Reposition() 算出來的位置是「以 Canvas 中心為原點」的 local position。
-        // 所以 container 的 anchor 要固定在 Canvas 中心。
         container.anchorMin = new Vector2(0.5f, 0.5f);
         container.anchorMax = new Vector2(0.5f, 0.5f);
-
-        // 讓 anchoredPosition 代表 Tooltip 左上角位置。
         container.pivot = new Vector2(0f, 1f);
+        container.localScale = Vector3.one;
+        container.localRotation = Quaternion.identity;
     }
 
-    public void Show(List<TooltipEntry> entries, RectTransform target, TooltipAnchorSide preferredSide = TooltipAnchorSide.Auto)
+    private void SetupScrollRect()
     {
-        if (container == null || contentRoot == null || blockTemplate == null)
+        if (scrollRect == null)
             return;
 
-        if (entries == null || entries.Count == 0 || target == null)
+        scrollRect.content = contentRoot;
+
+        if (viewport != null)
+            scrollRect.viewport = viewport;
+
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+    }
+
+    public void Show(List<TooltipEntry> entries, RectTransform target, TooltipAnchorSide preferredSide, TooltipPositionMode positionMode, Vector2 positionOffset, bool showClickBlocker)
+    {
+        if (container == null || contentRoot == null || blockTemplate == null) return;
+
+        if (entries == null || entries.Count == 0)
+        {
+            Hide();
+            return;
+        }
+
+        if (positionMode == TooltipPositionMode.RelativeToTrigger && target == null)
         {
             Hide();
             return;
@@ -93,17 +223,23 @@ public class TooltipUI : MonoBehaviour
 
         CacheCanvasRefs();
         SetupContainerTransform();
-
+        SetupScrollRect();
         ClearBlocks();
+
+        container.gameObject.SetActive(true);
+        SetClickBlockerActive(showClickBlocker);
+        ApplyFixedWindowSize();
+
+        Canvas.ForceUpdateCanvases();
 
         for (int i = 0; i < entries.Count; i++)
         {
-            if (entries[i] == null)
-                continue;
+            TooltipEntry entry = entries[i];
+            if (entry == null) continue;
 
             TooltipBlockUI block = Instantiate(blockTemplate, contentRoot);
             block.gameObject.SetActive(true);
-            block.SetData(entries[i]);
+            block.SetData(entry);
             spawnedBlocks.Add(block);
         }
 
@@ -113,27 +249,86 @@ public class TooltipUI : MonoBehaviour
             return;
         }
 
-        container.gameObject.SetActive(true);
-
-        Canvas.ForceUpdateCanvases();
-
-        if (contentRoot != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
-
-        if (container != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(container);
-
-        Canvas.ForceUpdateCanvases();
-
-        Reposition(target, preferredSide);
+        RefreshLayoutAndContainerSize();
+        RepositionContainer(target, preferredSide, positionMode, positionOffset, spawnedBlocks.Count);
+        ResetScrollPosition();
     }
-
     public void Hide()
     {
         ClearBlocks();
+        SetClickBlockerActive(false);
 
         if (container != null)
             container.gameObject.SetActive(false);
+    }
+
+    private void RefreshLayoutAndContainerSize()
+    {
+        if (container == null || contentRoot == null) return;
+
+        ApplyFixedWindowSize();
+        Canvas.ForceUpdateCanvases();
+
+        for (int i = 0; i < spawnedBlocks.Count; i++)
+        {
+            TooltipBlockUI block = spawnedBlocks[i];
+            if (block == null || block.rectTransform == null) continue;
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(block.rectTransform);
+        }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(container);
+        Canvas.ForceUpdateCanvases();
+
+        if (scrollRect == null) return;
+
+        scrollRect.content = contentRoot;
+        if (viewport != null) scrollRect.viewport = viewport;
+
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.velocity = Vector2.zero;
+    }
+    private float GetSafeMaxHeight()
+    {
+        return Mathf.Max(1f, tooltipHeight);
+    }
+
+    private void ResetScrollPosition()
+    {
+        if (scrollRect == null)
+            return;
+
+        Canvas.ForceUpdateCanvases();
+        scrollRect.StopMovement();
+        scrollRect.verticalNormalizedPosition = 1f;
+    }
+
+    private void SetClickBlockerActive(bool active)
+    {
+        if (clickBlocker == null)
+            return;
+
+        if (!active)
+        {
+            clickBlocker.SetActive(false);
+            return;
+        }
+
+        clickBlocker.SetActive(true);
+
+        if (container == null)
+            return;
+
+        if (clickBlocker.transform.parent != container.parent)
+        {
+            Debug.LogWarning("[TooltipUI] TooltipClickBlocker 和 TooltipContainer 必須是同一個父物件底下的兄弟物件");
+            return;
+        }
+
+        clickBlocker.transform.SetAsFirstSibling();
+        container.transform.SetAsLastSibling();
     }
 
     private void ClearBlocks()
@@ -173,104 +368,256 @@ public class TooltipUI : MonoBehaviour
         }
     }
 
-    private void Reposition(RectTransform target, TooltipAnchorSide preferredSide)
+    private void RepositionContainer(RectTransform target, TooltipAnchorSide preferredSide, TooltipPositionMode positionMode, Vector2 positionOffset, int statusCount)
     {
-        if (target == null || canvasRect == null || container == null)
-            return;
+        if (container == null || canvasRect == null) return;
 
         SetupContainerTransform();
+        ApplyFixedWindowSize();
 
         Canvas.ForceUpdateCanvases();
-
-        if (contentRoot != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
-
-        if (container != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(container);
-
+        LayoutRebuilder.ForceRebuildLayoutImmediate(container);
         Canvas.ForceUpdateCanvases();
 
-        Bounds targetBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(canvasRect, target);
-        Vector2 tooltipSize = container.rect.size;
+        TooltipAnchorSide resolvedSide = preferredSide == TooltipAnchorSide.Auto ? TooltipAnchorSide.Left : preferredSide;
+        TooltipBackgroundVariant variant = GetWindowVariant(resolvedSide, statusCount);
+        Vector2 finalPosition;
 
-        float targetCenterY = (targetBounds.min.y + targetBounds.max.y) * 0.5f;
-        float tooltipHalfHeight = tooltipSize.y * 0.5f;
+        if (positionMode == TooltipPositionMode.RelativeToTrigger)
+        {
+            Bounds targetBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(canvasRect, target);
+            finalPosition = CalculateRelativePosition(resolvedSide, targetBounds, container.rect.size);
+            finalPosition += positionOffset;
+        }
+        else
+        {
+            finalPosition = positionOffset;
+        }
 
-        // 因為 container pivot 是左上角，所以這些位置都是 Tooltip 左上角座標。
+        ApplyWindowVariant(variant);
 
-        Vector2 leftPos = new Vector2(
-            targetBounds.min.x - tooltipSize.x - sideOffset.x,
-            targetCenterY + tooltipHalfHeight + sideOffset.y
-        );
+        if (variant != null) finalPosition += variant.windowPositionOffset;
 
-        Vector2 rightPos = new Vector2(
-            targetBounds.max.x + sideOffset.x,
-            targetCenterY + tooltipHalfHeight + sideOffset.y
-        );
+        bool lockVerticalPosition = positionMode == TooltipPositionMode.FixedCanvasPosition && useFixedWindowY && (resolvedSide == TooltipAnchorSide.Left || resolvedSide == TooltipAnchorSide.Right);
+        if (lockVerticalPosition) finalPosition.y = fixedWindowY;
 
-        Vector2 topPos = new Vector2(
-            targetBounds.min.x,
-            targetBounds.max.y + tooltipSize.y + verticalOffset.y
-        );
+        if (clampToCanvas)
+        {
+            finalPosition = ClampToCanvas(finalPosition, container.rect.size);
+            if (lockVerticalPosition) finalPosition.y = fixedWindowY;
+        }
 
-        Vector2 bottomPos = new Vector2(
-            targetBounds.min.x,
-            targetBounds.min.y - verticalOffset.y
-        );
+        container.anchoredPosition = finalPosition;
+    }
+    private Vector2 CalculateRelativePosition(TooltipAnchorSide side, Bounds targetBounds, Vector2 tooltipSize)
+    {
+        float targetCenterX = (targetBounds.min.x + targetBounds.max.x) * 0.5f;
+        float tooltipHalfWidth = tooltipSize.x * 0.5f;
 
-        Vector2 finalPos;
-
-        switch (preferredSide)
+        switch (side)
         {
             case TooltipAnchorSide.Left:
-                finalPos = ChooseBestPosition(leftPos, rightPos, topPos, bottomPos, tooltipSize);
+                return new Vector2(targetBounds.min.x - tooltipSize.x - sideOffset.x, targetBounds.max.y + sideOffset.y);
+
+            case TooltipAnchorSide.Right:
+                return new Vector2(targetBounds.max.x + sideOffset.x, targetBounds.max.y + sideOffset.y);
+
+            case TooltipAnchorSide.Top:
+                return new Vector2(targetCenterX - tooltipHalfWidth + verticalOffset.x, targetBounds.max.y + tooltipSize.y + verticalOffset.y);
+
+            case TooltipAnchorSide.Bottom:
+                return new Vector2(targetCenterX - tooltipHalfWidth + verticalOffset.x, targetBounds.min.y - verticalOffset.y);
+
+            default:
+                return new Vector2(targetBounds.max.x + sideOffset.x, targetBounds.max.y + sideOffset.y);
+        }
+    }
+    private Vector2 ChooseBestPosition(Vector2 firstPosition, TooltipAnchorSide firstSide, Vector2 secondPosition, TooltipAnchorSide secondSide, Vector2 thirdPosition, TooltipAnchorSide thirdSide, Vector2 fourthPosition, TooltipAnchorSide fourthSide, Vector2 tooltipSize, out TooltipAnchorSide resolvedSide)
+    {
+        if (FitsInsideCanvas(firstPosition, tooltipSize))
+        {
+            resolvedSide = firstSide;
+            return firstPosition;
+        }
+
+        if (FitsInsideCanvas(secondPosition, tooltipSize))
+        {
+            resolvedSide = secondSide;
+            return secondPosition;
+        }
+
+        if (FitsInsideCanvas(thirdPosition, tooltipSize))
+        {
+            resolvedSide = thirdSide;
+            return thirdPosition;
+        }
+
+        if (FitsInsideCanvas(fourthPosition, tooltipSize))
+        {
+            resolvedSide = fourthSide;
+            return fourthPosition;
+        }
+
+        resolvedSide = firstSide;
+        return firstPosition;
+    }
+
+    //private void SetWindowBackground(TooltipAnchorSide side, int statusCount)
+    //{
+    //    if (windowBackgroundImage == null)
+    //        return;
+
+    //    TooltipBackgroundSpritesByCount backgroundSet = null;
+
+    //    switch (side)
+    //    {
+    //        case TooltipAnchorSide.Left:
+    //            backgroundSet = leftBackgrounds;
+    //            break;
+
+    //        case TooltipAnchorSide.Right:
+    //            backgroundSet = rightBackgrounds;
+    //            break;
+
+    //        case TooltipAnchorSide.Top:
+    //            backgroundSet = topBackgrounds;
+    //            break;
+
+    //        case TooltipAnchorSide.Bottom:
+    //            backgroundSet = bottomBackgrounds;
+    //            break;
+    //    }
+
+    //    if (backgroundSet == null)
+    //        return;
+
+    //    Sprite selectedSprite = backgroundSet.GetSprite(statusCount);
+
+    //    if (selectedSprite == null)
+    //    {
+    //        Debug.LogWarning($"[TooltipUI] 尚未設定 {side} 方向、{statusCount} 個狀態使用的背景圖片");
+    //        return;
+    //    }
+
+    //    windowBackgroundImage.sprite = selectedSprite;
+    //    windowBackgroundImage.enabled = true;
+    //}
+
+    private TooltipBackgroundVariant GetWindowVariant(TooltipAnchorSide side, int statusCount)
+    {
+        TooltipBackgroundSpritesByCount backgroundSet = null;
+
+        switch (side)
+        {
+            case TooltipAnchorSide.Left:
+                backgroundSet = leftBackgrounds;
                 break;
 
             case TooltipAnchorSide.Right:
-                finalPos = ChooseBestPosition(rightPos, leftPos, topPos, bottomPos, tooltipSize);
+                backgroundSet = rightBackgrounds;
                 break;
 
             case TooltipAnchorSide.Top:
-                finalPos = ChooseBestPosition(topPos, bottomPos, leftPos, rightPos, tooltipSize);
+                backgroundSet = topBackgrounds;
                 break;
 
             case TooltipAnchorSide.Bottom:
-                finalPos = ChooseBestPosition(bottomPos, topPos, leftPos, rightPos, tooltipSize);
-                break;
-
-            case TooltipAnchorSide.Auto:
-            default:
-                finalPos = ChooseBestPosition(leftPos, rightPos, topPos, bottomPos, tooltipSize);
+                backgroundSet = bottomBackgrounds;
                 break;
         }
 
-        if (clampToCanvas)
-            finalPos = ClampToCanvas(finalPos, tooltipSize);
+        if (backgroundSet == null)
+            return null;
 
-        container.anchoredPosition = finalPos;
+        return backgroundSet.GetVariant(statusCount);
     }
 
-    private Vector2 ChooseBestPosition(
-        Vector2 first,
-        Vector2 second,
-        Vector2 third,
-        Vector2 fourth,
-        Vector2 tooltipSize
-    )
+    private void ApplyFixedWindowSize()
+{
+    if (container == null)
+        return;
+
+    container.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, tooltipWidth);
+    container.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, tooltipHeight);
+}
+
+    private void ApplyWindowVariant(TooltipBackgroundVariant variant)
     {
-        if (FitsInsideCanvas(first, tooltipSize))
-            return first;
+        if (variant == null) return;
 
-        if (FitsInsideCanvas(second, tooltipSize))
-            return second;
+        if (scrollViewRect != null)
+        {
+            Vector2 offsetMin = scrollViewRect.offsetMin;
+            Vector2 offsetMax = scrollViewRect.offsetMax;
 
-        if (FitsInsideCanvas(third, tooltipSize))
-            return third;
+            offsetMin.y = variant.scrollViewBottom;
+            offsetMax.y = -variant.scrollViewTop;
 
-        if (FitsInsideCanvas(fourth, tooltipSize))
-            return fourth;
+            scrollViewRect.offsetMin = offsetMin;
+            scrollViewRect.offsetMax = offsetMax;
 
-        return first;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(scrollViewRect);
+        }
+
+        if (windowBackgroundImage == null) return;
+
+        if (variant.sprite != null)
+        {
+            windowBackgroundImage.sprite = variant.sprite;
+            windowBackgroundImage.enabled = true;
+        }
+
+        RectTransform backgroundRect = windowBackgroundImage.rectTransform;
+
+        // Background 頂端固定，高度只往下增加。
+        backgroundRect.anchorMin = new Vector2(0.5f, 1f);
+        backgroundRect.anchorMax = new Vector2(0.5f, 1f);
+        backgroundRect.pivot = new Vector2(0.5f, 1f);
+
+        backgroundRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Max(1f, variant.backgroundWidth));
+        backgroundRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(1f, variant.backgroundHeight));
+
+        backgroundRect.anchoredPosition = variant.backgroundPositionOffset;
+    }
+
+    private Vector2 CalculatePosition(TooltipAnchorSide side, Bounds targetBounds, Vector2 tooltipSize)
+    {
+        float targetCenterX = (targetBounds.min.x + targetBounds.max.x) * 0.5f;
+        float tooltipHalfWidth = tooltipSize.x * 0.5f;
+
+        float horizontalWindowY = useFixedWindowY
+            ? fixedWindowY
+            : targetBounds.max.y + sideOffset.y;
+
+        switch (side)
+        {
+            case TooltipAnchorSide.Left:
+                return new Vector2(
+                    targetBounds.min.x - tooltipSize.x - sideOffset.x,
+                    horizontalWindowY
+                );
+
+            case TooltipAnchorSide.Right:
+                return new Vector2(
+                    targetBounds.max.x + sideOffset.x,
+                    horizontalWindowY
+                );
+
+            case TooltipAnchorSide.Top:
+                return new Vector2(
+                    targetCenterX - tooltipHalfWidth + verticalOffset.x,
+                    targetBounds.max.y + tooltipSize.y + verticalOffset.y
+                );
+
+            case TooltipAnchorSide.Bottom:
+                return new Vector2(
+                    targetCenterX - tooltipHalfWidth + verticalOffset.x,
+                    targetBounds.min.y - verticalOffset.y
+                );
+
+            default:
+                return container.anchoredPosition;
+        }
     }
 
     private bool FitsInsideCanvas(Vector2 topLeftPosition, Vector2 size)
@@ -300,11 +647,9 @@ public class TooltipUI : MonoBehaviour
 
         float minX = rect.xMin + screenPadding.x;
         float maxX = rect.xMax - size.x - screenPadding.x;
-
         float minY = rect.yMin + size.y + screenPadding.y;
         float maxY = rect.yMax - screenPadding.y;
 
-        // 如果 Tooltip 太大，避免 Mathf.Clamp min > max 導致位置異常。
         if (maxX < minX)
             maxX = minX;
 

@@ -5,12 +5,12 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-[System.Serializable]
-public class EnemyStatusDebugEntry
-{
-    public StatusType statusType;
-    public int amount;
-}
+//[System.Serializable]
+//public class EnemyStatusDebugEntry
+//{
+//    public StatusType statusType;
+//    public int amount;
+//}
 
 public class EnemyUnit : BattleUnit
 {
@@ -21,9 +21,12 @@ public class EnemyUnit : BattleUnit
     public int chargeValue;
     public int chargeTurnsLeft;
 
-    [Header("Debug - Current Statuses")]
-    [SerializeField]
-    private List<EnemyStatusDebugEntry> inspectorStatuses = new List<EnemyStatusDebugEntry>();
+
+    private readonly Dictionary<StatusType, BattleStatusBehaviourData> statusBehaviours = new Dictionary<StatusType, BattleStatusBehaviourData>();
+    private bool statusIntentPending;
+    //[Header("Debug - Current Statuses")]
+    //[SerializeField]
+    //private List<EnemyStatusDebugEntry> inspectorStatuses = new List<EnemyStatusDebugEntry>();
     [Header("Enemy Status Icon UI")]
     [Tooltip("怪物狀態 Icon 生成位置。建議這個物件上放 Horizontal Layout Group 或 Vertical Layout Group")]
     public Transform statusIconRoot;
@@ -48,6 +51,8 @@ public class EnemyUnit : BattleUnit
     public AnimatedNumberTextUI hpNumberAnimator;
 
     [Header("HP UI")]
+    [Tooltip("目前使用的血條填充 Image，Image Type 設為 Filled。不使用血條時可以留空。")]
+    public Image hpFillImage;
     public TMP_Text currentHpText;
     public TMP_Text maxHpText;
 
@@ -179,7 +184,7 @@ public class EnemyUnit : BattleUnit
 
         RefreshIntentUI();
         RefreshIntentTooltip();
-        RefreshInspectorStatuses();
+        //RefreshInspectorStatuses();
 
         Debug.Log($"[{unitName}] 開始蓄力，蓄力值 = {chargeValue}，倒數 = {chargeTurnsLeft}");
     }
@@ -303,7 +308,7 @@ public class EnemyUnit : BattleUnit
         if (TryGetChargeTooltip(out chargeEntry))
         {
             entries.Add(chargeEntry);
-            intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+            intentTooltipTrigger.SetEntries(entries);
             return;
         }
 
@@ -311,7 +316,7 @@ public class EnemyUnit : BattleUnit
 
         if (intent == null)
         {
-            intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+            intentTooltipTrigger.SetEntries(entries);
             return;
         }
 
@@ -350,7 +355,7 @@ public class EnemyUnit : BattleUnit
             entries.Add(new TooltipEntry(title, body));
         }
 
-        intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+        intentTooltipTrigger.SetEntries(entries);
     }
 
     protected override void Awake()
@@ -367,7 +372,7 @@ public class EnemyUnit : BattleUnit
     {
         OnHpChanged += RefreshHpUI;
         OnHpChanged += RefreshBlockUI;
-        OnStatusChanged += RefreshInspectorStatuses;
+        //OnStatusChanged += RefreshInspectorStatuses;
         OnStatusChanged += RefreshStatusIconUI;
 
         RefreshBlockUI();
@@ -379,7 +384,7 @@ public class EnemyUnit : BattleUnit
     {
         OnHpChanged -= RefreshHpUI;
         OnHpChanged -= RefreshBlockUI;
-        OnStatusChanged -= RefreshInspectorStatuses;
+        //OnStatusChanged -= RefreshInspectorStatuses;
         OnStatusChanged -= RefreshStatusIconUI;
 
         if (blockAnimationCoroutine != null)
@@ -494,17 +499,15 @@ public class EnemyUnit : BattleUnit
 
     public void AdvanceIntent()
     {
-        if (intents == null || intents.Count == 0)
+        if (intents == null || intents.Count == 0) return;
+
+        if (!isCharging && !chargeBrokenStunQueued && HasStatusIntentController())
+        {
+            statusIntentPending = true;
             return;
+        }
 
-        currentIntentIndex++;
-
-        if (currentIntentIndex >= intents.Count)
-            currentIntentIndex = 0;
-
-        RefreshIntentUI();
-
-        OnIntentChanged?.Invoke();
+        AdvanceDefaultIntent();
     }
 
     public void RefreshAllUI()
@@ -520,39 +523,179 @@ public class EnemyUnit : BattleUnit
     {
         if (hpNumberAnimator != null)
         {
-            hpNumberAnimator.SetValue(currentHp);
+            hpNumberAnimator.SetValue(currentHp, maxHp);
         }
         else if (currentHpText != null)
         {
             currentHpText.text = currentHp.ToString();
         }
 
-        if (maxHpText != null)
-            maxHpText.text = maxHp.ToString();
+        if (maxHpText != null) maxHpText.text = maxHp.ToString();
+        if (hpFillImage != null) hpFillImage.fillAmount = maxHp > 0 ? Mathf.Clamp01((float)currentHp / maxHp) : 0f;
     }
-
-    [ContextMenu("Refresh Inspector Statuses")]
-    public void RefreshInspectorStatuses()
+    public void PrepareForUIReplacement()
     {
-        inspectorStatuses.Clear();
-
-        Array statusValues = Enum.GetValues(typeof(StatusType));
-
-        for (int i = 0; i < statusValues.Length; i++)
+        if (blockAnimationCoroutine != null)
         {
-            StatusType statusType = (StatusType)statusValues.GetValue(i);
-            int amount = GetStatus(statusType);
-
-            if (amount <= 0)
-                continue;
-
-            inspectorStatuses.Add(new EnemyStatusDebugEntry
-            {
-                statusType = statusType,
-                amount = amount
-            });
+            StopCoroutine(blockAnimationCoroutine);
+            blockAnimationCoroutine = null;
         }
+
+        if (blockRoot != null) blockRoot.SetActive(false);
+        isBlockUIVisible = false;
+
+        ClearStatusIconUI();
+
+        if (hpNumberAnimator != null) hpNumberAnimator.SetValueImmediate(currentHp, maxHp);
     }
+
+    public void InitializeStartingStatusAbilities(EnemyData enemyData)
+    {
+        statusBehaviours.Clear();
+        statusIntentPending = false;
+
+        if (enemyData != null && enemyData.startingStatuses != null)
+        {
+            for (int i = 0; i < enemyData.startingStatuses.Count; i++)
+            {
+                EnemyData.StartingStatusEntry entry = enemyData.startingStatuses[i];
+
+                if (entry == null) continue;
+                if (entry.amount <= 0) continue;
+                if (entry.statusBehaviour == null) continue;
+
+                BattleStatusBehaviourData behaviour = entry.statusBehaviour;
+
+                if (behaviour.SupportedStatus != entry.statusType)
+                {
+                    Debug.LogWarning($"[EnemyUnit] {unitName} 的 {entry.statusType} 指定了不相符的狀態資料 {behaviour.name}");
+                    continue;
+                }
+
+                statusBehaviours[entry.statusType] = behaviour;
+            }
+        }
+
+        ResolveInitialBlockOnSpawn();
+
+        foreach (KeyValuePair<StatusType, BattleStatusBehaviourData> pair in statusBehaviours)
+        {
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+
+            pair.Value.OnSpawn(this);
+        }
+
+        RefreshAllUI();
+    }
+
+    public bool TrySetStatusIntent(EnemyIntentData intent)
+    {
+        if (intent == null) return false;
+        if (intents == null) return false;
+
+        int intentIndex = intents.IndexOf(intent);
+
+        if (intentIndex < 0)
+        {
+            Debug.LogWarning($"[EnemyUnit] {unitName} 的狀態指定意圖 {intent.name} 沒有放入怪物的 Intents");
+            return false;
+        }
+
+        currentIntentIndex = intentIndex;
+        RefreshIntentUI();
+        OnIntentChanged?.Invoke();
+
+        return true;
+    }
+
+    private bool HasStatusIntentController()
+    {
+        foreach (KeyValuePair<StatusType, BattleStatusBehaviourData> pair in statusBehaviours)
+        {
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+            if (pair.Value.ControlsNextIntent(this)) return true;
+        }
+
+        return false;
+    }
+
+    private void AdvanceDefaultIntent()
+    {
+        if (intents == null || intents.Count == 0) return;
+
+        currentIntentIndex++;
+
+        if (currentIntentIndex >= intents.Count) currentIntentIndex = 0;
+
+        RefreshIntentUI();
+        OnIntentChanged?.Invoke();
+    }
+
+    
+    public override void OnTurnEnd()
+    {
+        base.OnTurnEnd();
+
+        if (!statusIntentPending) return;
+
+        statusIntentPending = false;
+
+        if (currentHp <= 0) return;
+        if (!gameObject.activeInHierarchy) return;
+        if (isCharging || chargeBrokenStunQueued || stayOnCurrentIntentThisTurn) return;
+
+        bool hasController = false;
+
+        foreach (KeyValuePair<StatusType, BattleStatusBehaviourData> pair in statusBehaviours)
+        {
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+            if (!pair.Value.ControlsNextIntent(this)) continue;
+
+            hasController = true;
+
+            if (pair.Value.TrySelectNextIntentAtTurnEnd(this)) return;
+        }
+
+        if (hasController)
+        {
+            Debug.LogWarning($"[EnemyUnit] {unitName} 的狀態未能選出下一個意圖，改用原本的循環意圖");
+        }
+
+        AdvanceDefaultIntent();
+    }
+
+    public string GetStatusBehaviourDescription(StatusType statusType, int amount)
+    {
+        if (!statusBehaviours.TryGetValue(statusType, out BattleStatusBehaviourData behaviour)) return "";
+        if (behaviour == null) return "";
+
+        return behaviour.GetDescription(this, amount);
+    }
+    //[ContextMenu("Refresh Inspector Statuses")]
+    //public void RefreshInspectorStatuses()
+    //{
+    //    inspectorStatuses.Clear();
+
+    //    Array statusValues = Enum.GetValues(typeof(StatusType));
+
+    //    for (int i = 0; i < statusValues.Length; i++)
+    //    {
+    //        StatusType statusType = (StatusType)statusValues.GetValue(i);
+    //        int amount = GetStatus(statusType);
+
+    //        if (amount <= 0)
+    //            continue;
+
+    //        inspectorStatuses.Add(new EnemyStatusDebugEntry
+    //        {
+    //            statusType = statusType,
+    //            amount = amount
+    //        });
+    //    }
+    //}
     public void RefreshStatusIconUI()
     {
         ClearStatusIconUI();
@@ -906,7 +1049,7 @@ public class EnemyUnit : BattleUnit
 
                 entries.Add(new TooltipEntry(title, body));
 
-                intentTooltipTrigger.SetEntries(entries, TooltipAnchorSide.Left);
+                intentTooltipTrigger.SetEntries(entries);
             }
         }
 

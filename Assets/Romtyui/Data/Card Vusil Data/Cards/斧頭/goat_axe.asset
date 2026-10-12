@@ -14,8 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: goat_axe
   cardName: goat_axe
-  description: "\u9020\u6210 {damage} \u9EDE\u50B7\u5BB3\n\u6839\u64DA\u5DF2\u4F7F\u7528\u904E
-    \u5375 \u6578\u91CF\u50B7\u5BB3+1"
+  description: "\u9020\u6210 {finalDamage} \u9EDE\u50B7\u5BB3\n( {damage} + {usedEggCount}(\u5DF2\u4F7F\u7528\u5375\u6B21\u6578))"
   visualData: {fileID: 11400000, guid: d821cd5ef7b65cc45bffb0e97ca43fd5, type: 2}
   cardType: 0
   rarity: 0
@@ -24,9 +23,11 @@ MonoBehaviour:
   exhaust: 0
   ethereal: 0
   retain: 0
-  isToken: 1
-  tokenId: goat_token
+  isToken: 0
+  tokenId: 
   isGodCard: 0
   godCardAnimation: {fileID: 0}
   effects:
   - {fileID: 11400000, guid: 3d2d043dada87fa4abc39ae3af6d5f46, type: 2}
+  - {fileID: 11400000, guid: d736b78ea3db8b542bfca96a019ad3d9, type: 2}
+  hitEffect: {fileID: 0}

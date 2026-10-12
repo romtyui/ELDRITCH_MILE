@@ -2,6 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+public class BattleUnitStatusDebugEntry
+{
+    public StatusType statusType;
+    public int amount;
+}
+
 public class BattleUnit : MonoBehaviour
 {
     public string unitName;
@@ -12,15 +19,23 @@ public class BattleUnit : MonoBehaviour
     public event Action OnHpChanged;
     public event Action OnStatusChanged;
 
+    [Header("Debug - Current Statuses")]
+    [SerializeField] private List<BattleUnitStatusDebugEntry> inspectorStatuses = new List<BattleUnitStatusDebugEntry>();
+
     [Header("Unit Type")]
     public bool isPlayerUnit;
 
     [SerializeField] private Dictionary<StatusType, int> statuses = new();
 
+    private bool initialBlockResolved;
+
     protected virtual void Awake()
     {
         currentHp = maxHp;
         OnHpChanged?.Invoke();
+
+        OnStatusChanged += RefreshInspectorStatuses;
+        RefreshInspectorStatuses();
     }
 
     public Dictionary<StatusType, int> GetAllStatuses()
@@ -33,7 +48,28 @@ public class BattleUnit : MonoBehaviour
         ResolveRegenerationAtTurnStart();
         ResolveHardenAtTurnStart();
     }
+    [ContextMenu("Refresh Inspector Statuses")]
+    public void RefreshInspectorStatuses()
+    {
+        inspectorStatuses.Clear();
 
+        Array statusValues = Enum.GetValues(typeof(StatusType));
+
+        for (int i = 0; i < statusValues.Length; i++)
+        {
+            StatusType statusType = (StatusType)statusValues.GetValue(i);
+            int amount = GetStatus(statusType);
+
+            if (amount <= 0)
+                continue;
+
+            inspectorStatuses.Add(new BattleUnitStatusDebugEntry
+            {
+                statusType = statusType,
+                amount = amount
+            });
+        }
+    }
     public virtual void OnTurnEnd()
     {
         ResolvePoisonAtTurnStart();
@@ -63,6 +99,7 @@ public class BattleUnit : MonoBehaviour
     public virtual void ClearAllStatuses()
     {
         statuses.Clear();
+        initialBlockResolved = false;
         OnStatusChanged?.Invoke();
 
         Debug.Log($"{unitName} 的所有狀態已清除");
@@ -79,7 +116,19 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 已完全重置");
     }
+    public void ResolveInitialBlockOnSpawn()
+    {
+        if (initialBlockResolved) return;
+        if (currentHp <= 0) return;
 
+        initialBlockResolved = true;
+
+        int initialBlock = GetStatus(StatusType.InitialBlock);
+
+        if (initialBlock <= 0) return;
+
+        GainBlock(initialBlock);
+    }
     public virtual void DealDamageTo(BattleUnit target, int baseDamage)
     {
         if (target == null)
@@ -96,6 +145,29 @@ public class BattleUnit : MonoBehaviour
         target.TakeDamage(damage, this);
 
         Debug.Log($"{unitName} 對 {target.unitName} 造成 {damage} 傷害");
+    }
+    public virtual void DealDamageTo(BattleUnit target, int baseDamage, bool ignoreBlock, bool doubleDamageAgainstBlock)
+    {
+        if (target == null) return;
+
+        if (!ignoreBlock && !doubleDamageAgainstBlock)
+        {
+            DealDamageTo(target, baseDamage);
+            return;
+        }
+
+        bool targetHadBlock = target.block > 0;
+
+        int damage = ModifyOutgoingDamage(baseDamage);
+        damage = target.ModifyIncomingDamage(damage);
+
+        if (doubleDamageAgainstBlock && targetHadBlock) damage *= 2;
+
+        damage = Mathf.Max(0, damage);
+
+        target.TakeDamage(damage, this, ignoreBlock);
+
+        Debug.Log($"{unitName} 對 {target.unitName} 造成 {damage} 傷害，穿透：{ignoreBlock}，破盾加倍：{doubleDamageAgainstBlock && targetHadBlock}");
     }
 
     public virtual int ModifyOutgoingDamage(int damage)
@@ -185,6 +257,9 @@ public class BattleUnit : MonoBehaviour
 
     public virtual void TakeDamage(int amount, BattleUnit damageSource, bool ignoreBlock)
     {
+        if (amount <= 0)
+            return;
+
         int hpBefore = currentHp;
 
         int remaining = amount;
@@ -205,41 +280,98 @@ public class BattleUnit : MonoBehaviour
 
         OnHpChanged?.Invoke();
 
+        // =========================================================
+        // 真正扣到 HP 才觸發的效果
+        // =========================================================
+
         if (realHpDamage > 0)
         {
             ReduceRegenerationOnDamage();
             OnAfterHpDamageTaken(realHpDamage);
         }
 
-        if (realHpDamage > 0 && isPlayerUnit)
+        // =========================================================
+        // 只要受到攻擊就觸發玩家受擊震動
+        // 即使傷害全部被護盾擋住也一樣
+        // =========================================================
+
+        if (isPlayerUnit)
         {
             if (CameraShake.Instance != null)
                 CameraShake.Instance.Shake();
         }
+
+        // =========================================================
+        // 傷害數字仍然只顯示真正扣掉的 HP
+        // =========================================================
 
         if (realHpDamage > 0 && this is EnemyUnit enemy)
         {
             enemy.ShowDamagePopup(realHpDamage);
         }
 
-        Debug.Log($"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}");
+        Debug.Log(
+            $"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}"
+        );
 
-        if (realHpDamage > 0)
-            TryTriggerCounter(damageSource);
+        // =========================================================
+        // 反擊
+        // 只要受到攻擊就觸發，即使被護盾完全擋住
+        // =========================================================
+
+        TryTriggerCounter(damageSource);
 
         if (currentHp <= 0)
         {
             Die();
         }
-        else if (realHpDamage > 0)
+        else
         {
+            // =====================================================
+            // 受擊動畫
+            // 只要受到攻擊就播放
+            // 不要求一定扣到 HP
+            // =====================================================
+
             OnDamagedButAlive();
         }
 
-        Debug.Log($"[Damage] {unitName} take {amount}, ignoreBlock = {ignoreBlock}, realHpDamage = {realHpDamage}, HP = {currentHp}");
+        Debug.Log(
+            $"[Damage] {unitName} take {amount}, ignoreBlock = {ignoreBlock}, " +
+            $"realHpDamage = {realHpDamage}, HP = {currentHp}"
+        );
     }
 
+    public virtual void PayHpCost(int amount, bool triggerHurtAnimation)
+    {
+        if (amount <= 0)
+            return;
 
+        int hpBefore = currentHp;
+
+        currentHp -= amount;
+
+        if (currentHp < 0)
+            currentHp = 0;
+
+        int actualHpCost = hpBefore - currentHp;
+
+        OnHpChanged?.Invoke();
+
+        Debug.Log($"{unitName} 支付 {actualHpCost} HP 作為卡牌費用，剩餘 HP: {currentHp}");
+
+        if (triggerHurtAnimation && isPlayerUnit)
+        {
+            if (CameraShake.Instance != null)
+                CameraShake.Instance.Shake();
+        }
+
+        if (currentHp <= 0)
+        {
+            Die();
+            return;
+        }
+    }
     private void TryTriggerCounter(BattleUnit damageSource)
     {
         if (damageSource == null)
@@ -379,7 +511,27 @@ public class BattleUnit : MonoBehaviour
 
         Debug.Log($"{unitName} 原始治療 {amount}，Modifier 後 {finalAmount}，實際恢復 {actualHeal} HP，當前 HP: {currentHp}");
     }
+    /// <summary>
+    /// Debug UI 專用：直接設定 HP，不觸發格擋、受傷動畫與受傷狀態效果。
+    /// </summary>
+    public virtual void SetCurrentHpForDebug(int value, bool allowDeath = false)
+    {
+        int safeMaxHp = Mathf.Max(1, maxHp);
+        int minimumHp = allowDeath ? 0 : 1;
+        int targetHp = Mathf.Clamp(value, minimumHp, safeMaxHp);
 
+        if (currentHp == targetHp)
+            return;
+
+        int previousHp = currentHp;
+        currentHp = targetHp;
+        OnHpChanged?.Invoke();
+
+        Debug.Log($"[Debug HP] {unitName}：{previousHp} → {currentHp}");
+
+        if (allowDeath && previousHp > 0 && currentHp <= 0)
+            Die();
+    }
     public virtual void GainBlock(int amount)
     {
         int finalBlock = ModifyBlockGain(amount);
@@ -393,6 +545,8 @@ public class BattleUnit : MonoBehaviour
 
     public virtual void ResetBlock()
     {
+        if (HasStatus(StatusType.RetainBlock)) return;
+
         block = 0;
         OnHpChanged?.Invoke();
     }
@@ -578,5 +732,10 @@ public class BattleUnit : MonoBehaviour
     protected virtual void Die()
     {
         Debug.Log($"{unitName} 死亡");
+    }
+
+    protected virtual void OnDestroy()
+    {
+        OnStatusChanged -= RefreshInspectorStatuses;
     }
 }

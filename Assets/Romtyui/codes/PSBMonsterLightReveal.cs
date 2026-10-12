@@ -15,7 +15,10 @@ public class PSBMonsterLightReveal : MonoBehaviour
         public SpriteRenderer[] normalRenderers;
         public SpriteRenderer[] darkRenderers;
 
-        public MonsterRevealTarget(Transform normalRoot, Transform darkRoot)
+        public MonsterRevealTarget(
+            Transform normalRoot,
+            Transform darkRoot
+        )
         {
             this.normalRoot = normalRoot;
             this.darkRoot = darkRoot;
@@ -38,53 +41,442 @@ public class PSBMonsterLightReveal : MonoBehaviour
     [Header("Runtime Monster Targets")]
     public List<MonsterRevealTarget> monsterTargets = new();
 
-    [Header("Blend Settings")]
+    [Header("Runtime Values")]
+    [Tooltip("經過曲線處理的燈光數值，只控制 Light 2D。")]
     [Range(0f, 1f)]
     public float lightPower = 1f;
 
-    [Tooltip("lightPower = 0 時，普通型態最低透明度")]
+    [Tooltip("原始 SAN 比例。0 = SAN 0%，1 = SAN 100%。")]
     [Range(0f, 1f)]
-    public float minNormalAlpha = 0f;
+    public float sanRatio = 1f;
 
-    [Tooltip("lightPower = 1 時，普通型態最高透明度")]
+    [Header("SAN Glitch")]
+    [Tooltip("提供實際 SAN 數值的 BattleManager。")]
+    public BattleManager glitchBattleManager;
+
+    [Tooltip("全螢幕故障效果實際使用的材質。")]
+    public Material glitchMaterial;
+
     [Range(0f, 1f)]
-    public float maxNormalAlpha = 1f;
+    [Tooltip("SAN 低於這個比例後才開始增加故障。例如 0.3 = 30%。")]
+    public float sanGlitchThreshold = 0.3f;
 
-    [Tooltip("lightPower = 0 時，黑暗型態最高透明度")]
+    [Min(0.01f)]
+    [Tooltip("故障增加的曲線；1 代表線性。")]
+    public float glitchResponsePower = 1f;
+
+    [Tooltip("Shader Graph 中 San Intensity 的 Reference。")]
+    public string sanIntensityReference = "_SanIntensity";
+
+    [Tooltip("Shader Graph 中 San Hit Pulse 的 Reference。")]
+    public string sanHitPulseReference = "_SanHitPulse";
+
     [Range(0f, 1f)]
-    public float maxDarkAlpha = 1f;
+    [Tooltip("每次 SAN 下降時，短暫故障的最高強度。")]
+    public float sanHitPulseStrength = 0.65f;
 
-    [Tooltip("lightPower = 1 時，黑暗型態最低透明度")]
+    [Min(0.01f)]
+    [Tooltip("短暫故障從最高強度消退至 0 的秒數。")]
+    public float sanHitPulseDuration = 0.45f;
+
+    [Header("New Glitch Material")]
+
+    [Tooltip("Shader Graph 中 Stripe Density 的 Reference。")]
+    public string stripeDensityReference = "_StripeDensity";
+
+    [Min(0f)]
+    [Tooltip("故障強度為 0 時的條紋密度。")]
+    public float minStripeDensity = 0f;
+
+    [Min(0f)]
+    [Tooltip("故障強度為 1 時的條紋密度。")]
+    public float maxStripeDensity = 0.12f;
+
+    [Tooltip("Shader Graph 中 Update Rate 的 Reference。")]
+    public string updateRateReference = "_UpdateRate";
+
+    [Min(0f)]
+    [Tooltip("故障強度為 0 時的條紋更新速度。")]
+    public float minUpdateRate = 1f;
+
+    [Min(0f)]
+    [Tooltip("故障強度為 1 時的條紋更新速度。")]
+    public float maxUpdateRate = 4f;
+
+    [Tooltip("Shader Graph 中 RGB Blend 的 Reference。")]
+    public string rgbBlendReference = "_RGBBlend";
+
     [Range(0f, 1f)]
-    public float minDarkAlpha = 0f;
+    [Tooltip("故障強度為 0 時的 RGB 混合程度。")]
+    public float minRgbBlend = 0f;
 
-    [Header("Optional Visual Light")]
+    [Range(0f, 1f)]
+    [Tooltip("故障強度為 1 時的 RGB 混合程度。")]
+    public float maxRgbBlend = 0.5f;
+
+    [Tooltip("Shader Graph 中 RGB Speed 的 Reference。")]
+    public string rgbSpeedReference = "_RGBSpeed";
+
+    [Min(0f)]
+    [Tooltip("故障強度為 0 時的 RGB 變化速度。")]
+    public float minRgbSpeed = 1f;
+
+    [Min(0f)]
+    [Tooltip("故障強度為 1 時的 RGB 變化速度。")]
+    public float maxRgbSpeed = 8f;
+
+    [Tooltip("Shader Graph 中 RGB Split Amount 的 Reference。")]
+    public string rgbSplitAmountReference = "_RGBSplitAmount";
+
+    [Min(0f)]
+    [Tooltip("故障強度為 0 時的 RGB 錯位幅度。")]
+    public float minRgbSplitAmount = 0f;
+
+    [Min(0f)]
+    [Tooltip("故障強度為 1 時的 RGB 錯位幅度。")]
+    public float maxRgbSplitAmount = 0.05f;
+
+    [Tooltip("Shader Graph 中 Noise Amount 的 Reference。")]
+    public string noiseAmountReference = "_NoiseAmount";
+
+    [Min(0f)]
+    [Tooltip("故障強度為 0 時的噪點強度。")]
+    public float minNoiseAmount = 0f;
+
+    [Min(0f)]
+    [Tooltip("故障強度為 1 時的噪點強度。")]
+    public float maxNoiseAmount = 0.01f;
+
+    private int previousSan = -1;
+    private float sanHitPulseRemaining;
+
+    // 同一個缺少的 Shader 屬性只提示一次，避免每幀刷滿 Console。
+    private readonly HashSet<string> missingGlitchProperties = new();
+
+    [Header("Form Blend Threshold")]
+    [Tooltip("SAN 低於此比例時，只顯示完整黑暗型態。")]
+    [Range(0f, 1f)]
+    public float darkToNormalStart = 0.25f;
+
+    [Tooltip("SAN 高於此比例時，只顯示完整亮型態。")]
+    [Range(0f, 1f)]
+    public float darkToNormalEnd = 0.75f;
+
+    [Header("Renderer Optimization")]
+    [Tooltip("在 Form Blend 完全為 0 或 1 時，停用看不到的另一套 Renderer。")]
+    public bool disableHiddenFormRenderers = true;
+
+    [Tooltip("判斷 Form Blend 是否已到達端點的誤差。")]
+    [Range(0f, 0.01f)]
+    public float endpointEpsilon = 0.0001f;
+
+    [Header("Global Light Color")]
+    [Tooltip("要控制顏色的 Global Light 2D。")]
+    public Light2D globalLight;
+
+    [Tooltip("lightPower 為 0 時的 Global Light 顏色。")]
+    [ColorUsage(false, true)]
+    public Color darkestGlobalLightColor =
+        new Color(0.08f, 0.1f, 0.16f, 1f);
+
+    [Tooltip("lightPower 為 1 時的 Global Light 顏色。")]
+    [ColorUsage(false, true)]
+    public Color brightestGlobalLightColor = Color.white;
+
+    [Tooltip("Global Light 顏色漸變曲線。1 為線性；大於 1 會更快變暗。")]
+    [Min(0.01f)]
+    public float globalLightResponsePower = 1f;
+
+    [Tooltip("lightPower 為 0 時的 Global Light 強度。")]
+    [Min(0f)]
+    public float darkestGlobalLightIntensity = 0.15f;
+
+    [Tooltip("lightPower 為 1 時的 Global Light 強度。")]
+    [Min(0f)]
+    public float brightestGlobalLightIntensity = 1f;
+
+    [Header("Freeform Visual Light")]
+    [Tooltip("控制怪物照明與溶解區域的 Freeform Light 2D。")]
     public Light2D visualLight;
 
-    [Header("Blend Threshold")]
-    [Range(0f, 1f)] public float darkToNormalStart = 0.45f;
-    [Range(0f, 1f)] public float darkToNormalEnd = 0.55f;
-    [Header("Anti Flicker")]
-    [Range(0f, 1f)] public float hideAlphaThreshold = 0.03f;
-
-    [Header("Visual Light Settings")]
+    [Header("Visual Light Intensity")]
+    [Tooltip("lightPower 為 0 時的 Freeform Light 強度。")]
     public float minLightIntensity = 0.25f;
-    public float maxLightIntensity = 1.5f;
 
+    [Tooltip("lightPower 為 1 時的 Freeform Light 強度。")]
+    public float maxLightIntensity = 5.01f;
+
+    [Header("Freeform Light Falloff")]
+    [Tooltip("SAN 為 0% 時的最小 Falloff。")]
+    [Min(0f)]
+    public float minLightFalloff = 0.1f;
+
+    [Tooltip("SAN 為 100% 時的最大 Falloff。")]
+    [Min(0f)]
+    public float maxLightFalloff = 0.65f;
+
+    [Tooltip("Falloff 是否使用原始 SAN 比例控制。")]
+    public bool useSanRatioForFalloff = true;
+
+    [Tooltip("Falloff 反應曲線。1 = 線性。")]
+    [Min(0.01f)]
+    public float falloffResponsePower = 1f;
+
+    [Header("Legacy Point Light Radius")]
+    [Tooltip("Freeform Light 不使用此半徑；保留供 Point Light 相容。")]
     public float minLightOuterRadius = 1.5f;
+
+    [Tooltip("Freeform Light 不使用此半徑；保留供 Point Light 相容。")]
     public float maxLightOuterRadius = 8f;
+
+    private static readonly int FormBlendId =
+        Shader.PropertyToID("_FormBlend");
+
+    private static readonly int RevealLightIntensityId =
+        Shader.PropertyToID("_RevealLightIntensity");
+
+    private readonly HashSet<Material> runtimeMaterials = new();
 
     private void Awake()
     {
         RefreshAllTargets();
+        PrepareAllTargets();
+    }
+
+    private void OnEnable()
+    {
+        previousSan = -1;
+        sanHitPulseRemaining = 0f;
+
+        RefreshAllTargets();
+        PrepareAllTargets();
+
+        UpdateVisualLight();
+        ApplyShaderValues(CalculateFormBlend());
+        UpdateGlitchStrength();
     }
 
     private void Update()
     {
-        float clampedPower = Mathf.Clamp01(lightPower);
+        UpdateVisualLight();
 
-        float normalAlpha = Mathf.Lerp(minNormalAlpha, maxNormalAlpha, clampedPower);
-        float darkAlpha = Mathf.Lerp(maxDarkAlpha, minDarkAlpha, clampedPower);
+        float formBlend = CalculateFormBlend();
+        ApplyShaderValues(formBlend);
+        UpdateGlitchStrength();
+    }
+
+    private void UpdateGlitchStrength()
+    {
+        if (glitchMaterial == null)
+            return;
+
+        float intensity = 0f;
+
+        if (glitchBattleManager != null &&
+            glitchBattleManager.energySystem != null)
+        {
+            EnergySystem energySystem =
+                glitchBattleManager.energySystem;
+
+            if (energySystem.maxEnergy > 0)
+            {
+                int currentSan = energySystem.currentEnergy;
+
+                float currentSanRatio = Mathf.Clamp01(
+                    currentSan / (float)energySystem.maxEnergy
+                );
+
+                float threshold = Mathf.Clamp01(
+                    sanGlitchThreshold
+                );
+
+                float progress = threshold > 0f
+                    ? Mathf.InverseLerp(
+                        threshold,
+                        0f,
+                        currentSanRatio
+                    )
+                    : (currentSanRatio <= 0f ? 1f : 0f);
+
+                float response = Mathf.Pow(
+                    progress,
+                    Mathf.Max(0.01f, glitchResponsePower)
+                );
+
+                intensity = response;
+
+                if (currentSanRatio >= threshold)
+                {
+                    sanHitPulseRemaining = 0f;
+                }
+                else if (
+                    previousSan >= 0 &&
+                    currentSan < previousSan
+                )
+                {
+                    sanHitPulseRemaining =
+                        Mathf.Max(0.01f, sanHitPulseDuration);
+                }
+
+                previousSan = currentSan;
+            }
+            else
+            {
+                previousSan = -1;
+                sanHitPulseRemaining = 0f;
+            }
+        }
+        else
+        {
+            previousSan = -1;
+            sanHitPulseRemaining = 0f;
+        }
+
+        float pulse =
+            Mathf.Clamp01(
+                sanHitPulseRemaining /
+                Mathf.Max(0.01f, sanHitPulseDuration)
+            ) *
+            Mathf.Clamp01(sanHitPulseStrength);
+
+        sanHitPulseRemaining = Mathf.Max(
+            0f,
+            sanHitPulseRemaining - Time.deltaTime
+        );
+
+        // 保留原本寫入 Shader Graph 的兩個 SAN 參數。
+        SetNewGlitchFloat(sanIntensityReference, intensity);
+        SetNewGlitchFloat(sanHitPulseReference, pulse);
+
+        // 新材質的其他參數同時受持續故障和受傷脈衝影響。
+        float newMaterialStrength =
+            Mathf.Clamp01(intensity + pulse);
+
+        SetNewGlitchFloat(
+            stripeDensityReference,
+            Mathf.Lerp(
+                minStripeDensity,
+                maxStripeDensity,
+                newMaterialStrength
+            )
+        );
+
+        SetNewGlitchFloat(
+            updateRateReference,
+            Mathf.Lerp(
+                minUpdateRate,
+                maxUpdateRate,
+                newMaterialStrength
+            )
+        );
+
+        SetNewGlitchFloat(
+            rgbBlendReference,
+            Mathf.Lerp(
+                minRgbBlend,
+                maxRgbBlend,
+                newMaterialStrength
+            )
+        );
+
+        SetNewGlitchFloat(
+            rgbSpeedReference,
+            Mathf.Lerp(
+                minRgbSpeed,
+                maxRgbSpeed,
+                newMaterialStrength
+            )
+        );
+
+        SetNewGlitchFloat(
+            rgbSplitAmountReference,
+            Mathf.Lerp(
+                minRgbSplitAmount,
+                maxRgbSplitAmount,
+                newMaterialStrength
+            )
+        );
+
+        SetNewGlitchFloat(
+            noiseAmountReference,
+            Mathf.Lerp(
+                minNoiseAmount,
+                maxNoiseAmount,
+                newMaterialStrength
+            )
+        );
+    }
+
+    private void SetNewGlitchFloat(
+        string propertyReference,
+        float value
+    )
+    {
+        if (glitchMaterial == null ||
+            string.IsNullOrEmpty(propertyReference))
+        {
+            return;
+        }
+
+        if (!glitchMaterial.HasProperty(propertyReference))
+        {
+            if (missingGlitchProperties.Add(propertyReference))
+            {
+                Debug.LogWarning(
+                    $"[PSBMonsterLightReveal] 材質 {glitchMaterial.name} " +
+                    $"找不到 Shader 屬性 {propertyReference}。請檢查 " +
+                    "Shader Graph Blackboard 的 Reference。",
+                    this
+                );
+            }
+
+            return;
+        }
+
+        glitchMaterial.SetFloat(propertyReference, value);
+    }
+
+    private float CalculateFormBlend()
+    {
+        float clampedSanRatio = Mathf.Clamp01(sanRatio);
+
+        float start = Mathf.Min(
+            darkToNormalStart,
+            darkToNormalEnd
+        );
+
+        float end = Mathf.Max(
+            darkToNormalStart,
+            darkToNormalEnd
+        );
+
+        if (Mathf.Approximately(start, end))
+        {
+            return clampedSanRatio >= end
+                ? 1f
+                : 0f;
+        }
+
+        return Mathf.InverseLerp(
+            start,
+            end,
+            clampedSanRatio
+        );
+    }
+
+    private void ApplyShaderValues(float formBlend)
+    {
+        formBlend = Mathf.Clamp01(formBlend);
+
+        bool normalVisible =
+            !disableHiddenFormRenderers ||
+            formBlend > endpointEpsilon;
+
+        bool darkVisible =
+            !disableHiddenFormRenderers ||
+            formBlend < 1f - endpointEpsilon;
+
+        runtimeMaterials.Clear();
 
         for (int i = monsterTargets.Count - 1; i >= 0; i--)
         {
@@ -96,60 +488,204 @@ public class PSBMonsterLightReveal : MonoBehaviour
                 continue;
             }
 
-            if (target.normalRoot == null && target.darkRoot == null)
+            if (target.normalRoot == null &&
+                target.darkRoot == null)
             {
                 monsterTargets.RemoveAt(i);
                 continue;
             }
 
-            SetRenderersAlpha(target.normalRenderers, normalAlpha);
-            SetRenderersAlpha(target.darkRenderers, darkAlpha);
+            CollectMaterialsAndSetVisibility(
+                target.normalRenderers,
+                normalVisible
+            );
+
+            CollectMaterialsAndSetVisibility(
+                target.darkRenderers,
+                darkVisible
+            );
         }
 
-        if (visualLight != null)
+        float revealLightIntensity = visualLight != null
+            ? Mathf.Max(0.001f, visualLight.intensity)
+            : 1f;
+
+        foreach (Material material in runtimeMaterials)
         {
-            visualLight.intensity = Mathf.Lerp(minLightIntensity, maxLightIntensity, clampedPower);
-            visualLight.pointLightOuterRadius = Mathf.Lerp(minLightOuterRadius, maxLightOuterRadius, clampedPower);
+            if (material == null)
+                continue;
+
+            if (material.HasProperty(FormBlendId))
+            {
+                material.SetFloat(
+                    FormBlendId,
+                    formBlend
+                );
+            }
+
+            if (material.HasProperty(RevealLightIntensityId))
+            {
+                material.SetFloat(
+                    RevealLightIntensityId,
+                    revealLightIntensity
+                );
+            }
         }
     }
 
-    public void RegisterMonster(Transform normalRoot, Transform darkRoot)
+    private void CollectMaterialsAndSetVisibility(
+        SpriteRenderer[] renderers,
+        bool visible
+    )
+    {
+        if (renderers == null)
+            return;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = renderers[i];
+
+            if (spriteRenderer == null)
+                continue;
+
+            spriteRenderer.enabled = visible;
+
+            Color color = spriteRenderer.color;
+            color.a = 1f;
+            spriteRenderer.color = color;
+
+            Material material = spriteRenderer.sharedMaterial;
+
+            if (material != null)
+                runtimeMaterials.Add(material);
+        }
+    }
+
+    private void UpdateVisualLight()
+    {
+        UpdateGlobalLight();
+
+        if (visualLight == null)
+            return;
+
+        float clampedLightPower = Mathf.Clamp01(lightPower);
+        float clampedSanRatio = Mathf.Clamp01(sanRatio);
+
+        visualLight.intensity = Mathf.Lerp(
+            minLightIntensity,
+            maxLightIntensity,
+            clampedLightPower
+        );
+
+        float falloffInput = useSanRatioForFalloff
+            ? clampedSanRatio
+            : clampedLightPower;
+
+        float responsePower = Mathf.Max(
+            0.01f,
+            falloffResponsePower
+        );
+
+        float falloffT = Mathf.Pow(
+            falloffInput,
+            responsePower
+        );
+
+        float safeMinFalloff = Mathf.Max(
+            0f,
+            Mathf.Min(minLightFalloff, maxLightFalloff)
+        );
+
+        float safeMaxFalloff = Mathf.Max(
+            safeMinFalloff,
+            Mathf.Max(minLightFalloff, maxLightFalloff)
+        );
+
+        visualLight.shapeLightFalloffSize = Mathf.Lerp(
+            safeMinFalloff,
+            safeMaxFalloff,
+            falloffT
+        );
+
+        // 保留原程式對 Point Light 半徑的相容設定。
+        visualLight.pointLightOuterRadius = Mathf.Lerp(
+            minLightOuterRadius,
+            maxLightOuterRadius,
+            clampedLightPower
+        );
+    }
+
+    public void RegisterMonster(
+        Transform normalRoot,
+        Transform darkRoot
+    )
     {
         if (normalRoot == null && darkRoot == null)
         {
-            Debug.LogWarning("[PSBMonsterLightReveal] normalRoot 和 darkRoot 都是 null，無法註冊怪物");
+            Debug.LogWarning(
+                "[PSBMonsterLightReveal] normalRoot 和 darkRoot " +
+                "都是 null，無法註冊怪物。"
+            );
+
             return;
         }
 
-        MonsterRevealTarget existing = FindTarget(normalRoot, darkRoot);
+        MonsterRevealTarget existing =
+            FindTarget(normalRoot, darkRoot);
 
         if (existing != null)
         {
             existing.RefreshRenderers();
-            Debug.Log($"[PSBMonsterLightReveal] 已存在，刷新怪物 roots：normal = {GetName(normalRoot)}, dark = {GetName(darkRoot)}");
+            PrepareTarget(existing);
+
+            UpdateVisualLight();
+            ApplyShaderValues(CalculateFormBlend());
+
+            Debug.Log(
+                $"[PSBMonsterLightReveal] 已存在，刷新怪物 roots：" +
+                $"normal = {GetName(normalRoot)}, " +
+                $"dark = {GetName(darkRoot)}"
+            );
+
             return;
         }
 
-        MonsterRevealTarget target = new MonsterRevealTarget(normalRoot, darkRoot);
+        MonsterRevealTarget target =
+            new MonsterRevealTarget(normalRoot, darkRoot);
+
         monsterTargets.Add(target);
 
-        Debug.Log($"[PSBMonsterLightReveal] 自動註冊怪物 roots：normal = {GetName(normalRoot)}, dark = {GetName(darkRoot)}");
+        PrepareTarget(target);
+
+        UpdateVisualLight();
+        ApplyShaderValues(CalculateFormBlend());
+
+        Debug.Log(
+            $"[PSBMonsterLightReveal] 自動註冊怪物 roots：" +
+            $"normal = {GetName(normalRoot)}, " +
+            $"dark = {GetName(darkRoot)}"
+        );
     }
 
-    public void UnregisterMonster(Transform normalRoot, Transform darkRoot)
+    public void UnregisterMonster(
+        Transform normalRoot,
+        Transform darkRoot
+    )
     {
         for (int i = monsterTargets.Count - 1; i >= 0; i--)
         {
             MonsterRevealTarget target = monsterTargets[i];
 
             if (target == null)
-            {
-                monsterTargets.RemoveAt(i);
                 continue;
-            }
 
-            bool sameNormal = normalRoot != null && target.normalRoot == normalRoot;
-            bool sameDark = darkRoot != null && target.darkRoot == darkRoot;
+            bool sameNormal =
+                normalRoot != null &&
+                target.normalRoot == normalRoot;
+
+            bool sameDark =
+                darkRoot != null &&
+                target.darkRoot == darkRoot;
 
             if (sameNormal || sameDark)
             {
@@ -158,17 +694,43 @@ public class PSBMonsterLightReveal : MonoBehaviour
         }
     }
 
+    private void UpdateGlobalLight()
+    {
+        if (globalLight == null)
+            return;
+
+        float globalLightT = Mathf.Pow(
+            Mathf.Clamp01(lightPower),
+            Mathf.Max(0.01f, globalLightResponsePower)
+        );
+
+        globalLight.color = Color.Lerp(
+            darkestGlobalLightColor,
+            brightestGlobalLightColor,
+            globalLightT
+        );
+
+        globalLight.intensity = Mathf.Lerp(
+            Mathf.Max(0f, darkestGlobalLightIntensity),
+            Mathf.Max(0f, brightestGlobalLightIntensity),
+            globalLightT
+        );
+    }
+
     public void ClearTargets()
     {
         monsterTargets.Clear();
+        runtimeMaterials.Clear();
     }
 
     public void RefreshAllTargets()
     {
         for (int i = 0; i < monsterTargets.Count; i++)
         {
-            if (monsterTargets[i] != null)
-                monsterTargets[i].RefreshRenderers();
+            MonsterRevealTarget target = monsterTargets[i];
+
+            if (target != null)
+                target.RefreshRenderers();
         }
     }
 
@@ -177,7 +739,78 @@ public class PSBMonsterLightReveal : MonoBehaviour
         lightPower = Mathf.Clamp01(value);
     }
 
-    private MonsterRevealTarget FindTarget(Transform normalRoot, Transform darkRoot)
+    public void SetSanRatio(float value)
+    {
+        sanRatio = Mathf.Clamp01(value);
+    }
+
+    private void PrepareAllTargets()
+    {
+        for (int i = 0; i < monsterTargets.Count; i++)
+        {
+            MonsterRevealTarget target = monsterTargets[i];
+
+            if (target != null)
+                PrepareTarget(target);
+        }
+    }
+
+    private void PrepareTarget(MonsterRevealTarget target)
+    {
+        if (target == null)
+            return;
+
+        PrepareRenderers(target.normalRenderers);
+        PrepareRenderers(target.darkRenderers);
+    }
+
+    private void PrepareRenderers(
+        SpriteRenderer[] renderers
+    )
+    {
+        if (renderers == null)
+            return;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer spriteRenderer = renderers[i];
+
+            if (spriteRenderer == null)
+                continue;
+
+            Color color = spriteRenderer.color;
+            color.a = 1f;
+            spriteRenderer.color = color;
+
+            spriteRenderer.enabled = true;
+
+            Material material = spriteRenderer.sharedMaterial;
+
+            if (material == null)
+                continue;
+
+            if (!material.HasProperty(FormBlendId))
+            {
+                Debug.LogWarning(
+                    $"[PSBMonsterLightReveal] {spriteRenderer.name} " +
+                    $"的材質 {material.name} 沒有 _FormBlend。"
+                );
+            }
+
+            if (!material.HasProperty(RevealLightIntensityId))
+            {
+                Debug.LogWarning(
+                    $"[PSBMonsterLightReveal] {spriteRenderer.name} " +
+                    $"的材質 {material.name} 沒有 _RevealLightIntensity。"
+                );
+            }
+        }
+    }
+
+    private MonsterRevealTarget FindTarget(
+        Transform normalRoot,
+        Transform darkRoot
+    )
     {
         for (int i = 0; i < monsterTargets.Count; i++)
         {
@@ -186,40 +819,20 @@ public class PSBMonsterLightReveal : MonoBehaviour
             if (target == null)
                 continue;
 
-            if (target.normalRoot == normalRoot && target.darkRoot == darkRoot)
+            if (target.normalRoot == normalRoot &&
+                target.darkRoot == darkRoot)
+            {
                 return target;
+            }
         }
 
         return null;
     }
 
-    private void SetRenderersAlpha(SpriteRenderer[] renderers, float alpha)
-    {
-        if (renderers == null)
-            return;
-
-        bool visible = alpha > hideAlphaThreshold;
-
-        for (int i = 0; i < renderers.Length; i++)
-        {
-            SpriteRenderer sr = renderers[i];
-
-            if (sr == null)
-                continue;
-
-            sr.enabled = visible;
-
-            if (!visible)
-                continue;
-
-            Color c = sr.color;
-            c.a = alpha;
-            sr.color = c;
-        }
-    }
-
     private string GetName(Transform target)
     {
-        return target != null ? target.name : "null";
+        return target != null
+            ? target.name
+            : "null";
     }
 }

@@ -10,6 +10,9 @@ public class BattleDebugHotkeys : MonoBehaviour
     public BattleManager battleManager;
     public GameObject battleManagerObject;
 
+    [Tooltip("控制 SAN 與燈光連動的 Binder。")]
+    public EnergyLightPowerBinder energyLightPowerBinder;
+
     [Header("Hotkeys")]
     public Key killAllEnemiesKey = Key.K;
     public Key enableBattleManagerKey = Key.B;
@@ -21,6 +24,13 @@ public class BattleDebugHotkeys : MonoBehaviour
     public Key loadSceneWithSaveKey = Key.F5;
     [Tooltip("不通關，保留目前怪物組並重新載入指定場景")]
     public Key reloadSceneWithoutCommitKey = Key.F6;
+
+    [Header("Player Value Debug UI")]
+    [Tooltip("關閉時，HP Slider 最低只能調到 1，避免直接結束戰鬥。")]
+    public bool allowZeroHpFromSlider;
+
+    [Tooltip("拖動 SAN 時暫時略過 Binder 的平滑，立即顯示燈光結果。")]
+    public bool instantSanSliderPreview = true;
 
     [Header("Settings")]
     public int debugDamage = 9999;
@@ -72,7 +82,8 @@ public class BattleDebugHotkeys : MonoBehaviour
     private readonly string[] tabNames = new string[]
     {
         "狀態",
-        "加牌"
+        "加牌",
+        "數值"
     };
 
     private void Awake()
@@ -161,6 +172,9 @@ public class BattleDebugHotkeys : MonoBehaviour
 
             case 1:
                 DrawCardDebugTab();
+                break;
+            case 2:
+                DrawPlayerValueDebugTab();
                 break;
         }
 
@@ -797,6 +811,9 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         if (battleManagerObject == null && battleManager != null)
             battleManagerObject = battleManager.gameObject;
+
+        if (energyLightPowerBinder == null)
+            energyLightPowerBinder = FindFirstObjectByType<EnergyLightPowerBinder>(FindObjectsInactive.Include);
     }
 
     // =========================================================
@@ -808,10 +825,7 @@ public class BattleDebugHotkeys : MonoBehaviour
     {
         AutoFindRefs();
 
-        EnemyUnit[] enemies = FindObjectsByType<EnemyUnit>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
-        );
+        EnemyUnit[] enemies = FindObjectsByType<EnemyUnit>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
         Debug.Log($"[BattleDebugHotkeys] 對場景所有怪物造成 {debugDamage} 傷害，數量 = {enemies.Length}");
 
@@ -961,5 +975,185 @@ public class BattleDebugHotkeys : MonoBehaviour
         Debug.Log($"[BattleDebugHotkeys] F6 使用戰鬥開始牌組快照重新載入場景：{debugSceneName}");
 
         SceneManager.LoadScene(debugSceneName);
+    }
+    private void DrawPlayerValueDebugTab()
+    {
+        AutoFindRefs();
+
+        GUILayout.Label("玩家數值與燈光預覽");
+        GUILayout.Space(8);
+
+        DrawPlayerHpSlider();
+
+        GUILayout.Space(12);
+
+        DrawSanSlider();
+
+        GUILayout.Space(12);
+        GUILayout.BeginVertical("box");
+
+        instantSanSliderPreview = GUILayout.Toggle(instantSanSliderPreview, "拖動 SAN 時立即更新燈光（暫時略過平滑）");
+        allowZeroHpFromSlider = GUILayout.Toggle(allowZeroHpFromSlider, "允許 HP Slider 調到 0（會觸發死亡）");
+
+        GUILayout.EndVertical();
+
+        GUILayout.Space(8);
+        GUILayout.Label("SAN Slider 會同步更新燈光強度、Freeform Falloff 與怪物溶解。");
+    }
+
+    private void DrawPlayerHpSlider()
+    {
+        GUILayout.BeginVertical("box");
+        GUILayout.Label("玩家 HP");
+
+        BattleUnit playerUnit = battleManager != null ? battleManager.playerUnit : null;
+
+        if (playerUnit == null)
+        {
+            GUILayout.Label("找不到玩家 BattleUnit");
+            GUILayout.EndVertical();
+            return;
+        }
+
+        int safeMaxHp = Mathf.Max(1, playerUnit.maxHp);
+        int minimumHp = allowZeroHpFromSlider ? 0 : 1;
+        int currentHp = Mathf.Clamp(playerUnit.currentHp, minimumHp, safeMaxHp);
+
+        GUILayout.Label($"{currentHp} / {safeMaxHp}");
+
+        int targetHp = Mathf.RoundToInt(GUILayout.HorizontalSlider(currentHp, minimumHp, safeMaxHp));
+
+        if (targetHp != playerUnit.currentHp)
+        {
+            playerUnit.SetCurrentHpForDebug(targetHp, allowZeroHpFromSlider);
+            RefreshBattleUI();
+        }
+
+        GUILayout.BeginHorizontal();
+
+        if (GUILayout.Button("最低"))
+        {
+            playerUnit.SetCurrentHpForDebug(minimumHp, allowZeroHpFromSlider);
+            RefreshBattleUI();
+        }
+
+        if (GUILayout.Button("50%"))
+        {
+            int halfHp = Mathf.Max(minimumHp, Mathf.RoundToInt(safeMaxHp * 0.5f));
+            playerUnit.SetCurrentHpForDebug(halfHp, allowZeroHpFromSlider);
+            RefreshBattleUI();
+        }
+
+        if (GUILayout.Button("全滿"))
+        {
+            playerUnit.SetCurrentHpForDebug(safeMaxHp, allowZeroHpFromSlider);
+            RefreshBattleUI();
+        }
+
+        GUILayout.EndHorizontal();
+        GUILayout.EndVertical();
+    }
+
+    private void DrawSanSlider()
+    {
+        GUILayout.BeginVertical("box");
+        GUILayout.Label("SAN／燈光預覽");
+
+        EnergySystem energySystem = battleManager != null ? battleManager.energySystem : null;
+
+        if (energySystem == null)
+        {
+            GUILayout.Label("找不到 EnergySystem");
+            GUILayout.EndVertical();
+            return;
+        }
+
+        int safeMaxSan = Mathf.Max(1, energySystem.maxEnergy);
+        int currentSan = Mathf.Clamp(energySystem.currentEnergy, 0, safeMaxSan);
+        float sanRatio = (float)currentSan / safeMaxSan;
+
+        GUILayout.Label($"{currentSan} / {safeMaxSan}　({sanRatio:P0})");
+
+        int targetSan = Mathf.RoundToInt(GUILayout.HorizontalSlider(currentSan, 0, safeMaxSan));
+
+        if (targetSan != energySystem.currentEnergy)
+            SetSanForDebug(targetSan);
+
+        GUILayout.BeginHorizontal();
+
+        if (GUILayout.Button("0%"))
+            SetSanByPercent(0f);
+
+        if (GUILayout.Button("25%"))
+            SetSanByPercent(0.25f);
+
+        if (GUILayout.Button("50%"))
+            SetSanByPercent(0.5f);
+
+        if (GUILayout.Button("75%"))
+            SetSanByPercent(0.75f);
+
+        if (GUILayout.Button("100%"))
+            SetSanByPercent(1f);
+
+        GUILayout.EndHorizontal();
+        GUILayout.EndVertical();
+    }
+
+    private void SetSanByPercent(float percentage)
+    {
+        AutoFindRefs();
+
+        if (battleManager == null || battleManager.energySystem == null)
+            return;
+
+        int maximum = Mathf.Max(1, battleManager.energySystem.maxEnergy);
+        int targetSan = Mathf.RoundToInt(maximum * Mathf.Clamp01(percentage));
+
+        SetSanForDebug(targetSan);
+    }
+
+    private void SetSanForDebug(int targetSan)
+    {
+        AutoFindRefs();
+
+        if (battleManager == null || battleManager.energySystem == null)
+        {
+            Debug.LogWarning("[BattleDebugHotkeys] 找不到 EnergySystem，無法調整 SAN。");
+            return;
+        }
+
+        EnergySystem energySystem = battleManager.energySystem;
+        int safeMaxSan = Mathf.Max(1, energySystem.maxEnergy);
+
+        targetSan = Mathf.Clamp(targetSan, 0, safeMaxSan);
+
+        int difference = targetSan - energySystem.currentEnergy;
+
+        if (difference == 0)
+            return;
+
+        bool previousSmoothChange = false;
+        bool temporarilyDisabledSmooth = false;
+
+        if (instantSanSliderPreview && energyLightPowerBinder != null)
+        {
+            previousSmoothChange = energyLightPowerBinder.smoothChange;
+            energyLightPowerBinder.smoothChange = false;
+            temporarilyDisabledSmooth = true;
+        }
+
+        if (difference > 0)
+            energySystem.GainEnergy(difference);
+        else
+            energySystem.Spend(-difference);
+
+        if (energyLightPowerBinder != null)
+            energyLightPowerBinder.RefreshLightPower();
+
+        if (temporarilyDisabledSmooth)
+            energyLightPowerBinder.smoothChange = previousSmoothChange;
+
+        RefreshBattleUI();
     }
 }

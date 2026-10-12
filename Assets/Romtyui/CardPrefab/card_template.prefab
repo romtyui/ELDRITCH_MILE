@@ -394,7 +394,7 @@ RectTransform:
   m_GameObject: {fileID: 5875220465785766505}
   m_LocalRotation: {x: -0, y: -0, z: -0.2079117, w: 0.9781476}
   m_LocalPosition: {x: 0, y: 0, z: -10.000023}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.1, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6780422379471587520}
@@ -517,7 +517,13 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
-  cardTooltipSide: 3
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.4
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 2
+  sanCorruptionMinRefreshInterval: 0.05
+  cardTooltipSide: 2
 --- !u!114 &2071348053210116029
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -531,7 +537,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 4293337803333473100}
-  preferredSide: 1
+  preferredSide: 2
+  positionMode: 1
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []

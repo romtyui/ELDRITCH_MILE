@@ -10,62 +10,81 @@ public class StatusIconUI : MonoBehaviour
     public TMP_Text stackText;
     public TooltipTriggerUI tooltipTrigger;
     public TooltipKeywordDatabase keywordDatabase;
-
     [Header("Stack Text Display")]
-    [Tooltip("狀態只有 1 層時是否顯示數字")]
-    public bool showNumberWhenOneStack = true;
+    public bool showNumberWhenOne = true;
 
     public void Set(StatusType statusType, Sprite icon, int stack, TooltipKeywordDatabase database)
     {
+        Set(statusType, icon, stack, database, true);
+    }
+
+    public void Set(StatusType statusType, Sprite icon, int stack, TooltipKeywordDatabase database, bool useIndividualTooltip)
+    {
+        keywordDatabase = database;
+
         if (iconImage != null)
         {
             iconImage.sprite = icon;
             iconImage.enabled = icon != null;
         }
 
-        RefreshStackText(stack);
+        if (stackText != null)
+        {
+            bool shouldShowStackText = stack > 1 || stack == 1 && showNumberWhenOne;
+
+            stackText.text = shouldShowStackText ? stack.ToString() : "";
+            stackText.gameObject.SetActive(shouldShowStackText);
+        }
 
         if (tooltipTrigger == null)
             tooltipTrigger = GetComponent<TooltipTriggerUI>();
 
-        if (tooltipTrigger != null)
-        {
-            List<TooltipEntry> entries = new List<TooltipEntry>();
-
-            string key = statusType.ToString();
-            string title = GetStatusTitle(statusType);
-            string body = GetStatusDescription(statusType, stack);
-
-            tooltipTrigger.SetTooltip(title, body);
-
-            if (database != null && database.TryGet(key, out TooltipKeywordEntry entry))
-            {
-                title = entry.title;
-                body = $"{entry.description}\n\n目前層數：{stack}";
-            }
-
-            entries.Add(new TooltipEntry(title, body));
-            tooltipTrigger.SetEntries(entries, tooltipTrigger.preferredSide);
-        }
+        SetupIndividualTooltip(statusType, stack, database, useIndividualTooltip);
 
         gameObject.SetActive(true);
     }
 
-    private void RefreshStackText(int stack)
+    private void SetupIndividualTooltip(StatusType statusType, int stack, TooltipKeywordDatabase database, bool useIndividualTooltip)
     {
-        if (stackText == null)
+        if (tooltipTrigger == null)
             return;
 
-        bool shouldShow = stack > 0;
+        if (!useIndividualTooltip)
+        {
+            tooltipTrigger.SetEntries(new List<TooltipEntry>());
+            tooltipTrigger.enabled = false;
+            return;
+        }
 
-        if (stack == 1 && !showNumberWhenOneStack)
-            shouldShow = false;
+        tooltipTrigger.enabled = true;
 
-        stackText.text = stack.ToString();
-        stackText.gameObject.SetActive(shouldShow);
+        TooltipEntry entry = BuildTooltipEntry(statusType, stack, database);
+        List<TooltipEntry> entries = new List<TooltipEntry>();
+
+        if (entry != null)
+            entries.Add(entry);
+
+        tooltipTrigger.SetEntries(entries);
     }
 
-    private string GetStatusTitle(StatusType statusType)
+    public static TooltipEntry BuildTooltipEntry(StatusType statusType, int amount, TooltipKeywordDatabase database)
+    {
+        string key = statusType.ToString();
+        string title = GetStatusTitle(statusType);
+        string body = GetStatusDescription(statusType, amount);
+
+        if (database != null && database.TryGet(key, out TooltipKeywordEntry databaseEntry))
+        {
+            title = string.IsNullOrWhiteSpace(databaseEntry.title) ? title : databaseEntry.title;
+
+            if (!string.IsNullOrWhiteSpace(databaseEntry.description))
+                body = $"{databaseEntry.description}\n\n目前層數：{amount}";
+        }
+
+        return new TooltipEntry(title, body);
+    }
+
+    public static string GetStatusTitle(StatusType statusType)
     {
         switch (statusType)
         {
@@ -93,12 +112,15 @@ public class StatusIconUI : MonoBehaviour
             case StatusType.Regeneration:
                 return "再生";
 
+            case StatusType.Counter:
+                return "反擊";
+
             default:
                 return statusType.ToString();
         }
     }
 
-    private string GetStatusDescription(StatusType statusType, int amount)
+    public static string GetStatusDescription(StatusType statusType, int amount)
     {
         switch (statusType)
         {
@@ -121,13 +143,14 @@ public class StatusIconUI : MonoBehaviour
                 return $"回合開始時受到 {amount} 點傷害，之後中毒層數減少。";
 
             case StatusType.Harden:
-                return $"每回合開始時，獲得 {amount} 點護盾。";
+                return $"每回合開始時，獲得 {amount} 點格擋。";
 
             case StatusType.Regeneration:
-                {
-                    int percent = amount * 5;
-                    return $"每回合開始時，恢復自身最大生命值 {percent}% 的生命。\n受到生命傷害時，層數減少 1。";
-                }
+                int percent = amount * 5;
+                return $"每回合開始時，恢復自身最大生命值 {percent}% 的生命。受到生命傷害時，層數減少 1。";
+
+            case StatusType.Counter:
+                return $"受到攻擊時，對攻擊者造成 {amount} 點反擊傷害。";
 
             default:
                 return $"目前層數：{amount}";

@@ -7,6 +7,11 @@ using Random = UnityEngine.Random;
 
 public class BattleManager : MonoBehaviour
 {
+
+    [Header("Card Cost HP Payment")]
+    [Tooltip("出牌費用使用 HP 支付時，是否播放玩家受傷動畫")]
+    public bool playCardHpCostTriggersHurtAnimation = true;
+
     [Header("Test Option Menu")]
     public OptionMenuUI optionMenuUI;
 
@@ -35,9 +40,10 @@ public class BattleManager : MonoBehaviour
     public PlayerStatusBarUI playerStatusBarUI;
     public TurnEndButtonAnimatorUI turnEndButtonAnimatorUI;
     public TurnPhaseBannerUI turnPhaseBannerUI;
-    [Header("Player Bars UI")]
-    public Image hpFillImage;
-    public Image sanFillImage;
+    public BattleHUDUI battleHUDUI;
+    //[Header("Player Bars UI")]
+    //public Image hpFillImage;
+    //public Image sanFillImage;
     // public EnemyStatusBarUI enemyStatusBarUI; // 之後再做
 
     //[Header("Damage Popup UI")]
@@ -50,6 +56,15 @@ public class BattleManager : MonoBehaviour
 
     //[Tooltip("F6 使用。重新載入場景後，是否要套用戰鬥開始前的牌組順序")]
     //public bool pendingRestoreBattleStartDeckSnapshot;
+
+    [Header("Battle Rewards")]
+    [Tooltip("戰鬥勝利後的獎勵畫面。")]
+    public BattleRewardUI battleRewardUI;
+
+    private bool waitingForBattleRewards;
+
+    public bool VictoryUsedRewardUI { get; private set; }
+
 
     [Header("Runtime")]
     public BattlePhase currentPhase = BattlePhase.None;
@@ -154,6 +169,9 @@ public class BattleManager : MonoBehaviour
             }
         }
 
+        if (battleHUDUI != null)
+            battleHUDUI.Bind(playerUnit, energySystem);
+
         SpawnEnemiesForBattle();
 
         RefreshPlayerBarsUI();
@@ -181,6 +199,41 @@ public class BattleManager : MonoBehaviour
             Debug.Log($"{playerDeck.Hand.Count}");
         }
     }
+
+    private void PayCardCost(int cost)
+    {
+        if (cost <= 0)
+            return;
+
+        if (energySystem == null || playerUnit == null)
+            return;
+
+        int sanPayment = Mathf.Min(energySystem.currentEnergy, cost);
+        int hpPayment = cost - sanPayment;
+
+        if (sanPayment > 0)
+            energySystem.Spend(sanPayment);
+
+        if (hpPayment > 0)
+            playerUnit.PayHpCost(hpPayment, playCardHpCostTriggersHurtAnimation);
+
+        Debug.Log($"[CardCost] Cost = {cost}, SAN 支付 = {sanPayment}, HP 支付 = {hpPayment}");
+    }
+    private bool CanPayCardCost(int cost)
+    {
+        if (cost <= 0)
+            return true;
+
+        if (energySystem == null || playerUnit == null)
+            return false;
+
+        int sanPayment = Mathf.Min(energySystem.currentEnergy, cost);
+        int hpPayment = cost - sanPayment;
+
+        return playerUnit.currentHp >= hpPayment;
+    }
+
+
     private void TriggerRelics(RelicsTriggerType triggerType,CardInstance playedCard = null)
     {
         if (relicsRuntime == null)
@@ -666,9 +719,15 @@ public class BattleManager : MonoBehaviour
             return false;
         }
 
-        if (!energySystem.CanSpend(card.currentCost))
+        if (playerUnit == null)
         {
-            Debug.Log("能量不足");
+            Debug.LogWarning("[TryPlayCard] playerUnit 沒有指定");
+            return false;
+        }
+
+        if (!CanPayCardCost(card.currentCost))
+        {
+            Debug.Log("SAN + HP 不足，無法支付卡牌費用");
             return false;
         }
 
@@ -692,13 +751,14 @@ public class BattleManager : MonoBehaviour
         }
 
 
+
         /*
          * =========================================================
          * 扣除卡牌費用
          * =========================================================
          */
 
-        energySystem.Spend(card.currentCost);
+        PayCardCost(card.currentCost);
 
         RefreshPlayerBarsUI();
 
@@ -730,7 +790,8 @@ public class BattleManager : MonoBehaviour
             handUIController != null)
         {
             Transform parent = null;
-
+            bool keepGodCardInSourceCanvas = false;
+            Vector3 scaleBeforeDetach = playedCardView.transform.localScale;
 
             /*
              * -----------------------------------------------------
@@ -756,9 +817,9 @@ public class BattleManager : MonoBehaviour
                 if (animationData != null &&
                     godCardCorruptionAnimationController != null)
                 {
-                    parent =
-                        godCardCorruptionAnimationController
-                            .AnimationRoot;
+                    // 神牌先留在原 Canvas，移動與震動完成後才交給 Card Root。
+                    parent = playedCardView.transform.parent;
+                    keepGodCardInSourceCanvas = true;
                 }
 
                 /*
@@ -800,10 +861,12 @@ public class BattleManager : MonoBehaviour
              * -----------------------------------------------------
              */
 
-            handUIController.DetachCardViewForPlay(
-                card,
-                parent
-            );
+            handUIController.DetachCardViewForPlay(card, parent);
+            if (keepGodCardInSourceCanvas && playedCardView != null)
+            {
+                playedCardView.transform.localScale = scaleBeforeDetach;
+                Debug.Log($"[GodCardAnimation] Detach 後 Parent = {playedCardView.transform.parent?.name}，localScale = {playedCardView.transform.localScale}");
+            }
         }
 
 
@@ -1457,41 +1520,47 @@ public class BattleManager : MonoBehaviour
         if (handUIController != null)
             handUIController.RefreshHandUI();
     }
+
     private void RefreshPlayerBarsUI()
     {
-        RefreshHpBarUI();
-        RefreshSanBarUI();
+        if (battleHUDUI != null)
+            battleHUDUI.Refresh();
     }
+    //private void RefreshPlayerBarsUI()
+    //{
+    //    RefreshHpBarUI();
+    //    RefreshSanBarUI();
+    //}
 
-    private void RefreshHpBarUI()
-    {
-        if (hpFillImage == null)
-            return;
+    //private void RefreshHpBarUI()
+    //{
+    //    if (hpFillImage == null)
+    //        return;
 
-        if (playerUnit == null)
-        {
-            hpFillImage.fillAmount = 0f;
-            return;
-        }
+    //    if (playerUnit == null)
+    //    {
+    //        hpFillImage.fillAmount = 0f;
+    //        return;
+    //    }
 
-        float maxHp = Mathf.Max(1, playerUnit.maxHp);
-        hpFillImage.fillAmount = Mathf.Clamp01(playerUnit.currentHp / maxHp);
-    }
+    //    float maxHp = Mathf.Max(1, playerUnit.maxHp);
+    //    hpFillImage.fillAmount = Mathf.Clamp01(playerUnit.currentHp / maxHp);
+    //}
 
-    private void RefreshSanBarUI()
-    {
-        if (sanFillImage == null)
-            return;
+    //private void RefreshSanBarUI()
+    //{
+    //    if (sanFillImage == null)
+    //        return;
 
-        if (energySystem == null)
-        {
-            sanFillImage.fillAmount = 0f;
-            return;
-        }
+    //    if (energySystem == null)
+    //    {
+    //        sanFillImage.fillAmount = 0f;
+    //        return;
+    //    }
 
-        float maxSan = Mathf.Max(1, energySystem.maxEnergy);
-        sanFillImage.fillAmount = Mathf.Clamp01(energySystem.currentEnergy / maxSan);
-    }
+    //    float maxSan = Mathf.Max(1, energySystem.maxEnergy);
+    //    sanFillImage.fillAmount = Mathf.Clamp01(energySystem.currentEnergy / maxSan);
+    //}
     public void RefreshStatusUI()
     {
         if (playerStatusBarUI != null)
@@ -1587,8 +1656,7 @@ public class BattleManager : MonoBehaviour
     }
     private void EndBattle(bool playerWin)
     {
-        if (currentPhase == BattlePhase.BattleEnded && isChangingTurn)
-            return;
+        if (currentPhase == BattlePhase.BattleEnded && isChangingTurn) return;
 
         currentPhase = BattlePhase.BattleEnded;
         isChangingTurn = true;
@@ -1604,49 +1672,65 @@ public class BattleManager : MonoBehaviour
         {
             Debug.Log("戰鬥勝利");
 
+            EnemyFormationData rewardFormation = enemyFormationSpawner != null ? enemyFormationSpawner.CurrentFormation : null;
+
             CommitCurrentFormation();
 
-            if (autoStartNextBattleOnWin)
-            {
-                StartCoroutine(StartNextBattleAfterDelay());
-            }
-            else
-            {
-                Debug.Log("[BattleManager] autoStartNextBattleOnWin = false，戰鬥勝利後關閉 BattleManager 物件");
-
-                gameObject.SetActive(false);
-            }
             Debug.Log("[BattleManager] 戰鬥勝利");
 
             if (RunStateManager.Instance != null)
             {
-                RunStateManager.Instance.SaveFromBattle(
-                    playerUnit,
-                    energySystem,
-                    playerDeck
-                );
-
+                RunStateManager.Instance.SaveFromBattle(playerUnit, energySystem, playerDeck);
                 RunStateManager.Instance.ClearReservedFormation();
 
                 Debug.Log("[BattleManager] 戰鬥勝利：已保存玩家進度，並清除保留怪物組");
             }
 
-            // ⚠️ 這一行要在 SaveFromBattle() **之後**。
-            // 探索流程端（EldritchMile.Core.BattleStageController）收到訊號就會去讀
-            // RunStateManager 的 HP / SAN / 牌組；早一步發的話會讀到上一場的數值。
-            TutorialEventBus.Raise(TutorialSignals.BattleWon);
+            waitingForBattleRewards = true;
+            VictoryUsedRewardUI = false;
+
+            if (battleRewardUI != null && battleRewardUI.Show(this, rewardFormation, CompleteBattleVictoryAfterRewards))
+            {
+                VictoryUsedRewardUI = true;
+                return;
+            }
+
+            Debug.LogWarning("[BattleManager] 獎勵畫面未啟動，沿用原本勝利流程。");
+            CompleteBattleVictoryAfterRewards();
         }
         else
         {
             Debug.Log("戰鬥失敗");
 
-            if (optionMenuUI != null)
-                optionMenuUI.OpenDeathMenu();
+            if (optionMenuUI != null) optionMenuUI.OpenDeathMenu();
 
-            // 失敗這一支他原本沒有對應的常數，用字面值 —— 與 "Battle_EndTurnPressed" 同一個寫法。
-            // 我方對應的是 EldritchMile.Core.TutorialSignal.BattleLost，**兩邊字串要一致**。
             TutorialEventBus.Raise("BattleLost");
         }
+    }
+
+    public void CompleteBattleVictoryAfterRewards()
+    {
+        if (!waitingForBattleRewards) return;
+
+        waitingForBattleRewards = false;
+
+        if (RunStateManager.Instance != null)
+        {
+            RunStateManager.Instance.SaveFromBattle(playerUnit, energySystem, playerDeck);
+            RunStateManager.Instance.ClearReservedFormation();
+        }
+
+        if (autoStartNextBattleOnWin)
+        {
+            StartCoroutine(StartNextBattleAfterDelay());
+        }
+        else
+        {
+            Debug.Log("[BattleManager] 獎勵結算完成，關閉 BattleManager 物件");
+            gameObject.SetActive(false);
+        }
+
+        TutorialEventBus.Raise(TutorialSignals.BattleWon);
     }
     private void CommitCurrentFormation()
     {
@@ -1718,23 +1802,25 @@ public class BattleManager : MonoBehaviour
     }
     public void RestartNewGame()
     {
-        Debug.Log("[BattleManager] ���s�}�l�s�C��");
+        Debug.Log("[BattleManager] 重新開始新遊戲");
 
         StopAllCoroutines();
+
+        if (battleRewardUI != null) battleRewardUI.CancelWithoutCompletion();
+
+        waitingForBattleRewards = false;
+        VictoryUsedRewardUI = false;
 
         currentPhase = BattlePhase.None;
         isChangingTurn = false;
         isResolvingCard = false;
         battleTurnNumber = 0;
 
-        if (playerUnit != null)
-            playerUnit.FullResetUnit();
+        if (playerUnit != null) playerUnit.FullResetUnit();
 
-        if (energySystem != null)
-            energySystem.ResetEnergy();
+        if (energySystem != null) energySystem.ResetEnergy();
 
-        if (playerDeck != null)
-            playerDeck.ResetForNewGame();
+        if (playerDeck != null) playerDeck.ResetForNewGame();
 
         SpawnEnemiesForBattle();
 

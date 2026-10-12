@@ -194,7 +194,6 @@ MonoBehaviour:
   stackText: {fileID: 22560675520507211}
   tooltipTrigger: {fileID: 0}
   keywordDatabase: {fileID: 0}
-  showNumberWhenOneStack: 1
 --- !u!114 &8150403969932170253
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -202,13 +201,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6777798781298083730}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5c0c528d19493d247b7ad615e8bb926f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 0}
   preferredSide: 1
+  positionOffset: {x: 0, y: 0}
   openMode: 0
   stopEventPropagation: 0
   entries: []
