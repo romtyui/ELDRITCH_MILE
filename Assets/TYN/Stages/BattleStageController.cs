@@ -335,6 +335,9 @@ public class BattleStageController : StageController
     /// </summary>
     private void BindToHostScene()
     {
+        // 先交接畫面，再綁 Canvas —— 綁的時候 Camera.main 要指到對的那一台
+        HandOverScreenToStageCameras();
+        SnapshotGlitchMaterial();
         BindCanvasCameras();
         BindBgmToOptionMenu();
         BindModifierSystem();
@@ -382,9 +385,20 @@ public class BattleStageController : StageController
                 "同時主相機的 cullingMask 要把那一層取消勾選", this);
         }
 
-        int bound = 0;
+        int bound = 0, kept = 0;
         foreach (Canvas canvas in GetComponentsInChildren<Canvas>(true))
         {
+            // ⚠️ 已經指著 **Stage 自己的相機** 就不要動。
+            //    Romtyui 從 9 月底開始讓戰鬥自帶四台相機（見 HandOverScreenToStageCameras），
+            //    每個 Canvas 指哪一台是他刻意配的：layer 10 的 UI 給 FinalUICamera、
+            //    神牌動畫給只拍 layer 7 的那台。prefab 內部的引用存得住，
+            //    蓋成宿主相機的話整條管線就斷了 —— 而且不會報錯，只是「渲染壞掉」
+            if (canvas.worldCamera != null && canvas.worldCamera.transform.IsChildOf(transform))
+            {
+                kept++;
+                continue;
+            }
+
             Camera target = (godCam != null && canvas == godCardAnimationCanvas) ? godCam : cam;
 
             // Overlay 的 Canvas 不需要相機，指了也無害；一起指是為了他哪天改 renderMode
@@ -395,7 +409,7 @@ public class BattleStageController : StageController
 
         if (verboseBinding)
         {
-            Debug.Log($"[戰鬥] 已綁 {bound} 個 Canvas。一般 →「{cam.name}」；" +
+            Debug.Log($"[戰鬥] 已綁 {bound} 個 Canvas、保留 {kept} 個 Stage 自己的綁定。一般 →「{cam.name}」；" +
                       $"神牌動畫 →「{(godCam != null ? godCam.name : "找不到")}」", this);
         }
     }
@@ -646,6 +660,151 @@ public class BattleStageController : StageController
             ModifierSystem.Instance.UnregisterProvider(boundRelicsRuntime);
         }
         boundRelicsRuntime = null;
+
+        RestoreGlitchMaterial(final: false);
+        RestoreHostCameras();
+    }
+
+    /// <summary>
+    /// 故障材質**一定要在這裡再寫一次**，光靠 OnStageExit 不夠 ——
+    ///
+    /// 【實測】離場時寫回 0，回到地圖一看 `_SanIntensity` 還是 0.83。
+    /// StageHost 是 `Destroy()`，物件要等**那一幀結尾**才真的消失，
+    /// 中間 `PSBMonsterLightReveal` 又跑了一輪，照當下的 SAN 把故障值寫回去。
+    /// OnDestroy 在那之後，這時他已經不會再寫了。
+    ///
+    /// 也是保險：沒走 OnStageExit 就被銷毀（換場景、停止播放）時，
+    /// 宿主相機一樣要還回去，不然回到地圖會是一片黑。兩支 Restore 都可以重複呼叫。
+    /// </summary>
+    private void OnDestroy()
+    {
+        RestoreGlitchMaterial(final: true);
+        RestoreHostCameras();
+    }
+
+    // ==========================================
+    // 戰鬥自帶相機時的畫面交接
+    // ==========================================
+    //
+    // 【Romtyui 的渲染管線】（2026-09 底起，SampleScene 的 BattleSystemPrefab/_Cameras）
+    //
+    //   Main Camera ─(Default/UI…，套 SAN 故障)─► ProcessedSceneRT (1920x1080)
+    //   神牌 Camera ─(只拍 layer 7 GodCardAnimation)─► ProcessedSceneRT
+    //   FinalUICamera ─(只拍 layer 10 No Rendering UI)─► **螢幕**
+    //        └ BattleUICanvas(No Rendering) 裡一張全螢幕 RawImage 顯示 ProcessedSceneRT，
+    //          戰鬥 UI 疊在上面 —— layer 10 的意思是「**不吃故障特效的 UI**」
+    //
+    // 所以戰鬥期間真正畫到螢幕上的是 FinalUICamera。宿主（EventScene）的主相機
+    // 繼續畫的話只是被蓋掉、白白多畫一次；更糟的是宿主那台神牌相機
+    // 會把 layer 7 **直接畫到螢幕最上層**，蓋過他的 UI。
+    //
+    // 規則：Stage 底下只要有一台「啟用中、直接畫到螢幕」的相機，
+    // 就把宿主所有「啟用中、直接畫到螢幕」的相機暫停，離場時還原。
+    // 畫到 RenderTexture 的（地圖的 MapCamera）不動 —— 那些不搶螢幕。
+    //
+    // ⚠️ 只關 Camera **元件**、不關 GameObject：宿主的 AudioListener 掛在主相機上，
+    //    關掉物件的話 BGM 會跟著消失。Stage 自己帶的 AudioListener 反過來要關掉，
+    //    不然 Console 會一直噴「場景裡有兩個 AudioListener」。
+
+    private readonly List<Camera> suspendedHostCameras = new List<Camera>();
+
+    private void HandOverScreenToStageCameras()
+    {
+        bool stageOwnsScreen = false;
+        foreach (Camera c in GetComponentsInChildren<Camera>(false))
+        {
+            if (c.enabled && c.targetTexture == null) { stageOwnsScreen = true; break; }
+        }
+
+        if (!stageOwnsScreen) return;   // v2 以前的戰鬥沒有自己的相機，照舊借宿主的
+
+        foreach (Camera c in FindObjectsByType<Camera>(FindObjectsInactive.Exclude))
+        {
+            if (c.transform.IsChildOf(transform)) continue;
+            if (!c.enabled || c.targetTexture != null) continue;
+
+            c.enabled = false;
+            suspendedHostCameras.Add(c);
+        }
+
+        bool hostHasListener = false;
+        foreach (AudioListener l in FindObjectsByType<AudioListener>(FindObjectsInactive.Exclude))
+        {
+            if (!l.transform.IsChildOf(transform) && l.enabled) { hostHasListener = true; break; }
+        }
+        if (hostHasListener)
+        {
+            foreach (AudioListener l in GetComponentsInChildren<AudioListener>(true)) l.enabled = false;
+        }
+
+        if (verboseBinding)
+        {
+            var names = new List<string>();
+            foreach (Camera c in suspendedHostCameras) names.Add(c.name);
+            Debug.Log($"[戰鬥] Stage 自帶畫面相機，暫停宿主相機：{string.Join("、", names)}", this);
+        }
+    }
+
+    private void RestoreHostCameras()
+    {
+        for (int i = 0; i < suspendedHostCameras.Count; i++)
+        {
+            if (suspendedHostCameras[i] != null) suspendedHostCameras[i].enabled = true;
+        }
+        suspendedHostCameras.Clear();
+    }
+
+    // ==========================================
+    // SAN 故障材質：離場要歸零
+    // ==========================================
+    //
+    // 【為什麼】Romtyui 把 SAN 故障做成**共用 Renderer**（test'_Renderer）上的
+    // FullScreenPassRendererFeature，`PSBMonsterLightReveal` 直接改那顆**共用材質**的數值。
+    // Renderer Feature 會套到**每一台**用這個 Renderer 的相機 —— 包括地圖與探索。
+    // 他的 SampleScene 裡只有戰鬥所以看不出來；搬進 EventScene 之後，
+    // 戰鬥中 SAN 掉了、回到地圖畫面會**繼續故障**，因為沒有人把數值改回去。
+    //
+    // 【做法】進場時把材質上所有 Float / Range 屬性記下來，離場時寫回去。
+    // 不寫死屬性名 —— 他之後在 Shader Graph 加參數，這裡不用跟著改。
+    // 不去關 Renderer Feature：那是**資產**上的開關，編輯器裡改了會被存進檔案，
+    // 他下次開 SampleScene 故障就整個不見了。
+
+    private Material glitchMaterial;
+    private readonly List<KeyValuePair<int, float>> glitchBaseline = new List<KeyValuePair<int, float>>();
+
+    private void SnapshotGlitchMaterial()
+    {
+        glitchBaseline.Clear();
+        glitchMaterial = null;
+
+        PSBMonsterLightReveal reveal = GetComponentInChildren<PSBMonsterLightReveal>(true);
+        if (reveal == null || reveal.glitchMaterial == null) return;
+
+        glitchMaterial = reveal.glitchMaterial;
+        Shader shader = glitchMaterial.shader;
+
+        for (int i = 0; i < shader.GetPropertyCount(); i++)
+        {
+            var type = shader.GetPropertyType(i);
+            if (type != UnityEngine.Rendering.ShaderPropertyType.Float &&
+                type != UnityEngine.Rendering.ShaderPropertyType.Range) continue;
+
+            int id = shader.GetPropertyNameId(i);
+            glitchBaseline.Add(new KeyValuePair<int, float>(id, glitchMaterial.GetFloat(id)));
+        }
+    }
+
+    /// <param name="final">true 才丟掉記錄。離場那一次不能丟 —— 見 <see cref="OnDestroy"/>。</param>
+    private void RestoreGlitchMaterial(bool final)
+    {
+        if (glitchMaterial == null) return;
+
+        for (int i = 0; i < glitchBaseline.Count; i++)
+            glitchMaterial.SetFloat(glitchBaseline[i].Key, glitchBaseline[i].Value);
+
+        if (!final) return;
+        glitchMaterial = null;
+        glitchBaseline.Clear();
     }
 
     // ==========================================
