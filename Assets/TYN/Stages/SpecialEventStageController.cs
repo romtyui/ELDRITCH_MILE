@@ -98,6 +98,18 @@ public class SpecialEventStageController : ChoiceStageController
             altarView.OnDeclined -= HandleDeclined;
             altarView.OnDeclined += HandleDeclined;
 
+            // 祭壇完全不用對話框 —— 基底類別為了「選項是對話框的子物件」
+            // 會強制把框撐開並 HoldOpen。這裡要把它收掉，不然：
+            //   · 畫面下方會一直掛著一個空的對話框
+            //   · 框後面那層全螢幕壓黑（DialogueUI = 101）會吃掉所有點擊，
+            //     手跟 YES / NO 都按不到
+            if (Box != null)
+            {
+                Box.HoldOpen = false;
+                Box.Hide();
+            }
+            Options?.HideAll();
+
             altarView.Begin();
             return;
         }
