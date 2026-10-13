@@ -609,10 +609,15 @@ public class BattleStageController : StageController
             ItemData d = db.GetById(st.id);
             if (d == null || d.relicEffect == null) { if (d != null && d.HasTag("Curio")) skipped++; continue; }
 
+            // ⚠️ 塞的是 **ItemData 本身**，不是 d.relicEffect。
+            //    RelicsRuntime 會對每一件做 `as IRelicsEffectSource` 再取效果清單；
+            //    效果資產不是那個介面，以前塞效果進去的結果是整件被跳過 ——
+            //    數值型（Modifier）遺物甚至連警告都沒有。ItemData 實作了那個介面。
+            //
             // 同一件收藏品拿了兩個就疊兩次 —— 這是 Romtyui 那邊的語意（清單，不是集合）
             for (int n = 0; n < st.count; n++)
             {
-                if (!inv.AddRelic(d.relicEffect)) break;   // 滿了就停，AddRelic 自己會說明
+                if (!inv.AddRelic(d)) break;   // 滿了就停，AddRelic 自己會說明
                 added++;
             }
         }

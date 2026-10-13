@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
   id: relic_mermaid_portrait
   displayName: "\u4EBA\u9B5A\u7684\u756B\u50CF"
+  tire: 1
   icon: {fileID: 21300000, guid: d136a08e36bb5284faa86313f7f36a14, type: 3}
   shelfIcon: {fileID: 21300000, guid: 3a88b2636f8b98f40ac69ac86ccba5c2, type: 3}
   description: "\u3010\u6548\u679C\u3011\u98DF\u7269\u7684 HP \u6062\u5FA9\u91CF\u589E\u52A0
@@ -31,6 +32,8 @@ MonoBehaviour:
   sanCost: 0
   consumeOnUse: 1
   battleItemEffect: {fileID: 0}
-  relicEffect: {fileID: 11400000, guid: dbb6b8b508589c541a50cbae19daebee, type: 2}
+  relicEffects:
+  - {fileID: 11400000, guid: dbb6b8b508589c541a50cbae19daebee, type: 2}
+  legacyRelicEffect: {fileID: 0}
   notes: "\u203B \u5DF2\u63A5\u4E0A\u73FE\u6210\u7684 RelicEffect_HealingReceived_10Percent
     \u2014\u2014 \u9019\u500B\u6548\u679C\u539F\u672C\u639B\u5728\u300C\u8CAA\u5A6A\u7684\u5927\u53E3\u300D\u4E0A\uFF0C\u9644\u4EF6\u628A\u5B83\u6539\u7D66\u4E86\u9019\u4E00\u4EF6\u3002"
