@@ -67,6 +67,12 @@ namespace EldritchMile.Core
                 foreach (ItemStack s in Merge(batch))
                 {
                     if (result.Count >= count) break;
+
+                    // 每一輪是分開的 batch，Emit 只看得到自己這一輪 ——
+                    // 池子沒開 distinct 的話，第二輪可能又抽到同一件遺物
+                    ItemData d = GameFlowManager.Item(s.id);
+                    if (d != null && d.IsUnique && Contains(result, s.id)) continue;
+
                     result.Add(s);
                 }
 
@@ -153,6 +159,11 @@ namespace EldritchMile.Core
                         if (matches.Count == 0) return;
                     }
 
+                    // 已經持有的遺物不抽、同一批已經出過的遺物不抽 ——
+                    // 抽到了 AddItem 也會擋掉，玩家等於白開一個寶箱、白看一格貨架
+                    matches.RemoveAll(m => m.IsUnique && (IsOwned(m.id) || Contains(output, m.id)));
+                    if (matches.Count == 0) return;
+
                     ItemData pickedItem = matches[rng.Next(matches.Count)];
                     Emit(pickedItem.id, entry, rng, output, taken);
                     break;
@@ -176,12 +187,33 @@ namespace EldritchMile.Core
             List<ItemStack> output, HashSet<string> taken)
         {
             if (string.IsNullOrEmpty(id)) return;
+
+            // 指名的遺物（不是標籤查詢）也要擋：已經有了、或這一批已經出過
+            ItemData data = GameFlowManager.Item(id);
+            bool unique = data != null && data.IsUnique;
+            if (unique && (IsOwned(id) || Contains(output, id))) return;
+
             if (taken != null && !taken.Add(id)) return;
 
             int count = RandomRange(rng, entry.countMin, entry.countMax);
             if (count <= 0) return;
+            if (unique) count = 1;
 
             output.Add(new ItemStack(id, count));
+        }
+
+        /// <summary>這一趟已經拿著這件了嗎。沒有 run（編輯器裡預覽表）就當沒有。</summary>
+        private static bool IsOwned(string id)
+        {
+            RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+            return run != null && run.HasItem(id);
+        }
+
+        private static bool Contains(List<ItemStack> output, string id)
+        {
+            for (int i = 0; i < output.Count; i++)
+                if (output[i] != null && output[i].id == id) return true;
+            return false;
         }
 
         /// <summary>

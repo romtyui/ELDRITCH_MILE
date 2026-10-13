@@ -176,6 +176,18 @@ namespace EldritchMile.Core
         /// </summary>
         public bool IsUsable => hpRestore > 0 || sanRestore > 0 || hpCost > 0 || sanCost > 0;
 
+        /// <summary>
+        /// **遺物是唯一的** —— 一件只能有一個，不能疊。（2026-10-13 定案）
+        ///
+        /// 判斷依據是 `Curio` 標籤（收藏品／遺物），不另開欄位：標籤本來就是
+        /// 「這個東西是什麼」，而「唯一」是遺物這一類的性質，不是個別道具的設定。
+        ///
+        /// 會讀這個的地方：<see cref="RunContext.AddItem"/>（已經有就不給）、
+        /// <see cref="LootService"/>（已經有的不抽、同一批不重複、數量壓成 1）、
+        /// 戰鬥開場灌遺物（舊存檔裡如果有 ×2 也只灌一件）。
+        /// </summary>
+        public bool IsUnique => HasTag("Curio");
+
         /// <summary>顯示名沒填就退回 id —— 至少畫面上不會是一片空白。</summary>
         public string Label => string.IsNullOrEmpty(displayName) ? id : displayName;
 
