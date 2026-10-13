@@ -37,10 +37,10 @@ public class SpecialEventStageController : ChoiceStageController
         [TextArea(2, 3)] public string takenText = "";
     }
 
-    [Header("祭壇演出（2026-10-12 美術改版）")]
+    [Header("祭壇演出（2026-10-13 改版：YES 左手給神牌、NO 右手給獎勵）")]
     [Tooltip("接上去就改用祭壇的兩隻手來選，不再用對話框的三個選項。"
              + "留空 = 回到舊的對話框選單（其他特殊事件還是用得到）。"
-             + "左手 = offers[0]、右手 = offers[1]")]
+             + "YES／左手 = offers[0] 那張牌；NO／右手 = 祭壇上的 Rewards（Romtyui 的獎勵畫面），offers[1] 不再使用")]
     public EldritchMile.UI.AltarEventView altarView;
 
     [Tooltip("跳過節點的環境敘述，進來就直接問「你願意相信嗎?」。"
@@ -93,10 +93,8 @@ public class SpecialEventStageController : ChoiceStageController
                 return;
             }
 
-            altarView.OnHandChosen -= HandleHandChosen;
-            altarView.OnHandChosen += HandleHandChosen;
-            altarView.OnDeclined -= HandleDeclined;
-            altarView.OnDeclined += HandleDeclined;
+            altarView.OnFinished -= HandleAltarFinished;
+            altarView.OnFinished += HandleAltarFinished;
 
             // 祭壇完全不用對話框 —— 基底類別為了「選項是對話框的子物件」
             // 會強制把框撐開並 HoldOpen。這裡要把它收掉，不然：
@@ -110,7 +108,10 @@ public class SpecialEventStageController : ChoiceStageController
             }
             Options?.HideAll();
 
-            altarView.Begin();
+            // 左手（YES）拿的是 offers[0] 那張牌的卡面
+            Offer gift = offers[0];
+            CardVisualData visual = gift != null && gift.battleCard != null ? gift.battleCard.visualData : null;
+            altarView.Begin(visual, run);
             return;
         }
 
@@ -143,26 +144,24 @@ public class SpecialEventStageController : ChoiceStageController
     {
         if (Options != null) Options.OnOptionClicked -= HandleChosen;
 
-        if (altarView != null)
-        {
-            altarView.OnHandChosen -= HandleHandChosen;
-            altarView.OnDeclined -= HandleDeclined;
-        }
-    }
-
-    /// <summary>玩家在祭壇選了某一隻手。左手 = offers[0]、右手 = offers[1]。</summary>
-    private void HandleHandChosen(int index)
-    {
-        GrantOffer(index);
+        if (altarView != null) altarView.OnFinished -= HandleAltarFinished;
     }
 
     /// <summary>
-    /// 玩家說不。**什麼都不給，直接離開** —— 組員定的。
-    /// 收尾台詞照常播，所以玩家不會覺得事件被硬切掉。
+    /// 祭壇演完了。（2026-10-13 改版）
+    ///   · YES／左手：玩家收下了神牌 → 這裡真的發 offers[0]
+    ///   · NO／右手：Romtyui 的獎勵畫面已經結束，獎勵是那個畫面自己發的 → 這裡只收尾
+    /// 改版前 NO 是「什麼都不給直接走」，現在右手也會給東西。
     /// </summary>
-    private void HandleDeclined()
+    private void HandleAltarFinished(EldritchMile.UI.AltarEventView.Choice choice)
     {
-        Debug.Log("[特殊事件] 玩家拒絕了祭壇，沒有拿牌");
+        if (choice == EldritchMile.UI.AltarEventView.Choice.Believe)
+        {
+            GrantOffer(0);
+            return;
+        }
+
+        Debug.Log("[特殊事件] 玩家沒有相信祭壇，從右手挑了獎勵");
         BeginOutro();
     }
 

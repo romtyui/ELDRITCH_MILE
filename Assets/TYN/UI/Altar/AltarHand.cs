@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace EldritchMile.UI
@@ -34,22 +33,25 @@ namespace EldritchMile.UI
     ///     刷權重**。現在只有「手.png」「拇指.png」兩張平面圖，骨頭綁上去也只能整塊轉，
     ///     跟這裡的關節鏈結果一模一樣，卻多背一套 runtime。
     ///   要手指真的能彎，得請美術交**分層 PSB**（每根手指一層）—— 那時候再換不遲，
-    ///   這支的對外介面（ReachIn / Withdraw / SetPickable / PlayGrant）可以原封不動。
+    ///   這支的對外介面（ReachIn / ReachToGive / Withdraw / SetHovered / PlayGrant）可以原封不動。
     ///
-    /// 【左右手共用同一組參數】鏡像是 root 的 `localScale.x = -1`。
-    /// 父層空間的量（肩點偏移、擺動角、推出方向）在鏡像**外面**，所以
-    /// <see cref="autoMirrorFromScale"/> 會自己把 x 與角度取負，
-    /// 兩隻手在 Inspector 上填一模一樣的值就好。
-    /// ⚠️ 同理，**root 自己的旋轉也不會被鏡像翻到** —— 左手 +21 的話右手必須是 −21。
+    /// 【左右手共用同一組參數】（2026-10-13 改）美術把左右手**分開畫了**，
+    /// 所以不再用 `localScale.x = -1` 鏡像 —— 右手用自己的圖、scale 是 +1。
+    /// 鏡像改由 <see cref="mirrored"/> 決定：打開時**所有動作的角度與水平偏移都取負**
+    /// （手臂擺動、肩點 x、各關節的進場／hover／遞牌／呼吸角度），
+    /// 兩隻手在 Inspector 上填一模一樣的動作參數就好。
+    /// 例外是**姿勢本身**（rest 是 transform 上擺好的、give 是 Inspector 上填的）——
+    /// 那是量出來的絕對值，每隻手各填各的。
     ///
-    /// 【點擊範圍是獨立的一塊，不是整張圖】手的圖是一個很大的旋轉矩形，
-    /// 裡面大半是透明的。拿整張去收點擊的話，點旁邊的空白也會選到它。
-    /// 用 alphaHitTestMinimumThreshold 可以精準，但要把貼圖設成 Read/Write
-    /// （這張 1030x2048 會多吃 8MB 常駐記憶體）。所以改放一塊看不見的
-    /// <see cref="hitArea"/> 蓋在掌心上，便宜又夠用。
+    /// 【兩個姿勢】（2026-10-13）
+    ///   · rest：一開始伸進來、擺在畫面兩側等你回答的姿勢（transform 上擺的）
+    ///   · give：選完之後**拿著東西**再伸出來的姿勢（<see cref="givePosition"/> 那組）
+    /// 兩個姿勢共用同一套弧線／遞延／回彈，差別只在終點。
+    ///
+    /// 【手不能點了】改版後是 YES／NO 兩個選項，hover 選項時對應的手會動
+    /// （<see cref="SetHovered"/>），手本身不收點擊。
     /// </summary>
-    public class AltarHand : MonoBehaviour,
-        IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+    public class AltarHand : MonoBehaviour
     {
         /// <summary>
         /// 關節鏈上的一節。每一節都只做一件事：**繞自己的 pivot 轉**。
@@ -107,8 +109,11 @@ namespace EldritchMile.UI
         [Tooltip("拇指那張圖。pivot 設在拇指根部")]
         public RectTransform thumb;
 
-        [Tooltip("看不見但收點擊的那一塊，蓋在掌心。可留空 = 不能點")]
+        [Tooltip("（已停用）舊版點手用的透明點擊區。改版後手不收點擊，留著只為了不弄壞 prefab 引用")]
         public Graphic hitArea;
+
+        [Tooltip("送禮時拿著的東西掛在這裡（神牌）。排在 Palm 與 Thumb 之間 —— 牌在手掌前面、拇指壓在牌上")]
+        public RectTransform giftAnchor;
 
         [Tooltip("之後美術要加的神牌特效掛在這裡。現在是空的")]
         public RectTransform fxAnchor;
@@ -170,16 +175,20 @@ namespace EldritchMile.UI
         public float grantExtend = 130f;
         [Min(0.05f)] public float grantSeconds = 0.9f;
 
+        [Header("送禮姿勢（選完之後拿著東西伸出來的終點）")]
+        [Tooltip("手腕的位置（父層座標）。左手的值是從美術稿《給牌》剪影比對出來的")]
+        public Vector2 givePosition = new Vector2(-540f, 528f);
+
+        [Tooltip("整隻手的角度")]
+        public float giveAngle = 13.5f;
+
+        [Tooltip("整隻手放大多少。稿子上送禮的手比伸進來時大一點（靠近鏡頭）")]
+        [Min(0.1f)] public float giveScale = 1.07f;
+
         [Header("鏡像")]
-        [Tooltip("localScale.x 是負的時候，自動把父層空間的量（肩點 x、擺動角、推出角）取負。\n"
-                 + "打開的話左右手可以填完全一樣的參數")]
-        public bool autoMirrorFromScale = true;
-
-        /// <summary>玩家點了這隻手。只有 <see cref="Pickable"/> 時才會發。</summary>
-        public event Action<AltarHand> OnPicked;
-
-        /// <summary>這隻手現在能不能點。提示還沒出現、或玩家選了「否」之前都是 false。</summary>
-        public bool Pickable { get; private set; }
+        [Tooltip("右手打勾。所有**動作**的角度與水平偏移會取負，左右手的動作參數就能填一樣的值。\n"
+                 + "姿勢（rest 的 transform、give 的那三格）是絕對值，不受影響")]
+        public bool mirrored = false;
 
         /// <summary>整隻手完全到位要幾秒 —— 鏈上最慢那一節說了算。外面等待時間用這個。</summary>
         public float ReachSeconds
@@ -197,6 +206,11 @@ namespace EldritchMile.UI
         private Vector2 restPos;
         private float restAngle;
 
+        // 這一次伸手的終點。rest 或 give —— 只在手收在畫面外時切換
+        private Vector2 targetPos;
+        private float targetAngle;
+        private float targetScale = 1f;
+
         private float swingProgress;     // 0 = 擺到畫面外，1 = 定位
         private float extendProgress;    // 0 = 沿軸縮到最後，1 = 定位
         private float hoverBlend;
@@ -211,6 +225,7 @@ namespace EldritchMile.UI
             self = (RectTransform)transform;
             restPos = self.anchoredPosition;
             restAngle = Wrap180(self.localEulerAngles.z);
+            UseRestPose();
 
             wrist.target = wrist.target != null ? wrist.target : palm;
             thumbJoint.target = thumbJoint.target != null ? thumbJoint.target : thumb;
@@ -236,19 +251,53 @@ namespace EldritchMile.UI
             grantBlend = 0f;
             wrist.progress = 0f;
             thumbJoint.progress = 0f;
-            Pickable = false;
             hovered = false;
             settled = false;
             SetHitEnabled(false);
             Apply();
         }
 
-        /// <summary>從畫面外伸進來。<paramref name="delay"/> 讓兩隻手錯開，不要同時到。</summary>
+        /// <summary>從畫面外伸進來，停在 rest 姿勢。<paramref name="delay"/> 讓兩隻手錯開。</summary>
         public Coroutine ReachIn(float delay)
         {
             StopMotion();
+            UseRestPose();
             motion = StartCoroutine(ReachRoutine(delay));
             return motion;
+        }
+
+        /// <summary>
+        /// 從畫面外**拿著東西**伸出來，停在送禮姿勢。要先 <see cref="Withdraw"/> 收回去再叫 ——
+        /// 終點是在手收在畫面外時切換的，手還在畫面上時切會瞬移。
+        /// </summary>
+        public Coroutine ReachToGive(float delay)
+        {
+            StopMotion();
+            swingProgress = extendProgress = wrist.progress = thumbJoint.progress = 0f;
+            hoverBlend = grantBlend = 0f;
+            settled = false;
+            targetPos = givePosition;
+            targetAngle = giveAngle;
+            targetScale = giveScale;
+            Apply();
+            motion = StartCoroutine(ReachRoutine(delay));
+            return motion;
+        }
+
+        /// <summary>
+        /// 由外部（YES／NO 選項的 hover）驅動「這隻手被注意到了」的動作。
+        /// 改版前是滑鼠直接移到手上，現在手不收點擊。
+        /// </summary>
+        public void SetHovered(bool on)
+        {
+            hovered = on;
+        }
+
+        private void UseRestPose()
+        {
+            targetPos = restPos;
+            targetAngle = restAngle;
+            targetScale = 1f;
         }
 
         /// <summary>縮回畫面外。玩家選「否」或拿完牌之後用。</summary>
@@ -256,18 +305,10 @@ namespace EldritchMile.UI
         {
             StopMotion();
             SetHitEnabled(false);
-            Pickable = false;
+            hovered = false;
             settled = false;
             motion = StartCoroutine(WithdrawRoutine());
             return motion;
-        }
-
-        /// <summary>開放／關閉點選。提示出現之前兩隻手都只是演出，點不得。</summary>
-        public void SetPickable(bool on)
-        {
-            Pickable = on;
-            SetHitEnabled(on);
-            if (!on) hovered = false;
         }
 
         /// <summary>被選中：把牌遞出來的那一下。</summary>
@@ -275,7 +316,6 @@ namespace EldritchMile.UI
         {
             StopMotion();
             SetHitEnabled(false);
-            Pickable = false;
             motion = StartCoroutine(GrantRoutine());
             return motion;
         }
@@ -363,7 +403,7 @@ namespace EldritchMile.UI
 
         private void Update()
         {
-            float wantHover = (hovered && Pickable) ? 1f : 0f;
+            float wantHover = hovered ? 1f : 0f;
             bool changed = false;
 
             if (Mathf.Abs(hoverBlend - wantHover) > 0.0005f)
@@ -396,10 +436,13 @@ namespace EldritchMile.UI
                 + grantSwing * grantBlend
                 + Idle(armIdleDegrees, armIdleSeconds, armIdlePhase) * alive);
 
-            Vector2 offset = new Vector2(shoulderOffset.x * mirror, shoulderOffset.y);
-            Vector2 shoulder = restPos + offset;
+            // 肩點跟著姿勢轉、跟著大小縮放 —— 送禮姿勢的手比 rest 多轉了幾度，
+            // 手臂軸也要跟著轉，伸出來的方向才會貼著那隻手的前臂
+            Vector2 offset = Rotate(new Vector2(shoulderOffset.x * mirror, shoulderOffset.y), targetAngle - restAngle)
+                             * targetScale;
+            Vector2 shoulder = targetPos + offset;
 
-            Vector2 pos = shoulder + Rotate(restPos - shoulder, theta);
+            Vector2 pos = shoulder + Rotate(targetPos - shoulder, theta);
 
             // 手臂軸（肩 → 腕），跟著 theta 一起轉，推出的方向才會貼著手臂
             Vector2 axis = offset.sqrMagnitude > 0.0001f
@@ -411,22 +454,25 @@ namespace EldritchMile.UI
                           - grantExtend * grantBlend;
 
             self.anchoredPosition = pos - axis * along;
-            self.localEulerAngles = new Vector3(0f, 0f, restAngle + theta);
+            self.localEulerAngles = new Vector3(0f, 0f, targetAngle + theta);
+            self.localScale = new Vector3(targetScale, targetScale, 1f);
 
-            // ── 遠端關節：純旋轉，位移由手臂帶。角度是**本地**的，鏡像在它們上游，不用再翻
-            ApplyJoint(wrist, alive);
-            ApplyJoint(thumbJoint, alive);
+            // ── 遠端關節：純旋轉，位移由手臂帶。
+            //    以前右手是 scale.x = -1，本地角度會被自動翻；現在兩隻手 scale 都是 +1，
+            //    所以動作角度要自己乘上 mirror
+            ApplyJoint(wrist, alive, mirror);
+            ApplyJoint(thumbJoint, alive, mirror);
         }
 
-        private void ApplyJoint(Joint j, float alive)
+        private void ApplyJoint(Joint j, float alive, float mirror)
         {
             if (j == null || j.target == null) return;
 
-            float a = j.restAngle
-                      + j.enterAngle * (1f - j.progress)
+            float a = j.restAngle + mirror * (
+                        j.enterAngle * (1f - j.progress)
                       + j.hoverAngle * hoverBlend
                       + j.grantAngle * grantBlend
-                      + Idle(j.idleDegrees, j.idleSeconds, j.idlePhase) * alive;
+                      + Idle(j.idleDegrees, j.idleSeconds, j.idlePhase) * alive);
 
             j.target.localEulerAngles = new Vector3(0f, 0f, a);
         }
@@ -439,8 +485,7 @@ namespace EldritchMile.UI
 
         private float Mirror()
         {
-            if (!autoMirrorFromScale) return 1f;
-            return self.localScale.x < 0f ? -1f : 1f;
+            return mirrored ? -1f : 1f;
         }
 
         private void SetHitEnabled(bool on)
@@ -451,17 +496,6 @@ namespace EldritchMile.UI
         private void StopMotion()
         {
             if (motion != null) { StopCoroutine(motion); motion = null; }
-        }
-
-        // ==========================================
-        public void OnPointerEnter(PointerEventData e) { if (Pickable) hovered = true; }
-        public void OnPointerExit(PointerEventData e) { hovered = false; }
-
-        public void OnPointerClick(PointerEventData e)
-        {
-            if (!Pickable || e.dragging) return;
-            var h = OnPicked;
-            if (h != null) h(this);
         }
 
         // ==========================================
