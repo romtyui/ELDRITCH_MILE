@@ -32,6 +32,17 @@ namespace EldritchMile.UI
         [Tooltip("上下能跑多遠")]
         [Min(0f)] public float radiusY = 26f;
 
+        [Header("不能超出眼球（2026-10-13 美術回報：虹膜會跑出那個圓）")]
+        [Tooltip("眼球那個圓（其實是橢圓）的圓心，跟虹膜同一個座標系（Eye 底下）。\n"
+                 + "從《眼睛.png》填色量出來的：內部區域與橢圓面積差 0.2%")]
+        public Vector2 eyeballCenter = new Vector2(-15.8f, 7.3f);
+
+        [Tooltip("眼球的半軸（左右、上下）")]
+        public Vector2 eyeballRadius = new Vector2(82.6f, 64.1f);
+
+        [Tooltip("虹膜自己的半徑。虹膜中心可以走的範圍 = 眼球半軸 − 這個值，整顆才會留在圓裡")]
+        [Min(0f)] public float irisRadius = 35f;
+
         [Header("手感")]
         [Tooltip("游標離眼睛多遠就算「看到底」。再遠不會更偏，只是方向改變")]
         [Min(1f)] public float fullDeflectionDistance = 700f;
@@ -129,9 +140,25 @@ namespace EldritchMile.UI
                 goal = new Vector2(dir.x * radiusX, dir.y * radiusY) * t;
             }
 
+            // 目標點夾進眼球裡。橢圓是凸的，所以兩個圈內的點之間平滑過去也一定在圈內
+            goal = ClampInsideEyeball(home + goal) - home;
+
             float k = 1f - Mathf.Exp(-Time.unscaledDeltaTime / smoothSeconds);
             Vector2 next = Vector2.Lerp(pupil.anchoredPosition - home, goal, k);
             pupil.anchoredPosition = home + next;
+        }
+
+        /// <summary>把虹膜中心夾在「眼球半軸 − 虹膜半徑」的橢圓裡。超出時沿著圓心方向拉回邊上。</summary>
+        private Vector2 ClampInsideEyeball(Vector2 p)
+        {
+            float ax = Mathf.Max(0.01f, eyeballRadius.x - irisRadius);
+            float ay = Mathf.Max(0.01f, eyeballRadius.y - irisRadius);
+
+            Vector2 d = p - eyeballCenter;
+            float e = (d.x * d.x) / (ax * ax) + (d.y * d.y) / (ay * ay);
+            if (e <= 1f) return p;
+
+            return eyeballCenter + d / Mathf.Sqrt(e);
         }
 
         private void TickBlink()

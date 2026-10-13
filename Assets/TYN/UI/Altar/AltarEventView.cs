@@ -81,6 +81,14 @@ namespace EldritchMile.UI
 
         [TextArea(1, 2)] public string giftLine = "收下吧。";
 
+        [Tooltip("收下之後，手放開牌自己收回去，牌在畫面中間停多久才淡出")]
+        [Min(0f)] public float giftHoldSeconds = 0.35f;
+
+        [Min(0.05f)] public float giftFadeSeconds = 0.6f;
+
+        [Tooltip("淡出時牌放大多少（1 = 不放大）。往鏡頭靠近一點，像是被你拿走")]
+        [Min(0.5f)] public float giftFadeScale = 1.08f;
+
         [Header("右手（NO）：獎勵")]
         public AltarRewardBridge rewards;
 
@@ -100,11 +108,26 @@ namespace EldritchMile.UI
         private RectTransform eyeRoot;
         private Vector2 eyeHome;
 
+        // 牌原本掛在左手 GiftAnchor 底下的位置。收下時會拆出來留在畫面上，下次要掛回去
+        private Transform giftHomeParent;
+        private int giftHomeSibling;
+        private Vector3 giftHomePos, giftHomeScale;
+        private Quaternion giftHomeRot;
+        private CanvasGroup giftGroup;
+
         private void Awake()
         {
             if (mood == null) mood = GetComponent<AltarMood>();
             if (eye != null) { eyeRoot = (RectTransform)eye.transform; eyeHome = eyeRoot.anchoredPosition; }
             if (giftAcceptButton == null && giftCard != null) giftAcceptButton = giftCard.GetComponent<Button>();
+            if (giftCard != null)
+            {
+                Transform g = giftCard.transform;
+                giftHomeParent = g.parent; giftHomeSibling = g.GetSiblingIndex();
+                giftHomePos = g.localPosition; giftHomeRot = g.localRotation; giftHomeScale = g.localScale;
+                giftGroup = giftCard.GetComponent<CanvasGroup>();
+                if (giftGroup == null) giftGroup = giftCard.gameObject.AddComponent<CanvasGroup>();
+            }
 
             SetGroup(promptGroup, 0f, false);
             SetGroup(captionGroup, 0f, false);
@@ -140,6 +163,7 @@ namespace EldritchMile.UI
         {
             if (leftHand != null) leftHand.PrepareHidden();
             if (rightHand != null) rightHand.PrepareHidden();
+            RestoreGift();
             if (giftCard != null) giftCard.Hide();
             SetGroup(promptGroup, 0f, false);
             SetGroup(captionGroup, 0f, false);
@@ -201,12 +225,22 @@ namespace EldritchMile.UI
             if (choice == Choice.Believe) yield return BelieveRoutine();
             else yield return RefuseRoutine();
 
-            // 4. 收回去、亮回來
+            // 4. 收回去、亮回來。YES 的話牌已經拆下來了 —— 手**自己**收回去，牌留在畫面中間
             if (giver != null) giver.Withdraw();
-            if (mood != null) mood.SetPhase(AltarMood.Phase.Leaving);
-            StartCoroutine(MoveEye(eyeHome));
+
+            // ⚠️ YES 時牌還留在中間 —— 眼睛與背景要等牌淡出之後才回去，
+            //    不然眼睛會滑回原位、正好壓在牌上
+            if (choice != Choice.Believe) BeginReturn();
             yield return new WaitForSecondsRealtime(HandSeconds() * 0.75f);
+
+            if (choice == Choice.Believe)
+            {
+                yield return FadeOutGift();
+                BeginReturn();
+                yield return new WaitForSecondsRealtime(eyeMoveSeconds);
+            }
             if (giftCard != null) giftCard.Hide();
+            RestoreGift();
 
             flow = null;
             var h = OnFinished;
@@ -227,8 +261,52 @@ namespace EldritchMile.UI
             if (giftAcceptButton != null) giftAcceptButton.interactable = false;
             yield return Fade(captionGroup, 0f, false);
 
-            // 「交給你了」那一下：手往你這邊推一點再收
-            if (leftHand != null) yield return leftHand.PlayGrant();
+            // 手放開牌：把牌從 GiftAnchor 拆出來掛到 AltarUI，世界座標不變 ——
+            // 接下來手自己收回去，牌留在原地（2026-10-13 美術回報：牌應該留在中間）
+            DetachGift();
+        }
+
+        private void DetachGift()
+        {
+            if (giftCard == null) return;
+            Transform g = giftCard.transform;
+            g.SetParent(transform, true);
+
+            // 排在兩隻手之上、眼睛與字之下 —— 收回去的手從牌後面退場
+            int above = 0;
+            if (leftHand != null) above = Mathf.Max(above, leftHand.transform.GetSiblingIndex() + 1);
+            if (rightHand != null) above = Mathf.Max(above, rightHand.transform.GetSiblingIndex() + 1);
+            g.SetSiblingIndex(above);
+        }
+
+        private IEnumerator FadeOutGift()
+        {
+            if (giftCard == null) yield break;
+            if (giftHoldSeconds > 0f) yield return new WaitForSecondsRealtime(giftHoldSeconds);
+
+            Transform g = giftCard.transform;
+            Vector3 from = g.localScale;
+            float t = 0f;
+            while (t < giftFadeSeconds)
+            {
+                t += Time.unscaledDeltaTime;
+                float u = Mathf.Clamp01(t / giftFadeSeconds);
+                float e = 1f - (1f - u) * (1f - u);
+                g.localScale = from * Mathf.Lerp(1f, giftFadeScale, e);
+                if (giftGroup != null) giftGroup.alpha = 1f - e;
+                yield return null;
+            }
+        }
+
+        /// <summary>牌掛回左手 GiftAnchor 原本的位置，下次進祭壇才拿得出來。</summary>
+        private void RestoreGift()
+        {
+            if (giftCard == null || giftHomeParent == null) return;
+            Transform g = giftCard.transform;
+            if (g.parent != giftHomeParent) g.SetParent(giftHomeParent, false);
+            g.SetSiblingIndex(giftHomeSibling);
+            g.localPosition = giftHomePos; g.localRotation = giftHomeRot; g.localScale = giftHomeScale;
+            if (giftGroup != null) giftGroup.alpha = 1f;
         }
 
         private IEnumerator RefuseRoutine()
@@ -249,6 +327,13 @@ namespace EldritchMile.UI
         }
 
         private void HandleAccept() { accepted = true; }
+
+        /// <summary>收場：背景亮回來、眼睛回原位。</summary>
+        private void BeginReturn()
+        {
+            if (mood != null) mood.SetPhase(AltarMood.Phase.Leaving);
+            StartCoroutine(MoveEye(eyeHome));
+        }
 
         private IEnumerator MoveEye(Vector2 to)
         {
