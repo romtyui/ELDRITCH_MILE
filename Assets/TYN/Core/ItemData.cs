@@ -16,7 +16,7 @@ namespace EldritchMile.Core
     /// 這跟 <see cref="EncounterTargetView"/> 對 <see cref="IProbabilityTarget"/> 的關係是同一個模式。
     /// </summary>
     [CreateAssetMenu(fileName = "Item_", menuName = "Eldritch/Item")]
-    public class ItemData : ScriptableObject
+    public class ItemData : ScriptableObject, IRelicsEffectSource, ISerializationCallbackReceiver
     {
         [Header("識別")]
         [Tooltip("道具的唯一 id。**這是存進背包與存檔的東西，定了就不要改** ——\n" +
@@ -122,12 +122,46 @@ namespace EldritchMile.Core
         public ItemEffectData battleItemEffect;
 
         [Header("遺物效果（戰鬥中被動觸發）")]
-        [Tooltip("這件收藏品在戰鬥裡的被動效果。\n\n" +
-                 "⚠️ 遺物**不是點來用的** —— Romtyui 的設計是在 BattleStart／\n" +
-                 "回合開始／回合結束／出牌時自動觸發（見 RelicsTriggerType）。\n" +
-                 "戰鬥開始時會由 BattleStageController 把身上的遺物送進 RelicsInventory。\n\n" +
+        [Tooltip("這件收藏品在戰鬥裡的效果。**可以放好幾個**，全部都會生效。\n\n" +
+                 "兩種效果都放這裡，戰鬥端會自己分：\n" +
+                 "  · 觸發型 —— BattleStart／回合開始／回合結束／出牌時自動執行（見 RelicsTriggerType）\n" +
+                 "  · 數值型 —— 繼承 RelicsModifierEffectData（例：Stat Modifier，受到治療 +10%），\n" +
+                 "    不會被「觸發」，而是 ModifierSystem 算傷害／治療／護甲時來問\n\n" +
+                 "⚠️ 遺物**不是點來用的**。戰鬥開始時 BattleStageController 會把身上的遺物\n" +
+                 "（**這個 ItemData 本身**，不是效果）送進 RelicsInventory。\n\n" +
                  "留空 = 這件收藏品目前只是收藏品，沒有效果")]
-        public RelicsEffectData relicEffect;
+        public List<RelicsEffectData> relicEffects = new List<RelicsEffectData>();
+
+        // 舊版是單一欄位 `relicEffect`。改成清單時用這個接住已經填過的值，
+        // 讀進來之後在 OnAfterDeserialize 搬進清單 —— 見那裡的說明
+        [SerializeField, HideInInspector, UnityEngine.Serialization.FormerlySerializedAs("relicEffect")]
+        private RelicsEffectData legacyRelicEffect;
+
+        /// <summary>
+        /// 第一個遺物效果。**只為了相容舊程式而留著**（Romtyui 的 BattleRewardUI 用它判斷
+        /// 「這件是不是有效果的遺物」）。新程式請用 <see cref="relicEffects"/> 或 <see cref="RelicsEffects"/>。
+        /// </summary>
+        public RelicsEffectData relicEffect
+        {
+            get
+            {
+                if (relicEffects == null) return null;
+                for (int i = 0; i < relicEffects.Count; i++)
+                    if (relicEffects[i] != null) return relicEffects[i];
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Romtyui 的 <see cref="RelicsRuntime"/> 就是靠這個介面讀遺物的。
+        ///
+        /// 【為什麼要實作】他的 `RelicsInventory` 收的是 ScriptableObject，`RelicsRuntime`
+        /// 拿到每一件都會做 `as IRelicsEffectSource` —— 不是這個介面的話**整件跳過**。
+        /// 以前我們塞進去的是效果資產本身（`RelicsEffectData`），那不是 IRelicsEffectSource，
+        /// 所以觸發型遺物只會噴警告，數值型（Modifier）則是**連警告都沒有、安靜地失效**。
+        /// 2026-10-13 Romtyui 開始做遺物效果時撞到的就是這個。
+        /// </summary>
+        public IReadOnlyList<RelicsEffectData> RelicsEffects => relicEffects;
 
         [Header("製作備註（玩家看不到）")]
         [TextArea(2, 8)]
@@ -141,6 +175,18 @@ namespace EldritchMile.Core
         /// **快捷欄用它決定要不要讓那一格可以點** —— 點了沒反應比不能點更糟。
         /// </summary>
         public bool IsUsable => hpRestore > 0 || sanRestore > 0 || hpCost > 0 || sanCost > 0;
+
+        /// <summary>
+        /// **遺物是唯一的** —— 一件只能有一個，不能疊。（2026-10-13 定案）
+        ///
+        /// 判斷依據是 `Curio` 標籤（收藏品／遺物），不另開欄位：標籤本來就是
+        /// 「這個東西是什麼」，而「唯一」是遺物這一類的性質，不是個別道具的設定。
+        ///
+        /// 會讀這個的地方：<see cref="RunContext.AddItem"/>（已經有就不給）、
+        /// <see cref="LootService"/>（已經有的不抽、同一批不重複、數量壓成 1）、
+        /// 戰鬥開場灌遺物（舊存檔裡如果有 ×2 也只灌一件）。
+        /// </summary>
+        public bool IsUnique => HasTag("Curio");
 
         /// <summary>顯示名沒填就退回 id —— 至少畫面上不會是一片空白。</summary>
         public string Label => string.IsNullOrEmpty(displayName) ? id : displayName;
@@ -170,6 +216,34 @@ namespace EldritchMile.Core
                 if (hasStory && hasEffect) return fullDescription + "\n\n" + description;
                 return hasStory ? fullDescription : (hasEffect ? description : "");
             }
+        }
+
+        // ==========================================
+        // 舊資料搬家：relicEffect（單一）→ relicEffects（清單）
+        // ==========================================
+        //
+        // 【為什麼不寫一次性的編輯器腳本就好】資產不只在 main 上。Romtyui 正在做遺物，
+        // 他本機可能有還沒推、已經填了舊欄位的資產 —— 一次性腳本跑不到那些。
+        // 放在讀檔的時候搬，誰的機器打開都會自己搬好，下次存檔舊欄位就消失了。
+        //
+        // ⚠️ 這個 callback 可能在**載入執行緒**上跑。UnityEngine.Object 的 `==` 與
+        //    List.Contains（走 Equals）會呼叫引擎內部的存活檢查，非主執行緒會報錯 ——
+        //    所以這裡全部用 ReferenceEquals，只做純 C# 的參考比較。
+
+        public void OnBeforeSerialize() { }
+
+        public void OnAfterDeserialize()
+        {
+            if (ReferenceEquals(legacyRelicEffect, null)) return;
+
+            if (relicEffects == null) relicEffects = new List<RelicsEffectData>();
+
+            bool already = false;
+            for (int i = 0; i < relicEffects.Count; i++)
+                if (ReferenceEquals(relicEffects[i], legacyRelicEffect)) { already = true; break; }
+
+            if (!already) relicEffects.Insert(0, legacyRelicEffect);
+            legacyRelicEffect = null;
         }
 
         /// <summary>標籤比對。大小寫不敏感 —— 手打標籤很容易大小寫不一致。</summary>

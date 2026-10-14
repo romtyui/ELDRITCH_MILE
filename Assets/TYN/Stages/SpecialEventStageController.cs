@@ -37,6 +37,18 @@ public class SpecialEventStageController : ChoiceStageController
         [TextArea(2, 3)] public string takenText = "";
     }
 
+    [Header("祭壇演出（2026-10-13 改版：YES 左手給神牌、NO 右手給獎勵）")]
+    [Tooltip("接上去就改用祭壇的兩隻手來選，不再用對話框的三個選項。"
+             + "留空 = 回到舊的對話框選單（其他特殊事件還是用得到）。"
+             + "YES／左手 = offers[0] 那張牌；NO／右手 = 祭壇上的 Rewards（Romtyui 的獎勵畫面），offers[1] 不再使用")]
+    public EldritchMile.UI.AltarEventView altarView;
+
+    [Tooltip("跳過節點的環境敘述，進來就直接問「你願意相信嗎?」。"
+             + "取消勾選 = 照舊先播 Intro Lines 再問。"
+             + "⚠️ 敘述是用對話框播的，而對話框後面那層全螢幕壓黑會吃掉所有點擊 —— "
+             + "敘述還開著的時候 YES / NO 是按不到的，這也是為什麼預設跳過")]
+    public bool skipIntroLines = true;
+
     [Header("可挑的牌")]
     [Tooltip("最多三張 —— 對話框只有三個選項槽")]
     public List<Offer> offers = new List<Offer>();
@@ -60,11 +72,49 @@ public class SpecialEventStageController : ChoiceStageController
     protected override void OnPrepare(RunContext context)
     {
         run = context;
+
+        // 換一份空的，不要去動原本那個 List —— 這是 prefab 實例，
+        // 但清掉共用的 List 還是容易在編輯器裡造成「我明明填了卻不見了」的困惑
+        if (skipIntroLines && introLines != null && introLines.Count > 0)
+            introLines = new System.Collections.Generic.List<Line>();
     }
 
     protected override void ShowOptions(RunContext context)
     {
         if (context != null) run = context;
+
+        // ── 祭壇：兩隻手伸出來 → 問「你願意相信嗎?」→ 相信才能點手 ──
+        if (altarView != null)
+        {
+            if (offers.Count == 0)
+            {
+                Debug.LogWarning("[特殊事件] 祭壇沒有設定任何可給的牌，直接離開");
+                BeginOutro();
+                return;
+            }
+
+            altarView.OnFinished -= HandleAltarFinished;
+            altarView.OnFinished += HandleAltarFinished;
+
+            // 祭壇完全不用對話框 —— 基底類別為了「選項是對話框的子物件」
+            // 會強制把框撐開並 HoldOpen。這裡要把它收掉，不然：
+            //   · 畫面下方會一直掛著一個空的對話框
+            //   · 框後面那層全螢幕壓黑（DialogueUI = 101）會吃掉所有點擊，
+            //     手跟 YES / NO 都按不到
+            if (Box != null)
+            {
+                Box.HoldOpen = false;
+                Box.Hide();
+            }
+            Options?.HideAll();
+
+            // 左手（YES）拿的是 offers[0] 那張牌的卡面
+            Offer gift = offers[0];
+            CardVisualData visual = gift != null && gift.battleCard != null ? gift.battleCard.visualData : null;
+            altarView.Begin(visual, run);
+            return;
+        }
+
         if (Options == null) { BeginOutro(); return; }
 
         var texts = new List<string>();
@@ -93,13 +143,43 @@ public class SpecialEventStageController : ChoiceStageController
     protected override void Unsubscribe()
     {
         if (Options != null) Options.OnOptionClicked -= HandleChosen;
+
+        if (altarView != null) altarView.OnFinished -= HandleAltarFinished;
+    }
+
+    /// <summary>
+    /// 祭壇演完了。（2026-10-13 改版）
+    ///   · YES／左手：玩家收下了神牌 → 這裡真的發 offers[0]
+    ///   · NO／右手：Romtyui 的獎勵畫面已經結束，獎勵是那個畫面自己發的 → 這裡只收尾
+    /// 改版前 NO 是「什麼都不給直接走」，現在右手也會給東西。
+    /// </summary>
+    private void HandleAltarFinished(EldritchMile.UI.AltarEventView.Choice choice)
+    {
+        if (choice == EldritchMile.UI.AltarEventView.Choice.Believe)
+        {
+            GrantOffer(0);
+            return;
+        }
+
+        Debug.Log("[特殊事件] 玩家沒有相信祭壇，從右手挑了獎勵");
+        BeginOutro();
     }
 
     private void HandleChosen(DialogueOptionUI option)
     {
-        if (option == null || option.Index < 0 || option.Index >= offers.Count) return;
+        if (option == null) return;
+        GrantOffer(option.Index);
+    }
 
-        Offer o = offers[option.Index];
+    /// <summary>
+    /// 真的把牌發出去並接上收尾。對話框選單與祭壇兩條路共用這一支 ——
+    /// 發牌的規則只能有一份。
+    /// </summary>
+    private void GrantOffer(int index)
+    {
+        if (index < 0 || index >= offers.Count) return;
+
+        Offer o = offers[index];
         if (o == null || (o.card == null && o.battleCard == null)) return;
 
         // ── 戰鬥牌庫（神牌走這一支）──

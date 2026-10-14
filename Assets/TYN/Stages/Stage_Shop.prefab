@@ -365,7 +365,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 23eeaa006bf82964b88e91691a5c6882, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0f7752866f7ab8e42b7079dfb08cb31d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -5203,7 +5203,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 23eeaa006bf82964b88e91691a5c6882, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0f7752866f7ab8e42b7079dfb08cb31d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -7027,7 +7027,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 23eeaa006bf82964b88e91691a5c6882, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0f7752866f7ab8e42b7079dfb08cb31d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -9522,7 +9522,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 23eeaa006bf82964b88e91691a5c6882, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0f7752866f7ab8e42b7079dfb08cb31d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -9545,6 +9545,7 @@ GameObject:
   - component: {fileID: 1497220582062086896}
   - component: {fileID: 3836980074287385900}
   - component: {fileID: 5718970150436892492}
+  - component: {fileID: 4545473499362802240}
   m_Layer: 0
   m_Name: Visual
   m_TagString: Untagged
@@ -9667,6 +9668,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.BookButtonUI
   button: {fileID: 3836980074287385900}
   notReadyMessage: "\u80CC\u5305\u9084\u6C92\u63A5\u4E0A"
+--- !u!114 &4545473499362802240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5708288025438006368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9316c2da521fbea469f8ae9dbe70c449, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.DeckBookButton
 --- !u!1 &5759395745206465771
 GameObject:
   m_ObjectHideFlags: 0
@@ -12990,7 +13003,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 23eeaa006bf82964b88e91691a5c6882, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0f7752866f7ab8e42b7079dfb08cb31d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -13065,7 +13078,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 23eeaa006bf82964b88e91691a5c6882, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0f7752866f7ab8e42b7079dfb08cb31d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -14852,7 +14865,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 125.3, y: -35}
+  m_AnchoredPosition: {x: 1460.8999, y: -47}
   m_SizeDelta: {x: 320, y: 70}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &4813355450628530758
@@ -15612,7 +15625,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 89.400024, y: -70}
+  m_AnchoredPosition: {x: 1425, y: -82}
   m_SizeDelta: {x: 63, y: 63}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8322290161826795003
@@ -16868,7 +16881,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 23eeaa006bf82964b88e91691a5c6882, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0f7752866f7ab8e42b7079dfb08cb31d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -18297,7 +18310,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 23eeaa006bf82964b88e91691a5c6882, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0f7752866f7ab8e42b7079dfb08cb31d, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

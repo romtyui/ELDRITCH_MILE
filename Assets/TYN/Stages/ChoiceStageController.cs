@@ -240,14 +240,27 @@ public abstract class ChoiceStageController : StageController
         // 選項收掉之後對話框才可以關 —— 在那之前要一直開著撐住版面
         if (Box != null) Box.HoldOpen = false;
 
-        QueueLines(outroLines);
+        bool queued = QueueLines(outroLines);
 
         // ⚠️ **順序有意義**：結算排在收尾之後，所以它是玩家看到的最後一頁。
         //    要放前面的話直接用 outroLines 就好，不必用這一條。
-        QueueLines(outroTailLines);
+        queued |= QueueLines(outroTailLines);
 
-        // 有沒有排到東西都一樣：等佇列播完就收
-        PopupService.Instance?.CloseWhenDrained();
+        // ⚠️ 什麼都沒得播、對話框也沒開 → **直接結束**，不要等。
+        //    離場是靠 PopupService.OnAllClosed 推的，可是框從頭到尾沒開過的話
+        //    那個事件永遠不會來 —— 2026-10-13 祭壇的 NO（右手給獎勵）就卡在這裡：
+        //    獎勵是獎勵畫面自己發的、沒有收尾台詞，按完「確定離開」整站停住。
+        //    YES 沒事只是因為收下神牌會跳一句話，關掉那句話剛好推了離場。
+        PopupService popup = PopupService.Instance;
+        if (!queued && (popup == null || (!popup.IsAnyOpen && !popup.HasPending)))
+        {
+            popup?.CloseWhenDrained();
+            Finish();
+            return;
+        }
+
+        // 有東西在播：等佇列播完就收
+        popup?.CloseWhenDrained();
     }
 
     protected void Finish()

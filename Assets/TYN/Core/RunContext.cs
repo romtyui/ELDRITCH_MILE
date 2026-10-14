@@ -170,9 +170,26 @@ namespace EldritchMile.Core
             return total;
         }
 
-        public void AddItem(string id, int count = 1)
+        /// <returns>
+        /// 真的有拿到東西就是 true。**唯一的道具（遺物）已經持有時回 false**，背包不會變 ——
+        /// 呼叫端要是會顯示「獲得了 xxx」，應該看這個值決定要不要說。
+        /// </returns>
+        public bool AddItem(string id, int count = 1)
         {
-            if (string.IsNullOrEmpty(id) || count <= 0) return;
+            if (string.IsNullOrEmpty(id) || count <= 0) return false;
+
+            // 遺物是唯一的：已經有就不給，一次也只給一個。
+            // 擋在這裡而不是各個來源 —— 寶箱、商店、事件、戰鬥獎勵、遺產全部都走這一支
+            ItemData data = GameFlowManager.Item(id);
+            if (data != null && data.IsUnique)
+            {
+                if (HasItem(id))
+                {
+                    Debug.Log($"[Run] {id} 是遺物，已經持有，不重複加入");
+                    return false;
+                }
+                count = 1;
+            }
 
             // ⚠️ 目前的合併規則是「同 id 就併進第一疊」。道具還都是可互換的，所以正確。
             //    等 ItemStack 加上 per-instance 狀態（例如每條魚不同的數值）之後，
@@ -185,13 +202,14 @@ namespace EldritchMile.Core
                     s.count += count;
                     Debug.Log($"[Run] 獲得道具：{id} ×{count}（共 {CountOf(id)}）");
                     NotifyTutorial(id);
-                    return;
+                    return true;
                 }
             }
 
             inventory.Add(new ItemStack(id, count));
             Debug.Log($"[Run] 獲得道具：{id} ×{count}（共 {count}）");
             NotifyTutorial(id);
+            return true;
         }
 
         /// <summary>

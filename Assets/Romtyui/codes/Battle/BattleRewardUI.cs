@@ -172,6 +172,25 @@ public class BattleRewardUI : MonoBehaviour
             return false;
         }
 
+        //新增時間26/10/13 by TYN —— 後半段抽成 OpenWith()，戰鬥外的入口共用同一條（行為不變）
+        return OpenWith(battleManager, context, formation, onCompleted);
+    }
+
+    //新增時間26/10/13 by TYN
+    /// <summary>
+    /// 戰鬥外打開獎勵畫面（祭壇的右手「NO」用這個）。沒有 BattleManager：
+    /// 標頭 HP／SAN 改讀 PlayerVitals，選到的武器直接進這一趟的牌組（PlayerVitals.AddCardToDeck）。
+    /// 獎勵內容照樣讀 EnemyFormationData 的那幾個欄位（金幣列數／範圍、武器列數／選項數、遺物列數／等級）。
+    /// </summary>
+    public bool ShowOutsideBattle(RunContext context, EnemyFormationData rewardSpec, Action onCompleted)
+    {
+        if (isOpen || context == null || rewardSpec == null) return false;
+        return OpenWith(null, context, rewardSpec, onCompleted);
+    }
+
+    private bool OpenWith(BattleManager battleManager, RunContext context, EnemyFormationData formation, Action onCompleted)
+    {
+    //新增時間26/10/13 by TYN
         if (rewardRoot == null || overviewRoot == null || weaponRoot == null || confirmationRoot == null || entryParent == null || entryTemplate == null || entryTemplate.actionButton == null || cardParent == null || cardTemplate == null || cardTemplate.cardView == null || closeButton == null || yesButton == null || noButton == null || confirmationText == null)
         {
             Debug.LogError("[BattleRewardUI] 必要 UI 引用尚未指定。");
@@ -224,12 +243,21 @@ public class BattleRewardUI : MonoBehaviour
 
     private void RefreshHeaders()
     {
-        if (headers == null || manager == null) return;
+        if (headers == null) return;
 
         for (int i = 0; i < headers.Length; i++)
         {
             BattleRewardHeaderReferences header = headers[i];
             if (header == null) continue;
+
+            //新增時間26/10/13 by TYN —— 戰鬥外沒有 BattleManager，改讀 PlayerVitals
+            if (manager == null)
+            {
+                if (header.hpNumberText != null) header.hpNumberText.text = PlayerVitals.Hp.ToString();
+                if (header.sanNumberText != null) header.sanNumberText.text = PlayerVitals.San.ToString();
+                continue;
+            }
+            //新增時間26/10/13 by TYN
 
             if (header.hpNumberText != null && manager.playerUnit != null) header.hpNumberText.text = manager.playerUnit.currentHp.ToString();
             if (header.sanNumberText != null && manager.energySystem != null) header.sanNumberText.text = manager.energySystem.currentEnergy.ToString();
@@ -434,6 +462,18 @@ public class BattleRewardUI : MonoBehaviour
         if (Time.unscaledTime - selectedAt < Mathf.Max(0f, cardConfirmMinInterval)) return;
 
         granting = true;
+
+        //新增時間26/10/13 by TYN —— 戰鬥外：直接進這一趟的牌組，沒有戰鬥資料要存
+        if (manager == null)
+        {
+            if (!PlayerVitals.AddCardToDeck(card.Data)) { granting = false; return; }
+
+            CompleteRow(currentRow);
+            ReturnToOverview();
+            granting = false;
+            return;
+        }
+        //新增時間26/10/13 by TYN
 
         if (!manager.playerDeck.AddRewardCardToDeck(card.Data))
         {
