@@ -135,7 +135,7 @@ public class EnemyUnit : BattleUnit
     public event Action OnIntentChanged;
 
     private bool isDead;
-
+    private int successfullyDiscardedHandCardCount;
     public bool IsDeathAnimationPlaying
     {
         get
@@ -553,6 +553,7 @@ public class EnemyUnit : BattleUnit
     {
         statusBehaviours.Clear();
         statusIntentPending = false;
+        successfullyDiscardedHandCardCount = 0;
 
         if (enemyData != null && enemyData.startingStatuses != null)
         {
@@ -633,12 +634,21 @@ public class EnemyUnit : BattleUnit
         OnIntentChanged?.Invoke();
     }
 
-    
+
     public override void OnTurnEnd()
     {
         base.OnTurnEnd();
 
         if (!statusIntentPending) return;
+
+        foreach (KeyValuePair<StatusType, BattleStatusBehaviourData> pair in statusBehaviours)
+        {
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+            if (!pair.Value.ControlsNextIntent(this)) continue;
+
+            if (pair.Value.SelectsIntentAtPlayerTurnEnd) return;
+        }
 
         statusIntentPending = false;
 
@@ -664,6 +674,52 @@ public class EnemyUnit : BattleUnit
             Debug.LogWarning($"[EnemyUnit] {unitName} 的狀態未能選出下一個意圖，改用原本的循環意圖");
         }
 
+        AdvanceDefaultIntent();
+    }
+    public void OnPlayerTurnEnd()
+    {
+        if (currentHp <= 0) return;
+        if (!gameObject.activeInHierarchy) return;
+
+        List<KeyValuePair<StatusType, BattleStatusBehaviourData>> behaviours = new List<KeyValuePair<StatusType, BattleStatusBehaviourData>>(statusBehaviours);
+
+        for (int i = 0; i < behaviours.Count; i++)
+        {
+            KeyValuePair<StatusType, BattleStatusBehaviourData> pair = behaviours[i];
+
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+
+            pair.Value.OnPlayerTurnEnd(this);
+
+            if (currentHp <= 0 || !gameObject.activeInHierarchy) return;
+        }
+
+        if (!statusIntentPending) return;
+        if (isCharging || chargeBrokenStunQueued || stayOnCurrentIntentThisTurn) return;
+
+        bool hasController = false;
+
+        foreach (KeyValuePair<StatusType, BattleStatusBehaviourData> pair in statusBehaviours)
+        {
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+            if (!pair.Value.ControlsNextIntent(this)) continue;
+            if (!pair.Value.SelectsIntentAtPlayerTurnEnd) continue;
+
+            hasController = true;
+
+            if (pair.Value.TrySelectNextIntentAtPlayerTurnEnd(this))
+            {
+                statusIntentPending = false;
+                return;
+            }
+        }
+
+        if (!hasController) return;
+
+        statusIntentPending = false;
+        Debug.LogWarning($"[EnemyUnit] {unitName} 的狀態未能在玩家回合結束時選出意圖，改用原本的循環意圖");
         AdvanceDefaultIntent();
     }
 
@@ -925,6 +981,19 @@ public class EnemyUnit : BattleUnit
         PlayBlockAnimation(blockIdleTrigger);
     }
 
+    public void RegisterSuccessfullyDiscardedHandCards(int amount)
+    {
+        if (amount <= 0) return;
+
+        successfullyDiscardedHandCardCount += amount;
+    }
+    public int ConsumeSuccessfullyDiscardedHandCardCount()
+    {
+        int count = successfullyDiscardedHandCardCount;
+        successfullyDiscardedHandCardCount = 0;
+
+        return count;
+    }
     private bool CanPlayBlockAnimation(string triggerName, bool useAnimation)
     {
         if (!useAnimation)

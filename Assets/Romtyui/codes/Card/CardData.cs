@@ -51,6 +51,15 @@ public class CardInstance
     public bool isUpgraded;
     public bool isExhaustedThisCombat;
 
+    [Tooltip("這張卡片實例是否已獲得穿透")]
+    public bool hasGrantedIgnoreBlock;
+
+    [Tooltip("這張卡片實例是否已獲得破盾")]
+    public bool hasGrantedBreakBlock;
+
+    [Tooltip("獲得破盾後，目標有護盾時使用的基礎傷害倍率")]
+    public float grantedBreakBlockMultiplier = 1f;
+
     public CardInstance(CardData data)
     {
         this.data = data;

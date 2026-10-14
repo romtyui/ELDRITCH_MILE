@@ -305,11 +305,12 @@ public class BattleManager : MonoBehaviour
 
         battleTurnNumber++;
 
-        if (turnEndButtonAnimatorUI != null)
-            turnEndButtonAnimatorUI.SetPlayerTurnIdle();
+        if (turnEndButtonAnimatorUI != null) turnEndButtonAnimatorUI.SetPlayerTurnIdle();
 
         if (turnPhaseBannerUI != null)
+        {
             yield return turnPhaseBannerUI.ShowPlayerTurn(battleTurnNumber);
+        }
 
         if (playerUnit != null)
         {
@@ -318,9 +319,7 @@ public class BattleManager : MonoBehaviour
             // =====================================================
 
             playerUnit.ResetBlock();
-
             playerUnit.OnTurnStart();
-
 
             // =====================================================
             // Relics：Player Turn Start
@@ -333,10 +332,7 @@ public class BattleManager : MonoBehaviour
             // 就不會剛獲得馬上被 ResetBlock 清掉。
             // =====================================================
 
-            TriggerRelics(
-                RelicsTriggerType.PlayerTurnStart
-            );
-
+            TriggerRelics(RelicsTriggerType.PlayerTurnStart);
 
             // =====================================================
             // 原本 UI
@@ -345,7 +341,6 @@ public class BattleManager : MonoBehaviour
             RefreshPlayerBarsUI();
             RefreshStatusUI();
 
-
             // =====================================================
             // 原本死亡判定
             // =====================================================
@@ -353,7 +348,6 @@ public class BattleManager : MonoBehaviour
             if (playerUnit.currentHp <= 0)
             {
                 EndBattle(false);
-
                 yield break;
             }
         }
@@ -361,14 +355,49 @@ public class BattleManager : MonoBehaviour
         Debug.Log($"玩家回合開始，第 {battleTurnNumber} 回合");
 
         if (handUIController != null)
+        {
             yield return handUIController.DrawCardsAnimatedWithBag(playerDeck, cardsPerTurn);
+        }
         else if (playerDeck != null)
+        {
             playerDeck.DrawCards(cardsPerTurn);
+        }
+
+        // 抽牌完成後，結算下回合開始隨機捨棄手牌的狀態。
+        if (playerUnit != null && playerDeck != null)
+        {
+            int actualDiscarded = playerUnit.ResolveHandDiscardAtNextTurnStart(playerDeck);
+
+            if (actualDiscarded > 0) RefreshHandUI();
+
+            RefreshStatusUI();
+
+            if (actualDiscarded > 0)
+            {
+                EnsureEnemiesRegistered();
+
+                if (enemies != null)
+                {
+                    for (int i = 0; i < enemies.Count; i++)
+                    {
+                        EnemyUnit enemy = enemies[i];
+
+                        if (enemy == null) continue;
+                        if (!enemy.gameObject.activeInHierarchy) continue;
+                        if (enemy.currentHp <= 0) continue;
+
+                        enemy.RefreshAllUI();
+                    }
+                }
+            }
+        }
 
         TutorialEventBus.Raise(BattleTutorialSignals.PlayerTurnStarted);
 
         if (turnPhaseBannerUI != null)
+        {
             yield return turnPhaseBannerUI.Hide();
+        }
 
         /*
          * 抽牌動畫完成、玩家回合提示關閉後，
@@ -376,9 +405,7 @@ public class BattleManager : MonoBehaviour
          */
         PlayerInputReady?.Invoke();
 
-        Debug.Log(
-            $"[BattleManager] 玩家已可操作，第 {battleTurnNumber} 回合"
-        );
+        Debug.Log($"[BattleManager] 玩家已可操作，第 {battleTurnNumber} 回合");
     }
     public void EndPlayerTurn()
     {
@@ -439,12 +466,10 @@ public class BattleManager : MonoBehaviour
     {
         isChangingTurn = true;
 
-
         if (turnEndButtonAnimatorUI != null)
         {
             turnEndButtonAnimatorUI.SetEnemyTurnIdle();
         }
-
 
         // =========================================================
         // Relics：Player Turn End
@@ -459,8 +484,7 @@ public class BattleManager : MonoBehaviour
         //
         // =========================================================
 
-        TriggerRelics( RelicsTriggerType.PlayerTurnEnd);
-
+        TriggerRelics(RelicsTriggerType.PlayerTurnEnd);
 
         // =========================================================
         // 原本玩家 Status 回合結束
@@ -470,20 +494,15 @@ public class BattleManager : MonoBehaviour
         {
             playerUnit.OnTurnEnd();
 
-
             RefreshPlayerBarsUI();
-
             RefreshStatusUI();
-
 
             if (playerUnit.currentHp <= 0)
             {
                 EndBattle(false);
-
                 yield break;
             }
         }
-
 
         // =========================================================
         // 原本棄牌
@@ -494,12 +513,9 @@ public class BattleManager : MonoBehaviour
             playerDeck.DiscardHandAtEndTurn();
         }
 
-
         RefreshHandUI();
 
-
-        Debug.Log( "玩家回合結束");
-
+        Debug.Log("玩家回合結束");
 
         // =========================================================
         // 你原本後面的 Tutorial / EnemyTurn 流程
@@ -508,12 +524,30 @@ public class BattleManager : MonoBehaviour
 
         TutorialEventBus.Raise(BattleTutorialSignals.TurnEnded);
 
+        // 玩家回合結束效果完成後，讓敵人狀態選擇本次意圖。
+        // 此時尚未進入 StartEnemyTurn，也尚未執行敵人護盾重置。
+        if (currentPhase == BattlePhase.BattleEnded) yield break;
+
+        EnsureEnemiesRegistered();
+
+        if (enemies != null)
+        {
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                EnemyUnit enemy = enemies[i];
+
+                if (enemy == null) continue;
+                if (!enemy.gameObject.activeInHierarchy) continue;
+                if (enemy.currentHp <= 0) continue;
+
+                enemy.OnPlayerTurnEnd();
+            }
+        }
 
         if (turnPhaseBannerUI != null)
         {
             yield return turnPhaseBannerUI.ShowEnemyTurn();
         }
-
 
         yield return EnemyTurnRoutine();
     }

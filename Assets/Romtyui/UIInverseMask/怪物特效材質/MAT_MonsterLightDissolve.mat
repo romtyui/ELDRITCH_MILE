@@ -24,7 +24,8 @@ Material:
   m_Shader: {fileID: -6465566751694194690, guid: fd7b2e804403510488f043fa21bb3cc0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - SKINNED_SPRITE
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -61,7 +62,7 @@ Material:
     - _FormBlend: 1
     - _FormSide: 0
     - _NoiseStrength: 0.3
-    - _RevealLightIntensity: 8.4295
+    - _RevealLightIntensity: 6.972156
     - _RevealRadius: 3.158389
     m_Colors:
     - White: {r: 1, g: 1, b: 1, a: 1}

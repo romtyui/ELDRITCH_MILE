@@ -17,7 +17,13 @@
 
     RetainBlock,    // 護盾保留：自身回合開始不清除護盾
 
+    DiscardHandAtNextTurnStart, // 下次玩家回合抽牌後，隨機捨棄等同層數的手牌，結算後清除
+
+
     //怪物區
 
-    HermitHunt      // 寄居狩獵：回合結束依護盾量選擇下一個意圖
+    HermitHunt,     // 寄居狩獵：回合結束依護盾量選擇下一個意圖
+
+    EndlessHunger, // 好餓好餓好餓：玩家回合結束時，自損並獲得力量
+
 }
