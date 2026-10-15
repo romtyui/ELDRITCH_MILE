@@ -10,15 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 45272a725e0c87c44862f6bd807c4755, type: 3}
-  m_Name: test
+  m_Name: "\u96DC\u9B5A2"
   m_EditorClassIdentifier: Assembly-CSharp::EnemyFormationData
   formationName: 
   enemies:
   - spawnIndex: 0
     enemyData: {fileID: 11400000, guid: 9006a131eed171a4cbd0b2dea4b47d8d, type: 2}
   - spawnIndex: 1
-    enemyData: {fileID: 11400000, guid: 9a7b03728b16cce45a850eefcb15d534, type: 2}
-  - spawnIndex: 2
     enemyData: {fileID: 11400000, guid: 9006a131eed171a4cbd0b2dea4b47d8d, type: 2}
   moneyRewardMaxRows: 1
   moneyRewardRange: {x: 10, y: 20}
