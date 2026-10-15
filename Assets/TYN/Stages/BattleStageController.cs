@@ -339,6 +339,7 @@ public class BattleStageController : StageController
         HandOverScreenToStageCameras();
         SnapshotGlitchMaterial();
         BindCanvasCameras();
+        RerouteDeckButton();
         BindBgmToOptionMenu();
         BindModifierSystem();
         BindRelicsFromInventory();
@@ -713,6 +714,47 @@ public class BattleStageController : StageController
     //    不然 Console 會一直噴「場景裡有兩個 AudioListener」。
 
     private readonly List<Camera> suspendedHostCameras = new List<Camera>();
+
+    /// <summary>
+    /// 戰鬥裡那顆書改開**我們的** DeckBook（資料直接讀這一場的 BattleDeck）。
+    ///
+    /// 【為什麼】（2026-10-14 Romtyui 回報）他自己的卡冊由他的相機畫，我們的遺物／食物 HUD
+    /// 是 Overlay 畫布 —— Overlay 永遠畫在所有相機之後，所以 HUD 一定浮在他的卡冊上面，
+    /// 調排序修不了。DeckBook 是 Overlay 7000，跟商店一樣會把 HUD 一起模糊蓋掉。
+    ///
+    /// 只在 runtime 關掉那顆按鈕原本指向他卡冊的 persistent listener，**不改 prefab、不改他的檔**。
+    /// 他的 DeckViewerUI 沒有跟教學或其他系統綁在一起（已查），換掉安全。
+    /// 細節見 Docs/Handoff_BattleDeckBook.md。
+    /// </summary>
+    private void RerouteDeckButton()
+    {
+        if (EldritchMile.UI.DeckBookUI.Instance == null) return;   // 沒有全域卡冊就維持他的
+
+        BattleDeck deck = GetComponentInChildren<BattleDeck>(true);
+        int rerouted = 0;
+
+        foreach (UnityEngine.UI.Button b in GetComponentsInChildren<UnityEngine.UI.Button>(true))
+        {
+            bool opensBook = false;
+            for (int i = 0; i < b.onClick.GetPersistentEventCount(); i++)
+            {
+                Object t = b.onClick.GetPersistentTarget(i);
+                if (t is DeckViewerUI || t is DeckViewerBlur)
+                {
+                    string m = b.onClick.GetPersistentMethodName(i);
+                    if (m == "Close") continue;   // 他卡冊自己的關閉鈕不動
+                    b.onClick.SetPersistentListenerState(i, UnityEngine.Events.UnityEventCallState.Off);
+                    opensBook = true;
+                }
+            }
+
+            if (!opensBook) continue;
+            b.onClick.AddListener(() => EldritchMile.UI.DeckBookUI.Instance?.Open(deck));
+            rerouted++;
+        }
+
+        if (verboseBinding) Debug.Log($"[戰鬥] 卡冊按鈕改開全域 DeckBook：{rerouted} 顆", this);
+    }
 
     private void HandOverScreenToStageCameras()
     {

@@ -72,7 +72,27 @@ namespace EldritchMile.UI
             if (Instance == this) Instance = null;
         }
 
-        /// <summary>打開卡冊，顯示目前這一趟的牌組。</summary>
+        /// <summary>
+        /// 戰鬥中打開：直接看**戰鬥的牌堆**（抽牌堆／棄牌堆／消耗區／手牌四個分頁都在）。
+        /// （2026-10-14）戰鬥裡那顆書原本開的是 Romtyui 自己的卡冊 —— 那本由他的相機畫，
+        /// 我們的遺物／食物 HUD 是 Overlay 畫布，一定疊在它上面、不會被模糊蓋住。
+        /// 改開這本（Overlay 7000）就跟商店一樣：HUD 被截進模糊背景、再被卡冊蓋住。
+        ///
+        /// ⚠️ **不要**對 liveDeck 呼叫 RestoreDrawPileOrderOnly —— 那會把戰鬥中的牌堆清空。
+        /// </summary>
+        public void Open(BattleDeck liveDeck)
+        {
+            if (liveDeck == null) { Open(); return; }
+            if (viewer == null) return;
+
+            viewer.battleDeck = liveDeck;
+            SetBattleOnlyTabsVisible(true);
+
+            viewer.OpenDrawPile();
+            if (blur != null) blur.Open();
+        }
+
+        /// <summary>打開卡冊，顯示目前這一趟的牌組（戰鬥外）。</summary>
         public void Open()
         {
             if (viewer == null) return;
@@ -87,7 +107,8 @@ namespace EldritchMile.UI
             bookDeck.RestoreDrawPileOrderOnly(deck);
             viewer.battleDeck = bookDeck;
 
-            if (hideBattleOnlyTabs) SetBattleOnlyTabsVisible(false);
+            // 上次可能是戰鬥中打開的，分頁要照這次的設定重新決定
+            SetBattleOnlyTabsVisible(!hideBattleOnlyTabs);
 
             // 順序照他戰鬥裡那顆按鈕：先開分頁，再交給模糊層（它會先藏面板、截圖、再打開）
             viewer.OpenDrawPile();
