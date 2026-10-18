@@ -191,6 +191,15 @@ namespace EldritchMile.Core
                 count = 1;
             }
 
+            // 食物：**同種類不疊加，一個佔一格**，最多 FoodSlots 格（2026-10-18 定案）。
+            // 滿了不是直接丟掉，而是交給選擇視窗（FoodOverflowUI）讓玩家決定 —— 見 AddFoodOne
+            if (data != null && data.HasTag(FoodTag))
+            {
+                for (int n = 0; n < count; n++) AddFoodOne(id);
+                NotifyTutorial(id);
+                return true;
+            }
+
             // ⚠️ 目前的合併規則是「同 id 就併進第一疊」。道具還都是可互換的，所以正確。
             //    等 ItemStack 加上 per-instance 狀態（例如每條魚不同的數值）之後，
             //    這裡必須改成「同 id **且狀態相同**才併」，否則兩條不同的魚會被併成一疊。
@@ -209,6 +218,97 @@ namespace EldritchMile.Core
             inventory.Add(new ItemStack(id, count));
             Debug.Log($"[Run] 獲得道具：{id} ×{count}（共 {count}）");
             NotifyTutorial(id);
+            return true;
+        }
+
+        // ==========================================
+        // 食物欄（2026-10-18）
+        // ==========================================
+
+        public const string FoodTag = "Food";
+
+        /// <summary>
+        /// 食物欄滿了、又拿到一個新的。UI 要讓玩家二選一：
+        ///   1. 吃掉任一個舊的（騰出一格，新的進來）
+        ///   2. 丟掉任一個 —— 舊的（新的進來）或新的（什麼都不變）
+        /// 參數是新拿到的食物 id。
+        ///
+        /// ⚠️ **沒有任何人訂閱時直接放進背包**（例如編輯器測試、還沒有 UI 的場景）——
+        ///    寧可超出格數，也不要讓玩家莫名其妙少一個東西。
+        /// </summary>
+        public static event Action<RunContext, string> OnFoodOverflow;
+
+        /// <summary>還沒決定去留的食物（依拿到的順序）。一次寶箱給兩個也會一個一個問。</summary>
+        [NonSerialized] public readonly List<string> pendingFood = new List<string>();
+
+        /// <summary>食物欄幾格。由 GameFlowManager 設定，沒有就 3（美術排的快捷欄是 3 格）。</summary>
+        public int FoodSlots
+        {
+            get { return GameFlowManager.Instance != null ? Math.Max(1, GameFlowManager.Instance.foodSlots) : 3; }
+        }
+
+        /// <summary>身上有幾個食物（每個佔一格，所以就是格數）。</summary>
+        public int FoodCount
+        {
+            get
+            {
+                int n = 0;
+                for (int i = 0; i < inventory.Count; i++)
+                {
+                    ItemStack s = inventory[i];
+                    if (s == null || s.count <= 0) continue;
+                    ItemData d = GameFlowManager.Item(s.id);
+                    if (d != null && d.HasTag(FoodTag)) n += s.count;
+                }
+                return n;
+            }
+        }
+
+        private void AddFoodOne(string id)
+        {
+            if (FoodCount < FoodSlots || OnFoodOverflow == null)
+            {
+                inventory.Add(new ItemStack(id, 1));
+                Debug.Log($"[Run] 獲得食物：{id}（食物欄 {FoodCount}/{FoodSlots}）");
+                return;
+            }
+
+            pendingFood.Add(id);
+            Debug.Log($"[Run] 食物欄滿了（{FoodSlots}/{FoodSlots}），「{id}」等玩家決定去留");
+
+            // 只在佇列第一個時通知 —— UI 處理完一個會自己看還有沒有下一個
+            if (pendingFood.Count == 1) OnFoodOverflow(this, id);
+        }
+
+        /// <summary>佇列最前面那個待決定的食物。沒有就是 null。</summary>
+        public string PendingFood { get { return pendingFood.Count > 0 ? pendingFood[0] : null; } }
+
+        /// <summary>騰出位子之後，把待決定的那個放進背包。放不下（還是滿的）回 false。</summary>
+        public bool AcceptPendingFood()
+        {
+            if (pendingFood.Count == 0 || FoodCount >= FoodSlots) return false;
+            string id = pendingFood[0];
+            pendingFood.RemoveAt(0);
+            inventory.Add(new ItemStack(id, 1));
+            Debug.Log($"[Run] 「{id}」放進食物欄（{FoodCount}/{FoodSlots}）");
+            return true;
+        }
+
+        /// <summary>不要新的那個。</summary>
+        public void DiscardPendingFood()
+        {
+            if (pendingFood.Count == 0) return;
+            Debug.Log($"[Run] 放棄新拿到的「{pendingFood[0]}」");
+            pendingFood.RemoveAt(0);
+        }
+
+        /// <summary>丟掉身上指定的那一格（不是吃掉，沒有效果）。</summary>
+        public bool DiscardStack(ItemStack stack)
+        {
+            if (stack == null || !inventory.Contains(stack)) return false;
+            stack.count -= 1;
+            if (stack.count <= 0) inventory.Remove(stack);
+            Debug.Log($"[Run] 丟掉「{stack.id}」");
             return true;
         }
 

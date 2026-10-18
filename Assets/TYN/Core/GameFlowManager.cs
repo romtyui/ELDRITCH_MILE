@@ -77,6 +77,10 @@ namespace EldritchMile.Core
                  "定案後這個值多半會改由遺產或難度決定，不會留在這裡")]
         [Min(0)] public int startingMoney = 0;
 
+        [Tooltip("食物欄幾格。食物同種類不疊加、一個佔一格，滿了再拿到會跳選擇視窗（吃掉舊的或丟掉一個）。\n"
+                 + "要跟快捷欄的格子數一致（美術排的是 3 格）")]
+        [Min(1)] public int foodSlots = 3;
+
         [Tooltip("開局的戰鬥牌組。大綱裡是坎貝爾幫你準備的那一套。\n\n" +
                  "⚠️ **沒有這個，Starting Max Hp 填了也不會生效** ——\n" +
                  "空牌組進戰鬥是打不動的，所以 PlayerVitals 會擋住並退回舊行為。\n" +
