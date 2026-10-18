@@ -134,6 +134,29 @@ public class EnemyUnit : BattleUnit
 
     public event Action OnIntentChanged;
 
+    public class PhaseSwitchRuntimeState
+    {
+        public int playerTurnEndCount;
+        public bool isSecondPhase;
+        public int nextIntentIndex;
+    }
+
+    [NonSerialized]
+    public PhaseSwitchRuntimeState phaseSwitchRuntime = new PhaseSwitchRuntimeState();
+
+    public class OverloadRuntimeState
+    {
+        public int nextIntentIndex;
+        public int hpLostThisPlayerTurn;
+        public int previousHp;
+    }
+
+    [NonSerialized]
+    public OverloadRuntimeState overloadRuntime = new OverloadRuntimeState();
+
+    public bool CanSwitchStatusPhase => currentHp > 0 && gameObject.activeInHierarchy && !isCharging && !chargeBrokenStunQueued && !stayOnCurrentIntentThisTurn;
+
+
     private bool isDead;
     private int successfullyDiscardedHandCardCount;
     public bool IsDeathAnimationPlaying
@@ -554,6 +577,7 @@ public class EnemyUnit : BattleUnit
         statusBehaviours.Clear();
         statusIntentPending = false;
         successfullyDiscardedHandCardCount = 0;
+        phaseSwitchRuntime = new PhaseSwitchRuntimeState();
 
         if (enemyData != null && enemyData.startingStatuses != null)
         {
@@ -986,6 +1010,20 @@ public class EnemyUnit : BattleUnit
         if (amount <= 0) return;
 
         successfullyDiscardedHandCardCount += amount;
+
+        List<KeyValuePair<StatusType, BattleStatusBehaviourData>> behaviours = new List<KeyValuePair<StatusType, BattleStatusBehaviourData>>(statusBehaviours);
+
+        for (int i = 0; i < behaviours.Count; i++)
+        {
+            KeyValuePair<StatusType, BattleStatusBehaviourData> pair = behaviours[i];
+
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+
+            pair.Value.OnSuccessfullyDiscardedHandCards(this, amount);
+
+            if (currentHp <= 0 || !gameObject.activeInHierarchy) return;
+        }
     }
     public int ConsumeSuccessfullyDiscardedHandCardCount()
     {
@@ -1252,5 +1290,25 @@ public class EnemyUnit : BattleUnit
         );
 
         return localPoint;
+    }
+    public void InitializeOverloadTracking()
+    {
+        OnHpChanged -= TrackOverloadHpChange;
+
+        overloadRuntime = new OverloadRuntimeState();
+        overloadRuntime.previousHp = currentHp;
+
+        OnHpChanged += TrackOverloadHpChange;
+    }
+    private void TrackOverloadHpChange()
+    {
+        int lostHp = Mathf.Max(0, overloadRuntime.previousHp - currentHp);
+        overloadRuntime.previousHp = currentHp;
+
+        if (!HasStatus(StatusType.Overload)) return;
+        if (battleManager == null) return;
+        if (battleManager.currentPhase != BattlePhase.PlayerTurn) return;
+
+        overloadRuntime.hpLostThisPlayerTurn += lostHp;
     }
 }

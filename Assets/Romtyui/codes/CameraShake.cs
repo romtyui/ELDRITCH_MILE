@@ -53,16 +53,20 @@ public class CameraShake : MonoBehaviour
     {
         if (shakeTargets == null || shakeTargets.Count == 0) return;
 
+        if (shakeCoroutine != null)
+        {
+            StopCoroutine(shakeCoroutine);
+            shakeCoroutine = null;
+            ResetTargets();
+        }
+
         if (edgePan != null && edgePan.enabled)
         {
             restoreEdgePanAfterShake = true;
-            edgePan.enabled = false;
+            edgePan.PauseForShake();
         }
 
         CacheOriginalPositions();
-
-        if (shakeCoroutine != null) StopCoroutine(shakeCoroutine);
-
         shakeCoroutine = StartCoroutine(ShakeRoutine(duration, strength));
     }
 
@@ -104,7 +108,17 @@ public class CameraShake : MonoBehaviour
             target.localPosition = pair.Value;
         }
 
-        if (restoreEdgePanAfterShake && edgePan != null) edgePan.enabled = true;
+        if (restoreEdgePanAfterShake && edgePan != null) edgePan.ResumeAfterShake();
         restoreEdgePanAfterShake = false;
+    }
+    private void OnDisable()
+    {
+        if (shakeCoroutine != null)
+        {
+            StopCoroutine(shakeCoroutine);
+            shakeCoroutine = null;
+        }
+
+        ResetTargets();
     }
 }

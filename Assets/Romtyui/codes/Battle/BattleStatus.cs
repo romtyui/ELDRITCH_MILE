@@ -26,4 +26,9 @@
 
     EndlessHunger, // 好餓好餓好餓：玩家回合結束時，自損並獲得力量
 
+    PhaseSwitch,  // 猥裸:型態轉變
+
+    FeedingDesire, // 飢食的渴求
+    Overload, // 過負荷
+
 }

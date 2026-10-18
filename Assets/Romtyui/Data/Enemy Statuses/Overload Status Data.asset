@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89b3f981f01c75f46885488b9a82152f, type: 3}
+  m_Name: Overload Status Data
+  m_EditorClassIdentifier: Assembly-CSharp::OverloadStatusData
+  normalIntentCycle:
+  - {fileID: 11400000, guid: cf1b99d416b5fa046a082895dc0f8651, type: 2}
+  - {fileID: 11400000, guid: 13da47a6d4e3548469c790242e21fc2a, type: 2}
+  hpLossThresholdRatio: 0.3
+  fatigueIntent: {fileID: 11400000, guid: b6c2361940c546d4caac6d4dc8852a50, type: 2}

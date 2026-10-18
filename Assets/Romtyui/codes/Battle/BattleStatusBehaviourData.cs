@@ -29,4 +29,7 @@ public abstract class BattleStatusBehaviourData : ScriptableObject
     {
         return false;
     }
+    public virtual void OnSuccessfullyDiscardedHandCards(EnemyUnit enemy, int amount)
+    {
+    }
 }

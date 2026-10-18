@@ -27,10 +27,14 @@ MonoBehaviour:
   targetFrameAnchoredPosition: {x: 0, y: 50}
   targetFrameSize: {x: 150, y: 150}
   stunIntent: {fileID: 0}
-  startingStatuses: []
+  startingStatuses:
+  - statusType: 13
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: 4a3e876e051b50e4596921dacc94613a, type: 2}
   intents:
-  - {fileID: 11400000, guid: dc080c9ae1798e6458d890a3e53d8c49, type: 2}
-  - {fileID: 11400000, guid: e533eb873d1c85846886accbb896836d, type: 2}
+  - {fileID: 11400000, guid: e5707821394d4ca43926ff13fc0a882d, type: 2}
+  - {fileID: 11400000, guid: 95cad0782087db24baf40bebd71e6801, type: 2}
+  - {fileID: 11400000, guid: 5259f9c25bf0c8a448b4da463ee8165b, type: 2}
   idleTrigger: idle
   attackTrigger: atk
   hurtTrigger: hurt

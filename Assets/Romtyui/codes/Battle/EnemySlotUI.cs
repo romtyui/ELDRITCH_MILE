@@ -31,6 +31,12 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
         public TMP_Text blockText;
         public Animator blockAnimator;
 
+        [Tooltip("此 Slot 的護盾基準偏移，會加在 Block Animator 物件的原始位置上。")]
+        public Vector2 blockBasePositionOffset = Vector2.zero;
+
+        [Tooltip("此 Slot 的護盾基準寬、高，會再乘上 EnemyData 的大小倍率。")]
+        public Vector2 blockBaseSize = new Vector2(100f, 100f);
+
         [Header("Intent")]
         public Image intentImage;
         public TMP_Text intentDamageText;
@@ -69,6 +75,8 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
     [Tooltip("這個站位額外的位置偏移。")]
     public Vector2 slotVisualPositionOffset = Vector2.zero;
 
+
+
     [SerializeField] private GameObject currentNormalVisual;
     [SerializeField] private GameObject currentDarkVisual;
 
@@ -101,6 +109,8 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
     [Tooltip("沒有狀態時是否隱藏 StatusIconRoot")]
     public bool hideStatusRootWhenEmpty = true;
+
+    private readonly Dictionary<RectTransform, Vector2> blockOriginalPositions = new Dictionary<RectTransform, Vector2>();
 
     private void Awake()
     {
@@ -234,6 +244,7 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
         ClearVisual();
 
         ApplyUIReferences(useBossUI);
+        ApplyBlockLayoutSettings(enemyData);
 
         ApplyDataToImage(enemyData);
         ApplyDataToEnemyUnit(enemyData);
@@ -727,7 +738,35 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
         if (enemyUnit != null)
             enemyUnit.visualAnimationController = visualAnimationController;
     }
+    private void ApplyBlockLayoutSettings(EnemyData enemyData)
+    {
+        if (enemyData == null) return;
 
+        EnemyUIReferences selectedUI = currentUsesBossUI ? bossUI : normalUI;
+
+        if (selectedUI == null || selectedUI.blockAnimator == null) return;
+
+        RectTransform blockRect = selectedUI.blockAnimator.transform as RectTransform;
+
+        if (blockRect == null)
+        {
+            Debug.LogWarning("[EnemySlotUI] Block Animator 所在物件沒有 RectTransform，無法套用護盾位置與大小", selectedUI.blockAnimator);
+            return;
+        }
+
+        if (!blockOriginalPositions.TryGetValue(blockRect, out Vector2 originalPosition))
+        {
+            originalPosition = blockRect.anchoredPosition;
+            blockOriginalPositions.Add(blockRect, originalPosition);
+        }
+
+        Vector2 finalPosition = originalPosition + selectedUI.blockBasePositionOffset + enemyData.blockPositionOffset;
+        Vector2 finalSize = Vector2.Scale(selectedUI.blockBaseSize, enemyData.blockSizeMultiplier);
+
+        blockRect.anchoredPosition = finalPosition;
+        blockRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, Mathf.Max(0f, finalSize.x));
+        blockRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(0f, finalSize.y));
+    }
     private void SpawnVisual(EnemyData enemyData)
     {
         Transform parent = visualRoot != null ? visualRoot : transform;
@@ -908,5 +947,40 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
             return;
 
         targetFrameImage.gameObject.SetActive(false);
+    }
+
+    public void SetVisualAnimatorBool(string parameterName, bool value)
+    {
+        if (string.IsNullOrWhiteSpace(parameterName)) return;
+
+        SetVisualRootAnimatorBool(currentNormalVisual, parameterName, value);
+        SetVisualRootAnimatorBool(currentDarkVisual, parameterName, value);
+    }
+
+    private void SetVisualRootAnimatorBool(GameObject root, string parameterName, bool value)
+    {
+        if (root == null) return;
+
+        Animator[] animators = root.GetComponentsInChildren<Animator>(true);
+
+        for (int i = 0; i < animators.Length; i++)
+        {
+            Animator animator = animators[i];
+
+            if (animator == null || animator.runtimeAnimatorController == null) continue;
+
+            AnimatorControllerParameter[] parameters = animator.parameters;
+
+            for (int j = 0; j < parameters.Length; j++)
+            {
+                AnimatorControllerParameter parameter = parameters[j];
+
+                if (parameter.type != AnimatorControllerParameterType.Bool) continue;
+                if (parameter.name != parameterName) continue;
+
+                animator.SetBool(parameterName, value);
+                break;
+            }
+        }
     }
 }
