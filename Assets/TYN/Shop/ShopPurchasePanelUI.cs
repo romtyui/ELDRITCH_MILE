@@ -128,9 +128,19 @@ namespace EldritchMile.Shop
 
             if (titleText != null) titleText.text = title ?? "";
             if (priceText != null) priceText.text = price.ToString();
-            if (bodyText != null) bodyText.text = body ?? "";
 
             ShowVisual(data);
+
+            // 武器：右側說明換成**卡片的實際效果** —— 跟大圖卡面上印的是同一串。
+            // （2026-10-18 Romtyui 回報：原本顯示的是道具資料上手寫的「加入牌組…」）
+            // 買不起那一行照樣接在後面
+            if (data != null && data.grantsCard != null && battleCard != null)
+            {
+                string effect = battleCard.EffectText;
+                if (!string.IsNullOrEmpty(effect)) body = ReplaceLead(body, data.description, effect);
+            }
+
+            if (bodyText != null) bodyText.text = body ?? "";
 
             if (yesButton != null)
             {
@@ -143,6 +153,19 @@ namespace EldritchMile.Shop
             IsOpen = true;
             gameObject.SetActive(true);
             StartFade(1f, true);
+        }
+
+        /// <summary>
+        /// 把 body 開頭的道具說明換成 replacement。body 是呼叫端組的（說明 ＋ 可能有的「買不起」那行），
+        /// 這裡只換掉說明那段、後面接的東西保留。
+        /// </summary>
+        private static string ReplaceLead(string body, string lead, string replacement)
+        {
+            if (string.IsNullOrEmpty(body)) return replacement;
+            if (!string.IsNullOrEmpty(lead) && body.StartsWith(lead)) return replacement + body.Substring(lead.Length);
+
+            // 說明是空的：呼叫端會退回「「名字」，價錢 塊。要嗎？」那句 —— 效果放前面、那句留著
+            return replacement + "\n" + body;
         }
 
         public void Close()
@@ -191,9 +214,8 @@ namespace EldritchMile.Shop
         private void ShowVisual(ItemData data)
         {
             CardData card = data != null ? data.grantsCard : null;
-            CardVisualData vis = card != null ? card.visualData : null;
 
-            bool asCard = battleCard != null && vis != null;
+            bool asCard = battleCard != null && card != null;
             bool asRelic = !asCard && relicCard != null && data != null && data.HasTag("Curio");
 
             if (battleCard != null && !asCard) battleCard.Hide();
@@ -202,7 +224,7 @@ namespace EldritchMile.Shop
 
             if (asCard)
             {
-                battleCard.Show(vis);
+                battleCard.Show(card);
                 return;
             }
 
