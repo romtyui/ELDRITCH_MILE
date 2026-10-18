@@ -41,8 +41,16 @@ namespace EldritchMile.Map3D
         [Tooltip("視角操作。留空則不做拖曳／點擊的區分，任何點擊都會選節點")]
         public MapCameraController cameraController;
 
-        [Tooltip("地面的世界尺寸（寬, 深）")]
+        [Tooltip("**節點分佈**的世界尺寸（寬, 深）。xPercent／yPercent 是乘這個。\n"
+                 + "改它節點會散開或擠在一起；只想讓底圖變大請改下面的 Ground Visual Scale")]
         public Vector2 groundSize = new Vector2(20f, 20f);
+
+        [Tooltip("地面那塊 Quad（底圖）。留空就不動底圖大小")]
+        public Transform ground;
+
+        [Tooltip("底圖比節點範圍大幾倍。（2026-10-18 組員要求：底圖佔更大面積、節點範圍不變，等於邊距留更寬）\n"
+                 + "1 = 底圖剛好等於節點範圍。只影響畫面，不影響節點分佈")]
+        [Min(1f)] public float groundVisualScale = 1.5f;
 
         [Header("節點")]
         [Tooltip("單一節點 prefab。不同種類只換 pin 的圖，不做六個 prefab")]
@@ -56,6 +64,9 @@ namespace EldritchMile.Map3D
 
         [Tooltip("底座圓環的世界直徑")]
         public float ringWorldSize = 0.5f;
+
+        [Tooltip("首領節點的棋子放大幾倍。（2026-10-18 美術要求 2 倍）")]
+        [Min(0.1f)] public float bossPinScale = 2f;
 
         [Header("節點圖（依種類）")]
         public Sprite spriteEvent;
@@ -151,6 +162,10 @@ namespace EldritchMile.Map3D
         {
             if (run == null || run.mapData == null) return;
 
+            // 底圖大小 = 節點範圍 × 倍率。地面是平躺的 Quad，本地 x/y 對應世界的寬/深
+            if (ground != null)
+                ground.localScale = new Vector3(groundSize.x * groundVisualScale, groundSize.y * groundVisualScale, 1f);
+
             bool rebuilt = boundMap != run.mapData;
             if (rebuilt) Build(run.mapData);
             SyncState();
@@ -235,7 +250,7 @@ namespace EldritchMile.Map3D
                 if (n.pin != null)
                 {
                     n.pin.sprite = SpriteFor(d);
-                    FitPin(n.pin, pinWorldHeight);
+                    FitPin(n.pin, d.kind == MapNodeKind.Boss ? pinWorldHeight * bossPinScale : pinWorldHeight);
                 }
                 if (n.ring != null) FitRing(n.ring);
 

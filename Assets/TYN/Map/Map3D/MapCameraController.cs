@@ -74,7 +74,12 @@ namespace EldritchMile.Map3D
         public Transform followTarget;
 
         [Header("平移自動歸位")]
-        [Tooltip("放手之後多久開始飄回去（秒）。0 = 放手就回")]
+        [Tooltip("放手之後要不要飄回去（回彈）。\n"
+                 + "（2026-10-18 組員回報：拖曳後不要回彈）預設關掉 —— 地圖停在你推到的地方。\n"
+                 + "換節點時還是會歸零，鏡頭會回到玩家身上")]
+        public bool panAutoReturn = false;
+
+        [Tooltip("放手之後多久開始飄回去（秒）。0 = 放手就回。Pan Auto Return 關掉時沒作用")]
         [Min(0f)] public float panReturnDelay = 1.2f;
 
         [Tooltip("飄回去要多久（秒）")]
@@ -111,6 +116,8 @@ namespace EldritchMile.Map3D
 
         /// <summary>這一次按下之後有沒有被判定成拖曳。MapView3D 靠它決定要不要吃點擊。</summary>
         public bool IsDragging { get; private set; }
+
+        private Transform lastFollowTarget;
 
         private MapCameraRig rig;
         private Vector2 pressPos;
@@ -438,9 +445,17 @@ namespace EldritchMile.Map3D
                     followOffset, Vector3.zero, ref followVel, Mathf.Max(0.01f, followSmooth));
             }
 
+            // ── 換了追隨目標（玩家走到下一個節點）→ 平移歸零，鏡頭回到玩家身上 ──
+            //    回彈關掉之後，不歸零的話推開的位移會一直留著，走到下一格還是偏的
+            if (followTarget != lastFollowTarget)
+            {
+                lastFollowTarget = followTarget;
+                panOffset = Vector3.zero;
+            }
+
             // ── 平移飄回 0 ──
             bool panning = pressedInside && pressButton == 0 && IsDragging;
-            if (!panning)
+            if (!panning && panAutoReturn)
             {
                 sincePan += Time.unscaledDeltaTime;
                 if (sincePan >= panReturnDelay)
