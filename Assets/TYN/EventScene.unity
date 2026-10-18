@@ -8947,7 +8947,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -9650,6 +9650,11 @@ MonoBehaviour:
   stageHost: {fileID: 1277115878}
   mapOverlay: {fileID: 2110897650}
   mapSettings: {fileID: 11400000, guid: 198f3f149ee61a94294d53f91ff8a4ef, type: 2}
+  startingRegion: {fileID: 11400000, guid: 452d3eeb14cc92f4ea39c1723ec31d58, type: 2}
+  extraRegions: []
+  gateUnfinishedLines:
+  - "\u901A\u9053\u7684\u53E6\u4E00\u982D\u4E00\u7247\u6F06\u9ED1\uFF0C\u4EC0\u9EBC\u4E5F\u770B\u4E0D\u6E05\u3002"
+  - "\uFF08\u901A\u5F80\u300C{0}\u300D\u7684\u901A\u9053\u5C1A\u672A\u5B8C\u6210\uFF0C\u8ACB\u7E7C\u7E8C\u539F\u672C\u7684\u8DEF\u3002\uFF09"
   itemDatabase: {fileID: 11400000, guid: aafc0b37eb0d75748975ed691881d032, type: 2}
   runFinishedEvent: {fileID: 11400000, guid: 5b636a52e3c18494a9c1125e6a69c003, type: 2}
   runFailedEvent: {fileID: 0}
@@ -11358,7 +11363,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -19531,7 +19536,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
   m_UseReflectionProbes: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 600
@@ -20915,6 +20920,8 @@ MonoBehaviour:
   spriteShop: {fileID: 21300000, guid: bbb26f440e881864883aa32f4866f8d9, type: 3}
   spriteSpecialEvent: {fileID: 21300000, guid: b45f0f4e423b7094c804e60f2d53a0fc, type: 3}
   spriteDialogue: {fileID: 21300000, guid: e3f68d38466a6204dafaf0ff1e001f62, type: 3}
+  spriteGate: {fileID: 0}
+  gateTint: {r: 0.6, g: 0.75, b: 1, a: 1}
   lineMaterial: {fileID: 2100000, guid: 6bcb648d972cea145918da382a4e0dfb, type: 2}
   lineWidth: 0.04
   lineEndGap: 0.25
@@ -20941,6 +20948,9 @@ MonoBehaviour:
   - kind: 5
     title: "\u906D\u9047"
     body: 
+  - kind: 6
+    title: "\u901A\u9053"
+    body: "\u901A\u5F80\u5176\u4ED6\u5730\u5340\u7684\u5C94\u8DEF"
   tooltipTierElite: "<color=#FF9B6A>\u25C6 \u83C1\u82F1</color>"
   tooltipTierBoss: "<color=#FF6A6A>\u25C6\u25C6 BOSS</color>"
   tooltipStateCurrent: "<color=#FFD98A>\u4F60\u5728\u9019\u88E1\u3002</color>"

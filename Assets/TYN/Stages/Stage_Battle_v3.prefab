@@ -19422,6 +19422,7 @@ GameObject:
   m_Component:
   - component: {fileID: 539127082535117902}
   - component: {fileID: 5459530331917795752}
+  - component: {fileID: 6266634794250604959}
   m_Layer: 0
   m_Name: Stage_Battle_v3
   m_TagString: Untagged
@@ -19487,6 +19488,20 @@ MonoBehaviour:
   godCardAnimationCanvas: {fileID: 2882329187957531520}
   godCardAnimationLayerName: GodCardAnimation
   verboseBinding: 0
+--- !u!114 &6266634794250604959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1661808450078756495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58cdfda947828564c892c0de048a2701, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleRegionHook
+  background: {fileID: 5824313556052503272}
+  spawner: {fileID: 886039991441222535}
 --- !u!1 &1677876205811359989
 GameObject:
   m_ObjectHideFlags: 0

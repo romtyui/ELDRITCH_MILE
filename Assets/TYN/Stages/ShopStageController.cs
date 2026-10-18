@@ -258,6 +258,12 @@ public class ShopStageController : StageController
     /// </summary>
     private LootTable ResolveStockTable()
     {
+        // 地區自己指定了貨表就用它（2026-10-18 地區系統）。沒指定的地區照下面的舊規則，
+        // 所以現有的商店內容不會因為有了地區而改變
+        EldritchMile.Core.RegionData current =
+            EldritchMile.Core.GameFlowManager.Instance != null ? EldritchMile.Core.GameFlowManager.Instance.CurrentRegion : null;
+        if (current != null && current.shopStock != null) return current.shopStock;
+
         EldritchMile.Core.RunNodeData node = run != null ? run.CurrentNode : null;
         string region = node != null ? node.contentId : null;
 

@@ -72,6 +72,24 @@ namespace EldritchMile.Core
         /// </summary>
         public List<string> flags = new List<string>();
 
+        [Header("地區")]
+        /// <summary>
+        /// 現在在哪一區（`RegionData.regionId`）。空字串 = 沒有設定地區（舊存檔、或場景沒指定起始地區），
+        /// 一切照 GameFlowManager 上的預設跑。2026-10-18 追加。
+        /// </summary>
+        public string currentRegionId = "";
+
+        /// <summary>這場 run 依序去過哪幾區（含起始那一區）。遊玩紀錄與「去過某區」的條件用。</summary>
+        public List<string> visitedRegionIds = new List<string>();
+
+        /// <summary>換到另一區。只記錄，換地圖由 GameFlowManager.TravelToRegion 負責。</summary>
+        public void EnterRegion(string regionId)
+        {
+            currentRegionId = regionId ?? "";
+            if (!string.IsNullOrEmpty(currentRegionId) && !visitedRegionIds.Contains(currentRegionId))
+                visitedRegionIds.Add(currentRegionId);
+        }
+
         [Header("侵蝕度")]
         /// <summary>
         /// 各尊神的侵蝕度（0–100）。**每尊神各一條，不是單一全域值** ——

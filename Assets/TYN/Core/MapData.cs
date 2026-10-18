@@ -23,6 +23,12 @@ namespace EldritchMile.Core
 
         /// <summary>C18/Phase 6：與角色對話。2026-08-16 追加</summary>
         Dialogue = 5,
+
+        /// <summary>
+        /// 通道：從這裡穿越到別的地區（<see cref="RunNodeData.targetRegionId"/>）。2026-10-18 追加。
+        /// 沒有自己的 Stage —— 走進去就是轉場（見 GameFlowManager.GateRoutine）。
+        /// </summary>
+        Gate = 6,
     }
 
     /// <summary>
@@ -55,6 +61,12 @@ namespace EldritchMile.Core
         /// 留空 = 交給戰鬥組自己的抽怪邏輯。
         /// </summary>
         public string enemyId;
+
+        /// <summary>
+        /// 通道節點（<see cref="MapNodeKind.Gate"/>）通往哪一區（`RegionData.regionId`）。其他節點留空。
+        /// 由 <see cref="MapGenerator.PlaceGates"/> 填。
+        /// </summary>
+        public string targetRegionId;
 
         /// <summary>
         /// 這一站的難度級別。**玩家在地圖上就要看得到** ——

@@ -201,6 +201,9 @@ public class BattleStageController : StageController
         TutorialEventBus.OnSignalRaised -= HandleSignal;
         TutorialEventBus.OnSignalRaised += HandleSignal;
 
+        // 地區的背景與怪物池要在預約敵人**之前**套上 —— 沒有指定對手時他會從怪物池抽
+        ApplyRegion();
+
         ReserveEnemies();
 
         if (battleManager == null)
@@ -861,6 +864,22 @@ public class BattleStageController : StageController
     /// <summary>
     /// 告訴戰鬥組這一場要打誰。沒有指定就不預約 —— 那時候他會自己抽怪。
     /// </summary>
+    /// <summary>
+    /// 把目前地區的戰鬥背景與怪物池交給 Romtyui 的接口（<see cref="BattleRegionHook"/>）。
+    /// 沒有地區、或 prefab 上沒有接口時什麼都不做，維持 prefab 原本的設定。
+    /// </summary>
+    private void ApplyRegion()
+    {
+        BattleRegionHook hook = GetComponentInChildren<BattleRegionHook>(true);
+        if (hook == null) return;
+
+        EldritchMile.Core.RegionData region =
+            EldritchMile.Core.GameFlowManager.Instance != null ? EldritchMile.Core.GameFlowManager.Instance.CurrentRegion : null;
+
+        hook.Apply(region != null ? region.battleBackground : null,
+                   region != null ? region.battleEncounterPool : null);
+    }
+
     private void ReserveEnemies()
     {
         var ids = new List<string>();
