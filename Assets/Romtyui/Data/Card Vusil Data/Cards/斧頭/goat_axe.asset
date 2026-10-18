@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: goat_axe
   cardName: goat_axe
-  description: "\u9020\u6210 {finalDamage} \u9EDE\u50B7\u5BB3\n( {damage} + {usedEggCount}(\u5DF2\u4F7F\u7528\u5375\u6B21\u6578))"
+  description: "\u9020\u6210 {finalDamage} \u9EDE\u50B7\u5BB3\n\u672C\u56DE\u5408\u5167\u6BCF\u4F7F\u75281\u5F35\u3010\u8C50\u9952\u3011\u5361\u724C\uFF0C\u672C\u6B21\u7684\u50B7\u5BB3+
+    {usedEggCount})"
   visualData: {fileID: 11400000, guid: d821cd5ef7b65cc45bffb0e97ca43fd5, type: 2}
   cardType: 0
   rarity: 0

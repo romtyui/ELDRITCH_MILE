@@ -20,7 +20,20 @@ public class EnemyUnit : BattleUnit
     public bool isCharging;
     public int chargeValue;
     public int chargeTurnsLeft;
+    public enum EnemyPopupKind
+    {
+        HpDamage,
+        BlockDamage
+    }
 
+    [System.Serializable]
+    public class EnemyPopupVariant
+    {
+        public EnemyPopupKind kind;
+        public DamagePopupUI prefab;
+        public Vector2 positionOffset = new Vector2(0f, 80f);
+        public Vector2 randomRange = new Vector2(40f, 20f);
+    }
 
     private readonly Dictionary<StatusType, BattleStatusBehaviourData> statusBehaviours = new Dictionary<StatusType, BattleStatusBehaviourData>();
     private bool statusIntentPending;
@@ -77,6 +90,9 @@ public class EnemyUnit : BattleUnit
 
     [Tooltip("跳字隨機散開範圍")]
     public Vector2 damagePopupRandomRange = new Vector2(40f, 20f);
+    [Header("Popup Variants")]
+    [Tooltip("依類型指定跳字 Prefab、固定偏移及隨機範圍。未設定 HpDamage 時沿用上方原本的傷害跳字欄位。")]
+    public List<EnemyPopupVariant> popupVariants = new List<EnemyPopupVariant>();
 
     [Header("Enemy Block UI")]
     [Tooltip("整個護盾 UI Root。建議是包含 Image、Text、Animator 的父物件")]
@@ -1214,12 +1230,42 @@ public class EnemyUnit : BattleUnit
 
     public void ShowDamagePopup(int damage)
     {
-        if (damage <= 0)
-            return;
+        ShowPopup(damage, EnemyPopupKind.HpDamage);
+    }
+    public void ShowBlockDamagePopup(int absorbedDamage)
+    {
+        ShowPopup(absorbedDamage, EnemyPopupKind.BlockDamage);
+    }
+    private void ShowPopup(int value, EnemyPopupKind kind)
+    {
+        if (value <= 0) return;
 
-        if (damagePopupPrefab == null)
+        EnemyPopupVariant variant = null;
+
+        if (popupVariants != null)
         {
-            Debug.LogWarning($"[EnemyDamagePopup] {unitName} 的 damagePopupPrefab 沒有指定", gameObject);
+            foreach (EnemyPopupVariant entry in popupVariants)
+            {
+                if (entry == null || entry.kind != kind) continue;
+                variant = entry;
+                break;
+            }
+        }
+
+        DamagePopupUI selectedPrefab = variant != null ? variant.prefab : null;
+        Vector2 selectedOffset = variant != null ? variant.positionOffset : Vector2.zero;
+        Vector2 selectedRandomRange = variant != null ? variant.randomRange : Vector2.zero;
+
+        if (variant == null && kind == EnemyPopupKind.HpDamage)
+        {
+            selectedPrefab = damagePopupPrefab;
+            selectedOffset = damagePopupOffset;
+            selectedRandomRange = damagePopupRandomRange;
+        }
+
+        if (selectedPrefab == null)
+        {
+            Debug.LogWarning($"[EnemyDamagePopup] {unitName} 的 {kind} 跳字 Prefab 沒有指定", gameObject);
             return;
         }
 
@@ -1229,9 +1275,7 @@ public class EnemyUnit : BattleUnit
             return;
         }
 
-        RectTransform anchor = damagePopupAnchor != null
-            ? damagePopupAnchor
-            : transform as RectTransform;
+        RectTransform anchor = damagePopupAnchor != null ? damagePopupAnchor : transform as RectTransform;
 
         if (anchor == null)
         {
@@ -1239,33 +1283,22 @@ public class EnemyUnit : BattleUnit
             return;
         }
 
-        DamagePopupUI popup = Instantiate(damagePopupPrefab, damagePopupRoot);
-
+        DamagePopupUI popup = Instantiate(selectedPrefab, damagePopupRoot);
         RectTransform popupRect = popup.transform as RectTransform;
 
         if (popupRect == null)
         {
-            popup.Setup(damage, Vector2.zero);
+            popup.Setup(value, Vector2.zero);
             return;
         }
 
         Vector2 localPosition = GetLocalPositionInPopupRoot(anchor);
+        Vector2 randomOffset = new Vector2(UnityEngine.Random.Range(-selectedRandomRange.x, selectedRandomRange.x), UnityEngine.Random.Range(-selectedRandomRange.y, selectedRandomRange.y));
+        popupRect.anchoredPosition = localPosition + selectedOffset + randomOffset;
+        popup.SetupLocal(value, popupRect.anchoredPosition);
 
-        Vector2 randomOffset = new Vector2(
-            UnityEngine.Random.Range(-damagePopupRandomRange.x, damagePopupRandomRange.x),
-            UnityEngine.Random.Range(-damagePopupRandomRange.y, damagePopupRandomRange.y)
-        );
-
-        popupRect.anchoredPosition = localPosition + damagePopupOffset + randomOffset;
-
-        popup.SetupLocal(damage, popupRect.anchoredPosition);
-
-        Debug.Log(
-            $"[EnemyDamagePopup] {unitName} damage = {damage}, root = {damagePopupRoot.name}, anchor = {anchor.name}, local = {popupRect.anchoredPosition}",
-            gameObject
-        );
+        Debug.Log($"[EnemyDamagePopup] {unitName} kind = {kind}, value = {value}, root = {damagePopupRoot.name}, anchor = {anchor.name}, local = {popupRect.anchoredPosition}", gameObject);
     }
-
     private Vector2 GetLocalPositionInPopupRoot(RectTransform anchor)
     {
         Canvas rootCanvas = damagePopupRoot.GetComponentInParent<Canvas>();

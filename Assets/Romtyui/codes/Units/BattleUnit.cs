@@ -293,14 +293,14 @@ public class BattleUnit : MonoBehaviour
             return;
 
         int hpBefore = currentHp;
-
         int remaining = amount;
+        int absorbedBlockDamage = 0;
 
         if (!ignoreBlock && block > 0)
         {
-            int absorbed = Mathf.Min(block, remaining);
-            block -= absorbed;
-            remaining -= absorbed;
+            absorbedBlockDamage = Mathf.Min(block, remaining);
+            block -= absorbedBlockDamage;
+            remaining -= absorbedBlockDamage;
         }
 
         currentHp -= remaining;
@@ -334,17 +334,19 @@ public class BattleUnit : MonoBehaviour
         }
 
         // =========================================================
-        // 傷害數字仍然只顯示真正扣掉的 HP
+        // 護盾跳字顯示實際吸收量，HP 跳字顯示實際扣血量
         // =========================================================
 
-        if (realHpDamage > 0 && this is EnemyUnit enemy)
+        if (this is EnemyUnit enemy)
         {
-            enemy.ShowDamagePopup(realHpDamage);
+            if (absorbedBlockDamage > 0)
+                enemy.ShowBlockDamagePopup(absorbedBlockDamage);
+
+            if (realHpDamage > 0)
+                enemy.ShowDamagePopup(realHpDamage);
         }
 
-        Debug.Log(
-            $"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}"
-        );
+        Debug.Log($"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}");
 
         // =========================================================
         // 反擊
@@ -368,10 +370,7 @@ public class BattleUnit : MonoBehaviour
             OnDamagedButAlive();
         }
 
-        Debug.Log(
-            $"[Damage] {unitName} take {amount}, ignoreBlock = {ignoreBlock}, " +
-            $"realHpDamage = {realHpDamage}, HP = {currentHp}"
-        );
+        Debug.Log($"[Damage] {unitName} take {amount}, ignoreBlock = {ignoreBlock}, realHpDamage = {realHpDamage}, HP = {currentHp}");
     }
 
     public virtual void PayHpCost(int amount, bool triggerHurtAnimation)

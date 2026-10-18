@@ -9165,7 +9165,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 71.4}
-  m_SizeDelta: {x: 941.321, y: 946.143}
+  m_SizeDelta: {x: 1300, y: 1300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!95 &310045455
 Animator:
@@ -19069,10 +19069,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1604837384}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 44.055, y: -27.75}
-  m_SizeDelta: {x: 88.11, y: 55.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &637386393
 MonoBehaviour:
@@ -21713,7 +21713,7 @@ RectTransform:
   m_GameObject: {fileID: 753208698}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8276838, y: 0.8276838, z: 0.8276838}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 310045454}
@@ -35724,6 +35724,15 @@ MonoBehaviour:
   damagePopupAnchor: {fileID: 1595762586}
   damagePopupOffset: {x: 0, y: 120}
   damagePopupRandomRange: {x: 200, y: 40}
+  popupVariants:
+  - kind: 0
+    prefab: {fileID: -8286644415514860712, guid: 1144ac4c395712d408b3fc4c798cae5a, type: 3}
+    positionOffset: {x: 0, y: 0}
+    randomRange: {x: 40, y: 20}
+  - kind: 1
+    prefab: {fileID: -8286644415514860712, guid: 718a282a8dacf3a48b90fe67e999ee47, type: 3}
+    positionOffset: {x: 0, y: 0}
+    randomRange: {x: 40, y: 20}
   blockRoot: {fileID: 1285507560}
   blockImage: {fileID: 1696468601}
   blockText: {fileID: 232491991}
@@ -47566,7 +47575,7 @@ RectTransform:
   m_GameObject: {fileID: 1419918613}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.7248916, y: 0.7248916, z: 0.7248916}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 879055943}
@@ -49996,6 +50005,15 @@ MonoBehaviour:
   damagePopupAnchor: {fileID: 2127834315}
   damagePopupOffset: {x: 0, y: 120}
   damagePopupRandomRange: {x: 40, y: 20}
+  popupVariants:
+  - kind: 0
+    prefab: {fileID: -8286644415514860712, guid: 1144ac4c395712d408b3fc4c798cae5a, type: 3}
+    positionOffset: {x: 0, y: 0}
+    randomRange: {x: 40, y: 20}
+  - kind: 1
+    prefab: {fileID: -8286644415514860712, guid: 718a282a8dacf3a48b90fe67e999ee47, type: 3}
+    positionOffset: {x: 0, y: 0}
+    randomRange: {x: 40, y: 20}
   blockRoot: {fileID: 177232777}
   blockImage: {fileID: 41058868}
   blockText: {fileID: 1022052939}
@@ -55569,7 +55587,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1655269225
 RectTransform:
   m_ObjectHideFlags: 0
@@ -58699,7 +58717,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1718624465
 RectTransform:
   m_ObjectHideFlags: 0
@@ -58709,7 +58727,7 @@ RectTransform:
   m_GameObject: {fileID: 1718624464}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: -18.37}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.738848, y: 0.738848, z: 0.738848}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1419918614}
@@ -63157,7 +63175,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1871956895
 RectTransform:
   m_ObjectHideFlags: 0
@@ -75427,6 +75445,15 @@ MonoBehaviour:
   damagePopupAnchor: {fileID: 1614959817}
   damagePopupOffset: {x: 0, y: 120}
   damagePopupRandomRange: {x: 40, y: 20}
+  popupVariants:
+  - kind: 0
+    prefab: {fileID: -8286644415514860712, guid: 1144ac4c395712d408b3fc4c798cae5a, type: 3}
+    positionOffset: {x: 0, y: 0}
+    randomRange: {x: 40, y: 20}
+  - kind: 1
+    prefab: {fileID: -8286644415514860712, guid: 718a282a8dacf3a48b90fe67e999ee47, type: 3}
+    positionOffset: {x: 0, y: 0}
+    randomRange: {x: 40, y: 20}
   blockRoot: {fileID: 409322872}
   blockImage: {fileID: 794996501}
   blockText: {fileID: 939908122}

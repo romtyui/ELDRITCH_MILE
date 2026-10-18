@@ -51,25 +51,20 @@ public class GainBlockByPlayedCardsThisTurnEffectData : CardEffectData, CardDesc
     {
         value = 0;
 
-        if (key != "block")
-            return false;
+        if (key != "block") return false;
 
-        if (context == null ||
-            context.source == null ||
-            context.battleManager == null ||
-            context.battleManager.playerDeck == null)
+        int baseBlockPerCard = Mathf.Max(0, blockPerCard);
+
+        if (context == null || context.source == null || context.battleManager == null || context.battleManager.playerDeck == null)
         {
+            value = baseBlockPerCard;
             return true;
         }
 
-        int playedCount =
-            context.battleManager.playerDeck.PlayedCardsThisTurn.Count;
-
-        int baseBlock =
-            playedCount * Mathf.Max(0, blockPerCard);
+        int playedCount = context.battleManager.playerDeck.PlayedCardsThisTurn.Count;
+        int baseBlock = playedCount * baseBlockPerCard;
 
         value = context.source.ModifyBlockGain(baseBlock);
-
         return true;
     }
 }
