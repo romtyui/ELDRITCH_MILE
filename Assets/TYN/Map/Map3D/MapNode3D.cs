@@ -59,6 +59,11 @@ namespace EldritchMile.Map3D
         /// <summary>可以點嗎。只有 Selectable 能點</summary>
         public bool IsSelectable { get { return NodeState == State.Selectable; } }
 
+        /// <summary>
+        /// 這一種節點自己的染色，乘在狀態顏色上。由 MapView3D 設（例如還沒有圖的通道先染成別的顏色）。
+        /// </summary>
+        [System.NonSerialized] public Color kindTint = Color.white;
+
         private MapView3D view;
         private Vector3 pinHome;
         private bool pinHomeCaptured;
@@ -94,6 +99,7 @@ namespace EldritchMile.Map3D
                 default: c = colorUnreachable; s = scaleInactive; break;
             }
 
+            c *= kindTint;
             if (pin != null) pin.color = c;
 
             // 圓環比棋子暗一階 —— 它是投影不是主體，一樣亮會搶掉棋子

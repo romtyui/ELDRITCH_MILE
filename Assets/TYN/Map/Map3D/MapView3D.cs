@@ -41,8 +41,16 @@ namespace EldritchMile.Map3D
         [Tooltip("視角操作。留空則不做拖曳／點擊的區分，任何點擊都會選節點")]
         public MapCameraController cameraController;
 
-        [Tooltip("地面的世界尺寸（寬, 深）")]
+        [Tooltip("**節點分佈**的世界尺寸（寬, 深）。xPercent／yPercent 是乘這個。\n"
+                 + "改它節點會散開或擠在一起；只想讓底圖變大請改下面的 Ground Visual Scale")]
         public Vector2 groundSize = new Vector2(20f, 20f);
+
+        [Tooltip("地面那塊 Quad（底圖）。留空就不動底圖大小")]
+        public Transform ground;
+
+        [Tooltip("底圖比節點範圍大幾倍。（2026-10-18 組員要求：底圖佔更大面積、節點範圍不變，等於邊距留更寬）\n"
+                 + "1 = 底圖剛好等於節點範圍。只影響畫面，不影響節點分佈")]
+        [Min(1f)] public float groundVisualScale = 1.5f;
 
         [Header("節點")]
         [Tooltip("單一節點 prefab。不同種類只換 pin 的圖，不做六個 prefab")]
@@ -57,6 +65,9 @@ namespace EldritchMile.Map3D
         [Tooltip("底座圓環的世界直徑")]
         public float ringWorldSize = 0.5f;
 
+        [Tooltip("首領節點的棋子放大幾倍。（2026-10-18 美術要求 2 倍）")]
+        [Min(0.1f)] public float bossPinScale = 2f;
+
         [Header("節點圖（依種類）")]
         public Sprite spriteEvent;
         public Sprite spriteCombat;
@@ -67,6 +78,12 @@ namespace EldritchMile.Map3D
 
         [Tooltip("對話節點。留空會退回事件的圖")]
         public Sprite spriteDialogue;
+
+        [Tooltip("通道（通往其他地區）。**還沒有圖** —— 留空會借事件的圖、再染上 gateTint，看得出不一樣")]
+        public Sprite spriteGate;
+
+        [Tooltip("通道沒有自己的圖時染的顏色。有圖之後就不染")]
+        public Color gateTint = new Color(0.6f, 0.75f, 1f, 1f);
 
         [Header("連線")]
         [Tooltip("連線材質。留空會用 Sprites/Default")]
@@ -151,14 +168,49 @@ namespace EldritchMile.Map3D
         {
             if (run == null || run.mapData == null) return;
 
+            // 底圖大小 = 節點範圍 × 倍率。地面是平躺的 Quad，本地 x/y 對應世界的寬/深
+            if (ground != null)
+                ground.localScale = new Vector3(groundSize.x * groundVisualScale, groundSize.y * groundVisualScale, 1f);
+
             bool rebuilt = boundMap != run.mapData;
-            if (rebuilt) Build(run.mapData);
+            if (rebuilt)
+            {
+                ApplyRegionGround();
+                Build(run.mapData);
+            }
             SyncState();
 
             // ⚠️ 在地圖滑下來**之前**就把縱覽擺好 —— 玩家看到的第一眼才是全圖。
             //    停留時間等 OnOpened（滑完）才開始算，見 MapCameraController.PrepareIntro
             if (rebuilt && playIntroOnNewMap && cameraController != null && spawned.Count > 0)
                 cameraController.PrepareIntro(NodeBounds(), playerRoot);
+        }
+
+        private Texture defaultGroundTexture;
+        private bool groundCaptured;
+
+        /// <summary>
+        /// 底圖換成目前地區的（RegionData.groundTexture）。地區沒填就換回場景裡原本那張。
+        /// 用 PropertyBlock，不動材質資產本身。
+        /// </summary>
+        private void ApplyRegionGround()
+        {
+            Renderer r = ground != null ? ground.GetComponent<Renderer>() : null;
+            if (r == null || r.sharedMaterial == null) return;
+
+            Material m = r.sharedMaterial;
+            string prop = m.HasProperty("_BaseMap") ? "_BaseMap" : (m.HasProperty("_MainTex") ? "_MainTex" : null);
+            if (prop == null) return;
+
+            if (!groundCaptured) { defaultGroundTexture = m.GetTexture(prop); groundCaptured = true; }
+
+            RegionData region = GameFlowManager.Instance != null ? GameFlowManager.Instance.CurrentRegion : null;
+            Texture tex = region != null && region.groundTexture != null ? region.groundTexture : defaultGroundTexture;
+
+            var block = new MaterialPropertyBlock();
+            r.GetPropertyBlock(block);
+            if (tex != null) block.SetTexture(prop, tex);
+            r.SetPropertyBlock(block);
         }
 
         /// <summary>所有節點（含棋子）的世界範圍。縱覽要把它整個裝進畫面。</summary>
@@ -235,9 +287,10 @@ namespace EldritchMile.Map3D
                 if (n.pin != null)
                 {
                     n.pin.sprite = SpriteFor(d);
-                    FitPin(n.pin, pinWorldHeight);
+                    FitPin(n.pin, d.kind == MapNodeKind.Boss ? pinWorldHeight * bossPinScale : pinWorldHeight);
                 }
                 if (n.ring != null) FitRing(n.ring);
+                n.kindTint = d.kind == MapNodeKind.Gate && spriteGate == null ? gateTint : Color.white;
 
                 // 棋子要面向地圖相機，不是主相機
                 YBillboard bb = n.pin != null ? n.pin.GetComponent<YBillboard>() : null;
@@ -408,6 +461,7 @@ namespace EldritchMile.Map3D
                 case MapNodeKind.Shop: s = spriteShop; break;
                 case MapNodeKind.SpecialEvent: s = spriteSpecialEvent; break;
                 case MapNodeKind.Dialogue: s = spriteDialogue; break;
+                case MapNodeKind.Gate: s = spriteGate; break;
                 default: s = spriteEvent; break;
             }
 

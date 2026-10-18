@@ -33,6 +33,25 @@ namespace EldritchMile.Core
         [Tooltip("地圖生成參數。留空會產生一張最小地圖並警告")]
         public MapGenerationSettings mapSettings;
 
+        [Header("地區（2026-10-18）")]
+        [Tooltip("一場 run 從哪一區開始。留空 = 沒有地區概念，照上面的 mapSettings／encounterPool 跑（舊行為）。\n\n" +
+                 "地區自己沒填的欄位（地圖設定、敵人池…）一樣退回這裡的那一格。")]
+        public RegionData startingRegion;
+
+        [Tooltip("其他地區。**從起始地區的出口清單連得到的不用再列**，會自己找到 ——\n" +
+                 "這一格是給「只靠劇情傳送、沒有通道連過去」的地區用的")]
+        public List<RegionData> extraRegions = new List<RegionData>();
+
+        [Tooltip("走進「還沒做好」的通道時播的系統提示（RegionData.travelReady = false）。\n" +
+                 "一行一句、依序播。名字框顯示的是 DialogueBoxUI 的「系統提示公版」那個符號。\n" +
+                 "{0} = 目標地區名（沒填就是 id）")]
+        [TextArea(1, 3)]
+        public List<string> gateUnfinishedLines = new List<string>
+        {
+            "通道的另一頭一片漆黑，什麼也看不清。",
+            "（通往「{0}」的通道尚未完成，請繼續原本的路。）",
+        };
+
         [Header("道具")]
         [Tooltip("道具資料庫（id → 顯示名／圖示）。\n" +
                  "掛在這裡是因為背包本身（RunContext.inventory）就由本類別持有。\n" +
@@ -76,6 +95,10 @@ namespace EldritchMile.Core
         [Tooltip("開局身上的錢。**佔位值** —— 經濟還沒設計，這只是為了讓商店能測。\n" +
                  "定案後這個值多半會改由遺產或難度決定，不會留在這裡")]
         [Min(0)] public int startingMoney = 0;
+
+        [Tooltip("食物欄幾格。食物同種類不疊加、一個佔一格，滿了再拿到會跳選擇視窗（吃掉舊的或丟掉一個）。\n"
+                 + "要跟快捷欄的格子數一致（美術排的是 3 格）")]
+        [Min(1)] public int foodSlots = 3;
 
         [Tooltip("開局的戰鬥牌組。大綱裡是坎貝爾幫你準備的那一套。\n\n" +
                  "⚠️ **沒有這個，Starting Max Hp 填了也不會生效** ——\n" +
@@ -358,14 +381,9 @@ namespace EldritchMile.Core
             }
 
             // 地圖在此一次生成，之後整場 run 都用同一份 —— 地圖 UI 反覆下拉收起不會重生成
-            Run.mapData = MapGenerator.Generate(mapSettings, Run.runSeed);
-
-            // 每個戰鬥節點要打誰，也在這裡一次安排好（保證項先佔位，剩下的抽）。
-            // ⚠️ 種子跟地圖**錯開**（^ 1）—— 用同一個的話，敵人的抽選會跟
-            //    地圖形狀綁在一起，兩張長得像的地圖會配到一樣的怪
-            EncounterPlanner.AssignEnemies(
-                Run.mapData, encounterPool, Run,
-                new System.Random(Run.runSeed ^ 1), itemDatabase);
+            // （穿越到別的地區才會換一張，見 TravelRoutine）
+            Run.EnterRegion(startingRegion != null ? startingRegion.regionId : "");
+            Run.mapData = BuildRegionMap(startingRegion, Run.runSeed);
 
             // 遊玩紀錄從這裡開始（地圖與敵人都排好了，種子與節點數才是最終的）
             RunRecorder.BeginRun(Run, Meta);
@@ -426,6 +444,13 @@ namespace EldritchMile.Core
         {
             IsTransitioning = true;
 
+            // 通道沒有自己的 Stage —— 走進去就是轉場（或「還沒做好」的提示）
+            if (node.kind == MapNodeKind.Gate)
+            {
+                yield return GateRoutine(node);
+                yield break;
+            }
+
             Run.mapData.MoveTo(node.nodeId);
             Run.pendingNode = node;
 
@@ -464,6 +489,151 @@ namespace EldritchMile.Core
             yield return FadeIn();
 
             IsTransitioning = false;
+        }
+
+        // ==========================================
+        // 地區與通道（2026-10-18，設計見 Docs/Design_RegionTravel.md）
+        // ==========================================
+
+        /// <summary>現在所在的地區。沒有地區概念（startingRegion 留空）時是 null。</summary>
+        public RegionData CurrentRegion => Region(Run != null ? Run.currentRegionId : null);
+
+        /// <summary>
+        /// 地區 id → 資料。從起始地區沿著出口清單找，再看 extraRegions。找不到回 null。
+        /// </summary>
+        public RegionData Region(string regionId)
+        {
+            if (string.IsNullOrEmpty(regionId)) return null;
+
+            var seen = new HashSet<RegionData>();
+            var queue = new Queue<RegionData>();
+            if (startingRegion != null) queue.Enqueue(startingRegion);
+            for (int i = 0; i < extraRegions.Count; i++) if (extraRegions[i] != null) queue.Enqueue(extraRegions[i]);
+
+            while (queue.Count > 0)
+            {
+                RegionData r = queue.Dequeue();
+                if (r == null || !seen.Add(r)) continue;
+                if (r.regionId == regionId) return r;
+
+                if (r.exits == null) continue;
+                for (int i = 0; i < r.exits.Count; i++)
+                    if (r.exits[i] != null && r.exits[i].target != null) queue.Enqueue(r.exits[i].target);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 生成一區的地圖：地形 → 通道 → 每個戰鬥節點打誰。地區沒填的欄位退回本類別上的那一格。
+        /// </summary>
+        private MapData BuildRegionMap(RegionData region, int seed)
+        {
+            MapGenerationSettings settings = region != null && region.mapSettings != null ? region.mapSettings : mapSettings;
+            EncounterPool pool = region != null && region.encounterPool != null ? region.encounterPool : encounterPool;
+
+            MapData map = MapGenerator.Generate(settings, seed);
+
+            // 通道要在排敵人**之前**放 —— 通道不該被排到敵人。
+            // 種子錯開（^ 2），理由同下
+            MapGenerator.PlaceGates(map, region, new System.Random(seed ^ 2));
+
+            // 每個戰鬥節點要打誰，也在這裡一次安排好（保證項先佔位，剩下的抽）。
+            // ⚠️ 種子跟地圖**錯開**（^ 1）—— 用同一個的話，敵人的抽選會跟
+            //    地圖形狀綁在一起，兩張長得像的地圖會配到一樣的怪
+            //
+            // 地區有指定戰鬥組的怪物池時只排級別（一般／菁英／首領），「打哪一組」交給他的池子 ——
+            // 見 BattleRegionHook.ReserveFromPool
+            bool tierOnly = region != null && region.battleEncounterPool != null;
+            EncounterPlanner.AssignEnemies(map, pool, Run, new System.Random(seed ^ 1), itemDatabase, tierOnly);
+            return map;
+        }
+
+        /// <summary>
+        /// 走進通道。目標地區做好了就穿越過去；沒做好就播一段系統提示，回地圖從這裡繼續走
+        /// （通道保留原本往前的連線，所以不會卡死 —— 見 MapGenerator.PlaceGates）。
+        /// </summary>
+        private IEnumerator GateRoutine(RunNodeData gate)
+        {
+            RegionData target = Region(gate.targetRegionId);
+
+            Run.mapData.MoveTo(gate.nodeId);
+            Run.pendingNode = gate;
+            RunRecorder.NodeEntered(Run, gate, null);
+
+            if (mapOverlay != null) yield return mapOverlay.SlideUp();
+
+            if (target == null || !target.travelReady)
+            {
+                string name = target != null && !string.IsNullOrEmpty(target.displayName)
+                    ? target.displayName : gate.targetRegionId;
+                Debug.Log($"[Flow] 通道 → 「{gate.targetRegionId}」還沒做好" + (target == null ? "（找不到這個地區）" : ""));
+
+                yield return PlaySystemLines(gateUnfinishedLines, name);
+
+                IsTransitioning = false;
+                yield return OpenMapRoutine();
+                yield break;
+            }
+
+            yield return TravelRoutine(target, gate);
+        }
+
+        /// <summary>
+        /// 穿越到 <paramref name="target"/>：換一張新地區的地圖，HP／SAN／牌組／背包全部保留
+        /// （那些是 run 的，不是地圖的）。落點是新地圖上「對應的位置」—— 見 MapGenerator.FindArrival。
+        /// 呼叫時地圖已經收起來了。
+        /// </summary>
+        private IEnumerator TravelRoutine(RegionData target, RunNodeData gate)
+        {
+            RegionData from = CurrentRegion;
+            MapData oldMap = Run.mapData;
+            Vector2Int dir = target.DirectionFrom(from);
+
+            yield return FadeOut();
+
+            Run.EnterRegion(target.regionId);
+            Run.mapData = BuildRegionMap(target, Run.runSeed ^ StableHash(target.regionId));
+            Run.pendingNode = null;
+
+            RunNodeData arrival = MapGenerator.FindArrival(Run.mapData, gate, oldMap, dir);
+            if (arrival != null) Run.mapData.MoveTo(arrival.nodeId);
+
+            Debug.Log($"[Flow] 穿越：「{(from != null ? from.regionId : "?")}」→「{target.regionId}」（方向 {dir}），" +
+                      $"落在 {(arrival != null ? arrival.nodeId : "起點")}；新地圖 {Run.mapData.allNodes.Count} 個節點");
+
+            yield return HoldBlackOrTitle(holdBlackAfterEventSeconds, target.displayName);
+            yield return FadeIn();
+
+            IsTransitioning = false;
+            yield return OpenMapRoutine();
+        }
+
+        /// <summary>依序播幾句系統提示（名字框是系統符號），播完收掉對話框。</summary>
+        private IEnumerator PlaySystemLines(List<string> lines, string arg)
+        {
+            PopupService popup = PopupService.Instance;
+            if (popup == null || lines == null || lines.Count == 0) yield break;
+
+            for (int i = 0; i < lines.Count; i++)
+                if (!string.IsNullOrEmpty(lines[i])) popup.ShowText(string.Format(lines[i], arg));
+            popup.CloseWhenDrained();
+
+            // 等玩家點完最後一句、對話框收起來
+            while (popup.IsAnyOpen || popup.HasPending) yield return null;
+        }
+
+        /// <summary>
+        /// 跨執行環境不變的字串雜湊（FNV-1a）。地區的地圖種子用它 ——
+        /// `string.GetHashCode` 在某些執行環境每次啟動都不一樣，存檔重進會換一張地圖。
+        /// </summary>
+        private static int StableHash(string s)
+        {
+            unchecked
+            {
+                uint h = 2166136261;
+                if (s != null) for (int i = 0; i < s.Length; i++) { h ^= s[i]; h *= 16777619; }
+                return (int)h;
+            }
         }
 
         /// <summary>

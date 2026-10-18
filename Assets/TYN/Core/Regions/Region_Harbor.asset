@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e620a68037f62e647b649723ce054bf5, type: 3}
+  m_Name: Region_Harbor
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.RegionData
+  regionId: harbor
+  displayName: "\u6E2F\u53E3"
+  worldCell: {x: 0, y: 0}
+  mapSettings: {fileID: 0}
+  groundTexture: {fileID: 0}
+  encounterPool: {fileID: 0}
+  shopStock: {fileID: 0}
+  battleBackground: {fileID: 0}
+  bossBattleBackground: {fileID: 0}
+  battleEncounterPool: {fileID: 11400000, guid: 13f5cf0799ec5e042b125c85a3849e23, type: 2}
+  earlyBattles: 3
+  weightEarly: 1
+  weightLater: 2
+  weightElite: 3
+  weightBoss: 5
+  exits:
+  - target: {fileID: 11400000, guid: 983bbc8ee5a458c4ab9a784521f21d6d, type: 2}
+    chance: 1
+  - target: {fileID: 11400000, guid: d3bccb495f84f9c45a60090cd343aa4a, type: 2}
+    chance: 1
+  travelReady: 1

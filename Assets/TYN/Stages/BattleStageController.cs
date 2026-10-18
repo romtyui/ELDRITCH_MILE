@@ -201,7 +201,13 @@ public class BattleStageController : StageController
         TutorialEventBus.OnSignalRaised -= HandleSignal;
         TutorialEventBus.OnSignalRaised += HandleSignal;
 
-        ReserveEnemies();
+        // 地區的背景與怪物池要在預約敵人**之前**套上。
+        // 這一站沒有指定對手時，由地區的怪物池依權重抽一組（ApplyRegion 回 true）——
+        // 那時就不走下面的 ReserveEnemies，免得 prefab 上手填的預設對手蓋掉它
+        bool pooled = ApplyRegion();
+        if (run != null) run.regionBattleCount++;
+
+        if (!pooled) ReserveEnemies();
 
         if (battleManager == null)
         {
@@ -861,6 +867,48 @@ public class BattleStageController : StageController
     /// <summary>
     /// 告訴戰鬥組這一場要打誰。沒有指定就不預約 —— 那時候他會自己抽怪。
     /// </summary>
+    /// <summary>
+    /// 把目前地區的戰鬥背景與怪物池交給 Romtyui 的接口（<see cref="BattleRegionHook"/>）。
+    /// 沒有地區、或 prefab 上沒有接口時什麼都不做，維持 prefab 原本的設定。
+    ///
+    /// 這一站**沒有指定對手**（事件沒指定、節點上沒排 enemyId）而地區有怪物池時，
+    /// 依《怪物組合》表的權重規則從池子抽一組並預約，回傳 true。
+    /// 有指定對手（例如保證出現的半魚人祭司）就回 false，交給 ReserveEnemies。
+    /// </summary>
+    private bool ApplyRegion()
+    {
+        BattleRegionHook hook = GetComponentInChildren<BattleRegionHook>(true);
+        if (hook == null) return false;
+
+        RegionData region = GameFlowManager.Instance != null ? GameFlowManager.Instance.CurrentRegion : null;
+        RunNodeData node = run != null ? run.pendingNode : null;
+
+        bool boss = node != null && node.kind == MapNodeKind.Boss;
+        Sprite bg = null;
+        if (region != null)
+            bg = boss && region.bossBattleBackground != null ? region.bossBattleBackground : region.battleBackground;
+
+        hook.Apply(bg, region != null ? region.battleEncounterPool : null);
+
+        if (region == null || region.battleEncounterPool == null) return false;
+        if (!string.IsNullOrEmpty(PendingEnemyId)) return false;
+        if (node != null && !string.IsNullOrEmpty(node.enemyId)) return false;
+
+        EncounterPool.Tier tier = boss ? EncounterPool.Tier.Boss
+                                : (node != null ? node.enemyTier : EncounterPool.Tier.Minion);
+        int weight = region.WeightFor(tier, run != null ? run.regionBattleCount : 0);
+
+        EnemyFormationData picked = hook.ReserveFromPool(weight);
+        if (picked == null) return false;
+
+        // 獎勵與紀錄要知道打的是誰（ReserveEnemies 平常會填這一份）
+        fightingEnemyIds.Clear();
+        for (int i = 0; i < picked.enemies.Count; i++)
+            if (picked.enemies[i] != null && picked.enemies[i].enemyData != null)
+                fightingEnemyIds.Add(picked.enemies[i].enemyData.enemyId);
+        return true;
+    }
+
     private void ReserveEnemies()
     {
         var ids = new List<string>();

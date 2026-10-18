@@ -557,8 +557,22 @@ namespace EldritchMile.UI.Shortcut
         private void HandleSlotClicked(ShortcutSlotUI s)
         {
             if (s.Item == null) return;
+            TryUse(s.Item, true);
+        }
 
-            ItemData d = s.Item;
+        /// <summary>
+        /// 吃掉／用掉一件道具。快捷欄點格子走這裡，食物欄滿了的選擇視窗（FoodOverflowUI）「吃掉舊的」也走這裡 ——
+        /// 戰鬥中改走戰鬥單位、付不起代價就不吃、播報實際變化，這些規則只能有一份。
+        /// </summary>
+        /// <param name="respectTiming">
+        /// true = 照快捷欄的規矩，地圖上、打牌中、對話中不能吃。
+        /// false = 不看時機 —— 食物欄滿了被迫選擇時用，那一刻「吃掉一個」本身就是選項。
+        /// </param>
+        /// <returns>真的吃下去了。</returns>
+        public bool TryUse(ItemData d, bool respectTiming = true)
+        {
+            if (d == null) return false;
+
 
             if (!d.IsUsable)
             {
@@ -566,18 +580,18 @@ namespace EldritchMile.UI.Shortcut
                 // 是戰鬥開始時自動生效。講清楚，不然玩家會一直點
                 Debug.Log($"[快捷欄]「{d.Label}」不是消耗品" +
                           (d.relicEffect != null ? " —— 它的效果在戰鬥中自動生效" : ""));
-                return;
+                return false;
             }
 
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
-            if (run == null) return;
+            if (run == null) return false;
 
             // ── 不能吃的時機：地圖、轉場、打牌、對話（2026-09-13／09-15 試玩回饋）──
-            string blocked = BlockedReason();
+            string blocked = respectTiming ? BlockedReason() : null;
             if (blocked != null)
             {
                 Notify(blocked);
-                return;
+                return false;
             }
 
             // ── 有代價的食物：付不起就**整個不發生** ──
@@ -594,7 +608,7 @@ namespace EldritchMile.UI.Shortcut
                           $"代價 HP -{d.hpCost}／SAN -{d.sanCost}，" +
                           $"目前 HP {PlayerVitals.Hp}、SAN {PlayerVitals.San}");
                 Notify($"{d.Label}　現在承受不起");
-                return;
+                return false;
             }
 
             // ⚠️ 先確認真的還有這件東西再套效果。
@@ -603,7 +617,7 @@ namespace EldritchMile.UI.Shortcut
             {
                 Debug.LogWarning($"[快捷欄]「{d.Label}」用不掉 —— 背包裡已經沒有了");
                 Refresh(false);
-                return;
+                return false;
             }
 
             // ⚠️ 記下**吃之前**的數值 —— 播報要講「實際發生了什麼」，
@@ -695,6 +709,7 @@ namespace EldritchMile.UI.Shortcut
             Refresh(false);
 
             OnItemUsed?.Invoke(d);
+            return true;
         }
 
         /// <summary>

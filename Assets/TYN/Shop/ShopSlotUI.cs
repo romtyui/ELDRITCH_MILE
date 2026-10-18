@@ -138,9 +138,7 @@ namespace EldritchMile.Shop
             // 判斷用標籤而不是「有沒有 grantsCard」—— 食物也沒有卡，但不該套遺物框
             // 武器賣的其實是一張戰鬥卡，架上就直接把那張牌疊出來
             CardData card = data != null ? data.grantsCard : null;
-            CardVisualData visual = card != null ? card.visualData : null;
-
-            showingBattleCard = battleCard != null && visual != null;
+            showingBattleCard = battleCard != null && card != null;
             showingRelicCard = !showingBattleCard && relicCard != null && data != null && data.HasTag("Curio");
 
             if (battleCard != null && !showingBattleCard) battleCard.Hide();
@@ -148,7 +146,8 @@ namespace EldritchMile.Shop
 
             if (showingBattleCard || showingRelicCard)
             {
-                if (showingBattleCard) battleCard.Show(visual);
+                // 傳整張牌而不是卡面 —— 有了 CardData 才畫得出效果文字（見 BattleCardView）
+                if (showingBattleCard) battleCard.Show(card);
                 else relicCard.Show(shelf);
 
                 if (iconImage != null) iconImage.enabled = false;
