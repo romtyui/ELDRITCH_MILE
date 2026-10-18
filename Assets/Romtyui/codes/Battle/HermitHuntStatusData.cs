@@ -5,16 +5,17 @@ using UnityEngine;
 public class HermitHuntStatusData : BattleStatusBehaviourData
 {
     public override StatusType SupportedStatus => StatusType.HermitHunt;
+    public override bool SelectsIntentAtPlayerTurnEnd => true;
 
     [Header("First Intent")]
-    [Tooltip("持有此狀態的怪物出場後，第一個行動使用的意圖。此意圖也必須放入怪物的 Intents。")]
+    [Tooltip("持有此狀態的怪物出場後，第一個行動固定使用的意圖，不會被第一次玩家回合結束的護盾判斷覆寫。此意圖也必須放入怪物的 Intents。")]
     public EnemyIntentData firstIntent;
 
     [Header("Block Conditions")]
-    [Tooltip("自身回合結束時，護盾為 0，下一次使用的意圖。")]
+    [Tooltip("首次行動完成後，玩家回合結束時，怪物護盾為 0，本次敵人行動使用的意圖。")]
     public EnemyIntentData zeroBlockIntent;
 
-    [Tooltip("自身回合結束時，護盾嚴格大於門檻，下一次使用的意圖。")]
+    [Tooltip("首次行動完成後，玩家回合結束時，怪物護盾嚴格大於門檻，本次敵人行動使用的意圖。")]
     public EnemyIntentData highBlockIntent;
 
     [Min(0)]
@@ -22,7 +23,7 @@ public class HermitHuntStatusData : BattleStatusBehaviourData
     public int blockThreshold = 10;
 
     [Header("Random Intents")]
-    [Tooltip("護盾大於 0，且未超過門檻時，從這些意圖中隨機選擇。每個意圖也必須放入怪物的 Intents。")]
+    [Tooltip("首次行動完成後，玩家回合結束時，怪物護盾大於 0，且未超過門檻，從這些意圖中隨機選擇。每個意圖也必須放入怪物的 Intents。")]
     public List<EnemyIntentData> randomIntents = new List<EnemyIntentData>();
 
     public override void OnSpawn(EnemyUnit enemy)
@@ -41,7 +42,7 @@ public class HermitHuntStatusData : BattleStatusBehaviourData
         return enemy != null && enemy.HasStatus(SupportedStatus);
     }
 
-    public override bool TrySelectNextIntentAtTurnEnd(EnemyUnit enemy)
+    public override bool TrySelectNextIntentAtPlayerTurnEnd(EnemyUnit enemy)
     {
         if (enemy == null) return false;
         if (!enemy.HasStatus(SupportedStatus)) return false;
@@ -88,7 +89,7 @@ public class HermitHuntStatusData : BattleStatusBehaviourData
         string zeroName = GetIntentName(zeroBlockIntent);
         string highName = GetIntentName(highBlockIntent);
 
-        return $"第一個行動使用「{firstName}」。\n自身回合結束時，護盾為 0，下一次使用「{zeroName}」。\n護盾大於 {threshold}，下一次使用「{highName}」。\n其他情況從指定意圖中隨機選擇。";
+        return $"第一個行動固定使用「{firstName}」。\n首次行動完成後，於玩家回合結束時依自身護盾選擇本次行動。\n護盾為 0，使用「{zeroName}」。\n護盾大於 {threshold}，使用「{highName}」。\n其他情況從指定意圖中隨機選擇。";
     }
 
     private string GetIntentName(EnemyIntentData intent)

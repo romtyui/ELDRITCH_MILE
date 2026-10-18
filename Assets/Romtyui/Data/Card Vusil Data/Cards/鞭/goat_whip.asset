@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
+  m_Name: goat_whip
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardId: goat_whip
+  cardName: goat_whip
+  description: "\u9020\u6210 {damage} \u9EDE\u7A7F\u900F\u50B7\u5BB3\n\u7372\u5F973\u5F35\u3010\u7F8A\u7F94\u3011\u3002 "
+  visualData: {fileID: 11400000, guid: b52a5d3df5d5aaa4ebbbdca515549867, type: 2}
+  cardType: 0
+  rarity: 0
+  targetType: 4
+  baseCost: 4
+  exhaust: 0
+  ethereal: 0
+  retain: 0
+  isToken: 1
+  tokenId: goat_token
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
+  effects:
+  - {fileID: 11400000, guid: 1cc25990596f8df41b0a832b31f08d40, type: 2}
+  - {fileID: 11400000, guid: dc88b5ab819c3604a8151b5dbc9f1ea5, type: 2}
+  hitEffect: {fileID: 0}

@@ -415,48 +415,37 @@ public class UsedTokenScaledDamageEffectData : CardEffectData, CardDescriptionVa
     {
         value = 0;
 
-        if (key == "usedEggCount" ||
-            key == "usedTokenCount" ||
-            key == "playedTokenCount" ||
-            key == "eggCount" ||
-            key == "已使用過卵的次數")
+        if (key == "usedEggCount" || key == "usedTokenCount" || key == "playedTokenCount" || key == "eggCount" || key == "已使用過卵的次數")
         {
             value = GetUsedTokenCount(context);
             return true;
         }
 
-        if (key == "bonusDamage" ||
-            key == "usedTokenBonusDamage" ||
-            key == "tokenBonusDamage" ||
-            key == "額外傷害")
+        if (key == "baseDamage" || key == "baseSwordDamage" || key == "基礎傷害")
+        {
+            value = GetFirstBaseDamage(context);
+            return true;
+        }
+
+        if (key == "bonusDamage" || key == "usedTokenBonusDamage" || key == "tokenBonusDamage" || key == "額外傷害")
         {
             value = GetBonusDamagePerHit(context);
             return true;
         }
 
-        if (key == "damage" ||
-            key == "damege" ||
-            key == "scaledDamage" ||
-            key == "damagePerHit" ||
-            key == "finalDamage" ||
-            key == "總傷害")
+        if (key == "damage" || key == "damege" || key == "scaledDamage" || key == "damagePerHit" || key == "finalDamage" || key == "總傷害" || key == "swordDamage" || key == "totalDamage")
         {
             value = GetScaledDamagePerHit(context);
             return true;
         }
 
-        if (key == "hitCount" ||
-            key == "repeatCount" ||
-            key == "bowHitCount" ||
-            key == "重複次數")
+        if (key == "hitCount" || key == "repeatCount" || key == "bowHitCount" || key == "重複次數")
         {
             value = GetFirstHitCount(context);
             return true;
         }
 
-        if (key == "totalDamageAllHits" ||
-            key == "allHitDamage" ||
-            key == "總段數傷害")
+        if (key == "totalDamageAllHits" || key == "allHitDamage" || key == "總段數傷害")
         {
             value = GetScaledTotalDamage(context);
             return true;

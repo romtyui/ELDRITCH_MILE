@@ -646,6 +646,43 @@ public class BattleDeck : MonoBehaviour
             targetPile.Add(new CardInstance(cardData));
         }
     }
+
+    public int DiscardRandomCardsFromHand(int amount)
+    {
+        if (amount <= 0 || hand == null || hand.Count == 0) return 0;
+        if (discardPile == null) discardPile = new List<CardInstance>();
+
+        List<CardInstance> candidates = new List<CardInstance>();
+
+        for (int i = 0; i < hand.Count; i++)
+        {
+            CardInstance card = hand[i];
+
+            if (card == null || card.data == null) continue;
+
+            candidates.Add(card);
+        }
+
+        int discardCount = Mathf.Min(amount, candidates.Count);
+        int actualDiscardCount = 0;
+
+        for (int i = 0; i < discardCount; i++)
+        {
+            int randomIndex = Random.Range(0, candidates.Count);
+            CardInstance card = candidates[randomIndex];
+            candidates.RemoveAt(randomIndex);
+
+            if (!hand.Remove(card)) continue;
+
+            discardPile.Add(card);
+            actualDiscardCount++;
+        }
+
+        RefreshDebugView();
+
+        return actualDiscardCount;
+    }
+
     public void RestoreDrawPileOrderOnly(List<CardData> savedDrawPileOrder)
     {
         drawPile.Clear();

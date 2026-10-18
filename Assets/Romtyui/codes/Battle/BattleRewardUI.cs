@@ -420,8 +420,8 @@ public class BattleRewardUI : MonoBehaviour
         }
 
         granting = false;
+        TryFinishAllRewards();
     }
-
     private void OpenWeapon(int index)
     {
         ClearCards();
@@ -471,6 +471,7 @@ public class BattleRewardUI : MonoBehaviour
             CompleteRow(currentRow);
             ReturnToOverview();
             granting = false;
+            TryFinishAllRewards();
             return;
         }
         //新增時間26/10/13 by TYN
@@ -485,6 +486,7 @@ public class BattleRewardUI : MonoBehaviour
         RunStateManager.Instance.SaveFromBattle(manager.playerUnit, manager.energySystem, manager.playerDeck);
         ReturnToOverview();
         granting = false;
+        TryFinishAllRewards();
     }
 
     public void RequestClose()
@@ -546,6 +548,7 @@ public class BattleRewardUI : MonoBehaviour
 
         CompleteRow(currentRow);
         ReturnToOverview();
+        TryFinishAllRewards();
     }
 
     private void ReturnToOverview()
@@ -589,7 +592,17 @@ public class BattleRewardUI : MonoBehaviour
         completedCallback = null;
         callback?.Invoke();
     }
+    private void TryFinishAllRewards()
+    {
+        if (!isOpen || granting) return;
 
+        for (int i = 0; i < rows.Count; i++)
+        {
+            if (!rows[i].completed) return;
+        }
+
+        FinishRewards();
+    }
     private void ClearCards()
     {
         selectedCard = null;

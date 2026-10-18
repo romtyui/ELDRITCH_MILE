@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: "tu\u0101-khoo-tai"
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   unitName: monster_03
-  maxHp: 80
+  maxHp: 20
   enemyId: tua_khoo_tai
   normalVisualPrefab: {fileID: 2726685744332138470, guid: 31fe265b8dd291041a74e7d80c71515a, type: 3}
   darkVisualPrefab: {fileID: 4278617798232755884, guid: 07b2d6fce24d46e4a96463e7f29c7b9b, type: 3}
@@ -27,10 +27,14 @@ MonoBehaviour:
   targetFrameAnchoredPosition: {x: 0, y: 50}
   targetFrameSize: {x: 150, y: 150}
   stunIntent: {fileID: 0}
-  startingStatuses: []
+  startingStatuses:
+  - statusType: 13
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: 4a3e876e051b50e4596921dacc94613a, type: 2}
   intents:
-  - {fileID: 11400000, guid: dc080c9ae1798e6458d890a3e53d8c49, type: 2}
-  - {fileID: 11400000, guid: e533eb873d1c85846886accbb896836d, type: 2}
+  - {fileID: 11400000, guid: e5707821394d4ca43926ff13fc0a882d, type: 2}
+  - {fileID: 11400000, guid: 95cad0782087db24baf40bebd71e6801, type: 2}
+  - {fileID: 11400000, guid: 5259f9c25bf0c8a448b4da463ee8165b, type: 2}
   idleTrigger: idle
   attackTrigger: atk
   hurtTrigger: hurt

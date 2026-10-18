@@ -609,7 +609,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: demage 10
+  m_text: "\u5C0D\u96A8\u6A5F\u6575\u4EBA\u9020\u6210 {damage} \u9EDE\u50B7\u5BB3\n\u672C\u56DE\u5408\u5167\uFF0C\u6BCF\u4F7F\u75281\u6B21\u3010\u7F8A\u7F94\u3011\uFF0C\u96A8\u6A5F\u9020\u62101\u9EDE\u50B7\u5BB3\u3002\u7372\u5F971\u5F35\u3010\u7F8A\u7F94\u3011\u3002"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -636,15 +636,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 20
+  m_fontSize: 11
   m_fontSizeBase: 16.42
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
+  m_fontSizeMin: 11
   m_fontSizeMax: 20
   m_fontStyle: 1
   m_HorizontalAlignment: 2
-  m_VerticalAlignment: 256
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1

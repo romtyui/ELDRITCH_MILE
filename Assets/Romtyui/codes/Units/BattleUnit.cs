@@ -9,6 +9,7 @@ public class BattleUnitStatusDebugEntry
     public int amount;
 }
 
+
 public class BattleUnit : MonoBehaviour
 {
     public string unitName;
@@ -28,6 +29,20 @@ public class BattleUnit : MonoBehaviour
     [SerializeField] private Dictionary<StatusType, int> statuses = new();
 
     private bool initialBlockResolved;
+
+    private class PendingHandDiscard
+    {
+        public EnemyUnit source;
+        public int amount;
+
+        public PendingHandDiscard(EnemyUnit source, int amount)
+        {
+            this.source = source;
+            this.amount = amount;
+        }
+    }
+
+    private readonly List<PendingHandDiscard> pendingHandDiscards = new List<PendingHandDiscard>();
 
     protected virtual void Awake()
     {
@@ -96,10 +111,27 @@ public class BattleUnit : MonoBehaviour
         Debug.Log($"{unitName} 的 {statusType} 已在回合結束清除，原本層數：{oldAmount}");
     }
 
+    public virtual int LoseHpDirectly(int amount)
+    {
+        if (amount <= 0 || currentHp <= 0) return 0;
+
+        int hpBefore = currentHp;
+        currentHp = Mathf.Max(0, currentHp - amount);
+        int actualLostHp = hpBefore - currentHp;
+
+        OnHpChanged?.Invoke();
+
+        Debug.Log($"{unitName} 直接失去 {actualLostHp} HP，剩餘 HP：{currentHp}");
+
+        if (currentHp <= 0) Die();
+
+        return actualLostHp;
+    }
+
     public virtual void ClearAllStatuses()
     {
         statuses.Clear();
-        initialBlockResolved = false;
+        pendingHandDiscards.Clear();
         OnStatusChanged?.Invoke();
 
         Debug.Log($"{unitName} 的所有狀態已清除");
@@ -261,14 +293,14 @@ public class BattleUnit : MonoBehaviour
             return;
 
         int hpBefore = currentHp;
-
         int remaining = amount;
+        int absorbedBlockDamage = 0;
 
         if (!ignoreBlock && block > 0)
         {
-            int absorbed = Mathf.Min(block, remaining);
-            block -= absorbed;
-            remaining -= absorbed;
+            absorbedBlockDamage = Mathf.Min(block, remaining);
+            block -= absorbedBlockDamage;
+            remaining -= absorbedBlockDamage;
         }
 
         currentHp -= remaining;
@@ -302,17 +334,19 @@ public class BattleUnit : MonoBehaviour
         }
 
         // =========================================================
-        // 傷害數字仍然只顯示真正扣掉的 HP
+        // 護盾跳字顯示實際吸收量，HP 跳字顯示實際扣血量
         // =========================================================
 
-        if (realHpDamage > 0 && this is EnemyUnit enemy)
+        if (this is EnemyUnit enemy)
         {
-            enemy.ShowDamagePopup(realHpDamage);
+            if (absorbedBlockDamage > 0)
+                enemy.ShowBlockDamagePopup(absorbedBlockDamage);
+
+            if (realHpDamage > 0)
+                enemy.ShowDamagePopup(realHpDamage);
         }
 
-        Debug.Log(
-            $"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}"
-        );
+        Debug.Log($"{unitName} 受到 {amount} 傷害，實際扣血 {realHpDamage}，剩餘 HP: {currentHp}");
 
         // =========================================================
         // 反擊
@@ -336,10 +370,7 @@ public class BattleUnit : MonoBehaviour
             OnDamagedButAlive();
         }
 
-        Debug.Log(
-            $"[Damage] {unitName} take {amount}, ignoreBlock = {ignoreBlock}, " +
-            $"realHpDamage = {realHpDamage}, HP = {currentHp}"
-        );
+        Debug.Log($"[Damage] {unitName} take {amount}, ignoreBlock = {ignoreBlock}, realHpDamage = {realHpDamage}, HP = {currentHp}");
     }
 
     public virtual void PayHpCost(int amount, bool triggerHurtAnimation)
@@ -697,6 +728,56 @@ public class BattleUnit : MonoBehaviour
         Heal(healAmount);
 
         Debug.Log($"{unitName} 的再生發動，層數 {regeneration}，恢復 {healAmount} 點生命");
+    }
+
+    public void QueueHandDiscardAtNextTurnStart(EnemyUnit source, int amount)
+    {
+        if (amount <= 0 || currentHp <= 0) return;
+
+        if (!HasStatus(StatusType.DiscardHandAtNextTurnStart)) pendingHandDiscards.Clear();
+
+        pendingHandDiscards.Add(new PendingHandDiscard(source, amount));
+        ApplyStatus(StatusType.DiscardHandAtNextTurnStart, amount);
+    }
+
+    public int ResolveHandDiscardAtNextTurnStart(BattleDeck deck)
+    {
+        int remainingAmount = GetStatus(StatusType.DiscardHandAtNextTurnStart);
+
+        if (remainingAmount <= 0)
+        {
+            pendingHandDiscards.Clear();
+            return 0;
+        }
+
+        if (deck == null || currentHp <= 0) return 0;
+
+        List<PendingHandDiscard> requests = new List<PendingHandDiscard>(pendingHandDiscards);
+        pendingHandDiscards.Clear();
+        ClearStatusCompletely(StatusType.DiscardHandAtNextTurnStart);
+
+        int totalDiscarded = 0;
+
+        for (int i = 0; i < requests.Count; i++)
+        {
+            if (remainingAmount <= 0) break;
+
+            PendingHandDiscard request = requests[i];
+            int requestedAmount = Mathf.Min(Mathf.Max(0, request.amount), remainingAmount);
+            remainingAmount -= requestedAmount;
+
+            int actualDiscarded = deck.DiscardRandomCardsFromHand(requestedAmount);
+            totalDiscarded += actualDiscarded;
+
+            if (request.source != null && request.source.currentHp > 0 && request.source.gameObject.activeInHierarchy)
+            {
+                request.source.RegisterSuccessfullyDiscardedHandCards(actualDiscarded);
+            }
+        }
+
+        if (remainingAmount > 0) totalDiscarded += deck.DiscardRandomCardsFromHand(remainingAmount);
+
+        return totalDiscarded;
     }
 
     private void TickTemporaryStatuses()

@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 488724cba8c55e84e8f0377d0c783cf2, type: 3}
+  m_Name: goat_hammer
+  m_EditorClassIdentifier: Assembly-CSharp::CardData
+  cardId: goat_hammer
+  cardName: goat_hammer
+  description: "\u9020\u6210 {damage} \u9EDE\u7A7F\u900F\u50B7\u5BB3\n\u4F7F\u624B\u724C\u4E2D\u7684\u6240\u6709\u3010\u7F8A\u7F94\u3011\u7372\u5F97\u3010\u7834\u76FE\u3011\u3002 "
+  visualData: {fileID: 11400000, guid: e7a000deffd62f24996dacb324663d5b, type: 2}
+  cardType: 0
+  rarity: 0
+  targetType: 2
+  baseCost: 3
+  exhaust: 0
+  ethereal: 0
+  retain: 0
+  isToken: 1
+  tokenId: goat_token
+  isGodCard: 0
+  godCardAnimation: {fileID: 0}
+  effects:
+  - {fileID: 11400000, guid: 7a89718429bb5a64ea65213421d60e94, type: 2}
+  - {fileID: 11400000, guid: 6a7b06285a1e1a34e899d418aa855d98, type: 2}
+  hitEffect: {fileID: 0}

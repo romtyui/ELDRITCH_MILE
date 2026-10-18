@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardData
   cardId: goat_crossbow
   cardName: goat_crossbow
-  description: "\u7372\u5F97 {shieldBlock} \u9EDE\u8B77\u76FE\n({baseBlock} + {usedEggCount}(\u5DF2\u4F7F\u7528\u5375\u6B21\u6578)) "
+  description: "\u7372\u5F971\u5F35\u3010\u7F8A\u7F94\u3011\u3002\n\u624B\u724C\u4E2D\u6BCF\u67091\u5F35\u3010\u7F8A\u7F94\u3011\uFF0C\u5C0D\u55AE\u9AD4\u9020\u6210{damage}\u9EDE\u50B7\u5BB3\u3002
+    \n(\u7576\u524D{extraHitCount} \u6B21\u3002)"
   visualData: {fileID: 11400000, guid: 08bc9206731e4ac47a863913c8268aae, type: 2}
   cardType: 0
   rarity: 0
@@ -28,5 +29,6 @@ MonoBehaviour:
   isGodCard: 0
   godCardAnimation: {fileID: 0}
   effects:
-  - {fileID: 11400000, guid: 3d2d043dada87fa4abc39ae3af6d5f46, type: 2}
-  - {fileID: 11400000, guid: 22aad712da0de044c97f638ece8a80c2, type: 2}
+  - {fileID: 11400000, guid: bfb847fb65e043341903a72921a438ff, type: 2}
+  - {fileID: 11400000, guid: 393f7e75158699d4eb4c15a0f02e93a1, type: 2}
+  hitEffect: {fileID: 0}

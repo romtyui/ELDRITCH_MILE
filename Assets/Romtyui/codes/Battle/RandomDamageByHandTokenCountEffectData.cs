@@ -98,8 +98,17 @@ public class RandomDamageByHandTokenCountEffectData : CardEffectData, CardDescri
     {
         RandomEnemyMultiHitDamageEffectData sourceEffect = GetSourceMultiHitEffect(context);
 
-        if (sourceEffect != null)
-            return Mathf.Max(0, sourceEffect.hitCount);
+        if (sourceEffect != null) return Mathf.Max(0, sourceEffect.hitCount);
+
+        if (context != null && context.card != null && context.card.data != null && context.card.data.effects != null)
+        {
+            for (int i = 0; i < context.card.data.effects.Count; i++)
+            {
+                CardEffectData effect = context.card.data.effects[i];
+
+                if (effect is RandomTargetEachHitDamageEffectData randomEachHitEffect) return Mathf.Max(0, randomEachHitEffect.hitCount);
+            }
+        }
 
         return Mathf.Max(0, fallbackBaseHitCount);
     }
@@ -108,11 +117,19 @@ public class RandomDamageByHandTokenCountEffectData : CardEffectData, CardDescri
     {
         RandomEnemyMultiHitDamageEffectData sourceEffect = GetSourceMultiHitEffect(context);
 
-        if (sourceEffect != null)
-            return Mathf.Max(0, sourceEffect.damagePerHit);
+        if (sourceEffect != null) return Mathf.Max(0, sourceEffect.damagePerHit);
 
-        if (useFallbackDamageIfMissingSourceEffect)
-            return Mathf.Max(0, fallbackDamagePerHit);
+        if (context != null && context.card != null && context.card.data != null && context.card.data.effects != null)
+        {
+            for (int i = 0; i < context.card.data.effects.Count; i++)
+            {
+                CardEffectData effect = context.card.data.effects[i];
+
+                if (effect is RandomTargetEachHitDamageEffectData randomEachHitEffect) return Mathf.Max(0, randomEachHitEffect.damagePerHit);
+            }
+        }
+
+        if (useFallbackDamageIfMissingSourceEffect) return Mathf.Max(0, fallbackDamagePerHit);
 
         return 0;
     }
@@ -148,36 +165,42 @@ public class RandomDamageByHandTokenCountEffectData : CardEffectData, CardDescri
     {
         value = 0;
 
-        if (key == "usedEggCount" ||
-            key == "usedTokenCount" ||
-            key == "playedTokenCount" ||
-            key == "eggCount" ||
-            key == "已使用過卵的次數")
+        if (key == "damage" || key == "damege" || key == "damage0" || key == "damege0" || key == "damagePerHit")
+        {
+            int damage = GetDamagePerHitFromSourceEffect(context);
+
+            if (context != null && context.source != null) damage = context.source.ModifyOutgoingDamage(damage);
+            if (context != null && context.target != null) damage = context.target.ModifyIncomingDamage(damage);
+
+            value = Mathf.Max(0, damage);
+            return true;
+        }
+
+        if (key == "baseDamage" || key == "基礎傷害")
+        {
+            value = GetDamagePerHitFromSourceEffect(context);
+            return true;
+        }
+
+        if (key == "usedEggCount" || key == "usedTokenCount" || key == "playedTokenCount" || key == "eggCount" || key == "已使用過卵的次數")
         {
             value = GetUsedTokenCount(context);
             return true;
         }
 
-        if (key == "extraHitCount" ||
-            key == "extraCount" ||
-            key == "追加次數")
+        if (key == "extraHitCount" || key == "extraCount" || key == "追加次數")
         {
             value = GetExtraHitCount(context);
             return true;
         }
 
-        if (key == "baseHitCount" ||
-            key == "baseCount" ||
-            key == "保底次數")
+        if (key == "baseHitCount" || key == "baseCount" || key == "保底次數")
         {
             value = GetBaseHitCountFromSourceEffect(context);
             return true;
         }
 
-        if (key == "bowHitCount" ||
-            key == "totalHitCount" ||
-            key == "repeatCount" ||
-            key == "重複次數")
+        if (key == "bowHitCount" || key == "totalHitCount" || key == "repeatCount" || key == "重複次數")
         {
             value = GetTotalHitCount(context);
             return true;

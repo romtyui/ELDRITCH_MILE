@@ -167,6 +167,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 0}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -949,6 +952,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!1 &191152698972099810
 GameObject:
@@ -2586,6 +2595,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!1 &450435267258140509
 GameObject:
@@ -6806,6 +6821,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!114 &3845730377115027277
 MonoBehaviour:
@@ -6821,6 +6842,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 7089956373110070945}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []
@@ -8129,6 +8153,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!114 &5703919921096690044
 MonoBehaviour:
@@ -8144,6 +8174,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 3148673898878820352}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []
@@ -8377,6 +8410,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!114 &2314201720207580218
 MonoBehaviour:
@@ -8392,6 +8431,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1519869197497917611}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []
@@ -8648,19 +8690,20 @@ MonoBehaviour:
   maxHp: 50
   currentHp: 0
   block: 0
+  inspectorStatuses: []
   isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
   isCharging: 0
   chargeValue: 0
   chargeTurnsLeft: 0
-  inspectorStatuses: []
   statusIconRoot: {fileID: 3288226435617326080}
   statusIconDatabase: {fileID: 11400000, guid: 5356eca61d8e2cd41a46f703fe013546, type: 2}
   statusIconPrefab: {fileID: 5204375593199812058, guid: 9d62f1c58d1e5094f9dd30d97e685dd4, type: 3}
   hideStatusRootWhenEmpty: 1
   currentIntentIndex: 0
   hpNumberAnimator: {fileID: 1609605035756227674}
+  hpFillImage: {fileID: 0}
   currentHpText: {fileID: 3334334832259143701}
   maxHpText: {fileID: 7067588471431443933}
   stunIntent: {fileID: 0}
@@ -8720,6 +8763,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecf723cf4d2644a4380572c2d17b5c61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySlotUI
+  normalUI:
+    root: {fileID: 0}
+    nameText: {fileID: 0}
+    currentHpText: {fileID: 0}
+    maxHpText: {fileID: 0}
+    hpFillImage: {fileID: 0}
+    blockRoot: {fileID: 0}
+    blockImage: {fileID: 0}
+    blockText: {fileID: 0}
+    blockAnimator: {fileID: 0}
+    intentImage: {fileID: 0}
+    intentDamageText: {fileID: 0}
+    intentTooltipTrigger: {fileID: 0}
+    statusIconRoot: {fileID: 0}
+    statusTooltipTrigger: {fileID: 0}
+  bossUI:
+    root: {fileID: 0}
+    nameText: {fileID: 0}
+    currentHpText: {fileID: 0}
+    maxHpText: {fileID: 0}
+    hpFillImage: {fileID: 0}
+    blockRoot: {fileID: 0}
+    blockImage: {fileID: 0}
+    blockText: {fileID: 0}
+    blockAnimator: {fileID: 0}
+    intentImage: {fileID: 0}
+    intentDamageText: {fileID: 0}
+    intentTooltipTrigger: {fileID: 0}
+    statusIconRoot: {fileID: 0}
+    statusTooltipTrigger: {fileID: 0}
+  currentUsesBossUI: 0
   slotImage: {fileID: 5315003869355457544}
   enemyUnit: {fileID: 8734344524436468035}
   battleTargetUI: {fileID: 1310569093729255191}
@@ -8753,6 +8827,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 7711926249281532620}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -11374,19 +11451,20 @@ MonoBehaviour:
   maxHp: 100
   currentHp: 0
   block: 0
+  inspectorStatuses: []
   isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
   isCharging: 0
   chargeValue: 0
   chargeTurnsLeft: 0
-  inspectorStatuses: []
   statusIconRoot: {fileID: 1519353535489267877}
   statusIconDatabase: {fileID: 11400000, guid: 5356eca61d8e2cd41a46f703fe013546, type: 2}
   statusIconPrefab: {fileID: 5204375593199812058, guid: 9d62f1c58d1e5094f9dd30d97e685dd4, type: 3}
   hideStatusRootWhenEmpty: 1
   currentIntentIndex: 0
   hpNumberAnimator: {fileID: 6393850265185264584}
+  hpFillImage: {fileID: 0}
   currentHpText: {fileID: 3019381965267653159}
   maxHpText: {fileID: 6013417187994035904}
   stunIntent: {fileID: 0}
@@ -11446,6 +11524,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecf723cf4d2644a4380572c2d17b5c61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySlotUI
+  normalUI:
+    root: {fileID: 0}
+    nameText: {fileID: 0}
+    currentHpText: {fileID: 0}
+    maxHpText: {fileID: 0}
+    hpFillImage: {fileID: 0}
+    blockRoot: {fileID: 0}
+    blockImage: {fileID: 0}
+    blockText: {fileID: 0}
+    blockAnimator: {fileID: 0}
+    intentImage: {fileID: 0}
+    intentDamageText: {fileID: 0}
+    intentTooltipTrigger: {fileID: 0}
+    statusIconRoot: {fileID: 0}
+    statusTooltipTrigger: {fileID: 0}
+  bossUI:
+    root: {fileID: 0}
+    nameText: {fileID: 0}
+    currentHpText: {fileID: 0}
+    maxHpText: {fileID: 0}
+    hpFillImage: {fileID: 0}
+    blockRoot: {fileID: 0}
+    blockImage: {fileID: 0}
+    blockText: {fileID: 0}
+    blockAnimator: {fileID: 0}
+    intentImage: {fileID: 0}
+    intentDamageText: {fileID: 0}
+    intentTooltipTrigger: {fileID: 0}
+    statusIconRoot: {fileID: 0}
+    statusTooltipTrigger: {fileID: 0}
+  currentUsesBossUI: 0
   slotImage: {fileID: 3727327310660908615}
   enemyUnit: {fileID: 2480765388002514174}
   battleTargetUI: {fileID: 3466717900976841516}
@@ -11479,6 +11588,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 1350757902546256320}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -11672,6 +11784,10 @@ MonoBehaviour:
   pageText: {fileID: 1241495698470046896}
   emptyMessageRoot: {fileID: 0}
   hidePageButtonsWhenSinglePage: 1
+  previousPageButtonImage: {fileID: 0}
+  nextPageButtonImage: {fileID: 0}
+  pageButtonActiveColor: {r: 1, g: 1, b: 1, a: 1}
+  pageButtonInactiveColor: {r: 0.35, g: 0.35, b: 0.35, a: 1}
   resetPageWhenSwitchTab: 1
   showCenterTitle: 0
   titleText: {fileID: 3140822681933218078}
@@ -11681,22 +11797,21 @@ MonoBehaviour:
   exhaustPileButton: {fileID: 0}
   handButton: {fileID: 0}
   closeButton: {fileID: 1525479384807284233}
+  activeTabYOffset: 15
+  tabMoveDuration: 0.15
+  tabAnimationUseUnscaledTime: 1
   drawPileButtonText: {fileID: 0}
   discardPileButtonText: {fileID: 0}
   exhaustPileButtonText: {fileID: 0}
   handButtonText: {fileID: 0}
-  drawPileButtonImage: {fileID: 0}
-  discardPileButtonImage: {fileID: 0}
-  exhaustPileButtonImage: {fileID: 0}
-  handButtonImage: {fileID: 0}
+  drawPileButtonCountText: {fileID: 0}
+  discardPileButtonCountText: {fileID: 0}
+  exhaustPileButtonCountText: {fileID: 0}
+  handButtonCountText: {fileID: 0}
   drawPileLabel: "\u724C\u7D44\u5340"
   discardPileLabel: "\u68C4\u724C\u5340"
   exhaustPileLabel: "\u6D88\u8017\u5340"
   handLabel: "\u624B\u724C\u5340"
-  activeTabColor: {r: 1, g: 1, b: 1, a: 1}
-  inactiveTabColor: {r: 0.45, g: 0.45, b: 0.45, a: 1}
-  activeTextColor: {r: 0, g: 0, b: 0, a: 1}
-  inactiveTextColor: {r: 0.18, g: 0.18, b: 0.18, a: 1}
   overrideCardSize: 0
   viewerCardSize: {x: 180, y: 260}
   viewerCardScale: {x: 0.9, y: 1.2, z: 1}
@@ -12532,6 +12647,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!1 &2542002679988894979
 GameObject:
@@ -13611,6 +13732,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 0}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -13919,6 +14043,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!114 &3659915670434426642
 MonoBehaviour:
@@ -13934,6 +14064,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 4259325662568058339}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []
@@ -14334,6 +14467,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!1 &2872504616831814636
 GameObject:
@@ -14746,6 +14885,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b3065c2c1e01434bbc1b3d9c9bc3900, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleManager
+  playCardHpCostTriggersHurtAnimation: 1
   optionMenuUI: {fileID: 0}
   autoStartNextBattleOnWin: 0
   nextBattleDelay: 1
@@ -14760,8 +14900,8 @@ MonoBehaviour:
   playerStatusBarUI: {fileID: 1939558455859971908}
   turnEndButtonAnimatorUI: {fileID: 2549355191048989653}
   turnPhaseBannerUI: {fileID: 3386158978913018378}
-  hpFillImage: {fileID: 3208868766540421051}
-  sanFillImage: {fileID: 5622500545883262673}
+  battleHUDUI: {fileID: 0}
+  battleRewardUI: {fileID: 0}
   currentPhase: 0
   battleTurnNumber: 0
   enemyFormationSpawner: {fileID: 4663059170036187743}
@@ -14788,11 +14928,15 @@ MonoBehaviour:
   hpNumberAnimator_SAN: {fileID: 6869890451676586913}
   currentHpText: {fileID: 2225614854292139781}
   maxHpText: {fileID: 7965337424707451768}
+  hpFillImage: {fileID: 0}
   currentEnergyText: {fileID: 6019198200638431734}
   maxEnergyText: {fileID: 2310726572322572546}
+  sanFillImage: {fileID: 0}
   blockRoot: {fileID: 450435267258140509}
   blockImage: {fileID: 555682656305717717}
   blockText: {fileID: 1551209871777811375}
+  blockFillImage: {fileID: 0}
+  blockBarVirtualMax: 50
   hideBlockWhenZero: 1
   blockTextPrefix: 
   blockTextSuffix: 
@@ -15594,6 +15738,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!1 &3143237258309592646
 GameObject:
@@ -16113,6 +16263,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: eb3f010ea207df442b8463c1ebe43510, type: 2}
   - {fileID: 11400000, guid: 73275e3c8c5a61146b78e6734693504f, type: 2}
   - {fileID: 11400000, guid: 95b8f4a71a6d46f4ab65c57417877017, type: 2}
+  tokenUsageRecords: []
   debugDrawPile: []
   debugHand: []
   debugDiscardPile: []
@@ -17954,6 +18105,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!114 &7221047140571885117
 MonoBehaviour:
@@ -17969,6 +18126,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 2350906123710162928}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []
@@ -20113,6 +20273,7 @@ MonoBehaviour:
   maxHp: 100
   currentHp: 0
   block: 0
+  inspectorStatuses: []
   isPlayerUnit: 1
 --- !u!114 &5177581449032189847
 MonoBehaviour:
@@ -20357,14 +20518,13 @@ MonoBehaviour:
   moveToCenterDuration: 0.35
   shakeDuration: 0.45
   shakeStrength: 12
+  displayScale: {x: 1, y: 1}
   defaultAnimationData: {fileID: 0}
   blackoutCanvasGroup: {fileID: 6469830822921863075, guid: 1088ba9c697512c4bb195a0c9de94ca5, type: 3}
   blackoutAlpha: 0.75
   blackoutFadeDuration: 0.25
   hideDuringGodAnimationUI: {fileID: 8690732862887551424}
   stretchAnimationPrefabToRoot: 0
-  animatedCorruptedCardTemplate: {fileID: 8664624671205180376, guid: 1088ba9c697512c4bb195a0c9de94ca5, type: 3}
-  animatedCardCanvasGroup: {fileID: 7126484006938685602, guid: 1088ba9c697512c4bb195a0c9de94ca5, type: 3}
   animationTimeoutBuffer: 2
   fallbackAnimationTimeout: 10
   godCardFadeDuration: 0.5
@@ -20373,6 +20533,8 @@ MonoBehaviour:
   currentAnimationAnimator: {fileID: 0}
   currentSignalEmitter: {fileID: 0}
   animationFinished: 0
+  animatedCorruptedCardTemplate: {fileID: 8664624671205180376, guid: 1088ba9c697512c4bb195a0c9de94ca5, type: 3}
+  animatedCardCanvasGroup: {fileID: 7126484006938685602, guid: 1088ba9c697512c4bb195a0c9de94ca5, type: 3}
   transformTriggered: 0
 --- !u!1 &4046122049240995947
 GameObject:
@@ -20529,6 +20691,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!114 &6286813970210997561
 MonoBehaviour:
@@ -20544,6 +20712,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 8981092571627529706}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []
@@ -22596,6 +22767,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!114 &7923436545487701218
 MonoBehaviour:
@@ -22611,6 +22788,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 505661569343816866}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []
@@ -22731,19 +22911,20 @@ MonoBehaviour:
   maxHp: 50
   currentHp: 0
   block: 0
+  inspectorStatuses: []
   isPlayerUnit: 0
   intents:
   - {fileID: 11400000, guid: 8e24cbffed796884a8f1975e41b53070, type: 2}
   isCharging: 0
   chargeValue: 0
   chargeTurnsLeft: 0
-  inspectorStatuses: []
   statusIconRoot: {fileID: 6304493527163673208}
   statusIconDatabase: {fileID: 11400000, guid: 5356eca61d8e2cd41a46f703fe013546, type: 2}
   statusIconPrefab: {fileID: 5204375593199812058, guid: 9d62f1c58d1e5094f9dd30d97e685dd4, type: 3}
   hideStatusRootWhenEmpty: 1
   currentIntentIndex: 0
   hpNumberAnimator: {fileID: 8852258152983491802}
+  hpFillImage: {fileID: 0}
   currentHpText: {fileID: 1981517108466675487}
   maxHpText: {fileID: 4630493409590319732}
   stunIntent: {fileID: 0}
@@ -22803,6 +22984,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ecf723cf4d2644a4380572c2d17b5c61, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySlotUI
+  normalUI:
+    root: {fileID: 0}
+    nameText: {fileID: 0}
+    currentHpText: {fileID: 0}
+    maxHpText: {fileID: 0}
+    hpFillImage: {fileID: 0}
+    blockRoot: {fileID: 0}
+    blockImage: {fileID: 0}
+    blockText: {fileID: 0}
+    blockAnimator: {fileID: 0}
+    intentImage: {fileID: 0}
+    intentDamageText: {fileID: 0}
+    intentTooltipTrigger: {fileID: 0}
+    statusIconRoot: {fileID: 0}
+    statusTooltipTrigger: {fileID: 0}
+  bossUI:
+    root: {fileID: 0}
+    nameText: {fileID: 0}
+    currentHpText: {fileID: 0}
+    maxHpText: {fileID: 0}
+    hpFillImage: {fileID: 0}
+    blockRoot: {fileID: 0}
+    blockImage: {fileID: 0}
+    blockText: {fileID: 0}
+    blockAnimator: {fileID: 0}
+    intentImage: {fileID: 0}
+    intentDamageText: {fileID: 0}
+    intentTooltipTrigger: {fileID: 0}
+    statusIconRoot: {fileID: 0}
+    statusTooltipTrigger: {fileID: 0}
+  currentUsesBossUI: 0
   slotImage: {fileID: 2320185987020964253}
   enemyUnit: {fileID: 7572411361815694613}
   battleTargetUI: {fileID: 280192202556376845}
@@ -22836,6 +23048,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 3551289280182355179}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -25709,6 +25924,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!114 &1728995042522575951
 MonoBehaviour:
@@ -25724,6 +25945,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 8353751344478855692}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []
@@ -26037,9 +26261,151 @@ MonoBehaviour:
   container: {fileID: 6412551903723912084}
   contentRoot: {fileID: 6412551903723912084}
   blockTemplate: {fileID: 230630827076521040, guid: dd90dcd4fc48eb54696c5547db71a122, type: 3}
+  windowBackgroundImage: {fileID: 0}
+  leftBackgrounds:
+    oneStatus:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    twoStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    threeStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    fourOrMoreStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+  rightBackgrounds:
+    oneStatus:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    twoStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    threeStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    fourOrMoreStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+  topBackgrounds:
+    oneStatus:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    twoStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    threeStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    fourOrMoreStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+  bottomBackgrounds:
+    oneStatus:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    twoStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    threeStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+    fourOrMoreStatuses:
+      sprite: {fileID: 0}
+      backgroundWidth: 420
+      backgroundHeight: 160
+      backgroundPositionOffset: {x: 0, y: 0}
+      windowPositionOffset: {x: 0, y: 0}
+      scrollViewTop: 0
+      scrollViewBottom: 0
+  scrollRect: {fileID: 0}
+  viewport: {fileID: 0}
+  scrollViewRect: {fileID: 0}
+  clickBlocker: {fileID: 0}
+  tooltipWidth: 420
+  tooltipHeight: 330
+  frameVerticalPadding: 24
   sideOffset: {x: 20, y: 0}
   verticalOffset: {x: 0, y: 20}
   screenPadding: {x: 20, y: 20}
+  useFixedWindowY: 1
+  fixedWindowY: 0
   clampToCanvas: 1
   forceTopLeftPivot: 1
 --- !u!1 &5250985684731168797
@@ -29154,6 +29520,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 0.6039783, g: 0.32296965, b: 0.8930817, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!114 &7767481348092348952
 MonoBehaviour:
@@ -29169,6 +29541,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 3660278889216182004}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []
@@ -32773,8 +33148,13 @@ MonoBehaviour:
   curveHeight: 60
   angleStep: 6
   centerYOffset: -30
+  normalScale: {x: 1, y: 1}
   hoverTargetY: 10
   hoverScale: 1.15
+  hoverPushLeftDistance: 100
+  hoverPushRightDistance: 100
+  limitHoverPushRange: 0
+  hoverPushCardCount: 2
 --- !u!1 &6841641020447577174
 GameObject:
   m_ObjectHideFlags: 0
@@ -34286,6 +34666,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!1 &7189902668191389288
 GameObject:
@@ -37229,6 +37615,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!1 &7726787001946795878
 GameObject:
@@ -37603,16 +37995,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PSBMonsterLightReveal
   monsterTargets: []
   lightPower: 1
-  minNormalAlpha: 0
-  maxNormalAlpha: 1
-  maxDarkAlpha: 1
-  minDarkAlpha: 0.739
-  visualLight: {fileID: 6707106802948876942}
+  sanRatio: 1
+  glitchBattleManager: {fileID: 0}
+  glitchMaterial: {fileID: 0}
+  sanGlitchThreshold: 0.3
+  glitchResponsePower: 1
+  sanIntensityReference: _SanIntensity
+  sanHitPulseReference: _SanHitPulse
+  sanHitPulseStrength: 0.65
+  sanHitPulseDuration: 0.45
+  stripeDensityReference: _StripeDensity
+  minStripeDensity: 0
+  maxStripeDensity: 0.12
+  updateRateReference: _UpdateRate
+  minUpdateRate: 1
+  maxUpdateRate: 4
+  rgbBlendReference: _RGBBlend
+  minRgbBlend: 0
+  maxRgbBlend: 0.5
+  rgbSpeedReference: _RGBSpeed
+  minRgbSpeed: 1
+  maxRgbSpeed: 8
+  rgbSplitAmountReference: _RGBSplitAmount
+  minRgbSplitAmount: 0
+  maxRgbSplitAmount: 0.05
+  noiseAmountReference: _NoiseAmount
+  minNoiseAmount: 0
+  maxNoiseAmount: 0.01
   darkToNormalStart: 0.488
   darkToNormalEnd: 0.525
-  hideAlphaThreshold: 0.025
+  disableHiddenFormRenderers: 1
+  endpointEpsilon: 0.0001
+  globalLight: {fileID: 0}
+  darkestGlobalLightColor: {r: 0.08, g: 0.1, b: 0.16, a: 1}
+  brightestGlobalLightColor: {r: 1, g: 1, b: 1, a: 1}
+  globalLightResponsePower: 1
+  darkestGlobalLightIntensity: 0.15
+  brightestGlobalLightIntensity: 1
+  visualLight: {fileID: 6707106802948876942}
   minLightIntensity: 1
   maxLightIntensity: 3
+  minLightFalloff: 0.1
+  maxLightFalloff: 0.65
+  useSanRatioForFalloff: 1
+  falloffResponsePower: 1
   minLightOuterRadius: 1.5
   maxLightOuterRadius: 8
 --- !u!1 &7814727375850225765
@@ -38654,7 +39080,7 @@ MonoBehaviour:
   stackText: {fileID: 5321141209076247639}
   tooltipTrigger: {fileID: 0}
   keywordDatabase: {fileID: 0}
-  showNumberWhenOneStack: 1
+  showNumberWhenOne: 1
 --- !u!114 &562457426968605362
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38669,6 +39095,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 0}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 0
   stopEventPropagation: 0
   entries: []
@@ -39850,6 +40279,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TooltipTriggerUI
   targetRect: {fileID: 0}
   preferredSide: 1
+  positionMode: 0
+  positionOffset: {x: 0, y: 0}
+  allowAutomaticFallback: 0
   openMode: 1
   stopEventPropagation: 0
   entries: []
@@ -41073,6 +41505,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!1 &8743042774104384034
 GameObject:
@@ -41227,6 +41665,12 @@ MonoBehaviour:
   damageValueColor: {r: 1, g: 0.2901961, b: 0.2901961, a: 1}
   blockValueColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   counterValueColor: {r: 1, g: 0.83137256, b: 0.3529412, a: 1}
+  enableSanDescriptionCorruption: 1
+  sanCorruptionThreshold: 0.3
+  sanCorruptionAmount: 1
+  sanCorruptionCharacters: "\u2593\u2592\u2591#@$%&!?\u203B\xA4\xA7"
+  sanCorruptionRefreshInterval: 0.5
+  sanCorruptionMinRefreshInterval: 0.05
   cardTooltipSide: 3
 --- !u!1 &8786495093489784397
 GameObject:
@@ -43705,6 +44149,7 @@ MonoBehaviour:
   statusIconPrefab: {fileID: 5204375593199812058, guid: b659e1cb772236f4ab60fe9d0618fae1, type: 3}
   iconRoot: {fileID: 3536457373423442416}
   keywordDatabase: {fileID: 11400000, guid: c4919ea44c1bc6d44a9426f1c93148a7, type: 2}
+  statusTooltipTrigger: {fileID: 0}
 --- !u!114 &1544318392885900206
 MonoBehaviour:
   m_ObjectHideFlags: 0

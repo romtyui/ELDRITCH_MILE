@@ -18,6 +18,8 @@ public class CameraEdgePan : MonoBehaviour
     private Vector2 currentOffset;
     private Vector2 offsetVelocity;
 
+    private bool pausedForShake;
+
     private void OnEnable()
     {
         originalPositions.Clear();
@@ -34,6 +36,8 @@ public class CameraEdgePan : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (pausedForShake) return;
+
         Vector2 targetOffset = Vector2.zero;
 
         if (Application.isFocused && Mouse.current != null && Screen.width > 0 && Screen.height > 0)
@@ -76,5 +80,14 @@ public class CameraEdgePan : MonoBehaviour
 
         currentOffset = Vector2.zero;
         offsetVelocity = Vector2.zero;
+    }
+    public void PauseForShake()
+    {
+        pausedForShake = true;
+    }
+
+    public void ResumeAfterShake()
+    {
+        pausedForShake = false;
     }
 }

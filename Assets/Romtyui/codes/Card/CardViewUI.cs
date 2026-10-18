@@ -144,52 +144,47 @@ public class CardViewUI : MonoBehaviour
 
     private string BuildRuntimeDescription(CardInstance instance)
     {
-        if (instance == null || instance.data == null)
-            return "";
+        if (instance == null || instance.data == null) return "";
 
         string originalDescription = instance.data.description;
-
-        if (originalDescription == null)
-            originalDescription = "";
+        if (originalDescription == null) originalDescription = "";
 
         BattleManager battleManager = GetBattleManager();
-
-        BattleUnit source = battleManager != null
-            ? battleManager.playerUnit
-            : null;
-
+        BattleUnit source = battleManager != null ? battleManager.playerUnit : null;
         BattleUnit target = null;
 
-        if (battleManager != null && instance.data.targetType == TargetType.SingleEnemy)
-            target = battleManager.currentEnemy;
+        if (battleManager != null && instance.data.targetType == TargetType.SingleEnemy) target = battleManager.currentEnemy;
 
-        CardResolveContext context = new CardResolveContext(
-            source,
-            target,
-            instance,
-            battleManager
-        );
+        CardResolveContext context = new CardResolveContext(source, target, instance, battleManager);
 
-        // 先處理原本卡片描述中的所有 Runtime Token。
-        string runtimeDescription = ReplaceDescriptionTokens(
-            originalDescription,
-            instance,
-            context
-        );
+        // 保留原本描述的動態數值。
+        string runtimeDescription = ReplaceDescriptionTokens(originalDescription, instance, context);
 
-        // 再依照目前 SAN 判定是否需要把效果描述亂碼化。
-        runtimeDescription = ApplySanDescriptionCorruption(
-            runtimeDescription,
-            battleManager
-        );
+        // 保留原本的 SAN 亂碼功能。
+        runtimeDescription = ApplySanDescriptionCorruption(runtimeDescription, battleManager);
 
-        // Flag 最後才加到最上方，所以不會一起被亂碼。
-        runtimeDescription = AppendFlagDescription(
-            runtimeDescription,
-            instance.data
-        );
+        // 將原本標籤和獲得的能力一起放在最上方。
+        runtimeDescription = AppendFlagDescription(runtimeDescription, instance);
 
         return runtimeDescription;
+    }
+
+    private string AppendGrantedAbilityDescription(string description, CardInstance instance)
+    {
+        if (instance == null) return description;
+
+        List<string> abilities = new List<string>();
+
+        if (instance.hasGrantedIgnoreBlock) abilities.Add("【穿透】");
+        if (instance.hasGrantedBreakBlock) abilities.Add("【破盾】");
+
+        if (abilities.Count == 0) return description;
+
+        string abilityLine = string.Join(" ", abilities);
+
+        if (string.IsNullOrWhiteSpace(description)) return abilityLine;
+
+        return description + "\n" + abilityLine;
     }
 
     private string ApplySanDescriptionCorruption(string description, BattleManager battleManager)
@@ -433,29 +428,25 @@ public class CardViewUI : MonoBehaviour
         });
     }
 
-    private string AppendFlagDescription(string description, CardData cardData)
+    private string AppendFlagDescription(string description, CardInstance instance)
     {
-        if (cardData == null)
-            return description;
+        if (instance == null || instance.data == null) return description;
 
+        CardData cardData = instance.data;
         List<string> flags = new List<string>();
 
-        if (cardData.exhaust)
-            flags.Add("消耗");
+        if (cardData.exhaust) flags.Add("消耗");
+        if (cardData.ethereal) flags.Add("虛無");
+        if (cardData.retain) flags.Add("保留");
 
-        if (cardData.ethereal)
-            flags.Add("虛無");
+        if (instance.hasGrantedIgnoreBlock) flags.Add("【穿透】");
+        if (instance.hasGrantedBreakBlock) flags.Add("【破盾】");
 
-        if (cardData.retain)
-            flags.Add("保留");
-
-        if (flags.Count == 0)
-            return description;
+        if (flags.Count == 0) return description;
 
         string flagLine = string.Join(" ", flags);
 
-        if (string.IsNullOrWhiteSpace(description))
-            return flagLine;
+        if (string.IsNullOrWhiteSpace(description)) return flagLine;
 
         return flagLine + "\n" + description;
     }

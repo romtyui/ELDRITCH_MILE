@@ -32,6 +32,13 @@ public class EnemyData : ScriptableObject
     public Vector3 visualEulerAngles = Vector3.zero;
     [Header("Damage Popup")]
     public Vector2 damagePopupOffset = new Vector2(0f, 80f);
+
+    [Header("Block UI")]
+    [Tooltip("額外加在 Slot 護盾基準位置上的偏移。")]
+    public Vector2 blockPositionOffset = Vector2.zero;
+
+    [Tooltip("乘上 Slot 護盾基準寬、高的倍率。(1, 1) 表示使用 Slot 基準大小。")]
+    public Vector2 blockSizeMultiplier = Vector2.one;
     [Header("Image Settings")]
     public Color hitBoxColor = new Color(1f, 0f, 1f, 0.25f);
     public Sprite hitBoxSprite;

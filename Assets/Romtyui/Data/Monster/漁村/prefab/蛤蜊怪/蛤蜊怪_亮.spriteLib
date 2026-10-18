@@ -1,0 +1,140 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &1
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5e6fedc2472449cead18ef23b5cb30d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.2D.Animation.Runtime::UnityEngine.U2D.Animation.SpriteLibrarySourceAsset
+  m_Library:
+  - m_Name: Clam_eye
+    m_Hash: 846926498
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: idle
+      m_Hash: 472167701
+      m_Sprite: {fileID: -7524050825324875793, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -7524050825324875793, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    - m_Name: idle-2
+      m_Hash: 630875299
+      m_Sprite: {fileID: -4034201849183772598, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -4034201849183772598, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    - m_Name: idle-3
+      m_Hash: 312300597
+      m_Sprite: {fileID: -3708260390199322425, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -3708260390199322425, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 3
+  - m_Name: Clam_mouth
+    m_Hash: 1062157005
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: idle
+      m_Hash: 472167701
+      m_Sprite: {fileID: -7986264655990520977, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -7986264655990520977, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    - m_Name: idle-2
+      m_Hash: 630875299
+      m_Sprite: {fileID: 114927289847683618, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 114927289847683618, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    - m_Name: idle_3
+      m_Hash: 261377857
+      m_Sprite: {fileID: 5941600048558541126, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 5941600048558541126, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 3
+  - m_Name: Clam_hair_front
+    m_Hash: 484036352
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: idle
+      m_Hash: 472167701
+      m_Sprite: {fileID: 8050133331155815864, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 8050133331155815864, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    - m_Name: idle-2
+      m_Hash: 630875299
+      m_Sprite: {fileID: 4186232561792668262, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 4186232561792668262, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 2
+  - m_Name: Clam_hair_back
+    m_Hash: 225808001
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: idle
+      m_Hash: 472167701
+      m_Sprite: {fileID: -2077957684359473229, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -2077957684359473229, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    - m_Name: idle_2
+      m_Hash: 949190615
+      m_Sprite: {fileID: -8610287580319852453, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -8610287580319852453, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 2
+  - m_Name: Clam_face
+    m_Hash: 32127276
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: idle
+      m_Hash: 472167701
+      m_Sprite: {fileID: -1186326858597693071, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -1186326858597693071, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    - m_Name: idle-2
+      m_Hash: 630875299
+      m_Sprite: {fileID: -3394169123716054963, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -3394169123716054963, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 2
+  - m_Name: Clam_noise
+    m_Hash: 472117363
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: idle
+      m_Hash: 472167701
+      m_Sprite: {fileID: -6668365633948701023, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: -6668365633948701023, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    - m_Name: idle-2
+      m_Hash: 630875299
+      m_Sprite: {fileID: 6493099649971940953, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 6493099649971940953, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 2
+  - m_Name: Clam_body
+    m_Hash: 525748729
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: idle
+      m_Hash: 472167701
+      m_Sprite: {fileID: 7743953708981736452, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 7743953708981736452, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    - m_Name: idle 2
+      m_Hash: 271850222
+      m_Sprite: {fileID: 1210657053746938642, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 1210657053746938642, guid: c359dcdc3e2571c4fa89b05ff425b850, type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 2
+  m_PrimaryLibraryGUID: 
+  m_ModificationHash: 639278883490360124
+  m_Version: 1

@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dde3d9e15a7f1d54b97ba0d5b5b936cc, type: 3}
+  m_Name: "\u6DF1\u6DF51"
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyEncounterPoolData
+  entries:
+  - formation: {fileID: 11400000, guid: ae3c8128499e0c34a9ba9318d4404cff, type: 2}
+    weight: 1
+    isBoss: 1
+  - formation: {fileID: 11400000, guid: e427ee165943e7d4ba99ec06f83b8e42, type: 2}
+    weight: 1
+    isBoss: 1
+  - formation: {fileID: 11400000, guid: f05519ffab9fdd44786c514ce5f31742, type: 2}
+    weight: 1
+    isBoss: 1
+  - formation: {fileID: 11400000, guid: 366fe132b7a8d3f47b0c9bb1b9782ab0, type: 2}
+    weight: 2
+    isBoss: 1
+  - formation: {fileID: 11400000, guid: 6ace41415e0789b43932ac40411c6ad3, type: 2}
+    weight: 2
+    isBoss: 1
+  - formation: {fileID: 11400000, guid: f05519ffab9fdd44786c514ce5f31742, type: 2}
+    weight: 2
+    isBoss: 1
+  - formation: {fileID: 11400000, guid: 3feec3443d7065349985e33aea899efb, type: 2}
+    weight: 2
+    isBoss: 0
+  - formation: {fileID: 11400000, guid: b024bcc879d551a4dbe2874ddd758db9, type: 2}
+    weight: 3
+    isBoss: 1
+  - formation: {fileID: 11400000, guid: b17ad8f810984a842b59f9d3d4b6bf3c, type: 2}
+    weight: 3
+    isBoss: 1
+  - formation: {fileID: 11400000, guid: c1822b2146515314d94e59db11bbcd9b, type: 2}
+    weight: 3
+    isBoss: 1
+  - formation: {fileID: 11400000, guid: 05adca09fd7d8e34098f9bc006e8fe36, type: 2}
+    weight: 3
+    isBoss: 1
+  - formation: {fileID: 11400000, guid: 5f7ae470a10f9e649bada05b2484acb2, type: 2}
+    weight: 5
+    isBoss: 1
+  debugUsedFormationNames:
+  - 
