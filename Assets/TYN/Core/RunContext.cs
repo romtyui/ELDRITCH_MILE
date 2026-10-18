@@ -82,9 +82,16 @@ namespace EldritchMile.Core
         /// <summary>這場 run 依序去過哪幾區（含起始那一區）。遊玩紀錄與「去過某區」的條件用。</summary>
         public List<string> visitedRegionIds = new List<string>();
 
-        /// <summary>換到另一區。只記錄，換地圖由 GameFlowManager.TravelToRegion 負責。</summary>
+        /// <summary>
+        /// 在這一區打過幾場戰鬥（進場就算）。戰鬥組怪物池的「前三場／第四場起」靠它分（RegionData.WeightFor）。
+        /// 換區歸零 —— 《怪物組合》表是每一區各自從前期開始排的。
+        /// </summary>
+        public int regionBattleCount;
+
+        /// <summary>換到另一區。只記錄，換地圖由 GameFlowManager.TravelRoutine 負責。</summary>
         public void EnterRegion(string regionId)
         {
+            if ((regionId ?? "") != currentRegionId) regionBattleCount = 0;
             currentRegionId = regionId ?? "";
             if (!string.IsNullOrEmpty(currentRegionId) && !visitedRegionIds.Contains(currentRegionId))
                 visitedRegionIds.Add(currentRegionId);

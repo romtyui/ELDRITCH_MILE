@@ -126,6 +126,12 @@ namespace EldritchMile.Core
                  "不從池子隨機。玩家對 Boss 的預期是「這一區的終點」，抽到雜魚會很怪")]
         public string bossEnemyId = "";
 
+        [Header("菁英不要太早出現（2026-10-18 組員回報）")]
+        [Tooltip("第幾層之前**不排菁英**（第 0 層是起點）。\n\n" +
+                 "抽到菁英條目的話會改抽一般條目；保證出現的菁英也會往後挪到這一層以後。\n" +
+                 "0 = 不限制（舊行為）")]
+        [Min(0)] public int eliteMinLayer = 3;
+
         [Tooltip("把每次的挑選過程印到 Console。查「為什麼遇到他」時打開")]
         public bool verbose = false;
 
@@ -147,6 +153,12 @@ namespace EldritchMile.Core
         /// <summary>抽一個敵人，同時回報難度級別（地圖要顯示）。</summary>
         public string Pick(RunContext run, System.Random rng, out Tier tier, ItemDatabase itemDb = null)
         {
+            return Pick(run, rng, out tier, Tier.Boss, itemDb);
+        }
+
+        /// <summary>同上，但只從 <paramref name="maxTier"/>（含）以下的條目抽 —— 前期不排菁英用。</summary>
+        public string Pick(RunContext run, System.Random rng, out Tier tier, Tier maxTier, ItemDatabase itemDb = null)
+        {
             tier = Tier.Minion;
             if (rng == null) return null;
 
@@ -158,6 +170,7 @@ namespace EldritchMile.Core
                 Entry e = entries[i];
                 if (e == null || string.IsNullOrEmpty(e.enemyId)) continue;
                 if (e.weight <= 0f) continue;
+                if (e.tier > maxTier) continue;
 
                 // ⚠️ 條件是在**挑之前**濾的，不是挑到之後再檢查 ——
                 //    後者會讓「條件不成立」變成「這一站沒有敵人」，而不是「換一隻」

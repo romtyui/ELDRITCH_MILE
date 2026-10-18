@@ -540,7 +540,11 @@ namespace EldritchMile.Core
             // 每個戰鬥節點要打誰，也在這裡一次安排好（保證項先佔位，剩下的抽）。
             // ⚠️ 種子跟地圖**錯開**（^ 1）—— 用同一個的話，敵人的抽選會跟
             //    地圖形狀綁在一起，兩張長得像的地圖會配到一樣的怪
-            EncounterPlanner.AssignEnemies(map, pool, Run, new System.Random(seed ^ 1), itemDatabase);
+            //
+            // 地區有指定戰鬥組的怪物池時只排級別（一般／菁英／首領），「打哪一組」交給他的池子 ——
+            // 見 BattleRegionHook.ReserveFromPool
+            bool tierOnly = region != null && region.battleEncounterPool != null;
+            EncounterPlanner.AssignEnemies(map, pool, Run, new System.Random(seed ^ 1), itemDatabase, tierOnly);
             return map;
         }
 

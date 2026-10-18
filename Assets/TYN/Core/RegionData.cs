@@ -47,13 +47,42 @@ namespace EldritchMile.Core
         public LootTable shopStock;
 
         [Header("戰鬥（交給 Romtyui 的 BattleRegionHook）")]
-        [Tooltip("戰鬥背景。留空 = 不換（戰鬥 prefab 裡那張）")]
+        [Tooltip("一般／菁英戰的背景。留空 = 不換（戰鬥 prefab 裡那張）")]
         public Sprite battleBackground;
+
+        [Tooltip("首領戰的背景。留空 = 跟一般戰同一張")]
+        public Sprite bossBattleBackground;
 
         [Tooltip("戰鬥組的怪物池（沒有指定對手時他自己抽的那一份）。留空 = 不換。\n\n" +
                  "⚠️ 要跟上面的 encounterPool **同一區** —— 只換一邊的話，\n" +
                  "漁村的節點可能排到別區的怪（或反過來）。")]
         public EnemyEncounterPoolData battleEncounterPool;
+
+        [Header("戰鬥組怪物池的權重規則（2026-10-18 Romtyui《怪物組合》）")]
+        [Tooltip("這一區的前幾場一般戰算「前期」。第 N+1 場起改用 weightLater")]
+        [Min(0)] public int earlyBattles = 3;
+
+        [Tooltip("前期一般戰抽 weight 等於這個的組合")]
+        public int weightEarly = 1;
+
+        [Tooltip("前期之後的一般戰")]
+        public int weightLater = 2;
+
+        [Tooltip("菁英戰")]
+        public int weightElite = 3;
+
+        [Tooltip("首領戰")]
+        public int weightBoss = 5;
+
+        /// <summary>
+        /// 這一站要抽哪個 weight 的組合。<paramref name="battlesSoFar"/> = 這一區已經打過幾場（不含這一場）。
+        /// </summary>
+        public int WeightFor(EncounterPool.Tier tier, int battlesSoFar)
+        {
+            if (tier == EncounterPool.Tier.Boss) return weightBoss;
+            if (tier == EncounterPool.Tier.Elite) return weightElite;
+            return battlesSoFar < earlyBattles ? weightEarly : weightLater;
+        }
 
         [Header("通道（岔路通往的地區）")]
         public List<RegionExit> exits = new List<RegionExit>();

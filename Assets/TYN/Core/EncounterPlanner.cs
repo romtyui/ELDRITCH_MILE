@@ -33,9 +33,15 @@ namespace EldritchMile.Core
         /// 亂數源要外面傳，而且應該綁 run 種子 ——
         /// 同一場 run 重算要得到同一張安排表。
         /// </param>
+        /// <param name="tierOnly">
+        /// **只排難度級別、不排是誰**（2026-10-18）。地區有指定戰鬥組的怪物池時用 ——
+        /// 那時「打哪一組」由他的池子依權重決定（見 BattleRegionHook），
+        /// 我們只負責地圖上看得到的那一層：這站是一般、菁英還是首領。
+        /// 保證出現的條目照樣排 enemyId（事件要靠它觸發，不能交給抽）。
+        /// </param>
         public static void AssignEnemies(
             MapData map, EncounterPool pool, RunContext run,
-            System.Random rng, ItemDatabase itemDb = null)
+            System.Random rng, ItemDatabase itemDb = null, bool tierOnly = false)
         {
             if (map == null || pool == null || rng == null)
             {
@@ -57,11 +63,11 @@ namespace EldritchMile.Core
                 else if (n.kind == MapNodeKind.Combat) combatNodes.Add(n);
             }
 
-            if (!string.IsNullOrEmpty(pool.bossEnemyId))
+            if (tierOnly || !string.IsNullOrEmpty(pool.bossEnemyId))
             {
                 for (int i = 0; i < bossNodes.Count; i++)
                 {
-                    bossNodes[i].enemyId = pool.bossEnemyId;
+                    bossNodes[i].enemyId = tierOnly ? null : pool.bossEnemyId;
                     bossNodes[i].enemyTier = EncounterPool.Tier.Boss;
                 }
             }
@@ -85,6 +91,8 @@ namespace EldritchMile.Core
                     {
                         RunNodeData n = free[i];
                         if (n.layer < req.minLayer) continue;
+                        // 菁英不要太早出現 —— 保證項也一樣（挪到 eliteMinLayer 以後）
+                        if (req.tier >= EncounterPool.Tier.Elite && n.layer < pool.eliteMinLayer) continue;
                         if (req.maxLayer >= 0 && n.layer > req.maxLayer) continue;
                         eligible.Add(n);
                     }
@@ -116,9 +124,11 @@ namespace EldritchMile.Core
             for (int i = 0; i < free.Count; i++)
             {
                 EncounterPool.Tier tier;
-                string id = pool.Pick(run, rng, out tier, itemDb);
+                EncounterPool.Tier maxTier = free[i].layer < pool.eliteMinLayer
+                    ? EncounterPool.Tier.Minion : EncounterPool.Tier.Boss;
+                string id = pool.Pick(run, rng, out tier, maxTier, itemDb);
                 if (string.IsNullOrEmpty(id)) continue;   // 抽不到就留空 = 交給戰鬥組
-                free[i].enemyId = id;
+                free[i].enemyId = tierOnly ? null : id;
                 free[i].enemyTier = tier;
                 filled++;
             }

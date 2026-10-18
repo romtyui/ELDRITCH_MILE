@@ -9651,7 +9651,8 @@ MonoBehaviour:
   mapOverlay: {fileID: 2110897650}
   mapSettings: {fileID: 11400000, guid: 198f3f149ee61a94294d53f91ff8a4ef, type: 2}
   startingRegion: {fileID: 11400000, guid: 452d3eeb14cc92f4ea39c1723ec31d58, type: 2}
-  extraRegions: []
+  extraRegions:
+  - {fileID: 11400000, guid: 04ca420aab8a6804abe2fde0a98d593c, type: 2}
   gateUnfinishedLines:
   - "\u901A\u9053\u7684\u53E6\u4E00\u982D\u4E00\u7247\u6F06\u9ED1\uFF0C\u4EC0\u9EBC\u4E5F\u770B\u4E0D\u6E05\u3002"
   - "\uFF08\u901A\u5F80\u300C{0}\u300D\u7684\u901A\u9053\u5C1A\u672A\u5B8C\u6210\uFF0C\u8ACB\u7E7C\u7E8C\u539F\u672C\u7684\u8DEF\u3002\uFF09"

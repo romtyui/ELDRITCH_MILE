@@ -14,16 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.RegionData
   regionId: village
   displayName: "\u6F01\u6751"
-  worldCell: {x: 0, y: 0}
+  worldCell: {x: 0, y: 1}
   mapSettings: {fileID: 0}
   groundTexture: {fileID: 0}
   encounterPool: {fileID: 0}
   shopStock: {fileID: 0}
   battleBackground: {fileID: 0}
-  battleEncounterPool: {fileID: 0}
-  exits:
-  - target: {fileID: 11400000, guid: 983bbc8ee5a458c4ab9a784521f21d6d, type: 2}
-    chance: 1
-  - target: {fileID: 11400000, guid: d3bccb495f84f9c45a60090cd343aa4a, type: 2}
-    chance: 1
-  travelReady: 1
+  bossBattleBackground: {fileID: 0}
+  battleEncounterPool: {fileID: 11400000, guid: e02e6ed190ca559478a9b937a6f9e959, type: 2}
+  earlyBattles: 3
+  weightEarly: 1
+  weightLater: 2
+  weightElite: 3
+  weightBoss: 5
+  exits: []
+  travelReady: 0
