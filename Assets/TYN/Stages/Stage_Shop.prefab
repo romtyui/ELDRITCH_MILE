@@ -459,7 +459,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 152.52, y: 152.52}
+  m_SizeDelta: {x: 269.7, y: 269.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6304741339536443599
 CanvasRenderer:
@@ -2189,6 +2189,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6615645316526439909}
   - component: {fileID: 7932247197507507655}
+  - component: {fileID: 8841293898110278991}
   m_Layer: 0
   m_Name: RelicCard
   m_TagString: Untagged
@@ -2233,6 +2234,20 @@ MonoBehaviour:
   backImage: {fileID: 2603382192241122645}
   artImage: {fileID: 408248662873170506}
   frameImage: {fileID: 6369318917668986943}
+--- !u!114 &8841293898110278991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1070557547282804977}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &1096243752522088165
 GameObject:
   m_ObjectHideFlags: 0
@@ -3851,6 +3866,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6279664568274454344}
   - component: {fileID: 3792022207059787103}
+  - component: {fileID: 7970153648742213656}
   m_Layer: 0
   m_Name: RelicCard
   m_TagString: Untagged
@@ -3895,6 +3911,20 @@ MonoBehaviour:
   backImage: {fileID: 1712084293490721227}
   artImage: {fileID: 5081196795325755082}
   frameImage: {fileID: 5576305375085128288}
+--- !u!114 &7970153648742213656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1922571226121771127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &1938976420248126486
 GameObject:
   m_ObjectHideFlags: 0
@@ -6982,7 +7012,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 152.52, y: 152.52}
+  m_SizeDelta: {x: 269.7, y: 269.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2887949095107238316
 CanvasRenderer:
@@ -8075,6 +8105,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5017326695623250904}
   - component: {fileID: 1556906652594411141}
+  - component: {fileID: 5475477629662880708}
   m_Layer: 0
   m_Name: RelicCard
   m_TagString: Untagged
@@ -8119,6 +8150,20 @@ MonoBehaviour:
   backImage: {fileID: 1587150284151161690}
   artImage: {fileID: 6921127571695824743}
   frameImage: {fileID: 4749033837499485582}
+--- !u!114 &5475477629662880708
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3799611928311976341}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &3860350480489662310
 GameObject:
   m_ObjectHideFlags: 0
@@ -9305,7 +9350,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 152.52, y: 152.52}
+  m_SizeDelta: {x: 269.7, y: 269.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1932400003958783507
 CanvasRenderer:
@@ -10777,6 +10822,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5314173862332103144}
   - component: {fileID: 7130753508673495905}
+  - component: {fileID: 167936462046805051}
   m_Layer: 0
   m_Name: RelicCard
   m_TagString: Untagged
@@ -10821,6 +10867,20 @@ MonoBehaviour:
   backImage: {fileID: 3018644800220175073}
   artImage: {fileID: 7285858701115908329}
   frameImage: {fileID: 7210451290398724279}
+--- !u!114 &167936462046805051
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5331744566432175483}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &5343907696618820185
 GameObject:
   m_ObjectHideFlags: 0
@@ -10856,7 +10916,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 152.52, y: 152.52}
+  m_SizeDelta: {x: 269.7, y: 269.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5174151760994608934
 CanvasRenderer:
@@ -11131,6 +11191,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6078914690091912117}
   - component: {fileID: 4045510187587759434}
+  - component: {fileID: 6883552084464311444}
   m_Layer: 0
   m_Name: RelicCard
   m_TagString: Untagged
@@ -11175,6 +11236,20 @@ MonoBehaviour:
   backImage: {fileID: 5327189042594486610}
   artImage: {fileID: 6728656628740299125}
   frameImage: {fileID: 2178667100026545405}
+--- !u!114 &6883552084464311444
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5539078659346496032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &5574057410471722417
 GameObject:
   m_ObjectHideFlags: 0
@@ -11930,7 +12005,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 152.52, y: 152.52}
+  m_SizeDelta: {x: 269.7, y: 269.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6192186506233912405
 CanvasRenderer:
@@ -12448,6 +12523,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5225662738734974365}
   - component: {fileID: 6116332200715683258}
+  - component: {fileID: 7192685488648863495}
   m_Layer: 0
   m_Name: RelicCard
   m_TagString: Untagged
@@ -12492,6 +12568,20 @@ MonoBehaviour:
   backImage: {fileID: 865287042703905251}
   artImage: {fileID: 4643062760852313829}
   frameImage: {fileID: 1357291324197438651}
+--- !u!114 &7192685488648863495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6228229119267393474}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &6260730097291125368
 GameObject:
   m_ObjectHideFlags: 0
@@ -13214,6 +13304,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8578633429284959216}
   - component: {fileID: 5079246084225256299}
+  - component: {fileID: 3939784672033377089}
   m_Layer: 0
   m_Name: RelicCard
   m_TagString: Untagged
@@ -13258,6 +13349,20 @@ MonoBehaviour:
   backImage: {fileID: 2866903487446774600}
   artImage: {fileID: 8627665189909629423}
   frameImage: {fileID: 3021438172022841850}
+--- !u!114 &3939784672033377089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6445692366457512123}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &6447580596717423386
 GameObject:
   m_ObjectHideFlags: 0
@@ -14495,7 +14600,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 152.52, y: 152.52}
+  m_SizeDelta: {x: 269.7, y: 269.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7019206378726433686
 CanvasRenderer:
@@ -15120,7 +15225,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 152.52, y: 152.52}
+  m_SizeDelta: {x: 269.7, y: 269.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3130597628318317754
 CanvasRenderer:
@@ -16176,6 +16281,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4925540282175095536}
   - component: {fileID: 5649551077551050291}
+  - component: {fileID: 4659362976400560405}
   m_Layer: 0
   m_Name: RelicCard
   m_TagString: Untagged
@@ -16220,6 +16326,20 @@ MonoBehaviour:
   backImage: {fileID: 6551435682109867728}
   artImage: {fileID: 3914323956514420700}
   frameImage: {fileID: 4178617732149237651}
+--- !u!114 &4659362976400560405
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7436156882364470494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &7448314395024166123
 GameObject:
   m_ObjectHideFlags: 0
@@ -18866,7 +18986,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 152.52, y: 152.52}
+  m_SizeDelta: {x: 269.7, y: 269.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6792039850980629141
 CanvasRenderer:
@@ -19490,6 +19610,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3983679369213206002}
   - component: {fileID: 8128617396752710331}
+  - component: {fileID: 3082120996533034183}
   m_Layer: 0
   m_Name: RelicCard
   m_TagString: Untagged
@@ -19534,6 +19655,20 @@ MonoBehaviour:
   backImage: {fileID: 8268992819405506167}
   artImage: {fileID: 7151197270153057059}
   frameImage: {fileID: 1959525337244950382}
+--- !u!114 &3082120996533034183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8535567948475184571}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3312d7739989d2b4e91e6319e9a96d76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RectMask2D
+  m_Padding: {x: 0, y: 0, z: 0, w: 0}
+  m_Softness: {x: 0, y: 0}
 --- !u!1 &8663093085628993814
 GameObject:
   m_ObjectHideFlags: 0
@@ -20029,7 +20164,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 328, y: 328}
+  m_SizeDelta: {x: 580, y: 580}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6567425369908245534
 CanvasRenderer:

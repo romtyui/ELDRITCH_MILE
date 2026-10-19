@@ -6467,6 +6467,7 @@ GameObject:
   - component: {fileID: 650878821}
   - component: {fileID: 650878823}
   - component: {fileID: 650878822}
+  - component: {fileID: 650878824}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -6531,6 +6532,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 650878820}
   m_CullTransparentMesh: 1
+--- !u!114 &650878824
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 650878820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17bec53edea88ea46b72a278988deab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.HoverDimImage
+  target: {fileID: 650878822}
+  hoverTint: {r: 0.6, g: 0.6, b: 0.6, a: 1}
+  fadeSeconds: 0.12
 --- !u!1 &691962861
 GameObject:
   m_ObjectHideFlags: 0

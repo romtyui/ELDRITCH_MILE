@@ -17,8 +17,14 @@ namespace EldritchMile.Core
     ///   · 每條路照樣走得到首領（「至少一條路通首領」自動成立，不用另外檢查）
     ///   · 通道「還沒做好」時（RegionData.travelReady = false），播完提示照樣能從它往下走，不會卡死
     ///
-    /// 【為什麼只挑探索節點】跟 EnsureGuaranteedKinds 同一個理由：探索房是填充用的，少一間最不痛。
-    /// 改到商店的話，那張圖可能就沒有商店了。
+    /// 【挑哪些節點】探索房優先（跟 EnsureGuaranteedKinds 同一個理由：填充用的，少一間最不痛），
+    /// 不夠才用一般戰。商店、對話、特殊不動 —— 改掉的話那張圖可能就沒有了。
+    ///
+    /// 【硬條件】（2026-10-19 試玩：可選的兩站都是通道）
+    ///   ① 落在那一側最外面 30% 的帶子裡（西的在西、東的在東，兩個通道自然隔開）
+    ///   ② 不跟別的通道互連、不共用父節點（玩家不會同時看到兩個通道）
+    ///   ③ 每一個通往它的節點都還有一條不是通道的路（不會「只能走通道」）
+    /// 找不到合格的就**這一場不放**，不退而求其次。
     /// </summary>
     public static partial class MapGenerator
     {
@@ -38,6 +44,23 @@ namespace EldritchMile.Core
 
             int maxLayer = map.MaxLayer;
             if (maxLayer < 3) return 0;   // 太淺的圖沒有「中段」
+
+            // 誰連到誰（反查父節點用）
+            var parents = new Dictionary<string, List<RunNodeData>>();
+            float minX = float.MaxValue, maxX = float.MinValue;
+            for (int i = 0; i < map.allNodes.Count; i++)
+            {
+                RunNodeData n = map.allNodes[i];
+                if (n == null) continue;
+                minX = Mathf.Min(minX, n.xPercent); maxX = Mathf.Max(maxX, n.xPercent);
+                for (int k = 0; k < n.nextNodeIds.Count; k++)
+                {
+                    List<RunNodeData> list;
+                    if (!parents.TryGetValue(n.nextNodeIds[k], out list)) parents[n.nextNodeIds[k]] = list = new List<RunNodeData>();
+                    list.Add(n);
+                }
+            }
+            float span = Mathf.Max(1f, maxX - minX);
 
             int placed = 0;
             for (int e = 0; e < region.exits.Count; e++)
@@ -63,18 +86,36 @@ namespace EldritchMile.Core
                 for (int i = 0; i < map.allNodes.Count; i++)
                 {
                     RunNodeData n = map.allNodes[i];
-                    if (n == null || n.kind != MapNodeKind.Event) continue;
+                    if (n == null) continue;
+
+                    // 只改探索房（優先）或沒有指定對手的一般戰 —— 理由見類別說明
+                    if (n.kind != MapNodeKind.Event && n.kind != MapNodeKind.Combat) continue;
 
                     float t = (float)n.layer / maxLayer;
                     if (t < GateLayerMin || t > GateLayerMax) continue;
 
+                    // ① 一定要在那一側的外緣帶裡（左右各 GateEdgeBand）。
+                    //    以前只挑「最靠邊的」，地圖在那幾層剛好很窄時，西邊的通道會落在東半邊
+                    float rel = (n.xPercent - minX) / span;
+                    if (dir.x < 0 && rel > GateEdgeBand) continue;
+                    if (dir.x > 0 && rel < 1f - GateEdgeBand) continue;
+
+                    // ② 不跟別的通道相鄰：不互連、不共用父節點
+                    if (TouchesGate(map, n, parents)) continue;
+
+                    // ③ 走到它的每一個父節點，都還要留一條**不是通道**的路 ——
+                    //    不然玩家在那一站只能選通道（實測 500 張圖有 332 張出現這種節點）
+                    if (!EveryParentKeepsAnotherWay(map, n, parents)) continue;
+
                     float score = EdgeDistance(n, dir, maxLayer);
+                    if (n.kind != MapNodeKind.Event) score += 15f;   // 能改探索房就不要吃掉一場戰鬥
                     if (score < bestScore) { bestScore = score; best = n; }
                 }
 
                 if (best == null)
                 {
-                    Debug.LogWarning($"[地圖生成] 找不到能改成通道的探索節點（→「{exit.target.regionId}」），這一場沒有這條通道");
+                    Debug.LogWarning($"[地圖生成] 這張圖找不到合格的通道位置（→「{exit.target.regionId}」：" +
+                                     "要在那一側的外緣、不跟別的通道相鄰、前一站還有別條路），這一場沒有這條通道");
                     continue;
                 }
 
@@ -86,6 +127,50 @@ namespace EldritchMile.Core
                 Debug.Log($"[地圖生成] 通道 {best.nodeId}（第 {best.layer} 層、x {best.xPercent:0}）→「{exit.target.regionId}」");
             }
             return placed;
+        }
+
+        /// <summary>通道只能落在那一側最外面這麼寬的一帶（佔地圖左右寬度的比例）。</summary>
+        public const float GateEdgeBand = 0.3f;
+
+        /// <summary>n 跟任何一個通道互連、或跟某個通道共用父節點。</summary>
+        private static bool TouchesGate(MapData map, RunNodeData n, Dictionary<string, List<RunNodeData>> parents)
+        {
+            for (int k = 0; k < n.nextNodeIds.Count; k++)
+            {
+                RunNodeData c = map.GetNode(n.nextNodeIds[k]);
+                if (c != null && c.kind == MapNodeKind.Gate) return true;
+            }
+
+            List<RunNodeData> ps;
+            if (!parents.TryGetValue(n.nodeId, out ps)) return false;
+            for (int i = 0; i < ps.Count; i++)
+            {
+                if (ps[i].kind == MapNodeKind.Gate) return true;
+                for (int k = 0; k < ps[i].nextNodeIds.Count; k++)
+                {
+                    RunNodeData sib = map.GetNode(ps[i].nextNodeIds[k]);
+                    if (sib != null && sib != n && sib.kind == MapNodeKind.Gate) return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>把 n 改成通道之後，它的每一個父節點是不是都還有一條不是通道的路。沒有父節點（起點層）回 false。</summary>
+        private static bool EveryParentKeepsAnotherWay(MapData map, RunNodeData n, Dictionary<string, List<RunNodeData>> parents)
+        {
+            List<RunNodeData> ps;
+            if (!parents.TryGetValue(n.nodeId, out ps) || ps.Count == 0) return false;
+            for (int i = 0; i < ps.Count; i++)
+            {
+                bool other = false;
+                for (int k = 0; k < ps[i].nextNodeIds.Count && !other; k++)
+                {
+                    RunNodeData c = map.GetNode(ps[i].nextNodeIds[k]);
+                    if (c != null && c != n && c.kind != MapNodeKind.Gate) other = true;
+                }
+                if (!other) return false;
+            }
+            return true;
         }
 
         /// <summary>
