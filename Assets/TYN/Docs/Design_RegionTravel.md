@@ -172,3 +172,13 @@
 **戰鬥重新打包成 `Stage_Battle_v4`**（從 10/19 的 SampleScene，945 物件、遺失腳本 0），處理跟 v3 一樣：拿掉重複系統與齒輪、BattleManager 關著、watcher 停用、固定像素畫布改 1920x1080 等比、掛 BattleRegionHook。StageHost 改指 v4，v3 留著（退回只要改那一格）。
 卡冊副本 `UI/System/DeckBook.prefab` 跟著換成 v4 的版本（他的卡冊有改）；祭壇的獎勵畫面副本比對過沒變，不用動。
 實測：首領戰抽到海坊主、指定猥裸也打得起來，他新的格擋跳字（popupVariants）在，0 錯誤。
+
+### 2026-10-19（早）Romtyui 更新 → Stage_Battle_v5
+- **他把池子的首領勾全部拿掉**（深淵1 連海坊主也沒勾 → 首領戰不會有首領的大血條，待他確認）。
+- **深淵1 第四場起的「海膽2祭司1」被他換回「海膽2雜魚1」**（重複）。照他的版本，不再改。
+- 新怪：怪海星（starfish）有資料與外觀，**已補進 EnemyDatabase**；但還沒有任何組合用到牠（表上「半魚人x1、怪海星x1」）。
+  人手、二口、磯撫、針千本、鬼切 只有外觀 prefab，還沒有 EnemyData。
+- 山羊神牌（goat_god）接上新的出場動畫（Goat.asset / Goatg group.prefab）。
+- **他的 SampleScene 把 `BattleUICanvas/Inventory` 整組關掉了**（抽牌袋、結束回合燈、HP/SAN 都在裡面），沒有程式會再打開。
+  v5 打包時**保持開著**，否則戰鬥裡沒有結束回合鍵。請他確認是不是忘了打開。
+- v5 其餘處理同 v4；StageHost 改指 v5，v4 留著。卡冊與獎勵畫面這次沒動，副本不用重拷。
