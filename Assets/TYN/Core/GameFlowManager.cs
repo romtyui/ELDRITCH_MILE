@@ -899,6 +899,14 @@ namespace EldritchMile.Core
             // 於是「從主選單進地圖，背景浮著一顆結束鍵」就跑出來了。
             EldritchMile.Explore.ExploreHandUI.Instance?.Hide();
 
+            // 對話立繪上的點擊區（場景常駐的 Speaker_Hitbox）**換站時把角色清掉**。
+            //
+            // （2026-10-19 評圖：探索裡點某些位置會一直冒出角色的對話氣泡）
+            // 它掛在對話框的立繪位置底下，遭遇（對話）節點把它設成那個角色之後就沒有人清。
+            // 探索開箱、檢查物件時會借同一個立繪位置秀特寫圖 → 點擊區跟著出現，
+            // 一點就講上一個遭遇角色的閒聊。對話環節進場時會自己再設回來（SetCharacter）
+            EldritchMile.UI.CharacterHitbox.SceneSpeaker?.SetCharacter("");
+
             // 氣泡也是同一批「畫布連坐關掉」的受害者，只是還沒有人回報 ——
             // 換環節時正好有一句話在播，它會被帶到下一個畫面上。
             // 用 Immediate：這一刻要卸載了，播收合動畫會來不及，殘影反而更糟。

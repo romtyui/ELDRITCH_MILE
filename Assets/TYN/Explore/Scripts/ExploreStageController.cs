@@ -27,6 +27,10 @@ namespace EldritchMile.Explore
         public Transform roomRoot;
         public RoomLibrary roomLibrary;
 
+        [Tooltip("進房間時要不要用對話框唸出房間的描述（RoomDefinition.entryText）。\n" +
+                 "（2026-10-19 評圖：進到探索場景不再需要顯示場景文字敘述）文字留在房間資料裡，要再打開勾這一格就好")]
+        public bool showEntryText = false;
+
         [Header("離開 (C13/C14)")]
         [Tooltip("ExitTag 上的 Button。\n" +
                  "兩段式確認由「hover 滑下提示 → 點擊跳出確認面板」構成，" +
@@ -183,7 +187,7 @@ namespace EldritchMile.Explore
 
         public override IEnumerator OnStageReady()
         {
-            if (room != null && !string.IsNullOrEmpty(room.entryText))
+            if (showEntryText && room != null && !string.IsNullOrEmpty(room.entryText))
             {
                 PopupService.Instance?.QueueText(room.entryText);
             }

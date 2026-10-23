@@ -49,9 +49,49 @@ namespace EldritchMile.UI
             {
                 artImage.sprite = art;
                 artImage.enabled = art != null;
+                CenterOnDrawing(art);
             }
 
             gameObject.SetActive(true);
+        }
+
+        [Tooltip("用「畫的部分」置中，而不是整張圖置中。\n" +
+                 "（2026-10-19 評圖：人魚的畫像沒有置中）彩圖本身的畫面不在畫布正中間 ——\n" +
+                 "實測偏移從 -5.8%（燒毀的樂譜）到 +4.9%（紅寶石）。圖放大之後偏移跟著放大，看得出歪。")]
+        public bool centerOnDrawing = true;
+
+        private Vector2 artHome;
+        private bool artHomeCaptured;
+
+        /// <summary>
+        /// 依 sprite 的 Tight 網格（貼著不透明部分）算出畫的中心，把 artImage 反向挪過去。
+        /// 網格是匯入時就算好的，不需要貼圖可讀；Full Rect 的圖網格就是整張，偏移為 0、等於不處理。
+        /// </summary>
+        private void CenterOnDrawing(Sprite art)
+        {
+            RectTransform rt = artImage.rectTransform;
+            if (!artHomeCaptured) { artHome = rt.anchoredPosition; artHomeCaptured = true; }
+
+            Vector2 offset = Vector2.zero;
+            if (centerOnDrawing && art != null)
+            {
+                Vector2[] v = art.vertices;
+                Bounds b = art.bounds;
+                if (v != null && v.Length > 0 && b.size.x > 0f && b.size.y > 0f)
+                {
+                    Vector2 mn = v[0], mx = v[0];
+                    for (int i = 1; i < v.Length; i++) { mn = Vector2.Min(mn, v[i]); mx = Vector2.Max(mx, v[i]); }
+                    Vector2 frac = new Vector2(((mn.x + mx.x) * 0.5f - b.center.x) / b.size.x,
+                                               ((mn.y + mx.y) * 0.5f - b.center.y) / b.size.y);
+
+                    // preserveAspect：圖在框裡實際顯示的大小
+                    Vector2 box = rt.rect.size;
+                    float aspect = b.size.x / b.size.y;
+                    Vector2 shown = box.x / box.y > aspect ? new Vector2(box.y * aspect, box.y) : new Vector2(box.x, box.x / aspect);
+                    offset = new Vector2(frac.x * shown.x, frac.y * shown.y);
+                }
+            }
+            rt.anchoredPosition = artHome - offset;
         }
 
         public void Hide()

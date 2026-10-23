@@ -718,7 +718,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.25}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1441,7 +1441,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.25}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2125,7 +2125,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.25}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2234,6 +2234,7 @@ MonoBehaviour:
   backImage: {fileID: 2603382192241122645}
   artImage: {fileID: 408248662873170506}
   frameImage: {fileID: 6369318917668986943}
+  centerOnDrawing: 1
 --- !u!114 &8841293898110278991
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3911,6 +3912,7 @@ MonoBehaviour:
   backImage: {fileID: 1712084293490721227}
   artImage: {fileID: 5081196795325755082}
   frameImage: {fileID: 5576305375085128288}
+  centerOnDrawing: 1
 --- !u!114 &7970153648742213656
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5224,7 +5226,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.25}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -8150,6 +8152,7 @@ MonoBehaviour:
   backImage: {fileID: 1587150284151161690}
   artImage: {fileID: 6921127571695824743}
   frameImage: {fileID: 4749033837499485582}
+  centerOnDrawing: 1
 --- !u!114 &5475477629662880708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9534,7 +9537,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.25}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -10867,6 +10870,7 @@ MonoBehaviour:
   backImage: {fileID: 3018644800220175073}
   artImage: {fileID: 7285858701115908329}
   frameImage: {fileID: 7210451290398724279}
+  centerOnDrawing: 1
 --- !u!114 &167936462046805051
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11236,6 +11240,7 @@ MonoBehaviour:
   backImage: {fileID: 5327189042594486610}
   artImage: {fileID: 6728656628740299125}
   frameImage: {fileID: 2178667100026545405}
+  centerOnDrawing: 1
 --- !u!114 &6883552084464311444
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12568,6 +12573,7 @@ MonoBehaviour:
   backImage: {fileID: 865287042703905251}
   artImage: {fileID: 4643062760852313829}
   frameImage: {fileID: 1357291324197438651}
+  centerOnDrawing: 1
 --- !u!114 &7192685488648863495
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13349,6 +13355,7 @@ MonoBehaviour:
   backImage: {fileID: 2866903487446774600}
   artImage: {fileID: 8627665189909629423}
   frameImage: {fileID: 3021438172022841850}
+  centerOnDrawing: 1
 --- !u!114 &3939784672033377089
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13841,7 +13848,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.25}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -14709,7 +14716,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.25}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -15136,7 +15143,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.25}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -16326,6 +16333,7 @@ MonoBehaviour:
   backImage: {fileID: 6551435682109867728}
   artImage: {fileID: 3914323956514420700}
   frameImage: {fileID: 4178617732149237651}
+  centerOnDrawing: 1
 --- !u!114 &4659362976400560405
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19655,6 +19663,7 @@ MonoBehaviour:
   backImage: {fileID: 8268992819405506167}
   artImage: {fileID: 7151197270153057059}
   frameImage: {fileID: 1959525337244950382}
+  centerOnDrawing: 1
 --- !u!114 &3082120996533034183
 MonoBehaviour:
   m_ObjectHideFlags: 0
