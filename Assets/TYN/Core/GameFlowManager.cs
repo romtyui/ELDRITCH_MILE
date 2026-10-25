@@ -115,6 +115,12 @@ namespace EldritchMile.Core
                  "0 = 沿用戰鬥端原本的值")]
         [Min(0)] public int startingMaxSan = 0;
 
+        [Header("休息節點（2026-10-25）")]
+        [Tooltip("走進休息節點時播的事件：回復 HP 或回復 SAN 二選一。\n" +
+                 "用事件模組是因為它已經有「一段文字＋選項＋效果」，休息就是那個形狀。\n" +
+                 "⚠️ 這一筆的 weight 要是 0，不然它會跑進隨機事件池")]
+        public EventData restEvent;
+
         [Header("對話節點")]
         [Tooltip("地圖上的**對話節點**要走哪一個 Stage。專案裡有兩套刻意並存的對話：\n\n" +
                  "· ProbabilityDialogue —— 資料驅動（一個事件一個資產），\n" +
@@ -273,6 +279,7 @@ namespace EldritchMile.Core
             new NodeTitle { kind = MapNodeKind.Shop,         text = "商店" },
             new NodeTitle { kind = MapNodeKind.SpecialEvent, text = "特殊" },
             new NodeTitle { kind = MapNodeKind.Dialogue,     text = "遭遇" },
+            new NodeTitle { kind = MapNodeKind.Rest,         text = "休息" },
         };
 
         [Tooltip("事件插播時的卡片文案。{0} = 事件標題。\n\n" +
@@ -465,7 +472,19 @@ namespace EldritchMile.Core
             // 有事件就先演事件，演完再由 StageCompleteRoutine 接回原本的節點 ——
             // 前置，不覆蓋。玩家不會因為運氣好觸發了事件反而少玩到一間房。
             StageType nodeStage = StageTypeForNode(node);
-            EventData ev = PickEventForNode();
+
+            // 休息節點本身就是一段事件（restEvent）—— 前面不再插隨機事件，
+            // 不然「事件 → 接回節點」那條路會接到一個沒有指定內容的事件 Stage
+            EventData ev = node.kind == MapNodeKind.Rest ? null : PickEventForNode();
+            if (node.kind == MapNodeKind.Rest)
+            {
+                PendingEvent = restEvent;
+                if (restEvent == null)
+                {
+                    Debug.LogWarning("[Flow] 走進休息節點，但 GameFlowManager.restEvent 沒有指定 —— 直接回地圖");
+                    nodeStage = StageType.None;
+                }
+            }
             RunRecorder.NodeEntered(Run, node, ev);
 
             string card;
@@ -1065,6 +1084,9 @@ namespace EldritchMile.Core
 
                 case MapNodeKind.Dialogue:
                     return dialogueNodeStage;
+
+                case MapNodeKind.Rest:
+                    return StageType.Event;   // 內容是 restEvent，見 EnterNodeRoutine
 
                 case MapNodeKind.Event:
                 default:

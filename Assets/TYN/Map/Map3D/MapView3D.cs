@@ -79,11 +79,27 @@ namespace EldritchMile.Map3D
         [Tooltip("對話節點。留空會退回事件的圖")]
         public Sprite spriteDialogue;
 
+        [Tooltip("休息節點。**還沒有圖** —— 留空會借事件的圖、再染上 restTint")]
+        public Sprite spriteRest;
+
+        [Tooltip("休息節點沒有自己的圖時染的顏色")]
+        public Color restTint = new Color(0.65f, 1f, 0.7f, 1f);
+
         [Tooltip("通道（通往其他地區）。**還沒有圖** —— 留空會借事件的圖、再染上 gateTint，看得出不一樣")]
         public Sprite spriteGate;
 
         [Tooltip("通道沒有自己的圖時染的顏色。有圖之後就不染")]
         public Color gateTint = new Color(0.6f, 0.75f, 1f, 1f);
+
+        [Header("進節點的鏡頭")]
+        [Tooltip("棋子走到下一站之後，鏡頭推近那一站再收地圖")]
+        public bool enterFocus = true;
+
+        [Tooltip("推近到現在距離的幾倍（越小越近）")]
+        [Range(0.1f, 1f)] public float enterFocusDistance = 0.4f;
+
+        [Tooltip("推近花幾秒")]
+        [Min(0f)] public float enterFocusSeconds = 0.6f;
 
         [Header("連線")]
         [Tooltip("連線材質。留空會用 Sprites/Default")]
@@ -167,6 +183,9 @@ namespace EldritchMile.Map3D
         public override void Refresh(RunContext run)
         {
             if (run == null || run.mapData == null) return;
+
+            // 上一次進節點時鏡頭推近了，地圖重新打開時退回原本的距離
+            if (cameraController != null) cameraController.ClearFocus();
 
             // 底圖大小 = 節點範圍 × 倍率。地面是平躺的 Quad，本地 x/y 對應世界的寬/深
             if (ground != null)
@@ -290,7 +309,8 @@ namespace EldritchMile.Map3D
                     FitPin(n.pin, d.kind == MapNodeKind.Boss ? pinWorldHeight * bossPinScale : pinWorldHeight);
                 }
                 if (n.ring != null) FitRing(n.ring);
-                n.kindTint = d.kind == MapNodeKind.Gate && spriteGate == null ? gateTint : Color.white;
+                n.kindTint = d.kind == MapNodeKind.Gate && spriteGate == null ? gateTint
+                           : d.kind == MapNodeKind.Rest && spriteRest == null ? restTint : Color.white;
 
                 // 棋子要面向地圖相機，不是主相機
                 YBillboard bb = n.pin != null ? n.pin.GetComponent<YBillboard>() : null;
@@ -462,6 +482,7 @@ namespace EldritchMile.Map3D
                 case MapNodeKind.SpecialEvent: s = spriteSpecialEvent; break;
                 case MapNodeKind.Dialogue: s = spriteDialogue; break;
                 case MapNodeKind.Gate: s = spriteGate; break;
+                case MapNodeKind.Rest: s = spriteRest; break;
                 default: s = spriteEvent; break;
             }
 
@@ -821,6 +842,14 @@ namespace EldritchMile.Map3D
                 yield return MovePlayer(PlayerSpot(boundMap.currentNodeId), PlayerSpot(node.nodeId));
             else
                 yield return null;
+
+            // 棋子到了之後鏡頭推近那一站，再收地圖（2026-10-25：進節點要有「靠近」的感覺）
+            if (enterFocus && cameraController != null)
+            {
+                MapNode3D target;
+                if (spawned.TryGetValue(node.nodeId, out target) && target != null)
+                    yield return cameraController.FocusOn(target.transform.position, enterFocusDistance, enterFocusSeconds);
+            }
 
             moving = false;
 

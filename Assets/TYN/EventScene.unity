@@ -3916,6 +3916,7 @@ MonoBehaviour:
   itemLineFormat: "\u3000\xB7 {0}"
   emptyContainerFormat: "{0} \u88E1\u9762\u7A7A\u7A7A\u5982\u4E5F\u3002"
   containerOpenedFormat: "\u6253\u958B\u4E86 {0}\u3002"
+  advanceOnAnyClick: 1
 --- !u!114 &407060547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9684,6 +9685,7 @@ MonoBehaviour:
   startingDeck: {fileID: 11400000, guid: 62ea6c15f92595b4f98ffee8d3ecdfbd, type: 2}
   startingMaxHp: 100
   startingMaxSan: 100
+  restEvent: {fileID: 11400000, guid: 493da22fa8ce320459ebe51a200f8ab1, type: 2}
   dialogueNodeStage: 9
   currentStage: 0
   fadeOutSeconds: 0.3
@@ -9708,6 +9710,8 @@ MonoBehaviour:
     text: "\u7279\u6B8A"
   - kind: 5
     text: "\u906D\u9047"
+  - kind: 7
+    text: "\u4F11\u606F"
   eventTitleFormat: "\u300A{0}\u300B"
 --- !u!1 &962004466
 GameObject:
@@ -20937,8 +20941,13 @@ MonoBehaviour:
   spriteShop: {fileID: 21300000, guid: bbb26f440e881864883aa32f4866f8d9, type: 3}
   spriteSpecialEvent: {fileID: 21300000, guid: b45f0f4e423b7094c804e60f2d53a0fc, type: 3}
   spriteDialogue: {fileID: 21300000, guid: e3f68d38466a6204dafaf0ff1e001f62, type: 3}
+  spriteRest: {fileID: 0}
+  restTint: {r: 0.65, g: 1, b: 0.7, a: 1}
   spriteGate: {fileID: 0}
   gateTint: {r: 0.6, g: 0.75, b: 1, a: 1}
+  enterFocus: 1
+  enterFocusDistance: 0.4
+  enterFocusSeconds: 0.6
   lineMaterial: {fileID: 2100000, guid: 6bcb648d972cea145918da382a4e0dfb, type: 2}
   lineWidth: 0.04
   lineEndGap: 0.25
@@ -20968,6 +20977,9 @@ MonoBehaviour:
   - kind: 6
     title: "\u901A\u9053"
     body: "\u901A\u5F80\u5176\u4ED6\u5730\u5340\u7684\u5C94\u8DEF"
+  - kind: 7
+    title: "\u4F11\u606F"
+    body: "\u56DE\u5FA9 HP \u6216\u56DE\u5FA9 SAN\uFF0C\u4E8C\u9078\u4E00"
   tooltipTierElite: "<color=#FF9B6A>\u25C6 \u83C1\u82F1</color>"
   tooltipTierBoss: "<color=#FF6A6A>\u25C6\u25C6 BOSS</color>"
   tooltipStateCurrent: "<color=#FFD98A>\u4F60\u5728\u9019\u88E1\u3002</color>"

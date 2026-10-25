@@ -41,6 +41,7 @@ namespace EldritchMile.Core
                 map = GenerateProcedural(settings, rng);
 
             EnsureGuaranteedKinds(map, settings, rng);
+            ComposeKinds(map, settings, rng);
             WarnIfUnreachable(map);
             return map;
         }
@@ -356,8 +357,12 @@ namespace EldritchMile.Core
             if (roll < s.combatChance) return MapNodeKind.Combat;
             roll -= s.combatChance;
 
-            if (roll < s.shopChance) return MapNodeKind.Shop;
-            roll -= s.shopChance;
+            // 商店改由「每條路線 1~2 間」那條規則放的話，這裡不擲
+            if (!s.shopsPerRoute)
+            {
+                if (roll < s.shopChance) return MapNodeKind.Shop;
+                roll -= s.shopChance;
+            }
 
             if (roll < s.specialEventChance) return MapNodeKind.SpecialEvent;
             roll -= s.specialEventChance;
@@ -366,6 +371,9 @@ namespace EldritchMile.Core
             //    只有 DEMO 的固定路線寫死了幾個。換成隨機生成就整個環節測不到，
             //    而且不會報錯，只會「怎麼玩都沒遇到對話」
             if (roll < s.dialogueChance) return MapNodeKind.Dialogue;
+            roll -= s.dialogueChance;
+
+            if (roll < s.restChance) return MapNodeKind.Rest;
 
             return MapNodeKind.Event;
         }

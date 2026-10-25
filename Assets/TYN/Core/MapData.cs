@@ -29,6 +29,9 @@ namespace EldritchMile.Core
         /// 沒有自己的 Stage —— 走進去就是轉場（見 GameFlowManager.GateRoutine）。
         /// </summary>
         Gate = 6,
+
+        /// <summary>休息：回復 HP 或回復 SAN，二選一。2026-10-25 追加</summary>
+        Rest = 7,
     }
 
     /// <summary>

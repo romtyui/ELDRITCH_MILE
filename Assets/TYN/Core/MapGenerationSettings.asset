@@ -23,6 +23,11 @@ MonoBehaviour:
   shopChance: 0.12
   specialEventChance: 0
   dialogueChance: 0.15
+  restChance: 0.1
+  shopsPerRoute: 1
+  maxShopsPerRoute: 2
+  shopMinLayerRatio: 0.3
+  balanceExploreCombat: 1
   guaranteedKinds: 0300000005000000
   organicSpread: 95
   organicWidthMax: 4
@@ -35,6 +40,8 @@ MonoBehaviour:
   coastRange: 8
   coastBias: 2.5
   candidatesPerNode: 24
+  terrainNodeCount: 38
+  minNodeSpacing: 9
   maxLinkDistance: 22
   linkMode: 1
   extraLinkChance: 0.2

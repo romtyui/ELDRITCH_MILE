@@ -53,6 +53,23 @@ namespace EldritchMile.Core
                  "只有 DEMO 的固定路線寫死了幾個，換成隨機生成就整個環節測不到了。\n" +
                  "那種漏法不會報錯，只會「怎麼玩都沒遇到對話」。")]
         [Range(0f, 1f)] public float dialogueChance = 0.15f;
+
+        [Tooltip("休息節點（回復 HP 或 SAN 二選一）的機率。2026-10-25 追加")]
+        [Range(0f, 1f)] public float restChance = 0.1f;
+
+        [Header("路線組成（生成完再調，2026-10-25）")]
+        [Tooltip("每條從起點到首領的路線，商店數控制在 1 ~ maxShopsPerRoute 間。\n" +
+                 "勾了之後上面的 shopChance 不作用（商店改由這條規則放）")]
+        public bool shopsPerRoute = true;
+
+        [Tooltip("一條路線最多幾間商店")]
+        [Range(1, 4)] public int maxShopsPerRoute = 2;
+
+        [Tooltip("商店最早出現在全圖層數的多少比例之後。開頭沒錢買東西，放了也是浪費")]
+        [Range(0f, 0.9f)] public float shopMinLayerRatio = 0.3f;
+
+        [Tooltip("中段的探索與戰鬥數量拉到接近 1:1（差距 1 以內）")]
+        public bool balanceExploreCombat = true;
         // 其餘機率歸 Event
 
         [Tooltip("**一定要出現至少一次**的節點類型。\n\n" +
@@ -103,6 +120,13 @@ namespace EldritchMile.Core
 
         [Tooltip("每個節點要試幾個候選點。越多分佈越均勻（藍雜訊），代價是生成變慢")]
         [Range(4, 60)] public int candidatesPerNode = 24;
+
+        [Tooltip("要放幾個節點（之後還會刪掉走不到的，實際會少一點）。0 = 依層數自動算")]
+        [Range(0, 60)] public int terrainNodeCount = 0;
+
+        [Tooltip("兩個節點至少隔多遠（地圖寬高 0~100 的單位）。0 = 不限制。\n" +
+                 "太大會放不下，節點數就少；放不下時會停在當下的數量")]
+        [Range(0f, 20f)] public float minNodeSpacing = 0f;
 
         [Tooltip("連線最長幾 %。太長會出現橫跨半張圖的斜線；太短圖會斷開、節點被丟掉")]
         [Range(10f, 60f)] public float maxLinkDistance = 22f;

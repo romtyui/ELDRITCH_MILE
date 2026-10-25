@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -335,9 +336,68 @@ namespace EldritchMile.Map3D
             if (introTarget != null) followTarget = introTarget;
         }
 
+        // ==========================================
+        // 進節點的鏡頭推近（2026-10-25）
+        // ==========================================
+
+        /// <summary>推近中（或推近完、地圖還沒收起來）。期間不吃拖曳縮放、也不追隨。</summary>
+        public bool IsFocusing { get; private set; }
+
+        private float preFocusDistance;
+
+        /// <summary>
+        /// 鏡頭推向 <paramref name="world"/>：中心移過去、距離拉到現在的 <paramref name="distanceFactor"/> 倍。
+        /// 結束後鏡頭**停在那裡**，等地圖收起來；下次地圖打開時呼叫 <see cref="ClearFocus"/> 還原。
+        /// </summary>
+        public IEnumerator FocusOn(Vector3 world, float distanceFactor, float seconds)
+        {
+            if (rig == null) rig = GetComponent<MapCameraRig>();
+
+            IsFocusing = true;
+            resetT = -1f;
+            preFocusDistance = rig.distance;
+
+            Vector3 centre = rig.pivot != null ? rig.pivot.position : Vector3.zero;
+            Vector3 fromOffset = rig.pivotOffset;
+            Vector3 goalOffset = world - centre; goalOffset.y = 0f;
+            float fromDist = rig.distance;
+            float goalDist = rig.distance * Mathf.Clamp(distanceFactor, 0.05f, 1f);
+            rig.distanceMinOverride = goalDist;
+
+            float t = 0f;
+            while (t < 1f)
+            {
+                t = seconds <= 0f ? 1f : Mathf.Min(1f, t + Time.unscaledDeltaTime / seconds);
+                // 先慢後快 —— 像是被吸過去，比等速有「進入」的感覺
+                float e = t * t * (3f - 2f * t);
+                e = e * e;
+                rig.pivotOffset = Vector3.Lerp(fromOffset, goalOffset, e);
+                rig.distance = Mathf.Lerp(fromDist, goalDist, e);
+                rig.Apply();
+                yield return null;
+            }
+
+            // 之後的追隨從這裡接，鏡頭才不會在地圖收起來的半路又滑回去
+            followOffset = goalOffset;
+            followVel = Vector3.zero;
+            panOffset = Vector3.zero;
+        }
+
+        /// <summary>還原推近之前的距離。地圖重新打開時呼叫。</summary>
+        public void ClearFocus()
+        {
+            if (!IsFocusing) return;
+            IsFocusing = false;
+            rig.distanceMinOverride = 0f;
+            rig.distance = preFocusDistance;
+            rig.Apply();
+            PushSlider();
+        }
+
         private void Update()
         {
             if (rig == null) return;
+            if (IsFocusing) return;
 
             if (introPhase != IntroPhase.None) { TickIntro(Mouse.current); return; }
 
@@ -426,6 +486,7 @@ namespace EldritchMile.Map3D
             if (rig == null) return;
             if (resetT >= 0f) return;    // 歸位動畫進行中，別跟它搶
             if (introPhase != IntroPhase.None) return;   // 開場縱覽自己在寫鏡頭
+            if (IsFocusing) return;                       // 進節點的推近自己在寫鏡頭
 
             // ── 追隨 ──
             if (followCurrentNode && followTarget != null)

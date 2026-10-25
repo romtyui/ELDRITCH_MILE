@@ -62,6 +62,9 @@ namespace EldritchMile.Map3D
         /// </summary>
         [System.NonSerialized] public float distanceMaxOverride;
 
+        /// <summary>暫時放寬「最近能拉多近」。進節點的鏡頭推近要比玩家能縮放的還近。0 = 不放寬</summary>
+        [System.NonSerialized] public float distanceMinOverride;
+
         private Camera cam;
 
         /// <summary>這台相機的長寬比。縱覽時算「整張圖裝不裝得下」要用</summary>
@@ -87,7 +90,8 @@ namespace EldritchMile.Map3D
             if (yawLimit >= 179.9f) yaw = Mathf.Repeat(yaw + 180f, 360f) - 180f;
             else yaw = Mathf.Clamp(yaw, yawCenter - yawLimit, yawCenter + yawLimit);
             pitch = Mathf.Clamp(pitch, pitchLimit.x, pitchLimit.y);
-            distance = Mathf.Clamp(distance, distanceLimit.x, Mathf.Max(distanceLimit.y, distanceMaxOverride));
+            float lo = distanceMinOverride > 0f ? Mathf.Min(distanceLimit.x, distanceMinOverride) : distanceLimit.x;
+            distance = Mathf.Clamp(distance, lo, Mathf.Max(distanceLimit.y, distanceMaxOverride));
 
             Vector3 centre = (pivot != null ? pivot.position : Vector3.zero) + pivotOffset;
 

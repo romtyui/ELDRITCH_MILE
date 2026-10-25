@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Loot_Sub_Relics
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.LootTable
   pools:
-  - note: "\u6536\u85CF\u54C1\u3002\u2757 \u539F\u672C\u662F\u666E\u901A 50 / \u7F55\u898B 33 / \u7A00\u6709 17 \u4E09\u968E\uFF0C\u4F46\u76EE\u524D\u53EA\u6709\u4EBA\u9B5A\u7684\u756B\u50CF\u63A5\u4E0A\u6548\u679C\uFF0C\u53E6\u5169\u968E\u6703\u62BD\u4E0D\u5230\u6771\u897F\u3002\u6548\u679C\u88DC\u9F4A\u5F8C\u8ACB\u6539\u56DE\u4E09\u968E"
+  - note: "\u6536\u85CF\u54C1\uFF0C\u5206\u4E09\u968E\u3002\u8D8A\u63A5\u8FD1\u9996\u9818\u7A00\u6709\u8D8A\u5E38\u898B\uFF08Weight
+      \u2192 Weight Deep\uFF09\u3002\u67D0\u4E00\u968E\u66AB\u6642\u6C92\u6709\u53EF\u8CE3\u7684\uFF08\u90FD\u9084\u6C92\u6548\u679C\uFF09\u6703\u81EA\u52D5\u8DF3\u904E\uFF0C\u4E0D\u6703\u7559\u7A7A\u683C\u30022026-10-25"
     chance: 1
     rollsMin: 1
     rollsMax: 1
@@ -23,10 +24,41 @@ MonoBehaviour:
       itemId: 
       requireTags:
       - Curio
+      - Common
       excludeTags:
       - EventOnly
       - NoEffect
+      - NotInShop
       table: {fileID: 0}
-      weight: 100
+      weight: 60
+      weightDeep: 30
+      countMin: 1
+      countMax: 1
+    - kind: 1
+      itemId: 
+      requireTags:
+      - Curio
+      - Uncommon
+      excludeTags:
+      - EventOnly
+      - NoEffect
+      - NotInShop
+      table: {fileID: 0}
+      weight: 30
+      weightDeep: 40
+      countMin: 1
+      countMax: 1
+    - kind: 1
+      itemId: 
+      requireTags:
+      - Curio
+      - Rare
+      excludeTags:
+      - EventOnly
+      - NoEffect
+      - NotInShop
+      table: {fileID: 0}
+      weight: 10
+      weightDeep: 30
       countMin: 1
       countMax: 1

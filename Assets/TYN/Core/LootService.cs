@@ -16,6 +16,15 @@ namespace EldritchMile.Core
     /// </summary>
     public static class LootService
     {
+        /// <summary>
+        /// 這一次抽獎在地圖上的進度（0 = 起點、1 = 首領）。條目有填 weightDeep 時，權重依它內插。
+        ///
+        /// 【為什麼是靜態的環境值】進度是「誰在抽」的事，不是表的事 —— 同一張遺物表，
+        /// 前期的商店與首領前的商店該抽出不同的稀有度。呼叫端抽之前設、抽完歸 0
+        /// （目前只有 ShopStageController 會設）。沒有人設就是 0，表現跟以前一樣。
+        /// </summary>
+        public static float Depth01;
+
         /// <summary>遞迴深度上限。表指到表、表又指回來的話會無限迴圈。</summary>
         private const int MaxTableDepth = 8;
 
@@ -122,7 +131,7 @@ namespace EldritchMile.Core
 
                 for (int r = 0; r < rolls; r++)
                 {
-                    LootTable.Entry entry = PickEntry(pool, rng, taken);
+                    LootTable.Entry entry = PickEntry(pool, rng, taken, db, output);
                     if (entry == null) break;   // 候選被 distinct 吃光了
 
                     Resolve(entry, rng, output, taken, depth, db, sharedTaken);
@@ -220,7 +229,8 @@ namespace EldritchMile.Core
         /// 依權重挑一個條目。<paramref name="taken"/> 只用來略過「指名道具且已經抽過」的條目 ——
         /// 標籤查詢沒辦法在這裡判斷（它代表一整群道具），交給 Resolve 處理。
         /// </summary>
-        private static LootTable.Entry PickEntry(LootTable.Pool pool, System.Random rng, HashSet<string> taken)
+        private static LootTable.Entry PickEntry(
+            LootTable.Pool pool, System.Random rng, HashSet<string> taken, ItemDatabase db, List<ItemStack> output)
         {
             float total = 0f;
             int zeroWeight = 0;
@@ -232,12 +242,17 @@ namespace EldritchMile.Core
                 LootTable.Entry e = pool.entries[i];
                 if (e == null) continue;
 
-                if (e.weight <= 0f) { zeroWeight++; continue; }
+                float w = e.WeightAt(Depth01);
+                if (w <= 0f) { zeroWeight++; continue; }
 
                 if (taken != null && e.kind == LootTable.EntryKind.Item && taken.Contains(e.itemId)) continue;
 
+                // 標籤查詢現在一件都抽不到（例如稀有遺物全部還沒有效果）就不要讓它佔機率 ——
+                // 不然抽中它就空手而回，商店會留空格
+                if (e.kind == LootTable.EntryKind.TagQuery && !HasAvailable(e, db, taken, output)) continue;
+
                 candidates.Add(e);
-                total += e.weight;
+                total += w;
             }
 
             if (candidates.Count == 0)
@@ -254,11 +269,25 @@ namespace EldritchMile.Core
             double roll = rng.NextDouble() * total;
             for (int i = 0; i < candidates.Count; i++)
             {
-                roll -= candidates[i].weight;
+                roll -= candidates[i].WeightAt(Depth01);
                 if (roll <= 0) return candidates[i];
             }
 
             return candidates[candidates.Count - 1];
+        }
+
+        /// <summary>這條標籤查詢現在還抽得到東西嗎（扣掉已抽過的、已持有或這一批已出過的遺物）。</summary>
+        private static bool HasAvailable(LootTable.Entry e, ItemDatabase db, HashSet<string> taken, List<ItemStack> output)
+        {
+            List<ItemData> matches = Query(e.requireTags, e.excludeTags, db);
+            for (int i = 0; i < matches.Count; i++)
+            {
+                ItemData m = matches[i];
+                if (taken != null && taken.Contains(m.id)) continue;
+                if (m.IsUnique && (IsOwned(m.id) || (output != null && Contains(output, m.id)))) continue;
+                return true;
+            }
+            return false;
         }
 
         /// <summary>

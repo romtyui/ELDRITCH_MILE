@@ -193,6 +193,9 @@ namespace EldritchMile.Core
                     }
                     if (picked.Count == 0) nearest = 10000f;
 
+                    // 太近的不要 —— 節點擠在一起，棋子會互相疊住（2026-10-25 要求間隔更寬）
+                    if (s.minNodeSpacing > 0f && nearest < s.minNodeSpacing * s.minNodeSpacing) continue;
+
                     float score = Mathf.Sqrt(nearest) * w;
                     if (score <= bestScore) continue;
 
@@ -201,7 +204,8 @@ namespace EldritchMile.Core
                 }
 
                 // K 個候選全在水裡 —— 放寬到「只要不是水就好」再試一輪
-                if (bestScore < 0f)
+                // （有間隔限制時不放寬：放寬就等於不限制了。放不下就停在這個數量）
+                if (bestScore < 0f && s.minNodeSpacing <= 0f)
                 {
                     for (int k = 0; k < K * 4 && bestScore < 0f; k++)
                     {
@@ -428,7 +432,9 @@ namespace EldritchMile.Core
             // ⚠️ 節點數決定圖的**直徑**，而直徑就是一場 run 有多長。
             //    Delaunay 圖的直徑大約是 sqrt(N)，所以要 8 層得要 N≈50 上下。
             //    玩家只會走過其中一條路徑（約 mapLayers 站），其餘是沒選的岔路
-            int count = Mathf.Clamp(depths * depths / 2 + depths, depths * 2, 60);
+            int count = s.terrainNodeCount > 0
+                ? s.terrainNodeCount
+                : Mathf.Clamp(depths * depths / 2 + depths, depths * 2, 60);
 
             List<Vector2> pts = SampleTerrain(su, s, rng, count);
             if (pts.Count < 3) return GenerateOrganic(s, rng);

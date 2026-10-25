@@ -179,6 +179,78 @@ namespace EldritchMile.Core
         }
 
         // ==========================================
+        // 點任意空白處推進（2026-10-25 美術要求）
+        // ==========================================
+
+        [Header("點任意空白處推進")]
+        [Tooltip("對話框有內容時，點畫面上任何**空白處**都能推進，不必點在框上。\n\n" +
+                 "「空白」的意思：滑鼠底下沒有會回應點擊的東西（按鈕、牌、寶箱、選項…都不算空白），\n" +
+                 "而且不是蓋在對話框上面的介面（HUD、卡冊、選單、彈窗）。\n" +
+                 "畫面上有選項要選時不推進 —— 不然一點就把選項跳掉了")]
+        public bool advanceOnAnyClick = true;
+
+        /// <summary>對話框是在哪一幀打開的。打開它的那一下點擊不能順便把它推進掉。</summary>
+        private int openedFrame = -1;
+
+        private static readonly List<UnityEngine.EventSystems.RaycastResult> clickHits =
+            new List<UnityEngine.EventSystems.RaycastResult>();
+
+        private void Update()
+        {
+            if (!advanceOnAnyClick || !IsShowing) return;
+
+            UnityEngine.InputSystem.Mouse mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
+            if (Time.frameCount <= openedFrame + 1) return;
+
+            if (IsBlankClick(mouse.position.ReadValue())) Advance();
+        }
+
+        /// <summary>這一點是不是「空白」：底下沒有會回應點擊的東西、也不是蓋在對話框上面的介面、畫面上沒有選項。</summary>
+        private bool IsBlankClick(Vector2 screenPos)
+        {
+            if (HoldOptions || (optionBox != null && optionBox.activeInHierarchy)) return false;
+
+            DialogueOptionsPanel options = DialogueOptionsPanel.Instance;
+            if (options != null && options.root != null && options.root.activeInHierarchy && options.Active.Count > 0) return false;
+
+            UnityEngine.EventSystems.EventSystem es = UnityEngine.EventSystems.EventSystem.current;
+            if (es == null) return true;
+
+            var data = new UnityEngine.EventSystems.PointerEventData(es) { position = screenPos };
+            clickHits.Clear();
+            es.RaycastAll(data, clickHits);
+            if (clickHits.Count == 0) return true;
+
+            GameObject top = clickHits[0].gameObject;
+
+            // ⚠️ 要排在「點在對話框自己身上」之前 —— 壓黑層跟對話框在同一個父物件底下
+            // 對話框後面那層全螢幕壓黑：它身上的「點外面結束打牌」只在探索打牌時有作用 ——
+            // 其他時候它就是空白，點了要推進
+            if (dimmer != null && top == dimmer)
+            {
+                DialogueEncounterController enc = DialogueEncounterController.Instance;
+                return enc == null || !enc.IsActive;
+            }
+
+            // 點在對話框自己身上 —— 推進鍵會處理，這裡再推一次就跳兩句
+            if (top.transform.IsChildOf(transform)) return false;
+            if (root != null && top.transform.IsChildOf(root.transform)) return false;
+
+            // 會回應點擊的東西（按鈕、牌、寶箱…）讓它自己處理
+            if (UnityEngine.EventSystems.ExecuteEvents.GetEventHandler<UnityEngine.EventSystems.IPointerClickHandler>(top) != null) return false;
+            if (UnityEngine.EventSystems.ExecuteEvents.GetEventHandler<UnityEngine.EventSystems.IPointerDownHandler>(top) != null) return false;
+
+            // 蓋在對話框上面的介面（HUD、卡冊、選單、彈窗）上的空白不算 —— 那是別的視窗的地盤
+            Canvas mine = GetComponentInParent<Canvas>();
+            Canvas theirs = top.GetComponentInParent<Canvas>();
+            if (mine != null && theirs != null && theirs.rootCanvas != mine.rootCanvas
+                && theirs.rootCanvas.sortingOrder > mine.rootCanvas.sortingOrder) return false;
+
+            return true;
+        }
+
+        // ==========================================
         // 對外 API
         // ==========================================
 
@@ -436,6 +508,7 @@ namespace EldritchMile.Core
         /// </summary>
         private void Open()
         {
+            if (!IsShowing) openedFrame = Time.frameCount;
             IsShowing = true;
             if (root != null) root.SetActive(true);
             if (dimmer != null) dimmer.SetActive(true);

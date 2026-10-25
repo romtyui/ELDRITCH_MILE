@@ -126,6 +126,9 @@ namespace EldritchMile.Core
 
                 Debug.Log($"[地圖生成] 通道 {best.nodeId}（第 {best.layer} 層、x {best.xPercent:0}）→「{exit.target.regionId}」");
             }
+
+            // 通道多半是由探索房改來的 —— 放完重新把探索與戰鬥拉回 1:1（MapGenerator.ComposeKinds 那條規則）
+            if (placed > 0) BalanceExploreCombat(map, rng);
             return placed;
         }
 
