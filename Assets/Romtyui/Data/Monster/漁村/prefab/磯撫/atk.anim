@@ -449,7 +449,7 @@ AnimationClip:
         outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
       - serializedVersion: 3
         time: 0.5833333
-        value: {x: 0, y: 0, z: 25.426}
+        value: {x: 0, y: 0, z: 15.304}
         inSlope: {x: 0, y: 0, z: 0}
         outSlope: {x: 0, y: 0, z: 0}
         tangentMode: 0
@@ -2796,7 +2796,7 @@ AnimationClip:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 0.5833333
-        value: 25.426
+        value: 15.304
         inSlope: 0
         outSlope: 0
         tangentMode: 136
@@ -4917,7 +4917,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.z
-    path: body_01/head_01/jaw_bottom_01
+    path: body_01/arm_L_01
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -4929,7 +4929,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.y
-    path: body_01/head_01/jaw_bottom_01
+    path: body_01/arm_L_01
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -4941,7 +4941,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.x
-    path: body_01/head_01/jaw_bottom_01
+    path: body_01/arm_L_01
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -5025,7 +5025,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.x
-    path: body_01/arm_L_01
+    path: body_01/head_01/jaw_bottom_01
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -5037,7 +5037,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.y
-    path: body_01/arm_L_01
+    path: body_01/head_01/jaw_bottom_01
     classID: 4
     script: {fileID: 0}
     flags: 0
@@ -5049,7 +5049,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_LocalEulerAngles.z
-    path: body_01/arm_L_01
+    path: body_01/head_01/jaw_bottom_01
     classID: 4
     script: {fileID: 0}
     flags: 0
