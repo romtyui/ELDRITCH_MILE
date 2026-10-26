@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine.UI;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -58,6 +59,9 @@ public class BattleDebugHotkeys : MonoBehaviour
     public int addCardAmount = 1;
 
     [Tooltip("是否自動把 BattleDeck.startingDeck 裡的牌加入 Debug 清單")]
+
+    [Header("Enemy Replacement Debug")]
+    public EnemyReplacementController enemyReplacementController;
     //public bool includeStartingDeckCards = true;
 
     //public int addCardAmount = 1;
@@ -78,12 +82,16 @@ public class BattleDebugHotkeys : MonoBehaviour
 
     private StatusType[] statusTypes;
 
+    private GameObject debugInputBlockerCanvasObject;
+    private RectTransform debugInputBlockerRect;
+
     private int selectedTabIndex;
     private readonly string[] tabNames = new string[]
     {
         "狀態",
         "加牌",
-        "數值"
+        "數值",
+        "換怪",
     };
 
     private void Awake()
@@ -138,18 +146,19 @@ public class BattleDebugHotkeys : MonoBehaviour
 
     private void OnGUI()
     {
-        if (!enableDebugHotkeys)
-            return;
+        bool shouldShow = enableDebugHotkeys && showStatusDebugUI;
 
-        if (!showStatusDebugUI)
+        if (!shouldShow)
+        {
+            if (debugInputBlockerCanvasObject != null) debugInputBlockerCanvasObject.SetActive(false);
             return;
+        }
 
-        statusWindowRect = GUI.Window(
-            8721,
-            statusWindowRect,
-            DrawDebugWindow,
-            "Battle Debug UI"
-        );
+        EnsureDebugInputBlocker();
+
+        statusWindowRect = GUI.Window(8721, statusWindowRect, DrawDebugWindow, "Battle Debug UI");
+
+        UpdateDebugInputBlockerRect();
     }
 
     private void DrawDebugWindow(int windowId)
@@ -173,8 +182,13 @@ public class BattleDebugHotkeys : MonoBehaviour
             case 1:
                 DrawCardDebugTab();
                 break;
+
             case 2:
                 DrawPlayerValueDebugTab();
+                break;
+
+            case 3:
+                DrawEnemyReplacementDebugTab();
                 break;
         }
 
@@ -1076,25 +1090,25 @@ public class BattleDebugHotkeys : MonoBehaviour
 
         int targetSan = Mathf.RoundToInt(GUILayout.HorizontalSlider(currentSan, 0, safeMaxSan));
 
-        if (targetSan != energySystem.currentEnergy)
-            SetSanForDebug(targetSan);
+        if (targetSan != energySystem.currentEnergy) SetSanForDebug(targetSan);
 
         GUILayout.BeginHorizontal();
 
-        if (GUILayout.Button("0%"))
-            SetSanByPercent(0f);
+        if (GUILayout.Button("-1")) SetSanForDebug(energySystem.currentEnergy - 1);
 
-        if (GUILayout.Button("25%"))
-            SetSanByPercent(0.25f);
+        GUILayout.Label("每次調整 1 點 SAN", GUILayout.Width(150));
 
-        if (GUILayout.Button("50%"))
-            SetSanByPercent(0.5f);
+        if (GUILayout.Button("+1")) SetSanForDebug(energySystem.currentEnergy + 1);
 
-        if (GUILayout.Button("75%"))
-            SetSanByPercent(0.75f);
+        GUILayout.EndHorizontal();
 
-        if (GUILayout.Button("100%"))
-            SetSanByPercent(1f);
+        GUILayout.BeginHorizontal();
+
+        if (GUILayout.Button("0%")) SetSanByPercent(0f);
+        if (GUILayout.Button("25%")) SetSanByPercent(0.25f);
+        if (GUILayout.Button("50%")) SetSanByPercent(0.5f);
+        if (GUILayout.Button("75%")) SetSanByPercent(0.75f);
+        if (GUILayout.Button("100%")) SetSanByPercent(1f);
 
         GUILayout.EndHorizontal();
         GUILayout.EndVertical();
@@ -1155,5 +1169,66 @@ public class BattleDebugHotkeys : MonoBehaviour
             energyLightPowerBinder.smoothChange = previousSmoothChange;
 
         RefreshBattleUI();
+    }
+
+    private void EnsureDebugInputBlocker()
+    {
+        if (debugInputBlockerCanvasObject != null)
+        {
+            debugInputBlockerCanvasObject.SetActive(true);
+            return;
+        }
+
+        debugInputBlockerCanvasObject = new GameObject("BattleDebugInputBlockerCanvas", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster));
+        debugInputBlockerCanvasObject.transform.SetParent(transform, false);
+
+        Canvas blockerCanvas = debugInputBlockerCanvasObject.GetComponent<Canvas>();
+        blockerCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        blockerCanvas.sortingOrder = 32767;
+
+        GameObject blockerObject = new GameObject("DebugWindowInputBlocker", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        blockerObject.transform.SetParent(debugInputBlockerCanvasObject.transform, false);
+
+        debugInputBlockerRect = blockerObject.GetComponent<RectTransform>();
+        debugInputBlockerRect.anchorMin = new Vector2(0f, 1f);
+        debugInputBlockerRect.anchorMax = new Vector2(0f, 1f);
+        debugInputBlockerRect.pivot = new Vector2(0f, 1f);
+
+        Image blockerImage = blockerObject.GetComponent<Image>();
+        blockerImage.color = Color.clear;
+        blockerImage.raycastTarget = true;
+
+        UpdateDebugInputBlockerRect();
+    }
+
+    private void UpdateDebugInputBlockerRect()
+    {
+        if (debugInputBlockerRect == null) return;
+
+        debugInputBlockerRect.anchoredPosition = new Vector2(statusWindowRect.x, -statusWindowRect.y);
+        debugInputBlockerRect.sizeDelta = new Vector2(statusWindowRect.width, statusWindowRect.height);
+    }
+
+    private void OnDisable()
+    {
+        if (debugInputBlockerCanvasObject != null) debugInputBlockerCanvasObject.SetActive(false);
+    }
+
+
+
+    //怪物替換
+    private void DrawEnemyReplacementDebugTab()
+    {
+        if (enemyReplacementController == null) enemyReplacementController = FindFirstObjectByType<EnemyReplacementController>();
+
+        if (enemyReplacementController == null)
+        {
+            GUILayout.Label("請在場景加入 EnemyReplacementController。");
+            return;
+        }
+
+        enemyReplacementController.DrawDebugGUI();
+
+        if (GUILayout.Button("重新整理狀態頁的目標清單")) RefreshDebugTargets();
     }
 }
