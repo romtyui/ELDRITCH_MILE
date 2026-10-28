@@ -24,7 +24,8 @@ public class BattleRewardUI : MonoBehaviour
     {
         Money,
         Weapon,
-        Relic
+        Relic,
+        Food
     }
 
     private class RewardRow
@@ -32,10 +33,15 @@ public class BattleRewardUI : MonoBehaviour
         public RewardKind kind;
         public int money;
         public ItemData relic;
+        public ItemData food;
         public List<CardData> choices;
         public BattleRewardEntryUI view;
         public bool completed;
     }
+
+    [Header("藥水／食物欄位")]
+    [Tooltip("指定自己戰鬥 Prefab 內的 ItemInventory。以 Current Items 數量和 Max Item Count 判斷是否已滿。")]
+    public ItemInventory foodInventory;
 
     [Header("獨立戰鬥測試")]
     [Tooltip("直接播放獨立戰鬥場景時開啟。沒有正式 RunContext 才建立測試資料；從探索進入時仍優先使用正式資料。")]
@@ -151,6 +157,11 @@ public class BattleRewardUI : MonoBehaviour
     private bool confirmingWeaponAbandon;
     private bool granting;
 
+    private void LateUpdate()
+    {
+        if (!isOpen) return;
+        RefreshFoodRewardStates();
+    }
     public bool Show(BattleManager battleManager, EnemyFormationData formation, Action onCompleted)
     {
         if (isOpen || battleManager == null || battleManager.playerDeck == null || formation == null || RunStateManager.Instance == null) return false;
@@ -306,6 +317,20 @@ public class BattleRewardUI : MonoBehaviour
         if (weaponRows > 0 && !rows.Exists(row => row.kind == RewardKind.Weapon)) Debug.LogWarning("[BattleRewardUI] 沒有符合條件的武器卡，請檢查卡池與 ID。");
         if (relicRows > 0 && database == null) Debug.LogWarning("[BattleRewardUI] 沒有 ItemDatabase，未生成遺物獎勵。");
         if (relicRows > 0 && database != null && !rows.Exists(row => row.kind == RewardKind.Relic)) Debug.LogWarning($"[BattleRewardUI] tire = {formation.relicRewardMaxLevel} 沒有可領取的遺物。");
+
+        int foodRows = RandomRows(formation.foodRewardMaxRows);
+
+        for (int i = 0; i < foodRows; i++)
+        {
+            ItemData food = PickFood();
+            if (food == null) continue;
+
+            rows.Add(new RewardRow { kind = RewardKind.Food, food = food });
+        }
+
+        if (foodRows > 0 && database == null) Debug.LogWarning("[BattleRewardUI] 沒有 ItemDatabase，未生成食物獎勵。", this);
+        if (foodRows > 0 && database != null && !rows.Exists(row => row.kind == RewardKind.Food)) Debug.LogWarning("[BattleRewardUI] 資料庫沒有符合 Food 標籤的食物獎勵。", this);
+        if (rows.Exists(row => row.kind == RewardKind.Food) && foodInventory == null) Debug.LogError("[BattleRewardUI] Food Inventory 尚未指定，食物獎勵無法領取。", this);
     }
 
     private List<CardData> CreateCardChoices(int count)
@@ -380,17 +405,54 @@ public class BattleRewardUI : MonoBehaviour
         for (int i = 0; i < rows.Count; i++)
         {
             RewardRow row = rows[i];
-            string name = row.kind == RewardKind.Money ? "金幣" : (row.kind == RewardKind.Weapon ? "武器" : row.relic.Label);
+            string name;
+            Sprite icon;
+
+            if (row.kind == RewardKind.Money)
+            {
+                name = "金幣";
+                icon = moneyIcon;
+            }
+            else if (row.kind == RewardKind.Weapon)
+            {
+                name = "武器";
+                icon = weaponIcon;
+            }
+            else if (row.kind == RewardKind.Food)
+            {
+                name = row.food.Label;
+                icon = row.food.ShelfIcon;
+            }
+            else
+            {
+                name = row.relic.Label;
+                icon = row.relic.shelfIcon;
+            }
+
             string amount = row.kind == RewardKind.Money ? $"+{row.money}" : "+1";
-            Sprite icon = row.kind == RewardKind.Money ? moneyIcon : (row.kind == RewardKind.Weapon ? weaponIcon : row.relic.icon);
 
             row.view = Instantiate(entryTemplate, entryParent);
             row.view.gameObject.SetActive(false);
             row.view.Bind(this, i, name, amount, icon, row.kind == RewardKind.Weapon);
             row.view.gameObject.SetActive(true);
         }
+
+        RefreshFoodRewardStates();
     }
 
+    private void RefreshFoodRewardStates()
+    {
+        bool full = foodInventory != null && foodInventory.IsFull;
+
+        for (int i = 0; i < rows.Count; i++)
+        {
+            RewardRow row = rows[i];
+            if (row.kind != RewardKind.Food || row.completed || row.view == null) continue;
+
+            row.view.SetFull(full);
+            if (foodInventory == null && row.view.actionButton != null) row.view.actionButton.interactable = false;
+        }
+    }
     public void ClickReward(int index)
     {
         if (!isOpen || confirming || granting || currentRow >= 0 || index < 0 || index >= rows.Count) return;
@@ -404,12 +466,35 @@ public class BattleRewardUI : MonoBehaviour
             return;
         }
 
+        if (row.kind == RewardKind.Food)
+        {
+            if (foodInventory == null)
+            {
+                Debug.LogError("[BattleRewardUI] Food Inventory 尚未指定，無法領取食物。", this);
+                return;
+            }
+
+            if (foodInventory.IsFull)
+            {
+                RefreshFoodRewardStates();
+                return;
+            }
+        }
+
         granting = true;
 
         if (row.kind == RewardKind.Money)
         {
             run.AddMoney(row.money);
             CompleteRow(index);
+        }
+        else if (row.kind == RewardKind.Food)
+        {
+            if (row.food != null)
+            {
+                ScriptableObject inventoryItem = row.food.battleItemEffect != null ? (ScriptableObject)row.food.battleItemEffect : row.food;
+                if (foodInventory.AddItem(inventoryItem)) CompleteRow(index);
+            }
         }
         else if (row.relic != null)
         {
@@ -420,6 +505,7 @@ public class BattleRewardUI : MonoBehaviour
         }
 
         granting = false;
+        RefreshFoodRewardStates();
         TryFinishAllRewards();
     }
     private void OpenWeapon(int index)
@@ -664,4 +750,26 @@ public class BattleRewardUI : MonoBehaviour
 
         return !hasFilter;
     }
+
+    private ItemData PickFood()
+    {
+        if (database == null || database.items == null) return null;
+
+        List<ItemData> candidates = new List<ItemData>();
+        HashSet<string> ids = new HashSet<string>();
+
+        for (int i = 0; i < database.items.Count; i++)
+        {
+            ItemData item = database.items[i];
+            if (item == null || string.IsNullOrWhiteSpace(item.id) || !item.HasTag("Food")) continue;
+            if (database.GetById(item.id) != item || !ids.Add(item.id)) continue;
+
+            candidates.Add(item);
+        }
+
+        if (candidates.Count == 0) return null;
+        return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+    }
+
+    
 }

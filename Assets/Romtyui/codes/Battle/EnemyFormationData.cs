@@ -32,6 +32,11 @@ public class EnemyFormationData : ScriptableObject
     [Min(1)]
     [Tooltip("指定遺物 tire。設定 2 就只抽 tire 為 2 的遺物，不改抽其他等級。")]
     public int relicRewardMaxLevel = 1;
+
+    [Header("藥水／食物獎勵")]
+    [Min(0)]
+    [Tooltip("最多生成幾欄 Food 獎勵。0 不生成；大於 0 時隨機生成 1～設定值欄，每欄一個。")]
+    public int foodRewardMaxRows;
 }
 
 [System.Serializable]
