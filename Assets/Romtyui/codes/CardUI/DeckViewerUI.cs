@@ -168,29 +168,16 @@ public class DeckViewerUI : MonoBehaviour
         AutoBindButtonRefs();
         CacheTabButtonBasePositions();
 
-        if (drawPileButton != null)
-            drawPileButton.onClick.AddListener(OpenDrawPile);
+        if (drawPileButton != null) drawPileButton.onClick.AddListener(OpenDrawPile);
+        if (discardPileButton != null) discardPileButton.onClick.AddListener(OpenDiscardPile);
+        if (exhaustPileButton != null) exhaustPileButton.onClick.AddListener(OpenExhaustPile);
+        if (handButton != null) handButton.onClick.AddListener(OpenHand);
+        if (closeButton != null) closeButton.onClick.AddListener(Close);
+        if (previousPageButton != null) previousPageButton.onClick.AddListener(PreviousPage);
+        if (nextPageButton != null) nextPageButton.onClick.AddListener(NextPage);
 
-        if (discardPileButton != null)
-            discardPileButton.onClick.AddListener(OpenDiscardPile);
-
-        if (exhaustPileButton != null)
-            exhaustPileButton.onClick.AddListener(OpenExhaustPile);
-
-        if (handButton != null)
-            handButton.onClick.AddListener(OpenHand);
-
-        if (closeButton != null)
-            closeButton.onClick.AddListener(Close);
-
-        if (previousPageButton != null)
-            previousPageButton.onClick.AddListener(PreviousPage);
-
-        if (nextPageButton != null)
-            nextPageButton.onClick.AddListener(NextPage);
-
-        if (panelRoot != null)
-            panelRoot.SetActive(false);
+        // 如果是 Open() 正在開啟面板，就不能在初始化時再次關閉。
+        if (panelRoot != null && !openingTabAnimationPending) panelRoot.SetActive(false);
 
         RefreshTabUI();
         UpdateCenterTitle();

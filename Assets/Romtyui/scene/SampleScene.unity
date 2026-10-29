@@ -1092,11 +1092,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 4.7588
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 46.9736
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7974429899864020984, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_Layer
@@ -1736,7 +1736,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f53bfeb8a4236e4389efcdf64213dc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyFormationSpawner
-  encounterPool: {fileID: 11400000, guid: e02e6ed190ca559478a9b937a6f9e959, type: 2}
+  encounterPool: {fileID: 11400000, guid: 13f5cf0799ec5e042b125c85a3849e23, type: 2}
   useStageWeightRule: 0
   currentStageMaxWeight: 1
   currentStageIsBoss: 0
@@ -12870,11 +12870,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 4.7588
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 46.9736
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7974429899864020984, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_Layer
@@ -12986,7 +12986,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 20, y: -23}
+  m_AnchoredPosition: {x: -3, y: -23}
   m_SizeDelta: {x: 287.3769, y: 355.39}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &436005314
@@ -27011,11 +27011,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 4.7588
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 46.9736
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7974429899864020984, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_Layer
@@ -30003,7 +30003,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6794814368126517811, guid: 1088ba9c697512c4bb195a0c9de94ca5, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6832108913775884281, guid: 1088ba9c697512c4bb195a0c9de94ca5, type: 3}
       propertyPath: m_LocalRotation.w
@@ -30200,7 +30200,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6794814368126517811, guid: 1088ba9c697512c4bb195a0c9de94ca5, type: 3}
+      insertIndex: 4
+      addedObject: {fileID: 1776172030}
   m_SourcePrefab: {fileID: 100100000, guid: 1088ba9c697512c4bb195a0c9de94ca5, type: 3}
 --- !u!224 &1012058116 stripped
 RectTransform:
@@ -32666,11 +32669,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 4.7588
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 46.9736
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7974429899864020984, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_Layer
@@ -33374,11 +33377,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 4.7588
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 46.9736
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7974429899864020984, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_Layer
@@ -41059,11 +41062,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 4.7588
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 46.9736
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7974429899864020984, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_Layer
@@ -42099,6 +42102,23 @@ Transform:
   - {fileID: 332666859}
   m_Father: {fileID: 1910383567}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1387568848 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8981409995537641472, guid: b8eafb4d1395e1c4db6214a444191b0c, type: 3}
+  m_PrefabInstance: {fileID: 2598842014239019637}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1387568853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1387568848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fd28fd4cdfe66b41bbd871e8a9960da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GodCardAnimationEventRelay
 --- !u!1 &1387617404
 GameObject:
   m_ObjectHideFlags: 0
@@ -49905,11 +49925,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 4.7588
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 46.9736
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7974429899864020984, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_Layer
@@ -51887,11 +51907,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 4.7588
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6780422379471587520, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 46.9736
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7974429899864020984, guid: efb07566f2a640248902ebab0d291c5e, type: 3}
       propertyPath: m_Layer
@@ -55938,6 +55958,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1775657553}
   m_CullTransparentMesh: 1
+--- !u!1 &1776172025 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6794814368126517811, guid: 1088ba9c697512c4bb195a0c9de94ca5, type: 3}
+  m_PrefabInstance: {fileID: 1012058115}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1776172030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1776172025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fd28fd4cdfe66b41bbd871e8a9960da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GodCardAnimationEventRelay
 --- !u!1 &1778125298
 GameObject:
   m_ObjectHideFlags: 0
@@ -66900,7 +66937,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8981409995537641472, guid: b8eafb4d1395e1c4db6214a444191b0c, type: 3}
+      insertIndex: 4
+      addedObject: {fileID: 1387568853}
   m_SourcePrefab: {fileID: 100100000, guid: b8eafb4d1395e1c4db6214a444191b0c, type: 3}
 --- !u!1001 &2921024456868550467
 PrefabInstance:
