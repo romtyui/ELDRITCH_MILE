@@ -1344,4 +1344,26 @@ public class EnemyUnit : BattleUnit
 
         overloadRuntime.hpLostThisPlayerTurn += lostHp;
     }
+
+    //怪物替換判定
+    public void PrepareForDebugReplacement()
+    {
+        StopAllCoroutines();
+        PrepareForUIReplacement();
+
+        OnHpChanged -= TrackOverloadHpChange;
+
+        isCharging = false;
+        chargeValue = 0;
+        chargeTurnsLeft = 0;
+        chargeBrokenStunQueued = false;
+        stayOnCurrentIntentThisTurn = false;
+
+        statusBehaviours.Clear();
+        statusIntentPending = false;
+        successfullyDiscardedHandCardCount = 0;
+
+        phaseSwitchRuntime = new PhaseSwitchRuntimeState();
+        overloadRuntime = new OverloadRuntimeState();
+    }
 }

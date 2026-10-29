@@ -100,6 +100,9 @@ public class BattleManager : MonoBehaviour
      * 正式可以開始操作時發送。
      */
     public event Action PlayerInputReady;
+
+    //允許怪物替換的判定
+    public bool CanReplaceEnemyForDebug => isActiveAndEnabled && currentPhase == BattlePhase.PlayerTurn && !isChangingTurn && !isResolvingCard && !isCheckingBattleEndDelayed && !waitingForBattleRewards && playerUnit != null && playerUnit.currentHp > 0;
     private void Start()
     {
         StartBattle();
