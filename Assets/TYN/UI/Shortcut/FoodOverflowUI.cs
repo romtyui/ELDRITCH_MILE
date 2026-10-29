@@ -43,10 +43,32 @@ namespace EldritchMile.UI
         public string eatLabel = "吃掉";
         public string discardLabel = "丟掉";
 
+        [Tooltip("替換模式（戰鬥獎勵：選一個舊的換掉）時，獎勵那一列的按鈕文字")]
+        public string cancelLabel = "取消";
+
+        [Tooltip("替換模式的提示")]
+        public string offerHintLine = "吃掉或丟掉一個舊的，換成這個；不換就按取消";
+
         private RunContext run;
         private readonly List<FoodOverflowRow> rows = new List<FoodOverflowRow>();
 
         public bool IsOpen { get; private set; }
+
+        // 替換模式（2026-10-29 戰鬥獎勵）：獎勵還沒進背包，選一個舊的換掉，或取消
+        private ItemData offer;
+        private System.Action<bool> offerDone;
+
+        /// <summary>
+        /// 替換模式：<paramref name="newItem"/> 還沒進背包。玩家吃掉／丟掉一個舊的 → 放進去、回呼 true；
+        /// 按取消 → 什麼都不變、回呼 false。（BattleFoodBridge.RequestReplace 用）
+        /// </summary>
+        public void OpenForOffer(RunContext context, ItemData newItem, System.Action<bool> done)
+        {
+            run = context;
+            offer = newItem;
+            offerDone = done;
+            Rebuild();
+        }
 
         private void Awake()
         {
@@ -71,11 +93,11 @@ namespace EldritchMile.UI
         {
             Clear();
 
-            string pending = run != null ? run.PendingFood : null;
+            string pending = offer != null ? offer.id : (run != null ? run.PendingFood : null);
             if (pending == null) { SetVisible(false); return; }
 
             if (titleText != null) titleText.text = string.Format(titleFormat, run.FoodSlots);
-            if (hintText != null) hintText.text = hintLine;
+            if (hintText != null) hintText.text = offer != null ? offerHintLine : hintLine;
 
             // 舊的：每一格各一列（同種類不疊，所以兩個乾麵包是兩列）
             var snapshot = new List<ItemStack>(run.inventory);
@@ -93,9 +115,11 @@ namespace EldritchMile.UI
                        () => DiscardOld(captured));
             }
 
-            // 新的：只能丟
+            // 新的：只能丟（替換模式是「取消」—— 獎勵留著，不算領取）
             ItemData nd = GameFlowManager.Item(pending);
             AddRow(nd, true, null, DiscardNew);
+            if (offer != null && rows.Count > 0 && rows[rows.Count - 1].discardButton != null)
+                SetLabel(rows[rows.Count - 1].discardButton, cancelLabel);
 
             SetVisible(true);
         }
@@ -135,6 +159,7 @@ namespace EldritchMile.UI
             bool eaten = bar != null ? bar.TryUse(d, false) : run.ConsumeItem(d.id, 1);
             if (!eaten) return;
 
+            if (offer != null) { FinishOffer(); return; }
             run.AcceptPendingFood();
             Next();
         }
@@ -142,14 +167,35 @@ namespace EldritchMile.UI
         private void DiscardOld(ItemStack stack)
         {
             run.DiscardStack(stack);
+            if (offer != null) { FinishOffer(); return; }
             run.AcceptPendingFood();
             Next();
         }
 
         private void DiscardNew()
         {
+            if (offer != null) { EndOffer(false); return; }
             run.DiscardPendingFood();
             Next();
+        }
+
+        /// <summary>舊的騰出一格了 —— 把獎勵放進去。放不進去（不該發生）就當取消，獎勵保留。</summary>
+        private void FinishOffer()
+        {
+            bool ok = run.FoodCount < run.FoodSlots && run.AddItem(offer.id, 1);
+            EndOffer(ok);
+        }
+
+        private void EndOffer(bool replaced)
+        {
+            System.Action<bool> cb = offerDone;
+            offer = null;
+            offerDone = null;
+            Clear();
+            SetVisible(false);
+            ShortcutBarUI bar = FoodBar();
+            if (bar != null) bar.Refresh(false);
+            if (cb != null) cb(replaced);
         }
 
         /// <summary>這一個處理完。佇列裡還有的話接著問下一個。</summary>

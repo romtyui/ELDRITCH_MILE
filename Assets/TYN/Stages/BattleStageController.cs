@@ -550,49 +550,24 @@ public class BattleStageController : StageController
     /// 戰鬥內外都有效，不經過這裡。**戰鬥中要吃東西現在就吃得到**，
     /// 只是走的是快捷欄不是戰鬥自己的面板。
     /// </summary>
+    /// <summary>
+    /// 戰鬥裡的食物欄（Romtyui 的 ItemInventory）接上旅程背包。（2026-10-29 改：交給 BattleFoodBridge）
+    ///
+    /// 以前只放「有 battleItemEffect 的」食物 —— 沒有戰鬥效果的食物不佔格，
+    /// 他的戰鬥獎勵判斷「滿了沒」就會少算。現在每一個食物都佔一格、格數跟旅程一致，
+    /// 而且兩邊的增減會互相同步（見 BattleFoodBridge 的約定）。
+    /// </summary>
     private void BindItemsFromInventory()
     {
         ItemInventory inv = GetComponentInChildren<ItemInventory>(true);
-        if (inv == null) return;
+        if (inv == null || run == null) return;
 
-        RunContext ctx = run;
-        ItemDatabase db = GameFlowManager.Instance != null ? GameFlowManager.Instance.itemDatabase : null;
-        if (ctx == null || db == null) return;
+        BattleFoodBridge bridge = GetComponent<BattleFoodBridge>();
+        if (bridge == null) bridge = gameObject.AddComponent<BattleFoodBridge>();
+        bridge.Bind(run, inv);
 
-        inv.Clear();
-
-        int added = 0, skipped = 0;
-
-        for (int i = 0; i < ctx.inventory.Count; i++)
-        {
-            ItemStack st = ctx.inventory[i];
-            if (st == null || st.count <= 0) continue;
-
-            ItemData d = db.GetById(st.id);
-            if (d == null) continue;
-
-            if (d.battleItemEffect == null)
-            {
-                // 食物與補給才值得算 —— 收藏品本來就走遺物那一條
-                if (d.HasTag("Food") || d.HasTag("Supply")) skipped++;
-                continue;
-            }
-
-            for (int n = 0; n < st.count; n++)
-            {
-                if (!inv.AddItem(d.battleItemEffect)) break;   // 滿了就停
-                added++;
-            }
-        }
-
-        if (verboseBinding || skipped > 0)
-        {
-            Debug.Log($"[戰鬥] 道具已灌入 {added} 件" +
-                      (skipped > 0
-                          ? $"；另有 {skipped} 件食物／補給還沒有戰鬥效果資產"
-                            + "（Battle Item Effect 是空的 —— ItemEffectData 目前整個專案都還沒有子類別）"
-                          : ""), this);
-        }
+        if (verboseBinding)
+            Debug.Log($"[戰鬥] 食物欄已接上旅程背包：{inv.Count}/{inv.maxItemCount}", this);
     }
 
     private void BindRelicsFromInventory()

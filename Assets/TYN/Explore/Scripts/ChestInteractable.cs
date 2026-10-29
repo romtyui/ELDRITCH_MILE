@@ -439,6 +439,14 @@ namespace EldritchMile.Explore
                     break;
 
                 case OpenMode.RequiresCheck:
+                    // （2026-10-29 組員回報）開寶箱跳過描述、直接當作成功打開，顯示拿到什麼。
+                    // 開關在 ExploreStageController.autoOpenChecks，關掉就回到下面的打牌環節
+                    if (stage != null && stage.autoOpenChecks)
+                    {
+                        Open();
+                        break;
+                    }
+
                     // C18：點擊只是「開始打牌環節」，不會自動擲骰。
                     // 實際判定要玩家把機率卡拖到這個目標上，而且可以連續嘗試。
                     if (stage != null)
@@ -540,7 +548,8 @@ namespace EldritchMile.Explore
             }
             else
             {
-                PopupService.Instance?.ShowLoot(displayName, reported);
+                // 特寫用這個容器自己的圖（櫃子是櫃子，不是一律寶箱）
+                PopupService.Instance?.ShowLoot(displayName, reported, closeUpSprite);
             }
 
             MarkDone();

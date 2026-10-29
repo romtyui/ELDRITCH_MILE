@@ -31,6 +31,10 @@ namespace EldritchMile.Explore
                  "（2026-10-19 評圖：進到探索場景不再需要顯示場景文字敘述）文字留在房間資料裡，要再打開勾這一格就好")]
         public bool showEntryText = false;
 
+        [Tooltip("要判定才能開的東西（寶箱、上鎖的櫃子）點了就**直接當作成功**，跳過描述與打牌，顯示拿到什麼。\n" +
+                 "（2026-10-29 組員回報）取消勾選就回到打牌開鎖")]
+        public bool autoOpenChecks = true;
+
         [Header("離開 (C13/C14)")]
         [Tooltip("ExitTag 上的 Button。\n" +
                  "兩段式確認由「hover 滑下提示 → 點擊跳出確認面板」構成，" +

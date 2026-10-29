@@ -346,7 +346,7 @@ MonoBehaviour:
     interacted: {fileID: 0}
   - normal: {fileID: 21300000, guid: 9639822202a68d44d9838223b552fb5f, type: 3}
     interacted: {fileID: 0}
-  closeUpSprite: {fileID: 21300000, guid: 939a940e7f35eab44970e64c5a8c0fef, type: 3}
+  closeUpSprite: {fileID: 21300000, guid: 6d774da3b620c45c5b8184195854a32d, type: 3}
   showGrabCursor: 1
   openMode: 2
   requiredKeyId: 
@@ -356,6 +356,11 @@ MonoBehaviour:
   lootItems: []
   grantedItemIds: []
   lootTable: {fileID: 11400000, guid: 2dcc99b3b48aaed4a8641aa7e8dc7fee, type: 2}
+  moneyMin: 3
+  moneyMax: 8
+  emptyBonusMoneyMin: 5
+  emptyBonusMoneyMax: 12
+  moneyLineFormat: "\u91D1\u5E63 \xD7{0}"
   attribute: 2
   retryPolicy: 0
   tier: 0

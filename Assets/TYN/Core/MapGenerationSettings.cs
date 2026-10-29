@@ -121,6 +121,19 @@ namespace EldritchMile.Core
         [Tooltip("每個節點要試幾個候選點。越多分佈越均勻（藍雜訊），代價是生成變慢")]
         [Range(4, 60)] public int candidatesPerNode = 24;
 
+        [Tooltip("節點區域佔地形圖的多少（寬高同比例，以中心為準）。\n\n" +
+                 "⚠️ **要等於 1 / MapView3D.groundVisualScale。** 地圖底圖畫得比節點區域大（目前 1.5 倍），\n" +
+                 "取樣時也要同樣縮進來，不然判斷「這裡是不是水」用的位置跟畫面上的水對不起來 ——\n" +
+                 "節點會站在畫出來的湖上，而且不會有任何錯誤訊息。（2026-10-29 換新底圖時發現）")]
+        [Range(0.1f, 1f)] public float terrainSampleArea = 1f;
+
+        /// <summary>節點座標（0~100）→ 地形圖 UV。</summary>
+        public Vector2 TerrainUv(Vector2 pct)
+        {
+            float a = Mathf.Clamp(terrainSampleArea, 0.1f, 1f);
+            return new Vector2(0.5f + (pct.x / 100f - 0.5f) * a, 0.5f + (pct.y / 100f - 0.5f) * a);
+        }
+
         [Tooltip("要放幾個節點（之後還會刪掉走不到的，實際會少一點）。0 = 依層數自動算")]
         [Range(0, 60)] public int terrainNodeCount = 0;
 

@@ -35,11 +35,12 @@ MonoBehaviour:
   organicAngleJitter: 0.4
   organicMinSpacing: 9
   organicCrossLink: 0.35
-  terrainMap: {fileID: 2800000, guid: 4e0b829dd9899a0438f9506acedfba48, type: 3}
+  terrainMap: {fileID: 2800000, guid: e9976d7c6c0123c4b9e989967f625b76, type: 3}
   waterThreshold: 0.5
   coastRange: 8
   coastBias: 2.5
   candidatesPerNode: 24
+  terrainSampleArea: 0.6666667
   terrainNodeCount: 38
   minNodeSpacing: 9
   maxLinkDistance: 22

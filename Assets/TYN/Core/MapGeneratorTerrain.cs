@@ -83,9 +83,9 @@ namespace EldritchMile.Core
             for (int y = 0; y < R; y++)
                 for (int x = 0; x < R; x++)
                 {
-                    float u = (float)x / (R - 1);
-                    float vv = (float)y / (R - 1);
-                    Color c = tex.GetPixelBilinear(u, vv);
+                    // 格子是「節點區域」的格子，要換算到地形圖上實際對應的位置（見 terrainSampleArea）
+                    Vector2 uv = s.TerrainUv(new Vector2(100f * x / (R - 1), 100f * y / (R - 1)));
+                    Color c = tex.GetPixelBilinear(uv.x, uv.y);
                     float lum = c.r * 0.299f + c.g * 0.587f + c.b * 0.114f;
 
                     bool isWater = lum < s.waterThreshold;
@@ -230,7 +230,8 @@ namespace EldritchMile.Core
         {
             if (s.terrainMap == null || !s.terrainMap.isReadable) return false;
 
-            Color c = s.terrainMap.GetPixelBilinear(pct.x / 100f, pct.y / 100f);
+            Vector2 uv = s.TerrainUv(pct);
+            Color c = s.terrainMap.GetPixelBilinear(uv.x, uv.y);
             float lum = c.r * 0.299f + c.g * 0.587f + c.b * 0.114f;
             return lum < s.waterThreshold;
         }
