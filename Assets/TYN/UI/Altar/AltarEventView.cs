@@ -309,8 +309,29 @@ namespace EldritchMile.UI
             if (giftGroup != null) giftGroup.alpha = 1f;
         }
 
+        /// <summary>
+        /// ≥ 0 時右手（拒絕）不開獎勵畫面，改成恢復這麼多點 SAN（《未知的祭壇》大綱：拒絕 → 恢復 10 點 SAN）。
+        /// 由 SpecialEventStageController 在 Begin 之前設。
+        /// </summary>
+        [System.NonSerialized] public int refuseRestoresSan = -1;
+
+        [Tooltip("《未知的祭壇》拒絕時的字幕。{0} = 恢復的 SAN")]
+        public string refuseSanLine = "僅存的理性讓你找回了自我。（恢復 {0} 點 SAN）";
+
         private IEnumerator RefuseRoutine()
         {
+            if (refuseRestoresSan >= 0)
+            {
+                if (EldritchMile.Core.PlayerVitals.IsReady && refuseRestoresSan > 0)
+                    EldritchMile.Core.PlayerVitals.RestoreSan(refuseRestoresSan);
+                ShowCaption(string.Format(refuseSanLine, refuseRestoresSan));
+                yield return Fade(captionGroup, 1f, false);
+                float t = 0f;
+                while (t < 2f) { t += Time.unscaledDeltaTime; yield return null; }
+                yield return Fade(captionGroup, 0f, false);
+                yield break;
+            }
+
             if (!string.IsNullOrEmpty(rewardLine))
             {
                 ShowCaption(rewardLine);

@@ -65,16 +65,34 @@ namespace EldritchMile.Core
             /// </summary>
             StartBattle = 102,
 
-            // ── 以下三種還沒有系統可以接 ──
+            /// <summary>SAN 增減**固定點數**（大綱寫「恢復 5 點 SAN」）。2026-10-29 追加</summary>
+            ChangeSanPoints = 9,
 
-            /// 《喂米可吃飯》永久銷毀 1 張武器牌。**需要牌組編輯，尚未接上**
+            /// <summary>HP 增減固定點數（「失去 5 點 HP」）。2026-10-29 追加</summary>
+            ChangeHpPoints = 10,
+
+            /// <summary>
+            /// 《米可，要吃飯！》永久銷毀 1 張**武器牌**。事件畫面會打開卡冊讓玩家挑（2026-10-29 接上）
+            /// </summary>
             DestroyWeaponCard = 100,
 
-            /// 《門扉》隨機傳送到地圖的任意節點。**需要地圖跳轉 API，尚未接上**
+            /// <summary>
+            /// 《任意門》傳送到同一張地圖任一個**沒去過**的節點，並直接進入那一站（2026-10-29 接上）。
+            /// 不會送到首領或通道。
+            /// </summary>
             TeleportRandomNode = 101,
 
-            /// 《損壞的祭壇》獲得 1 張神牌。**需要神牌系統，尚未接上**
+            /// 《損壞的祭壇》獲得 1 張神牌。**沒有接** —— 給神牌改走 OpenAltar（祭壇畫面左手）
             GrantGodCard = 103,
+
+            /// <summary>《怪人》銷毀 1 張**信仰牌**（神牌）。同樣打開卡冊挑。2026-10-29 追加</summary>
+            DestroyFaithCard = 104,
+
+            /// <summary>
+            /// 《未知的祭壇》：事件播完切到**有雙手的祭壇畫面**（Stage_SpecialEvent）。
+            /// 左手（祈禱）給神牌；右手（拒絕）恢復 amount 點 SAN（大綱 10 點）。演完接回這一站原本的內容。2026-10-29 追加
+            /// </summary>
+            OpenAltar = 105,
         }
 
         [Tooltip("要發生什麼")]
@@ -98,6 +116,19 @@ namespace EldritchMile.Core
                  "（2026-09-17 文案：《貪吃鬼》這類事件，要給出的食物可以自選）\n" +
                  "⚠️ 只有事件（EventStageController）會問；別的地方套用這個效果時仍然自動扣")]
         public bool letPlayerChoose = true;
+
+        /// <summary>套用前要不要先讓玩家從**牌組**挑一張（銷毀武器牌／信仰牌）。</summary>
+        public bool NeedsCardChoice => kind == Kind.DestroyWeaponCard || kind == Kind.DestroyFaithCard;
+
+        /// <summary>這個效果要挑哪一類的牌（PlayerVitals.DeckWeapon / DeckFaith）。</summary>
+        public string CardKind => kind == Kind.DestroyFaithCard ? PlayerVitals.DeckFaith : PlayerVitals.DeckWeapon;
+
+        /// <summary>玩家挑好了要銷毀的牌。回傳提示（「失去 匕首」）。</summary>
+        public string ApplyChosenCard(CardData card)
+        {
+            if (card == null) return "";
+            return PlayerVitals.RemoveCardFromDeck(card) ? $"失去「{card.cardName}」" : "";
+        }
 
         /// <summary>套用前要不要先讓玩家挑。</summary>
         public bool NeedsChoice
@@ -230,6 +261,38 @@ namespace EldritchMile.Core
                     return PlayerVitals.SpendHp(-delta) ? $"失去 {-delta} 點 HP" : "";
                 }
 
+                case Kind.ChangeSanPoints:
+                {
+                    if (!PlayerVitals.IsReady) return WarnNotReady("SAN");
+                    if (amount == 0) return "";
+                    if (amount > 0) { PlayerVitals.RestoreSan(amount); return $"恢復 {amount} 點 SAN"; }
+                    return PlayerVitals.SpendSan(-amount) ? $"失去 {-amount} 點 SAN" : "";
+                }
+
+                case Kind.ChangeHpPoints:
+                {
+                    if (!PlayerVitals.IsReady) return WarnNotReady("HP");
+                    if (amount == 0) return "";
+                    if (amount > 0) { PlayerVitals.HealHp(amount); return $"恢復 {amount} 點 HP"; }
+                    return PlayerVitals.SpendHp(-amount) ? $"失去 {-amount} 點 HP" : "";
+                }
+
+                case Kind.DestroyWeaponCard:
+                case Kind.DestroyFaithCard:
+                {
+                    // 沒經過挑選就套用（例如不是從事件畫面來的）→ 拿掉第一張符合的
+                    List<CardData> cards = PlayerVitals.DeckCards(CardKind);
+                    return cards.Count > 0 ? ApplyChosenCard(cards[0]) : "";
+                }
+
+                case Kind.TeleportRandomNode:
+                    GameFlowManager.Instance?.RequestTeleport();
+                    return "";
+
+                case Kind.OpenAltar:
+                    GameFlowManager.Instance?.RequestAltar(amount);
+                    return "";
+
                 case Kind.GrantFromTable:
                 {
                     if (table == null)
@@ -354,6 +417,10 @@ namespace EldritchMile.Core
                  "⚠️ 大綱寫「從**未觸發過**的事件中隨機」，所以多數事件都要勾")]
         public bool once = true;
 
+        [Tooltip("**一張地圖只觸發一次**，換到別的地區（新地圖）就重置。《任意門》用。\n" +
+                 "勾了這一格時 once 不作用。（2026-10-29《常駐事件》）")]
+        public bool oncePerMap = false;
+
         [Tooltip("**優先序。數字大的先出。**\n\n" +
                  "同一站只會有一個事件出得來，所以「誰先出」是有意義的 ——\n" +
                  "《暴食之深淵》是這張地圖的開場介紹，理應排在《無人的小船》前面。\n\n" +
@@ -430,5 +497,19 @@ namespace EldritchMile.Core
 
         /// <summary>「觸發過沒有」用的旗標名。</summary>
         public string TriggeredFlag => "event_" + id;
+
+        /// <summary>這一次要記的旗標：oncePerMap 的話加上地區 id（換區就是另一面旗）。</summary>
+        public string TriggeredFlagFor(RunContext run)
+        {
+            return oncePerMap ? TriggeredFlag + "@" + (run != null ? run.currentRegionId : "") : TriggeredFlag;
+        }
+
+        /// <summary>這一場（或這張地圖）是不是已經觸發過、不能再出。</summary>
+        public bool IsSpent(RunContext run)
+        {
+            if (run == null) return false;
+            if (oncePerMap) return run.HasFlag(TriggeredFlagFor(run));
+            return once && run.HasFlag(TriggeredFlag);
+        }
     }
 }

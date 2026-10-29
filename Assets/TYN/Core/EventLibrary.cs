@@ -72,9 +72,17 @@ namespace EldritchMile.Core
                 }
 
                 // 「未觸發過」不是特例，它就是一條旗標條件
-                if (e.once && run.HasFlag(e.TriggeredFlag))
+                if (e.IsSpent(run))
                 {
                     if (verbose) Debug.Log($"[事件] {e.title} 已經觸發過");
+                    continue;
+                }
+
+                // 可以重複的事件**不會連續觸發**（2026-10-29《常駐事件》）：
+                // 上一次是 A，至少要先觸發過別的事件，A 才能再出現
+                if (!e.once && e.id == run.lastEventId)
+                {
+                    if (verbose) Debug.Log($"[事件] {e.title} 上一次才出過，不連續觸發");
                     continue;
                 }
 
@@ -147,8 +155,13 @@ namespace EldritchMile.Core
         /// </summary>
         public static void MarkTriggered(EventData e, RunContext run)
         {
-            if (e == null || run == null || !e.once) return;
-            run.SetFlag(e.TriggeredFlag);
+            if (e == null || run == null) return;
+
+            // 不連續觸發要看「上一次是誰」—— 每一個事件都記，不只可重複的
+            run.lastEventId = e.id;
+
+            if (e.oncePerMap) run.SetFlag(e.TriggeredFlagFor(run));
+            else if (e.once) run.SetFlag(e.TriggeredFlag);
         }
     }
 }

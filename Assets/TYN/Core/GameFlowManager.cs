@@ -442,6 +442,9 @@ namespace EldritchMile.Core
             PendingEvent = null;
             stageAfterEvent = StageType.None;
             stageAfterBattle = StageType.None;
+            stageAfterAltar = StageType.None;
+            teleportRequested = false;
+            altarRequested = false;
 
             BattleStageController.PendingEnemyId = null;
             ProbabilityDialogueStageController.PendingDialogue = null;
@@ -655,6 +658,37 @@ namespace EldritchMile.Core
             }
         }
 
+        // ==========================================
+        // 事件要求的流程跳轉（2026-10-29《常駐事件》《祭壇事件》）
+        // ==========================================
+
+        private bool teleportRequested;
+        private bool altarRequested;
+        private int altarRefuseSan;
+        private StageType stageAfterAltar = StageType.None;
+
+        /// <summary>《任意門》：這個事件演完之後，傳送到同一張地圖任一個沒去過的節點並直接進入。</summary>
+        public void RequestTeleport() { teleportRequested = true; }
+
+        /// <summary>《未知的祭壇》：這個事件演完之後切到祭壇畫面；拒絕的話恢復 <paramref name="refuseSan"/> 點 SAN。</summary>
+        public void RequestAltar(int refuseSan) { altarRequested = true; altarRefuseSan = refuseSan; }
+
+        /// <summary>沒去過、不是首領也不是通道、不是現在這一站的節點，隨機挑一個。</summary>
+        private RunNodeData PickTeleportTarget()
+        {
+            if (Run == null || Run.mapData == null) return null;
+            var pool = new List<RunNodeData>();
+            RunNodeData cur = Run.mapData.CurrentNode;
+            for (int i = 0; i < Run.mapData.allNodes.Count; i++)
+            {
+                RunNodeData n = Run.mapData.allNodes[i];
+                if (n == null || n.visited || n == cur) continue;
+                if (n.kind == MapNodeKind.Boss || n.kind == MapNodeKind.Gate) continue;
+                pool.Add(n);
+            }
+            return pool.Count > 0 ? pool[UnityEngine.Random.Range(0, pool.Count)] : null;
+        }
+
         /// <summary>
         /// 把一場戰鬥**插在**事件與原本那個節點之間。由事件效果
         /// `EventEffect.Kind.StartBattle`（《好餓好餓的貪吃鬼》選項 B）呼叫。
@@ -769,6 +803,30 @@ namespace EldritchMile.Core
                 StageType next = stageAfterEvent;
                 stageAfterEvent = StageType.None;
 
+                // 《任意門》：不回原本那一站，直接傳送到一個沒去過的節點並進入它
+                if (teleportRequested)
+                {
+                    teleportRequested = false;
+                    RunNodeData target = PickTeleportTarget();
+                    if (target != null)
+                    {
+                        Debug.Log($"[Flow] 任意門：傳送到 {target.nodeId}（{target.kind}）");
+                        Run.mapData.MoveTo(target.nodeId);
+                        Run.pendingNode = target;
+                        next = StageTypeForNode(target);
+                        if (target.kind == MapNodeKind.Rest) PendingEvent = restEvent;
+                    }
+                }
+
+                // 《未知的祭壇》：先切到有雙手的祭壇，演完再接回原本那一站
+                if (altarRequested)
+                {
+                    altarRequested = false;
+                    stageAfterAltar = next;
+                    SpecialEventStageController.PendingRefuseSan = altarRefuseSan;
+                    next = StageType.SpecialEvent;
+                }
+
                 // 接回主選單 ＝ 這場 run 結束了（結局那一段演完就是這條路）。
                 // ⚠️ 遺產結算（ContributeToMeta）在進結局事件**之前**就做過了，
                 //    這裡只負責把 run 丟掉
@@ -800,6 +858,21 @@ namespace EldritchMile.Core
                 stageAfterBattle = StageType.None;
 
                 Debug.Log($"[Flow] 事件安排的戰鬥結束，接回 {next}");
+
+                yield return FadeOut();
+                yield return SwitchStageInternal(next);
+                yield return HoldBlackOrTitle(holdBlackAfterEventSeconds, TitleForNode());
+                yield return FadeIn();
+
+                IsTransitioning = false;
+                yield break;
+            }
+
+            // ── 事件安排的祭壇演完 → 接回原本那個節點 ──
+            if (currentStage == StageType.SpecialEvent && stageAfterAltar != StageType.None)
+            {
+                StageType next = stageAfterAltar;
+                stageAfterAltar = StageType.None;
 
                 yield return FadeOut();
                 yield return SwitchStageInternal(next);

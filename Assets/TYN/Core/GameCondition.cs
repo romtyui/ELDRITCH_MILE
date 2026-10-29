@@ -66,6 +66,15 @@ namespace EldritchMile.Core
 
             /// 這場 run 已經玩了 ≥ value 秒
             ElapsedAtLeast = 6,
+
+            /// <summary>
+            /// **戰鬥牌組**裡這一類的牌 ≥ value。key：Weapon（武器牌）／Faith（信仰牌 = 神牌）。2026-10-29 追加。
+            /// 跟 TagCount 的差別：那個數的是背包裡的道具，牌在牌組裡，不在背包。
+            /// </summary>
+            DeckCountAtLeast = 7,
+
+            /// <summary>戰鬥牌組裡這一類的牌 &lt; value。key 同上</summary>
+            DeckCountBelow = 8,
         }
 
         [Tooltip("要判斷什麼")]
@@ -98,6 +107,9 @@ namespace EldritchMile.Core
                 case Kind.TagCountAtLeast: return run.CountByTag(key, db) >= value;
                 case Kind.TagCountBelow: return run.CountByTag(key, db) < value;
 
+                case Kind.DeckCountAtLeast: return PlayerVitals.CountDeck(key) >= value;
+                case Kind.DeckCountBelow: return PlayerVitals.CountDeck(key) < value;
+
                 case Kind.ElapsedAtLeast: return run.ElapsedSeconds >= value;
             }
 
@@ -116,6 +128,8 @@ namespace EldritchMile.Core
                 case Kind.TagCountAtLeast: return $"持有 [{key}] ≥ {value}";
                 case Kind.TagCountBelow: return $"持有 [{key}] < {value}";
                 case Kind.ElapsedAtLeast: return $"已進行 ≥ {value} 秒";
+                case Kind.DeckCountAtLeast: return $"牌組 [{key}] ≥ {value}";
+                case Kind.DeckCountBelow: return $"牌組 [{key}] < {value}";
             }
             return kind.ToString();
         }

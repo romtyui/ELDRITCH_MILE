@@ -88,6 +88,9 @@ namespace EldritchMile.Core
         /// </summary>
         public int regionBattleCount;
 
+        /// <summary>上一個觸發的事件 id。可重複的事件不會連續出兩次（EventLibrary.Pick）。2026-10-29</summary>
+        public string lastEventId = "";
+
         /// <summary>換到另一區。只記錄，換地圖由 GameFlowManager.TravelRoutine 負責。</summary>
         public void EnterRegion(string regionId)
         {
