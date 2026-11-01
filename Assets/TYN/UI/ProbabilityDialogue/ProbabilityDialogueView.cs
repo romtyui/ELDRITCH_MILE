@@ -307,6 +307,15 @@ namespace EldritchMile.UI.ProbabilityDialogue
             speaker = "";
             body = page;
 
+            // 《協助者事件》還不知道名字的時候，名字框是「？？？」
+            const string Unknown = "？？？";
+            if (page.StartsWith(Unknown + "："))
+            {
+                speaker = Unknown;
+                body = page.Substring(Unknown.Length + 1).TrimStart();
+                return;
+            }
+
             if (string.IsNullOrEmpty(speakerLabel)) return;
 
             string[] marks = { speakerLabel + "：", speakerLabel + ":" };
@@ -333,6 +342,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
         /// </param>
         private void Say(string line, bool waitForCurrent = false)
         {
+            if (session != null && session.Data != null && session.Data.noBarks) return;
+
             if (string.IsNullOrEmpty(line)) return;
 
             if (speakerHitbox != null) { speakerHitbox.Say(line, waitForCurrent); return; }
@@ -749,6 +760,22 @@ namespace EldritchMile.UI.ProbabilityDialogue
             CharacterData who = Speaker;
             if (who != null) Say(who.PickFarewell(lineRng), true);
 
+            StartCoroutine(OutcomeAfterText());
+        }
+
+        /// <summary>
+        /// 結算那一句要排在結果文字**後面**。（2026-11-02 修：之前結算排在最前面 ——
+        /// 這一支在判定當下就跑，結果文字卻要等判定動效播完才進佇列，順序就反了。
+        /// 《協助者事件》會先跳「【時藏】加入了隊伍」，名字還沒揭曉就爆雷）
+        /// 等動效的時間再多等一點點，確保文字已經排進去。
+        /// </summary>
+        private IEnumerator OutcomeAfterText()
+        {
+            float wait = 0f;
+            for (int i = 0; i < answerUIs.Count; i++)
+                if (answerUIs[i] != null) wait = Mathf.Max(wait, answerUIs[i].TotalFlashSeconds);
+
+            yield return new WaitForSecondsRealtime(wait + 0.05f);
             ShowOutcome();
         }
 

@@ -32,6 +32,14 @@ namespace EldritchMile.Core.ProbabilityDialogue
                      "附件把「已觸發的事件在同一輪次中會不會再觸發」標為未確定 ——\n" +
                      "先做成一個勾勾，定案時改資料就好，不必改程式")]
             public bool once = true;
+
+            [Tooltip("全部成立才會抽到這一段（《對話事件》「某角色在隊伍內」、《協助者事件》「未加入大廳」）。\n" +
+                     "留空 = 無條件。2026-11-02")]
+            public List<GameCondition> conditions = new List<GameCondition>();
+
+            [Tooltip("演過之後這一輪就真的不再出現，「全部演過了改成重播」也不算它。\n" +
+                     "（《協助者事件》：失敗的話本輪次內不會再觸發相同事件）")]
+            public bool neverReplay = false;
         }
 
         [Tooltip("所有對話事件。順序不影響行為")]
@@ -93,6 +101,12 @@ namespace EldritchMile.Core.ProbabilityDialogue
                     continue;
                 }
 
+                if (run != null && !GameCondition.AllMet(e.conditions, run, null))
+                {
+                    if (verbose) Debug.Log($"[對話庫]「{e.dialogue.eventId}」條件不合：{GameCondition.FirstUnmet(e.conditions, run, null)}");
+                    continue;
+                }
+
                 // 同行角色過濾。**沒有指定同行角色時不過濾** ——
                 // 反過來做的話（沒隊伍就一段都不給）會在隊伍系統做好之前
                 // 讓所有對話節點都變成空的
@@ -124,6 +138,10 @@ namespace EldritchMile.Core.ProbabilityDialogue
                     if (e == null || e.dialogue == null) continue;
                     if (string.IsNullOrEmpty(e.dialogue.eventId)) continue;
                     if (e.weight <= 0f) continue;
+
+                    // 重播也要看條件（角色不在隊伍裡的對話不能重播），協助者事件不重播
+                    if (e.neverReplay) continue;
+                    if (run != null && !GameCondition.AllMet(e.conditions, run, null)) continue;
 
                     candidates.Add(e);
                     total += e.weight;

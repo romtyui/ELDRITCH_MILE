@@ -95,9 +95,38 @@ namespace EldritchMile.Core
             {
                 // enabled 要一起處理，理由同 ShowSystem；設 null 時把圖也清掉，
                 // 免得殘留的舊立繪在下次 portraitRoot 被打開時冒出來
+                SetPortraitLayout(false);
                 portraitImage.enabled = portrait != null;
                 portraitImage.sprite = portrait;
             }
+        }
+
+        [Header("物件特寫（2026-11-02）")]
+        [Tooltip("開箱、檢查物件時借立繪位置秀特寫圖用的框。\n" +
+                 "立繪的框是直的（角色）、物件的圖是橫的，不換框的話寶箱會被拉成直的。圖本身維持比例")]
+        public Vector2 closeUpSize = new Vector2(1200f, 1200f);
+
+        [Tooltip("特寫的位置（相對立繪位置的中心）")]
+        public Vector2 closeUpPosition = Vector2.zero;
+
+        private Vector2 portraitHomeSize, portraitHomePos;
+        private bool portraitHomeCaptured;
+
+        /// <summary>切換立繪框：物件特寫（方框、維持比例）或角色（原本的直框）。</summary>
+        private void SetPortraitLayout(bool closeUp)
+        {
+            if (portraitImage == null) return;
+            RectTransform rt = portraitImage.rectTransform;
+            if (!portraitHomeCaptured)
+            {
+                portraitHomeSize = rt.sizeDelta;
+                portraitHomePos = rt.anchoredPosition;
+                portraitHomeCaptured = true;
+            }
+
+            rt.sizeDelta = closeUp ? closeUpSize : portraitHomeSize;
+            rt.anchoredPosition = closeUp ? closeUpPosition : portraitHomePos;
+            portraitImage.preserveAspect = closeUp;
         }
 
         [Header("打字機")]
@@ -279,6 +308,7 @@ namespace EldritchMile.Core
                 // 只設 sprite 的話這張圖不會出現，而且不會有任何錯誤訊息
                 if (portraitImage != null && closeUp != null)
                 {
+                    SetPortraitLayout(true);
                     portraitImage.sprite = closeUp;
                     portraitImage.enabled = true;
                 }
@@ -304,6 +334,7 @@ namespace EldritchMile.Core
                 // enabled 要一起開，理由同 ShowSystem
                 if (portraitImage != null && portrait != null)
                 {
+                    SetPortraitLayout(false);
                     portraitImage.sprite = portrait;
                     portraitImage.enabled = true;
                 }

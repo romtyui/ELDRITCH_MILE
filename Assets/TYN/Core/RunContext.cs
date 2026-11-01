@@ -100,6 +100,24 @@ namespace EldritchMile.Core
                 visitedRegionIds.Add(currentRegionId);
         }
 
+        [Header("隊伍（2026-11-02《協助者事件》《對話事件》）")]
+        /// <summary>
+        /// 這一輪同行的角色 id。對話事件看它（「坎貝爾在隊伍內」），協助者事件成功就加進來。
+        /// 本輪結束時會寫進大廳（MetaProgressData.lobby），下一輪開始就在隊伍裡。
+        /// </summary>
+        public List<string> party = new List<string>();
+
+        public bool InParty(string characterId) => !string.IsNullOrEmpty(characterId) && party.Contains(characterId);
+
+        /// <summary>加入隊伍。已經在隊伍裡回 false。</summary>
+        public bool JoinParty(string characterId)
+        {
+            if (string.IsNullOrEmpty(characterId) || party.Contains(characterId)) return false;
+            party.Add(characterId);
+            Debug.Log($"[Run] {characterId} 加入隊伍（{party.Count} 人）");
+            return true;
+        }
+
         [Header("侵蝕度")]
         /// <summary>
         /// 各尊神的侵蝕度（0–100）。**每尊神各一條，不是單一全域值** ——
@@ -217,6 +235,17 @@ namespace EldritchMile.Core
                     return false;
                 }
                 count = 1;
+            }
+
+            // 武器：拿到就是**進戰鬥牌組**，不進背包（2026-11-02）。
+            // 以前只有商店會轉成牌，寶箱、事件獎勵給的武器一直躺在背包裡，戰鬥用不到。
+            // 擋在這裡，所有來源都走這一支
+            if (data != null && data.grantsCard != null)
+            {
+                bool added = false;
+                for (int n = 0; n < count; n++) added |= PlayerVitals.AddCardToDeck(data.grantsCard);
+                NotifyTutorial(id);
+                return added;
             }
 
             // 食物：**同種類不疊加，一個佔一格**，最多 FoodSlots 格（2026-10-18 定案）。
@@ -558,6 +587,9 @@ namespace EldritchMile.Core
             if (meta == null) return;
 
             meta.totalRuns++;
+
+            // 協助者：這一輪同行過的，輪次結束後成為大廳的常駐成員
+            for (int i = 0; i < party.Count; i++) meta.AddToLobby(party[i]);
 
             if (result == StageResult.PlayerDied)
             {

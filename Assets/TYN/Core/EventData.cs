@@ -93,6 +93,9 @@ namespace EldritchMile.Core
             /// 左手（祈禱）給神牌；右手（拒絕）恢復 amount 點 SAN（大綱 10 點）。演完接回這一站原本的內容。2026-10-29 追加
             /// </summary>
             OpenAltar = 105,
+
+            /// <summary>《協助者事件》判定成功：key = 角色 id 加入隊伍。2026-11-02</summary>
+            JoinParty = 106,
         }
 
         [Tooltip("要發生什麼")]
@@ -292,6 +295,13 @@ namespace EldritchMile.Core
                 case Kind.OpenAltar:
                     GameFlowManager.Instance?.RequestAltar(amount);
                     return "";
+
+                case Kind.JoinParty:
+                {
+                    if (!run.JoinParty(key)) return "";
+                    CharacterData who = GameFlowManager.Character(key);
+                    return $"【{(who != null ? who.Label : key)}】加入了隊伍。";
+                }
 
                 case Kind.GrantFromTable:
                 {

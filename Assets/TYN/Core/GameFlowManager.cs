@@ -121,6 +121,12 @@ namespace EldritchMile.Core
                  "⚠️ 這一筆的 weight 要是 0，不然它會跑進隨機事件池")]
         public EventData restEvent;
 
+        [Header("隊伍（2026-11-02）")]
+        [Tooltip("每一輪開始就在隊伍裡的角色 id。\n" +
+                 "（測試階段）坎貝爾預設在隊伍裡 —— 大綱沒有招募他的協助者事件，《魔術秀》又要他在隊伍內。\n" +
+                 "大廳的常駐成員會再加上去")]
+        public List<string> startingParty = new List<string> { "campbell" };
+
         [Header("對話節點")]
         [Tooltip("地圖上的**對話節點**要走哪一個 Stage。專案裡有兩套刻意並存的對話：\n\n" +
                  "· ProbabilityDialogue —— 資料驅動（一個事件一個資產），\n" +
@@ -193,6 +199,14 @@ namespace EldritchMile.Core
             CharacterDatabase db = Instance != null ? Instance.characterDatabase : null;
             return db != null ? db.GetById(id) : null;
         }
+
+        [Header("地圖的進出（2026-11-02）")]
+        [Tooltip("地圖不滑動：進節點是「鏡頭推近 → 黑」，回地圖是「黑 → 從那一站拉遠」。\n" +
+                 "取消勾選 = 回到地圖從上方滑下來的舊做法")]
+        public bool mapFadeTransition = true;
+
+        [Tooltip("回地圖時鏡頭從節點拉遠花幾秒。比淡入（fadeInSeconds）長一點，亮起來時鏡頭還在動才有「回到地圖」的感覺")]
+        [Min(0f)] public float mapPullBackSeconds = 1.1f;
 
         [Header("轉場節奏")]
         [Tooltip("淡出（畫面 → 黑）幾秒。\n\n" +
@@ -378,6 +392,9 @@ namespace EldritchMile.Core
             Run = RunContext.CreateNew(inheritLegacyItems ? Meta : null);
             Run.AddMoney(startingMoney);
 
+            for (int i = 0; i < startingParty.Count; i++) Run.JoinParty(startingParty[i]);
+            if (Meta != null) for (int i = 0; i < Meta.lobby.Count; i++) Run.JoinParty(Meta.lobby[i]);
+
             // HP／SAN 不存在 RunContext 裡 —— 它們歸 RunStateManager（戰鬥端）持有，
             // 我方只負責「run 開始時把它設好」。見 PlayerVitals 的說明。
             if (startingMaxHp > 0)
@@ -412,11 +429,7 @@ namespace EldritchMile.Core
             }
 
             yield return SwitchStageInternal(StageType.None);
-            yield return FadeIn();
-
-            IsTransitioning = false;
-
-            yield return OpenMapRoutine();
+            yield return RevealMapRoutine();
         }
 
         /// <summary>
@@ -464,10 +477,7 @@ namespace EldritchMile.Core
             Run.mapData.MoveTo(node.nodeId);
             Run.pendingNode = node;
 
-            // 收起地圖（此時畫面還沒黑，玩家看得到地圖收上去）
-            if (mapOverlay != null) yield return mapOverlay.SlideUp();
-
-            yield return FadeOut();
+            yield return CloseMapRoutine();
 
             // ── 事件的前置檢查（大綱：「每當前進到下一張地圖…就會有概率觸發事件」）──
             //
@@ -582,7 +592,7 @@ namespace EldritchMile.Core
             Run.pendingNode = gate;
             RunRecorder.NodeEntered(Run, gate, null);
 
-            if (mapOverlay != null) yield return mapOverlay.SlideUp();
+            yield return CloseMapRoutine();
 
             if (target == null || !target.travelReady)
             {
@@ -590,10 +600,10 @@ namespace EldritchMile.Core
                     ? target.displayName : gate.targetRegionId;
                 Debug.Log($"[Flow] 通道 → 「{gate.targetRegionId}」還沒做好" + (target == null ? "（找不到這個地區）" : ""));
 
+                yield return FadeIn();
                 yield return PlaySystemLines(gateUnfinishedLines, name);
-
-                IsTransitioning = false;
-                yield return OpenMapRoutine();
+                yield return FadeOut();
+                yield return RevealMapRoutine();
                 yield break;
             }
 
@@ -624,10 +634,7 @@ namespace EldritchMile.Core
                       $"落在 {(arrival != null ? arrival.nodeId : "起點")}；新地圖 {Run.mapData.allNodes.Count} 個節點");
 
             yield return HoldBlackOrTitle(holdBlackAfterEventSeconds, target.displayName);
-            yield return FadeIn();
-
-            IsTransitioning = false;
-            yield return OpenMapRoutine();
+            yield return RevealMapRoutine();
         }
 
         /// <summary>依序播幾句系統提示（名字框是系統符號），播完收掉對話框。</summary>
@@ -935,27 +942,63 @@ namespace EldritchMile.Core
                 yield break;
             }
 
-            // 一般情況：卸掉 Stage，地圖自動下拉（C1/C2）
+            // 一般情況：卸掉 Stage，回到地圖（C1/C2）
             yield return FadeOut();
             yield return SwitchStageInternal(StageType.None);
             yield return HoldBlack(holdBlackSeconds);
-            yield return FadeIn();
-
-            IsTransitioning = false;
-
-            yield return OpenMapRoutine();
+            yield return RevealMapRoutine();
         }
 
-        private IEnumerator OpenMapRoutine()
+        /// <summary>
+        /// 離開地圖。結束時畫面是**全黑**的、地圖已經收走。
+        /// 不滑動的版本：直接淡到黑（鏡頭已經推近那一站），黑了才把地圖收走。
+        /// </summary>
+        private IEnumerator CloseMapRoutine()
+        {
+            if (mapOverlay != null && !mapFadeTransition) yield return mapOverlay.SlideUp();
+
+            yield return FadeOut();
+
+            if (mapOverlay != null && mapFadeTransition) mapOverlay.HideForFade();
+        }
+
+        /// <summary>
+        /// 回到地圖。**呼叫時畫面要是全黑的**，結束時地圖已經可以操作（IsTransitioning 也放開了）。
+        ///
+        /// 【為什麼不滑了】（2026-11-02 組員回報）舊流程是「黑 → 亮起來一片空 → 地圖從上方掉下來」，
+        /// 是兩個分開的動作、中間還有一段空畫面。現在趁全黑把地圖擺好，亮起來時地圖就在那裡，
+        /// 鏡頭停在剛才那一站、邊亮邊拉遠 —— 跟進節點的推近是同一條路的反方向。
+        /// </summary>
+        private IEnumerator RevealMapRoutine()
         {
             if (mapOverlay == null)
             {
-                Debug.LogWarning("[Flow] 沒有指定 MapOverlay，無法下拉地圖");
+                Debug.LogWarning("[Flow] 沒有指定 MapOverlay，沒有地圖可以開");
+                yield return FadeIn();
+                IsTransitioning = false;
+                yield break;
+            }
+
+            if (!mapFadeTransition)
+            {
+                yield return FadeIn();
+                IsTransitioning = false;
+                mapOverlay.ResetEnterFocus();
+                mapOverlay.Refresh(Run);
+                yield return mapOverlay.SlideDown();
+                yield return mapOverlay.OnOpened();
                 yield break;
             }
 
             mapOverlay.Refresh(Run);
-            yield return mapOverlay.SlideDown();
+            mapOverlay.ShowForReveal();
+
+            Coroutine pullBack = StartCoroutine(mapOverlay.OnRevealing(mapPullBackSeconds));
+            yield return FadeIn();
+            yield return pullBack;
+
+            mapOverlay.FinishReveal();
+            IsTransitioning = false;
             yield return mapOverlay.OnOpened();
         }
 

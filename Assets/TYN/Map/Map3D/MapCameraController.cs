@@ -234,6 +234,10 @@ namespace EldritchMile.Map3D
             panOffset = Vector3.zero;
             sincePan = panReturnDelay;
 
+            // 換了一張地圖（穿越）：上一張的進節點推近不用還原了，縱覽會重新擺鏡頭
+            IsFocusing = false;
+            rig.distanceMinOverride = 0f;
+
             Vector3 centre = rig.pivot != null ? rig.pivot.position : Vector3.zero;
             Vector3 off = mapBounds.center - centre;
             off.y = 0f;
@@ -381,6 +385,30 @@ namespace EldritchMile.Map3D
             followOffset = goalOffset;
             followVel = Vector3.zero;
             panOffset = Vector3.zero;
+        }
+
+        /// <summary>
+        /// 從節點拉遠回推近之前的距離（2026-11-02：從節點回地圖的轉場）。
+        /// 進場是「推近 → 黑」，回來是「黑 → 從同一個位置拉遠」，玩家知道自己回到哪裡。
+        /// </summary>
+        public IEnumerator ReleaseFocus(float seconds)
+        {
+            if (!IsFocusing) yield break;
+
+            float from = rig.distance;
+            float t = 0f;
+            while (t < 1f)
+            {
+                t = seconds <= 0f ? 1f : Mathf.Min(1f, t + Time.unscaledDeltaTime / seconds);
+                float e = 1f - (1f - t) * (1f - t);   // 先快後慢，落定得柔和
+                rig.distance = Mathf.Lerp(from, preFocusDistance, e);
+                rig.Apply();
+                PushSlider();
+                yield return null;
+            }
+
+            IsFocusing = false;
+            rig.distanceMinOverride = 0f;
         }
 
         /// <summary>還原推近之前的距離。地圖重新打開時呼叫。</summary>

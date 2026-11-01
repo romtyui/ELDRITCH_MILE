@@ -90,7 +90,8 @@ public class BattleRewardEntryUI : MonoBehaviour
 
         if (buttonText != null) buttonText.text = isFull ? fullButtonText : (isWeapon ? "選擇" : "收下");
         if (buttonImage != null) buttonImage.sprite = isFull ? fullButtonSprite : (isWeapon ? chooseButtonSprite : receiveButtonSprite);
-        if (actionButton != null) actionButton.interactable = !isFull;
+        //新增時間26/11/02 by TYN：正式流程裡滿了還是可以按（按下去是選一個舊的換掉，見 BattleRewardUI）
+        if (actionButton != null) actionButton.interactable = !isFull || BattleFoodBridge.Instance != null;
     }
 
     public void SetCompleted()

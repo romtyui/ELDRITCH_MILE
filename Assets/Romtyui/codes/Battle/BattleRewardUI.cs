@@ -476,6 +476,20 @@ public class BattleRewardUI : MonoBehaviour
 
             if (foodInventory.IsFull)
             {
+                //新增時間26/11/02 by TYN：正式流程裡按「裝備已滿」= 選一個舊的換掉（BattleFoodBridge）。
+                //換成功才算領取；取消時舊的與獎勵都保留。獨立測試的 prefab 沒有 bridge，行為不變。
+                if (BattleFoodBridge.Instance != null && row.food != null)
+                {
+                    int rowIndex = index;
+                    BattleFoodBridge.Instance.RequestReplace(row.food, replaced =>
+                    {
+                        if (replaced) CompleteRow(rowIndex);
+                        RefreshFoodRewardStates();
+                    });
+                    return;
+                }
+                //新增時間26/11/02 by TYN
+
                 RefreshFoodRewardStates();
                 return;
             }

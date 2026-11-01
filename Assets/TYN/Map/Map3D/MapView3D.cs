@@ -184,8 +184,6 @@ namespace EldritchMile.Map3D
         {
             if (run == null || run.mapData == null) return;
 
-            // 上一次進節點時鏡頭推近了，地圖重新打開時退回原本的距離
-            if (cameraController != null) cameraController.ClearFocus();
 
             // 底圖大小 = 節點範圍 × 倍率。地面是平躺的 Quad，本地 x/y 對應世界的寬/深
             if (ground != null)
@@ -230,6 +228,16 @@ namespace EldritchMile.Map3D
             r.GetPropertyBlock(block);
             if (tex != null) block.SetTexture(prop, tex);
             r.SetPropertyBlock(block);
+        }
+
+        public override IEnumerator OnRevealing(float seconds)
+        {
+            if (cameraController != null) yield return cameraController.ReleaseFocus(seconds);
+        }
+
+        public override void ResetEnterFocus()
+        {
+            if (cameraController != null) cameraController.ClearFocus();
         }
 
         /// <summary>所有節點（含棋子）的世界範圍。縱覽要把它整個裝進畫面。</summary>

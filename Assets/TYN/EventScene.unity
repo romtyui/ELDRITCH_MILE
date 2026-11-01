@@ -3907,6 +3907,8 @@ MonoBehaviour:
   dimmer: {fileID: 816323013}
   advanceButton: {fileID: 99592063}
   targetViewPrefab: {fileID: 2935104796966573886, guid: 4bee8ef9c5b5d3a4b99cefb470bd0f0a, type: 3}
+  closeUpSize: {x: 1200, y: 1200}
+  closeUpPosition: {x: 0, y: 0}
   charsPerSecond: 40
   systemSpeakerName: "\u203B"
   systemTextColor: {r: 0.85, g: 0.85, b: 0.75, a: 1}
@@ -9686,8 +9688,12 @@ MonoBehaviour:
   startingMaxHp: 100
   startingMaxSan: 100
   restEvent: {fileID: 11400000, guid: 493da22fa8ce320459ebe51a200f8ab1, type: 2}
+  startingParty:
+  - campbell
   dialogueNodeStage: 9
   currentStage: 0
+  mapFadeTransition: 1
+  mapPullBackSeconds: 1.1
   fadeOutSeconds: 0.3
   fadeInSeconds: 0.55
   holdBlackSeconds: 0.25
@@ -12744,7 +12750,7 @@ MonoBehaviour:
     prefab: {fileID: 6450695220657823247, guid: 7c6299e907ec2034c827ba5a695ffcf5, type: 3}
     customParent: {fileID: 0}
   - type: 4
-    prefab: {fileID: 4070592771386185462, guid: 67ac51b1d7ace1942816d47530443692, type: 3}
+    prefab: {fileID: 980951467994646417, guid: 20b31f4247388de46b3ad09e338c42d6, type: 3}
     customParent: {fileID: 211474239}
   - type: 9
     prefab: {fileID: 7707460458205152320, guid: 37e6767f6a350234296f742793598e83, type: 3}
@@ -19487,6 +19493,8 @@ MonoBehaviour:
   hintLine: "\u5403\u6389\u4E00\u500B\u820A\u7684\u9A30\u51FA\u4F4D\u5B50\uFF0C\u6216\u4E1F\u6389\u5176\u4E2D\u4E00\u500B"
   eatLabel: "\u5403\u6389"
   discardLabel: "\u4E1F\u6389"
+  cancelLabel: "\u53D6\u6D88"
+  offerHintLine: "\u5403\u6389\u6216\u4E1F\u6389\u4E00\u500B\u820A\u7684\uFF0C\u63DB\u6210\u9019\u500B\uFF1B\u4E0D\u63DB\u5C31\u6309\u53D6\u6D88"
 --- !u!225 &1980679220
 CanvasGroup:
   m_ObjectHideFlags: 0

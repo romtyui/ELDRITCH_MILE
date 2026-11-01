@@ -423,15 +423,8 @@ public class ShopStageController : StageController
             return;
         }
 
+        // 武器牌會由 AddItem 轉進戰鬥牌組（見 RunContext.AddItem）
         run.AddItem(slot.ItemId, slot.Count);
-
-        // 武器牌買了要真的進戰鬥牌組（不是只躺在背包裡）。
-        // 牌組歸戰鬥端持有，這裡只是呼叫 —— 見 PlayerVitals.AddCardToDeck
-        ItemData data = GameFlowManager.Item(slot.ItemId);
-        if (data != null && data.grantsCard != null)
-        {
-            for (int i = 0; i < slot.Count; i++) PlayerVitals.AddCardToDeck(data.grantsCard);
-        }
 
         slot.MarkSoldOut();
         shelf.RefreshAffordability();

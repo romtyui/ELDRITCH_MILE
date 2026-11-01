@@ -16,7 +16,46 @@ MonoBehaviour:
   - dialogue: {fileID: 11400000, guid: ba050dd184cfee1c132749b6f904ea51, type: 2}
     weight: 1
     once: 1
+    conditions:
+    - kind: 9
+      key: campbell
+      value: 0
+    neverReplay: 0
   - dialogue: {fileID: 11400000, guid: b586c1e38e08dd93db0446ae40230ee3, type: 2}
     weight: 1
     once: 1
+    conditions:
+    - kind: 9
+      key: tokizo
+      value: 0
+    neverReplay: 0
+  - dialogue: {fileID: 11400000, guid: 073c634886c1cbe48ad3faca83ec6824, type: 2}
+    weight: 1
+    once: 1
+    conditions:
+    - kind: 11
+      key: tokizo
+      value: 0
+    - kind: 10
+      key: tokizo
+      value: 0
+    - kind: 12
+      key: 
+      value: 3
+    neverReplay: 1
+  - dialogue: {fileID: 11400000, guid: a40a90d069cee5440b277f4ebbc35d2f, type: 2}
+    weight: 1
+    once: 1
+    conditions:
+    - kind: 11
+      key: parker
+      value: 0
+    - kind: 10
+      key: parker
+      value: 0
+    - kind: 12
+      key: 
+      value: 3
+    neverReplay: 1
+  replayWhenExhausted: 1
   verbose: 0

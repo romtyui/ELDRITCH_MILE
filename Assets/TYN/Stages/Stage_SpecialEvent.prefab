@@ -1513,7 +1513,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -1911,7 +1911,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -5711,6 +5711,9 @@ MonoBehaviour:
   canvas: {fileID: 6346443677427369995}
   radiusX: 95
   radiusY: 26
+  eyeballCenter: {x: -15.8, y: 7.3}
+  eyeballRadius: {x: 82.6, y: 64.1}
+  irisRadius: 35
   fullDeflectionDistance: 700
   smoothSeconds: 0.18
   blinkEveryMin: 3.5
@@ -7786,7 +7789,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
   m_UseReflectionProbes: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 95
@@ -7863,8 +7866,13 @@ MonoBehaviour:
   giftCard: {fileID: 6886544265781331381}
   giftAcceptButton: {fileID: 4602186413811294192}
   giftLine: "\u6536\u4E0B\u5427\u3002"
+  giftHoldSeconds: 0.35
+  giftFadeSeconds: 0.6
+  giftFadeScale: 1.08
   rewards: {fileID: 1924900269633948058}
   rewardLine: 
+  refuseSanLine: "\u50C5\u5B58\u7684\u7406\u6027\u8B93\u4F60\u627E\u56DE\u4E86\u81EA\u6211\u3002\uFF08\u6062\u5FA9
+    {0} \u9EDE SAN\uFF09"
 --- !u!114 &2044229305152464583
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8416,6 +8424,9 @@ MonoBehaviour:
   faceImage: {fileID: 7347902469275691531}
   artworkImage: {fileID: 7351756795913599859}
   frameImage: {fileID: 2282259892383336112}
+  cardView: {fileID: 0}
+  effectLabel: {fileID: 0}
+  costLabel: {fileID: 0}
 --- !u!222 &9098822791276675570
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8585,7 +8596,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -9131,7 +9142,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -9659,7 +9670,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
   m_UseReflectionProbes: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 120
@@ -10499,7 +10510,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 9e9ff56a9c376b7488cc6bba75a63270, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e44468e19974cee4ab49a9552e95350f, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
