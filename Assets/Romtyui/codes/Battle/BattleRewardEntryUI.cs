@@ -31,6 +31,16 @@ public class BattleRewardEntryUI : MonoBehaviour
     [Tooltip("武器按鈕使用的 B_IMAGE。")]
     public Sprite chooseButtonSprite;
 
+    [Tooltip("藥水或食物欄位已滿時使用的按鈕圖片。")]
+    public Sprite fullButtonSprite;
+
+    [Tooltip("藥水或食物欄位已滿時顯示的文字。")]
+    public string fullButtonText = "裝備已滿";
+
+    private bool isWeapon;
+    private bool isFull;
+    private bool isCompleted;
+
     [Range(0f, 1f)]
     [Tooltip("已領取或放棄後的整欄透明度。")]
     public float completedAlpha = 0.35f;
@@ -42,6 +52,9 @@ public class BattleRewardEntryUI : MonoBehaviour
     {
         owner = rewardUI;
         index = rewardIndex;
+        isWeapon = weapon;
+        isFull = false;
+        isCompleted = false;
 
         if (rowGroup == null) rowGroup = GetComponent<CanvasGroup>();
         if (rowGroup == null) rowGroup = gameObject.AddComponent<CanvasGroup>();
@@ -70,8 +83,20 @@ public class BattleRewardEntryUI : MonoBehaviour
         rowGroup.blocksRaycasts = true;
     }
 
+    public void SetFull(bool full)
+    {
+        isFull = full;
+        if (isCompleted) return;
+
+        if (buttonText != null) buttonText.text = isFull ? fullButtonText : (isWeapon ? "選擇" : "收下");
+        if (buttonImage != null) buttonImage.sprite = isFull ? fullButtonSprite : (isWeapon ? chooseButtonSprite : receiveButtonSprite);
+        if (actionButton != null) actionButton.interactable = !isFull;
+    }
+
     public void SetCompleted()
     {
+        isCompleted = true;
+
         if (rowGroup != null)
         {
             rowGroup.alpha = completedAlpha;
@@ -84,7 +109,7 @@ public class BattleRewardEntryUI : MonoBehaviour
 
     private void OnClicked()
     {
-        if (owner == null) return;
+        if (owner == null || isFull || isCompleted) return;
         owner.ClickReward(index);
     }
 }

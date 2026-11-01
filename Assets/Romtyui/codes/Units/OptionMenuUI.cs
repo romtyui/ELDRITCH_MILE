@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class OptionMenuUI : MonoBehaviour
 {
@@ -87,14 +88,14 @@ public class OptionMenuUI : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Keyboard.current == null) return;
+
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             if (panelRoot != null && panelRoot.activeSelf)
             {
-                if (settingsPageRoot != null && settingsPageRoot.activeSelf)
-                    OpenMainPage();
-                else
-                    ContinueGame();
+                if (settingsPageRoot != null && settingsPageRoot.activeSelf) OpenMainPage();
+                else ContinueGame();
             }
             else
             {

@@ -268,7 +268,7 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         // 1. 隱藏指定 UI
         // =====================================================
 
-        //HideUIForGodAnimation();
+        HideUIForGodAnimation();
 
         // =====================================================
         // 1. 開啟黑幕
@@ -952,6 +952,16 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
             return false;
         }
 
+        // Animation Event 的接收元件必須與 Animator 位於同一個物件。
+        GodCardAnimationEventRelay eventRelay = currentAnimationAnimator.GetComponent<GodCardAnimationEventRelay>();
+
+        if (eventRelay == null)
+        {
+            eventRelay = currentAnimationAnimator.gameObject.AddComponent<GodCardAnimationEventRelay>();
+        }
+
+        eventRelay.Initialize(this);
+
         currentSignalEmitter = currentAnimationObject.GetComponent<GodCardAnimationSignalEmitter>();
 
         if (currentSignalEmitter == null)
@@ -1544,5 +1554,15 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
         Debug.Log($"[GodCardAnimation] 動畫總長度 = {totalDuration:F2} 秒，Buffer = {animationTimeoutBuffer:F2} 秒，Timeout = {timeout:F2} 秒");
 
         return timeout;
+    }
+
+    public void AnimEvent_HideOtherCanvas()
+    {
+        HideUIForGodAnimation();
+    }
+
+    public void AnimEvent_ShowOtherCanvas()
+    {
+        ShowUIAfterGodAnimation();
     }
 }

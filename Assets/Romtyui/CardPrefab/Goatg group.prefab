@@ -10755,6 +10755,7 @@ GameObject:
   - component: {fileID: 2494865143810742018}
   - component: {fileID: 6358258842011040321}
   - component: {fileID: 7645323139836772709}
+  - component: {fileID: 7107004595601938968}
   - component: {fileID: 2815869056993185965}
   m_Layer: 7
   m_Name: Goatg group
@@ -10834,6 +10835,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GodCardAnimationReferences
   animatedCorruptedCardTemplate: {fileID: 7031325642889257117}
   animatedCardCanvasGroup: {fileID: 0}
+--- !u!114 &7107004595601938968
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8981409995537641472}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fd28fd4cdfe66b41bbd871e8a9960da, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GodCardAnimationEventRelay
 --- !u!225 &2815869056993185965
 CanvasGroup:
   m_ObjectHideFlags: 0
