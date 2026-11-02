@@ -1766,8 +1766,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 540}
-  m_SizeDelta: {x: -1820, y: 100}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &212650080
 MonoBehaviour:
@@ -1787,9 +1787,14 @@ MonoBehaviour:
   root: {fileID: 0}
   endButton: {fileID: 404171100}
   cardSpacing: 130
-  maxHandWidth: 760
-  hoverLift: 40
-  selectedLift: 155
+  maxHandWidth: 900
+  curveHeight: 60
+  angleStep: 6
+  hoverPush: 60
+  hoverScale: 1.2
+  hoverLift: 70
+  selectedLift: 100
+  handZoneTopRatio: 0.34
   ineffectiveAlpha: 0.35
 --- !u!225 &212650081
 CanvasGroup:
@@ -3741,7 +3746,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 794, y: 0}
+  m_AnchoredPosition: {x: 794, y: 120}
   m_SizeDelta: {x: 280, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &404171102
@@ -3907,7 +3912,7 @@ MonoBehaviour:
   dimmer: {fileID: 816323013}
   advanceButton: {fileID: 99592063}
   targetViewPrefab: {fileID: 2935104796966573886, guid: 4bee8ef9c5b5d3a4b99cefb470bd0f0a, type: 3}
-  closeUpSize: {x: 1200, y: 1200}
+  closeUpSize: {x: 750, y: 750}
   closeUpPosition: {x: 0, y: 0}
   charsPerSecond: 40
   systemSpeakerName: "\u203B"
@@ -3919,6 +3924,7 @@ MonoBehaviour:
   emptyContainerFormat: "{0} \u88E1\u9762\u7A7A\u7A7A\u5982\u4E5F\u3002"
   containerOpenedFormat: "\u6253\u958B\u4E86 {0}\u3002"
   advanceOnAnyClick: 1
+  closeUpDimAlpha: 0.9
 --- !u!114 &407060547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8002,7 +8008,6 @@ GameObject:
   - component: {fileID: 816323016}
   - component: {fileID: 816323015}
   - component: {fileID: 816323017}
-  - component: {fileID: 816323018}
   m_Layer: 5
   m_Name: BLACK
   m_TagString: Untagged
@@ -8083,18 +8088,6 @@ MonoBehaviour:
   visibleInStages: 
   alwaysVisible: 0
   useFadeIfAvailable: 1
---- !u!114 &816323018
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 816323013}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 088d61d1f39730e4c967fab6d1fdc0ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Explore.DimmerClickEndsEncounter
 --- !u!1 &819430381
 GameObject:
   m_ObjectHideFlags: 0
@@ -8806,7 +8799,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 530, y: -323.5}
+  m_AnchoredPosition: {x: 0, y: 140}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &874061774
@@ -10930,8 +10923,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 530, y: -180}
-  m_SizeDelta: {x: 860, y: 326}
+  m_AnchoredPosition: {x: 0, y: 180}
+  m_SizeDelta: {x: 1100, y: 360}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1091056595
 MonoBehaviour:

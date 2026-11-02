@@ -7898,8 +7898,9 @@ MonoBehaviour:
     vignetteScale: 1.15
     seconds: 1.1
   - phase: 2
-    dim: 0.5
-    vignette: 0.7
+    dim: 1
+    blacken: 1
+    vignette: 1
     vignetteScale: 1
     seconds: 0.9
   - phase: 3

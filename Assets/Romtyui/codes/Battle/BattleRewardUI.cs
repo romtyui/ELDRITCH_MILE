@@ -25,13 +25,16 @@ public class BattleRewardUI : MonoBehaviour
         Money,
         Weapon,
         Relic,
-        Food
+        Food,
+        //新增時間26/11/02 by TYN：指定好的道具（寶箱開出來的）。ItemData 放在 relic 欄位，領取走 run.AddItem
+        Item
     }
 
     private class RewardRow
     {
         public RewardKind kind;
         public int money;
+        public int count = 1; //新增時間26/11/02 by TYN
         public ItemData relic;
         public ItemData food;
         public List<CardData> choices;
@@ -199,6 +202,44 @@ public class BattleRewardUI : MonoBehaviour
         return OpenWith(null, context, rewardSpec, onCompleted);
     }
 
+    //新增時間26/11/02 by TYN
+    /// <summary>
+    /// 戰鬥外打開獎勵畫面，**內容由呼叫端指定**（寶箱用這個：戰利品表已經抽好了）。
+    /// 畫面與領取流程跟戰鬥同一套；道具走 RunContext.AddItem（武器進牌組、食物滿了跳選擇視窗）。
+    /// </summary>
+    public bool ShowGivenRewards(RunContext context, int money, List<ItemStack> items, Action onCompleted)
+    {
+        if (isOpen || context == null) return false;
+
+        givenMoney = money;
+        givenItems = items;
+        return OpenWith(null, context, null, onCompleted);
+    }
+
+    private int givenMoney;
+    private List<ItemStack> givenItems;
+
+    private void GenerateGivenRewards()
+    {
+        if (givenMoney > 0) rows.Add(new RewardRow { kind = RewardKind.Money, money = givenMoney });
+        if (givenItems == null) return;
+
+        for (int i = 0; i < givenItems.Count; i++)
+        {
+            ItemStack stack = givenItems[i];
+            ItemData item = stack != null ? (database != null ? database.GetById(stack.id) : GameFlowManager.Item(stack.id)) : null;
+
+            if (item == null)
+            {
+                Debug.LogWarning($"[BattleRewardUI] 找不到道具「{stack?.id}」，這一筆不顯示。", this);
+                continue;
+            }
+
+            rows.Add(new RewardRow { kind = RewardKind.Item, relic = item, count = stack.count });
+        }
+    }
+    //新增時間26/11/02 by TYN
+
     private bool OpenWith(BattleManager battleManager, RunContext context, EnemyFormationData formation, Action onCompleted)
     {
     //新增時間26/10/13 by TYN
@@ -227,7 +268,7 @@ public class BattleRewardUI : MonoBehaviour
 
         SetPreferenceVisibility();
         RefreshHeaders();
-        GenerateRewards(formation);
+        if (formation != null) GenerateRewards(formation); else GenerateGivenRewards(); //新增時間26/11/02 by TYN
         CreateEntries();
 
         return true;
@@ -426,10 +467,10 @@ public class BattleRewardUI : MonoBehaviour
             else
             {
                 name = row.relic.Label;
-                icon = row.relic.shelfIcon;
+                icon = row.kind == RewardKind.Item ? row.relic.ShelfIcon : row.relic.shelfIcon; //新增時間26/11/02 by TYN
             }
 
-            string amount = row.kind == RewardKind.Money ? $"+{row.money}" : "+1";
+            string amount = row.kind == RewardKind.Money ? $"+{row.money}" : $"+{row.count}"; //新增時間26/11/02 by TYN
 
             row.view = Instantiate(entryTemplate, entryParent);
             row.view.gameObject.SetActive(false);
@@ -502,6 +543,13 @@ public class BattleRewardUI : MonoBehaviour
             run.AddMoney(row.money);
             CompleteRow(index);
         }
+        //新增時間26/11/02 by TYN
+        else if (row.kind == RewardKind.Item)
+        {
+            run.AddItem(row.relic.id, row.count);
+            CompleteRow(index);
+        }
+        //新增時間26/11/02 by TYN
         else if (row.kind == RewardKind.Food)
         {
             if (row.food != null)

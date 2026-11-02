@@ -13,7 +13,8 @@ namespace EldritchMile.Explore
     /// —— 對應企劃草圖的「A 50 / B 50 / C 50」。
     /// **只在尚未選定主要目標時廣播**（C18①）；選定之後畫面應該聚焦在該目標。
     ///
-    /// 【出牌】拖到目標上放開就是出牌。已選定主要目標時，不論拖到哪都作用在該目標上。
+    /// 【出牌】（2026-11-02）拖出牌區放開就是出牌，不必拖到目標上（範圍見 HandFanLayout.LeftHandZone）。
+    /// 放回牌區 ＝ 取消。場上有多個目標又沒選定主要目標時，才看放開的位置打中誰。
     /// </summary>
     [RequireComponent(typeof(CanvasGroup))]
     public class ExploreCardDrag : MonoBehaviour,
@@ -21,11 +22,11 @@ namespace EldritchMile.Explore
         IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         [Header("拖曳")]
-        [Tooltip("拖超過這個距離才算出牌，避免手抖誤觸")]
-        public float playThresholdPixels = 80f;
-
         [Tooltip("拖曳時的縮放")]
-        public float dragScale = 0.9f;
+        public float dragScale = 1f;
+
+        [Tooltip("拖出牌區（放開就會出牌）時再放大幾倍 —— 告訴玩家「現在放開就打出去了」")]
+        public float armedScale = 1.12f;
 
         // 「被選取時上浮多少」屬於排版參數，跟 hoverLift 一起放在 ExploreHandUI ——
         // 排版是它在做，參數散在兩個物件上會變成調一個要開 prefab、調另一個要開場景。
@@ -50,11 +51,10 @@ namespace EldritchMile.Explore
             visualRoot = root;
         }
 
-        /// <summary>設定上浮距離。只動視覺層，可點區域維持原位。</summary>
-        public void SetLift(float lift)
+        /// <summary>被指到／選取時浮起來。只動視覺層，可點區域維持原位。</summary>
+        public void SetPose(bool active, float hoverY, float hoverScale)
         {
-            if (visualRoot == null) return;
-            visualRoot.anchoredPosition = new Vector2(0f, lift);
+            EldritchMile.UI.HandFanLayout.PoseVisual(visualRoot, rect, active, hoverY, hoverScale);
         }
 
         private ExploreHandUI hand;
@@ -62,10 +62,7 @@ namespace EldritchMile.Explore
         private CanvasGroup canvasGroup;
         private Canvas rootCanvas;
 
-        private Vector2 startAnchoredPos;
-        private Vector2 pointerDownPos;
         private Transform startParent;
-        private int startSiblingIndex;
 
         private void Awake()
         {
@@ -112,6 +109,7 @@ namespace EldritchMile.Explore
         {
             // 拖曳結束時 Unity 也會送 click，要濾掉，否則放開牌會順便把它選起來
             if (eventData.dragging) return;
+            if (eventData.button != PointerEventData.InputButton.Left) return;   // 右鍵是離開
 
             hand?.ToggleSelect(this);
         }
@@ -157,10 +155,7 @@ namespace EldritchMile.Explore
 
             IsDragging = true;
             hand?.NotifyDragBegin(this);   // 記錄「誰在拖」＋ 手牌區維持在最上層
-            pointerDownPos = eventData.position;
-            startAnchoredPos = rect.anchoredPosition;
             startParent = transform.parent;
-            startSiblingIndex = transform.GetSiblingIndex();
 
             // 移到專用的拖曳層（永遠在 Canvas 最上層），並讓 raycast 穿透自己才打得到底下的目標。
             //
@@ -174,6 +169,9 @@ namespace EldritchMile.Explore
             transform.SetAsLastSibling();
             canvasGroup.blocksRaycasts = false;
             transform.localScale = Vector3.one * dragScale;
+            transform.localRotation = Quaternion.identity;
+            SetPose(false, 0f, 1f);
+            rect.position = eventData.position;
 
             // 拖曳中持續顯示預覽，讓玩家看得到自己正拖向哪個目標
             hand?.ShowPreviewFor(Card.data);
@@ -184,10 +182,17 @@ namespace EldritchMile.Explore
             if (!IsDragging) return;
             rect.position = eventData.position;
 
-            // 每幀更新「放開會打到誰」。這是拖曳時唯一能讓玩家知道自己瞄到哪的線索 ——
-            // 卡片跟著游標走，目標又可能被對話框壓住一半，光看位置判斷不出來。
+            // 每幀更新「放開會不會出牌、打到誰」。這是拖曳時唯一能讓玩家知道自己瞄到哪的線索
+            bool outside = LeftZone(eventData);
+            transform.localScale = Vector3.one * (outside ? dragScale * armedScale : dragScale);
+
             DialogueEncounterController e = DialogueEncounterController.Instance;
-            if (e != null) e.SetAimed(FindTargetUnder(eventData));
+            if (e != null) e.SetAimed(outside ? FindTargetUnder(eventData) : null);
+        }
+
+        private bool LeftZone(PointerEventData eventData)
+        {
+            return hand != null && EldritchMile.UI.HandFanLayout.LeftHandZone(eventData.position, hand.handZoneTopRatio);
         }
 
         public void OnEndDrag(PointerEventData eventData)
@@ -199,9 +204,6 @@ namespace EldritchMile.Explore
             HoverPreviewBroadcaster.Instance?.End();
             DialogueEncounterController.Instance?.ClearAimed();
 
-            bool draggedFarEnough =
-                Vector2.Distance(eventData.position, pointerDownPos) >= playThresholdPixels;
-
             // ⚠️⚠️ 找目標**必須在還原 blocksRaycasts 之前**。
             //
             // 拖曳中的卡片就跟在游標底下，而且住在永遠最上層的 __DragLayer。
@@ -211,7 +213,7 @@ namespace EldritchMile.Explore
             // 症狀非常有欺騙性：拖曳途中的瞄準回饋是好的（那時 blocksRaycasts 還是 false），
             // 只有放開的那一瞬間失效，看起來像「目標沒反應」而不是「找錯人」。
             // 而且它對**所有**目標都失效，不是只有選項。
-            IProbabilityTarget target = draggedFarEnough ? FindTargetUnder(eventData) : null;
+            IProbabilityTarget target = LeftZone(eventData) ? FindTargetUnder(eventData) : null;
 
             canvasGroup.blocksRaycasts = true;
 
@@ -223,8 +225,8 @@ namespace EldritchMile.Explore
         /// <summary>找放開位置底下的判定目標。UI 與世界物件都要找。</summary>
         private IProbabilityTarget FindTargetUnder(PointerEventData eventData)
         {
-            // 已選定主要目標時，出牌一律作用在它身上（C18①），不必看放在哪
-            if (hand != null && hand.PrimaryTarget != null) return hand.PrimaryTarget;
+            // 已選定主要目標、或場上只有一個目標（寶箱）時，出牌一律作用在它身上，不必看放在哪
+            if (hand != null && hand.SoleTarget != null) return hand.SoleTarget;
 
             // UI 目標。
             //
@@ -275,9 +277,8 @@ namespace EldritchMile.Explore
         public void ReturnToHand()
         {
             if (startParent != null) transform.SetParent(startParent, false);
-            transform.SetSiblingIndex(startSiblingIndex);
-            rect.anchoredPosition = startAnchoredPos;
             transform.localScale = Vector3.one;
+            hand?.Relayout();   // 位置、旋轉、疊放順序都由手牌區排回去
         }
     }
 }

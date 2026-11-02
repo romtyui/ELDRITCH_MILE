@@ -31,26 +31,21 @@ namespace EldritchMile.Explore
                  "（2026-10-19 評圖：進到探索場景不再需要顯示場景文字敘述）文字留在房間資料裡，要再打開勾這一格就好")]
         public bool showEntryText = false;
 
-        [Tooltip("要判定才能開的東西（寶箱、上鎖的櫃子）點了就**直接當作成功**，跳過描述與打牌，顯示拿到什麼。\n" +
-                 "（2026-10-29 組員回報）取消勾選就回到打牌開鎖")]
-        public bool autoOpenChecks = true;
-
         [Header("離開 (C13/C14)")]
         [Tooltip("ExitTag 上的 Button。\n" +
                  "兩段式確認由「hover 滑下提示 → 點擊跳出確認面板」構成，" +
                  "所以標籤本身只需要單擊，不必再做二次點擊")]
         public Button exitTag;
 
-        [Tooltip("和寶箱打牌時，點空白處（不是對象大圖、對話框、手牌）就結束打牌，並藏起「結束」鍵。\n" +
-                 "（2026-09-15）判定掛在對話框後面的壓黑層上，見 DimmerClickEndsEncounter")]
+        [Tooltip("寶箱畫面按右鍵就離開，並藏起「結束」鍵（2026-11-02 左鍵改右鍵）。見 Update")]
         public bool clickOutsideEndsEncounter = true;
 
-        [Tooltip("開箱成功後，再點一下對話框就結算（播出拿到什麼）並離開寶箱畫面。\n" +
-                 "（2026-09-15）跟事件、對話的「點對話框就離開」同一套")]
-        public bool settleByDialogueClick = true;
+        [Header("開箱結算（2026-11-02）")]
+        [Tooltip("Romtyui 戰鬥結算那個畫面的複製品（在 ExploreUI/ChestRewards）。留空就退回對話框唸出拿到什麼")]
+        public EldritchMile.UI.AltarRewardBridge rewardScreen;
 
-        [Tooltip("開箱成功之後多久內的點擊不算數（秒）—— 成功那一刻隨手一點不會直接跳過結果")]
-        [Min(0f)] public float settleDismissGrace = 0.35f;
+        [Tooltip("開鎖成功後停多久才跳結算 —— 讓玩家看到箱子彈完、讀到「鎖鬆開了」")]
+        [Min(0f)] public float settleDelaySeconds = 0.9f;
 
         [Tooltip("離開前的確認面板。\n" +
                  "若上面掛了 FadePanel 就會用淡入（與 MapBanner 外觀一致），否則直接 SetActive")]
@@ -418,22 +413,13 @@ namespace EldritchMile.Explore
                 return;
             }
 
-            if (Encounter.IsActive) return;
-
-            if (!string.IsNullOrEmpty(promptText))
-            {
-                PopupService.Instance?.ShowText(promptText);
-            }
+            if (Encounter.IsActive || awaitingHand || settling) return;
 
             // ⚠️ **手牌檢查一定要在動到對話框之前。**
             //
-            // 底下會做兩件不可逆的事：把對話框設成 HoldOpen（點擊只推進文字、不關閉），
-            // 以及生出對象大圖。等那兩件做完才發現沒牌的話，畫面上會留下
-            // 「一個關不掉的框 ＋ 一張寶箱近照」，但沒有手牌、沒有環節、沒有結束鍵 ——
-            // 玩家完全卡死。之前就是這樣。
-            //
-            // 檢查放在 promptText 之後是刻意的：容器本身的描述照樣讀得到，
-            // 後面再接一句「沒牌了」，玩家知道發生什麼事。
+            // 底下會做兩件不可逆的事：把對話框設成 HoldOpen，以及生出對象大圖。
+            // 等那兩件做完才發現沒牌的話，畫面上會留下一張關不掉的寶箱近照，
+            // 沒有手牌、沒有環節、沒有結束鍵 —— 玩家完全卡死。之前就是這樣。
             EnsureRoomHand();
 
             var hand = new List<CardInstanceExplore>(roomHand);
@@ -456,32 +442,114 @@ namespace EldritchMile.Explore
                 return;
             }
 
-            // 在對話框裡生成對象化身：卡片打在它身上、機率顯示在它頭上。
-            // 世界裡的寶箱維持狀態真相，但不再是拖曳目標 —— 它可能被遮住或位置不佳。
-            IProbabilityTarget encounterTarget = target;
+            // ── 第一次點：壓黑＋近景圖，沒有對話框也沒有手牌（2026-11-02）──
+            //
+            // 世界裡的寶箱維持狀態真相，大圖是它的化身：機率數字顯示在上面、Q 彈也在上面。
+            currentEncounterTarget = target;
+            SetExitVisible(false);
 
             DialogueBoxUI box = PopupService.Instance != null ? PopupService.Instance.dialogueBox : null;
             if (box != null)
             {
-                box.HoldOpen = true;   // 打牌期間點擊只推進文字，不關閉對話框
+                box.HoldOpen = true;   // 打牌途中若有訊息（付不起之類）跳出來，點掉也不會把大圖收走
 
-                EncounterTargetView view = box.SpawnTargetView(target, closeUp);
-                if (view != null)
+                closeUpView = box.ShowTargetOnly(target, closeUp);
+                if (closeUpView != null)
                 {
-                    encounterTarget = view;
-
                     // 兩段式出牌的第二段：點大圖 = 把選取的卡打在它身上。
                     // 世界裡的寶箱現在被壓黑層擋著，點不到也不該被點。
-                    view.OnClicked += HandleTargetViewClicked;
+                    closeUpView.OnClicked += HandleTargetViewClicked;
+                    closeUpView.ShowResult(promptText);
+
+                    awaitingHand = true;
+                    return;
                 }
             }
 
-            // 手牌已經在上面備妥了（`EnsureRoomHand()`）。
+            BeginCardPhase();   // 大圖生不出來（少了 prefab）：跳過這一步，至少打得了牌
+        }
+
+        // 第一次點之後，等第二次點才發牌
+        private bool awaitingHand;
+
+        // 開鎖成功到結算畫面關掉這段期間。手牌已收，不接受右鍵
+        private bool settling;
+
+        private EncounterTargetView closeUpView;
+
+        /// <summary>
+        /// 寶箱畫面的滑鼠：等發牌時左鍵＝發牌、右鍵＝離開；打牌時右鍵＝離開。
+        ///
+        /// 【為什麼不掛在壓黑層的 OnPointerClick】近景圖和手牌區都蓋在壓黑層上面，
+        /// 寶箱佔了畫面正中央一大塊，右鍵按在那上面沒反應會像壞掉。這裡全畫面都算。
+        /// </summary>
+        private void Update()
+        {
+            UnityEngine.InputSystem.Mouse mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouse == null) return;
+
+            if (awaitingHand)
+            {
+                if (mouse.rightButton.wasPressedThisFrame)
+                {
+                    awaitingHand = false;
+                    FinishCloseUp();
+                }
+                else if (mouse.leftButton.wasPressedThisFrame && !PointerOnOtherWindow(mouse.position.ReadValue()))
+                {
+                    awaitingHand = false;
+                    BeginCardPhase();
+                }
+                return;
+            }
+
+            if (!mouse.rightButton.wasPressedThisFrame) return;
+            if (settling || !clickOutsideEndsEncounter || Encounter == null || !Encounter.IsActive) return;
+
+            // 正在問「要不要付代價重來」時，那個面板要自己回答
+            if (EncounterUIController.Instance != null && EncounterUIController.Instance.IsAsking) return;
+
+            ExploreHandUI hand = HandUI;
+            if (hand != null && hand.IsAnyCardDragging) return;
+
+            // 選著牌時第一下只放下那張牌：選了牌又不小心按到，直接離開代價太大
+            if (hand != null && hand.SelectedCard != null)
+            {
+                hand.ToggleSelect(hand.SelectedCard);
+                return;
+            }
+
+            Encounter.EndEncounter();
+        }
+
+        /// <summary>點在蓋在對話框上面的視窗（HUD、卡冊、選單）上。那些點擊不是給寶箱的。</summary>
+        private bool PointerOnOtherWindow(Vector2 screenPos)
+        {
+            var es = UnityEngine.EventSystems.EventSystem.current;
+            DialogueBoxUI box = PopupService.Instance != null ? PopupService.Instance.dialogueBox : null;
+            if (es == null || box == null) return false;
+
+            var hits = new List<UnityEngine.EventSystems.RaycastResult>();
+            es.RaycastAll(new UnityEngine.EventSystems.PointerEventData(es) { position = screenPos }, hits);
+            if (hits.Count == 0) return false;
+
+            Canvas mine = box.GetComponentInParent<Canvas>();
+            Canvas theirs = hits[0].gameObject.GetComponentInParent<Canvas>();
+            return mine != null && theirs != null && theirs.rootCanvas != mine.rootCanvas
+                   && theirs.rootCanvas.sortingOrder > mine.rootCanvas.sortingOrder;
+        }
+
+        /// <summary>第二次點：發牌。</summary>
+        private void BeginCardPhase()
+        {
             // ⚠️ 一間房只抽一次牌。**換去打別的容器不會重抽。**
             //
             // 重抽會讓玩家一直換一手更好的屬性組合去試，逐次衰減就完全沒有代價了。
             // 舊做法是把手牌暫存在「同一個目標」上，但玩家繞去別的容器再回來就破功。
-            currentEncounterTarget = target;
+            var hand = new List<CardInstanceExplore>(roomHand);
+
+            IProbabilityTarget encounterTarget = closeUpView != null ? closeUpView : currentEncounterTarget;
+            closeUpView?.ShowResult(null);
 
             // 先開手牌區再 Begin —— 手牌區在 Start 才訂閱事件，
             // 順序反了就會漏掉第一次的 OnHandChanged，卡片畫不出來。
@@ -620,16 +688,89 @@ namespace EldritchMile.Explore
             pendingLoot.Clear();
             if (items != null) pendingLoot.AddRange(items);
 
-            // ── 開箱成功 → 再點一下對話框就結算並離開寶箱畫面（2026-09-15）──
-            //
-            // 跟事件、對話的「點對話框就離開」同一套（PopupService.ArmDismiss）：
-            // 保護期內的誤觸不算、打字中的點擊只快轉；文字播完後的下一次點擊才結束打牌，
-            // HandleEncounterEnded 會接著播出拿到什麼。
-            //
-            // ⚠️ 只在**成功**這個時間點武裝。沒成功的話打牌還要繼續（蓄意失敗是合法策略），
-            //    點對話框只是推進文字，不能把整個環節結束掉。
-            if (settleByDialogueClick && Encounter != null && Encounter.IsActive && PopupService.Instance != null)
-                PopupService.Instance.ArmDismiss(settleDismissGrace, EndEncounter);
+            // 箱子開了，手上的牌對它沒有用了
+            StartCoroutine(EndEncounterAfterDelay());
+        }
+
+        private IEnumerator EndEncounterAfterDelay()
+        {
+            HandUI?.Hide();
+            yield return new WaitForSecondsRealtime(settleDelaySeconds);
+            EndEncounter();
+        }
+
+        // ==========================================
+        // 開箱結算（2026-11-02）
+        // ==========================================
+
+        public bool HasRewardScreen => rewardScreen != null && run != null;
+
+        /// <summary>
+        /// 打開 Romtyui 的結算畫面領東西。寶箱開了就走這裡（打牌開的、不必判定的、用鑰匙開的都一樣）。
+        ///
+        /// 【道具什麼時候入袋】玩家在畫面上按領取的時候，跟戰鬥一樣；放棄就是沒拿到。
+        /// </summary>
+        /// <param name="onDone">結算畫面關掉之後。寶箱在這時才回報房間 —— 不然「房間清空」的文字會蓋在開箱途中。</param>
+        public void SettleChest(int money, List<ItemStack> items, System.Action onDone)
+        {
+            settling = true;
+            SetExitVisible(false);
+            HandUI?.Hide();
+            StartCoroutine(SettleRoutine(money, items, onDone));
+        }
+
+        private IEnumerator SettleRoutine(int money, List<ItemStack> items, System.Action onDone)
+        {
+            if (Encounter != null && Encounter.IsActive)
+            {
+                yield return new WaitForSecondsRealtime(settleDelaySeconds);
+                Encounter.EndEncounter(false);
+            }
+
+            rewardScreen.OpenGiven(run, money, items, delegate
+            {
+                settling = false;
+                FinishCloseUp();
+                onDone?.Invoke();
+            });
+        }
+
+        /// <summary>寶箱畫面上方那行字。沒有大圖時回 false，呼叫端自己找地方講。</summary>
+        public bool ShowCloseUpLine(string line)
+        {
+            if (closeUpView == null) return false;
+
+            closeUpView.ShowResult(line);
+            return true;
+        }
+
+        /// <summary>收掉寶箱畫面，ExitTag 回來。</summary>
+        private void FinishCloseUp(bool clearViews = true)
+        {
+            closeUpView = null;
+            currentEncounterTarget = null;
+
+            DialogueBoxUI box = PopupService.Instance != null ? PopupService.Instance.dialogueBox : null;
+            if (box != null && clearViews)
+            {
+                box.HoldOpen = false;
+                box.ClearTargetViews();
+            }
+
+            // 結束打牌就收掉對話框 —— 但等排隊中的訊息播完再收，不會把玩家正在讀的最後一句截斷
+            PopupService.Instance?.CloseWhenDrained();
+
+            SetExitVisible(true);
+        }
+
+        /// <summary>ExitTag：進寶箱畫面時收起來，打完牌或右鍵離開才回來。</summary>
+        private void SetExitVisible(bool visible)
+        {
+            EldritchMile.UI.SharedExitUI exit = EldritchMile.UI.SharedExitUI.Instance;
+            if (exit == null) return;
+
+            if (visible) exit.ShowWithConfirm(LeaveFromSharedExit);
+            else exit.Hide();
         }
 
         private void HandleTargetViewClicked(EncounterTargetView view)
@@ -728,16 +869,21 @@ namespace EldritchMile.Explore
         {
             if (Encounter == null) return;
 
-            // 不管是點對話框、點空白處、EXIT 還是手牌用盡結束的，都把「點對話框就結算」的武裝解掉 ——
-            // 殘留的話，下一次打開對話框的第一下會被當成結算吃掉
-            PopupService.Instance?.CancelDismiss();
-
             Encounter.OnEncounterEnded -= HandleEncounterEnded;
 
             // ⚠️ 一定要清掉。DialogueEncounterController 常駐場景，而本控制器住在
             //    Stage prefab 裡、換環節就被銷毀 —— 留著的話下一個環節觸發手牌用盡時，
             //    會呼叫到已銷毀物件上的方法。
             Encounter.HandExhaustedInterceptor = null;
+
+            // ⚠️ 大圖要在下面通知結案之前收掉：結案那句話會帶特寫圖開對話框，
+            //    順序反過來的話那張特寫會被 ClearTargetViews 一起清掉
+            DialogueBoxUI box = PopupService.Instance != null ? PopupService.Instance.dialogueBox : null;
+            if (box != null && !settling)
+            {
+                box.HoldOpen = false;
+                box.ClearTargetViews();
+            }
 
             // 還有手牌沒出完 = 玩家按了結束中途離開 → 把剩下的存起來。
             // 同一個目標再進來時接續使用，避免用「結束再點一次」重抽一手更好的牌。
@@ -762,8 +908,6 @@ namespace EldritchMile.Explore
                 currentEncounterTarget?.OnAttemptsExhausted();
             }
 
-            currentEncounterTarget = null;
-
             // ⚠️ 還原「結束」鍵 —— 手牌區是場景常駐的，對話節點的打牌還要用它
             HandUI?.SetEndButtonVisible(true);
             HandUI?.Hide();
@@ -776,17 +920,14 @@ namespace EldritchMile.Explore
                 pendingLoot.Clear();
             }
 
-            // 解除 HoldOpen，對話框才收得掉；對象大圖也一併移除
-            DialogueBoxUI box = PopupService.Instance != null ? PopupService.Instance.dialogueBox : null;
-            if (box != null)
-            {
-                box.HoldOpen = false;
-                box.ClearTargetViews();
-            }
+            // Q13 暫行做法：環節結束就把剩下的手牌棄掉，下次重抽
+            if (explorationDeck != null) explorationDeck.DiscardHand();
 
-            // 結束打牌就收掉對話框 —— 但等排隊中的訊息（成功/失敗的後續）播完再收，
-            // 不會把玩家正在讀的最後一句截斷。內容是空的就立刻收。
-            PopupService.Instance?.CloseWhenDrained();
+            // 開箱成功：近景圖留著當結算畫面的背景，畫面關掉才收（SettleChest）
+            if (settling) return;
+
+            // 大圖上面已經收了，再清一次會把結案那句話帶的特寫圖一起清掉
+            FinishCloseUp(false);
 
             // 【關鍵】按「結束」本身就相當於在對話框上點一下：
             //   · 成功 → 目前顯示「鎖開了」，推進一次就接到「獲得了…」
@@ -800,9 +941,6 @@ namespace EldritchMile.Explore
             //    （SkipTyping → Hide → Drain 到下一則），玩家根本看不到成功或失敗，
             //    畫面直接變成物品結算。那一則要留著等玩家自己點。
             if (Encounter.EndedByPlayer) box?.AdvanceImmediate();
-
-            // Q13 暫行做法：環節結束就把剩下的手牌棄掉，下次重抽
-            if (explorationDeck != null) explorationDeck.DiscardHand();
         }
 
         // ==========================================

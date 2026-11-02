@@ -106,6 +106,8 @@ namespace EldritchMile.Explore
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            if (eventData.button != PointerEventData.InputButton.Left) return;   // 右鍵是離開寶箱畫面
+
             // 兩段式出牌的第二段：手上有選取的卡就是要打在這，
             // 不是要執行這個物件本來的互動（例如又跳一次「上了鎖」的提示）。
             if (stage != null && this is IProbabilityTarget target &&

@@ -31,22 +31,37 @@ namespace EldritchMile.Explore
         [Tooltip("整個手牌區的開關對象（含結束按鈕等）。留空則使用自身")]
         public GameObject root;
 
-        [Tooltip("「結束打牌」那顆按鈕。探索改成點空白處離開之後會把它藏起來（見 DimmerClickEndsEncounter）")]
+        [Tooltip("「結束打牌」那顆按鈕。寶箱畫面右鍵就能離開，所以會把它藏起來（見 ExploreStageController.Update）")]
         public GameObject endButton;
 
-        [Header("排版")]
+        [Header("排版（畫面正下方的扇形，跟戰鬥同一套，見 HandFanLayout）")]
         [Tooltip("卡片間距")]
-        public float cardSpacing = 140f;
+        public float cardSpacing = 130f;
 
         [Tooltip("整排手牌的最大寬度。超過會自動壓縮間距")]
         public float maxHandWidth = 900f;
 
-        [Tooltip("hover 時卡片上浮的距離")]
-        public float hoverLift = 40f;
+        [Tooltip("兩側下彎多少。戰鬥是 60")]
+        public float curveHeight = 60f;
 
-        [Tooltip("被選取（兩段式出牌的第一段）時上浮的距離。\n" +
+        [Tooltip("相鄰兩張差幾度。戰鬥是 6")]
+        public float angleStep = 6f;
+
+        [Tooltip("滑上去時兩邊的牌讓開多遠")]
+        public float hoverPush = 60f;
+
+        [Tooltip("滑上去時放大幾倍")]
+        public float hoverScale = 1.2f;
+
+        [Tooltip("滑上去時浮到哪個高度（Hand Root 座標）")]
+        public float hoverLift = 70f;
+
+        [Tooltip("被選取（兩段式出牌的第一段）時浮到哪個高度。\n" +
                  "要明顯大於 Hover Lift，否則玩家分不出「滑過」與「已選取待命」")]
-        public float selectedLift = 70f;
+        public float selectedLift = 100f;
+
+        [Tooltip("牌區的上緣（佔畫面高度的比例）。拖過這條線放開就是出牌，見 HandFanLayout.LeftHandZone")]
+        [Range(0.1f, 0.8f)] public float handZoneTopRatio = 0.34f;
 
         [Header("屬性無效的視覺 (C17)")]
         [Tooltip("對當前目標屬性完全無效（顯示 ✕）的手牌要壓多暗。\n\n" +
@@ -66,6 +81,19 @@ namespace EldritchMile.Explore
         public ExploreCardDrag SelectedCard { get; private set; }
 
         public IProbabilityTarget PrimaryTarget => encounter != null ? encounter.PrimaryTarget : null;
+
+        /// <summary>出牌不必瞄準時的對象：已選定的主要目標，或場上唯一的目標（寶箱）。多個目標又沒選定時是 null。</summary>
+        public IProbabilityTarget SoleTarget
+        {
+            get
+            {
+                if (encounter == null) return null;
+                if (encounter.PrimaryTarget != null) return encounter.PrimaryTarget;
+
+                IReadOnlyList<IProbabilityTarget> targets = encounter.Targets;
+                return targets != null && targets.Count == 1 ? targets[0] : null;
+            }
+        }
 
         /// C18①：尚未選定主要目標時才廣播全選項預覽
         public bool ShouldBroadcastPreview => encounter != null && encounter.ShouldBroadcastPreview;
@@ -265,35 +293,41 @@ namespace EldritchMile.Explore
         }
 
         /// <summary>
-        /// 水平置中排列。**排版規則走共用的 <see cref="EldritchMile.UI.HandFanLayout"/>** ——
+        /// 扇形排列。**排版規則走共用的 <see cref="EldritchMile.UI.HandFanLayout"/>** ——
         /// 機率對話的手牌用的是同一支，兩邊才不會又長得不一樣。
         ///
-        /// 這裡只留「哪一張要浮多高」，因為那是這個環節自己的狀態
-        /// （選取優先於 hover —— 選取是持續狀態，hover 只是滑過）。
+        /// 這裡只留「哪一張要浮起來」，因為那是這個環節自己的狀態
+        /// （選取優先於 hover —— 選取是持續狀態，hover 只是滑過）。拖曳中的牌不參與排列。
         /// </summary>
         private void Layout()
         {
-            int n = spawned.Count;
-            if (n == 0) return;
+            ExploreCardDrag active = SelectedCard != null ? SelectedCard : hovered;
+            var cards = new List<ExploreCardDrag>(spawned.Count);
+            var rects = new List<RectTransform>(spawned.Count);
+            int activeIndex = -1;
 
-            var rects = new List<RectTransform>(n);
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < spawned.Count; i++)
             {
-                rects.Add(spawned[i] != null ? spawned[i].GetComponent<RectTransform>() : null);
+                ExploreCardDrag c = spawned[i];
+                if (c == null || c == DraggingCard) continue;
+
+                if (c == active) activeIndex = rects.Count;
+                cards.Add(c);
+                rects.Add(c.GetComponent<RectTransform>());
             }
 
-            EldritchMile.UI.HandFanLayout.Arrange(rects, cardSpacing, maxHandWidth);
+            EldritchMile.UI.HandFanLayout.ArrangeFan(rects, activeIndex, cardSpacing, maxHandWidth, curveHeight, angleStep, hoverPush);
 
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < cards.Count; i++)
             {
-                if (spawned[i] == null) continue;
-
-                float lift = 0f;
-                if (spawned[i] == SelectedCard) lift = selectedLift;
-                else if (spawned[i] == hovered) lift = hoverLift;
-
-                spawned[i].SetLift(lift);
+                cards[i].SetPose(i == activeIndex, cards[i] == SelectedCard ? selectedLift : hoverLift, hoverScale);
             }
+        }
+
+        /// <summary>拖回牌區之後重新排一次。</summary>
+        public void Relayout()
+        {
+            Layout();
         }
 
         // ==========================================
@@ -383,7 +417,9 @@ namespace EldritchMile.Explore
         public void NotifyDragBegin(ExploreCardDrag card)
         {
             DraggingCard = card;
+            hovered = null;
             SetLayerLocked(true);
+            Layout();
         }
 
         public void NotifyDragEnd(ExploreCardDrag card)

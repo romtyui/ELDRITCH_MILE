@@ -23,6 +23,12 @@ namespace EldritchMile.UI.ProbabilityDialogue
         [Tooltip("目前成功機率。文字格式見 Probability Format")]
         public TextMeshProUGUI probabilityText;
 
+        [Tooltip("進度條的填色（選項下方那條）。靠 anchorMax.x 伸長，不需要 Filled 圖")]
+        public RectTransform barFill;
+
+        [Tooltip("進度條的預覽段：手上指著的牌打出去會到哪裡。畫在填色底下")]
+        public RectTransform barPreview;
+
         [Tooltip("色點的容器。**色點會依這個回答吃的屬性動態生成**，\n" +
                  "所以這裡放一個空的 Layout Group 就好，不用預先擺點")]
         public RectTransform colorDotRoot;
@@ -115,6 +121,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
             if (labelText != null) labelText.text = option?.source?.text ?? "";
             SetProbabilityImmediate(option != null ? option.currentProbability : 0);
             BuildDots(option, colorLookup);
+            TintBar(option, colorLookup);
             ApplyTint(interactable ? normalTint : disabledTint);
 
             gameObject.SetActive(true);
@@ -146,17 +153,65 @@ namespace EldritchMile.UI.ProbabilityDialogue
             }
         }
 
+        /// <summary>進度條的顏色跟色點同一個系統；吃多種屬性的回答取混色。</summary>
+        private void TintBar(ProbabilityDialogueSession.RuntimeOption option,
+                             Func<EldritchMile.Core.ExploreAttribute, Color> colorLookup)
+        {
+            Color c = Color.white;
+            List<EldritchMile.Core.ExploreAttribute> attrs = option?.source?.acceptedAttributes;
+
+            if (colorLookup != null && attrs != null && attrs.Count > 0)
+            {
+                c = Color.black;
+                for (int i = 0; i < attrs.Count; i++) c += colorLookup(attrs[i]);
+                c /= attrs.Count;
+                c.a = 1f;
+            }
+
+            SetBarColor(barFill, c);
+            c.a = 0.6f;
+            SetBarColor(barPreview, c);
+        }
+
+        private static void SetBarColor(RectTransform bar, Color c)
+        {
+            Image img = bar != null ? bar.GetComponent<Image>() : null;
+            if (img != null) img.color = c;
+        }
+
+        private static void SetBar(RectTransform bar, int percent)
+        {
+            if (bar != null) bar.anchorMax = new Vector2(Mathf.Clamp01(percent / 100f), 1f);
+        }
+
+        private int currentPercent;
+
         // ==========================================
         public void SetProbabilityImmediate(int value)
         {
             if (countUp != null) { StopCoroutine(countUp); countUp = null; }
+            currentPercent = value;
             if (probabilityText != null) probabilityText.text = string.Format(probabilityFormat, value);
+            SetBar(barFill, value);
+            SetBar(barPreview, value);
+        }
+
+        /// <summary>
+        /// 手上指著的牌打出去會到多少：進度條的預覽段伸長、數字換成打出後的。null ＝ 收掉預覽。
+        /// </summary>
+        public void SetPreview(int? value)
+        {
+            int shown = value ?? currentPercent;
+            SetBar(barPreview, shown);
+            if (probabilityText != null && countUp == null) probabilityText.text = string.Format(probabilityFormat, shown);
         }
 
         /// <summary>機率變化的動畫（規格 §10.1 probabilityChangeEffect）。</summary>
         public void AnimateProbability(int before, int after)
         {
             if (probabilityText == null) return;
+
+            currentPercent = after;
 
             if (countUpSeconds <= 0f || before == after)
             {
@@ -176,9 +231,13 @@ namespace EldritchMile.UI.ProbabilityDialogue
                 t += Time.unscaledDeltaTime;
                 int v = Mathf.RoundToInt(Mathf.Lerp(from, to, Mathf.Clamp01(t / countUpSeconds)));
                 probabilityText.text = string.Format(probabilityFormat, v);
+                SetBar(barFill, v);
+                SetBar(barPreview, v);
                 yield return null;
             }
             probabilityText.text = string.Format(probabilityFormat, to);
+            SetBar(barFill, to);
+            SetBar(barPreview, to);
             countUp = null;
         }
 
@@ -243,6 +302,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
         public void SetDisabled()
         {
             interactable = false;
+            SetBarColor(barFill, disabledTint);
+            SetBar(barPreview, currentPercent);
 
             if (flashRoutine != null) { dimAfterFlash = true; return; }
 

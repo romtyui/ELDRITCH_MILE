@@ -63,6 +63,10 @@ namespace EldritchMile.UI
             [Tooltip("平塗層的濃度。0 = 不壓暗，1 = 全黑")]
             [Range(0f, 1f)] public float dim = 0.4f;
 
+            [Tooltip("底色往純黑靠多少。Base Tint 在畫面上會比色碼亮很多（Linear 專案的 UI 頂點色不會轉換），" +
+                     "#140D08 實際看起來是灰褐色。要真的全黑就把這格拉到 1")]
+            [Range(0f, 1f)] public float blacken = 0f;
+
             [Tooltip("暗角的濃度")]
             [Range(0f, 1f)] public float vignette = 0.6f;
 
@@ -82,7 +86,7 @@ namespace EldritchMile.UI
         {
             new Step { phase = Phase.Hidden,   dim = 0f,    vignette = 0f,    vignetteScale = 1.3f, seconds = 0.6f },
             new Step { phase = Phase.Reaching, dim = 0.36f, vignette = 0.55f, vignetteScale = 1.15f, seconds = 1.1f },
-            new Step { phase = Phase.Asking,   dim = 0.5f,  vignette = 0.7f,  vignetteScale = 1f,    seconds = 0.9f },
+            new Step { phase = Phase.Asking,   dim = 1f,    blacken = 1f, vignette = 1f,   vignetteScale = 1f,    seconds = 0.9f },
             new Step { phase = Phase.Picking,  dim = 0.46f, vignette = 0.8f,  vignetteScale = 0.86f, seconds = 1.2f },
             new Step { phase = Phase.Granting, dim = 0.62f, vignette = 0.88f, vignetteScale = 0.78f, seconds = 0.5f },
             new Step { phase = Phase.Leaving,  dim = 0f,    vignette = 0f,    vignetteScale = 1.3f, seconds = 0.7f },
@@ -114,7 +118,7 @@ namespace EldritchMile.UI
         public Image vignetteLayer;
 
         private Step current;          // 目前趨近的目標
-        private float dimNow, vigNow, scaleNow;
+        private float dimNow, blackNow, vigNow, scaleNow;
         private Color accent = Color.white;
         private RectTransform host;
         private Texture2D generated;
@@ -127,6 +131,7 @@ namespace EldritchMile.UI
 
             current = Find(Phase.Hidden);
             dimNow = current.dim;
+            blackNow = current.blacken;
             vigNow = current.vignette;
             scaleNow = current.vignetteScale;
             Push();
@@ -159,6 +164,7 @@ namespace EldritchMile.UI
             float k = 1f - Mathf.Exp(-Time.unscaledDeltaTime / Mathf.Max(0.01f, current.seconds));
 
             dimNow = Mathf.Lerp(dimNow, current.dim, k);
+            blackNow = Mathf.Lerp(blackNow, current.blacken, k);
             vigNow = Mathf.Lerp(vigNow, current.vignette, k);
             scaleNow = Mathf.Lerp(scaleNow, current.vignetteScale, k);
 
@@ -172,11 +178,13 @@ namespace EldritchMile.UI
                 ? Mathf.Sin(Time.unscaledTime / pulseSeconds * Mathf.PI * 2f) * pulseAmount
                 : 0f;
 
-            Color c = baseTint * accent;
+            Color c = Color.Lerp(baseTint, Color.black, blackNow) * accent;
 
             if (dimLayer != null)
             {
-                float a = Mathf.Clamp01(dimNow + pulse * Mathf.Clamp01(dimNow * 4f));
+                // 全黑的時候也不脈動（「你願意相信嗎？」那一段）：Linear 專案裡差 3% 的透明度，
+                // 亮背景就會透上來，字又看不清楚了
+                float a = Mathf.Clamp01(dimNow + pulse * Mathf.Clamp01(dimNow * 4f) * Mathf.Clamp01((1f - dimNow) * 8f));
                 dimLayer.color = new Color(c.r, c.g, c.b, a);
                 dimLayer.enabled = a > 0.002f;
             }

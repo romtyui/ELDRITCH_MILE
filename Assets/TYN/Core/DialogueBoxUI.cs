@@ -104,7 +104,7 @@ namespace EldritchMile.Core
         [Header("物件特寫（2026-11-02）")]
         [Tooltip("開箱、檢查物件時借立繪位置秀特寫圖用的框。\n" +
                  "立繪的框是直的（角色）、物件的圖是橫的，不換框的話寶箱會被拉成直的。圖本身維持比例")]
-        public Vector2 closeUpSize = new Vector2(1200f, 1200f);
+        public Vector2 closeUpSize = new Vector2(750f, 750f);
 
         [Tooltip("特寫的位置（相對立繪位置的中心）")]
         public Vector2 closeUpPosition = Vector2.zero;
@@ -504,6 +504,55 @@ namespace EldritchMile.Core
             return view;
         }
 
+        /// <summary>
+        /// 只有壓黑與對象大圖，沒有對話框（寶箱畫面，2026-11-02）。文字改由大圖上方那行字顯示。
+        /// 要收掉時走一般的 Hide。
+        /// </summary>
+        public EncounterTargetView ShowTargetOnly(IProbabilityTarget source, Sprite closeUp)
+        {
+            if (root != null) root.SetActive(false);
+
+            // 大圖要先生：SpawnTargetView 會清舊的大圖，順便把壓黑還原
+            EncounterTargetView view = SpawnTargetView(source, closeUp);
+
+            if (dimmer != null)
+            {
+                dimmer.SetActive(true);
+                SetDimmerAlpha(closeUpDimAlpha);
+            }
+
+            return view;
+        }
+
+        [Tooltip("寶箱畫面的壓黑有多深。一般對話的壓黑是場景上 BLACK 那張圖自己的顏色，這裡只影響寶箱畫面")]
+        [Range(0f, 1f)] public float closeUpDimAlpha = 0.9f;
+
+        private float dimmerHomeAlpha = -1f;
+
+        private void SetDimmerAlpha(float alpha)
+        {
+            Image img = dimmer != null ? dimmer.GetComponent<Image>() : null;
+            if (img == null) return;
+
+            if (dimmerHomeAlpha < 0f) dimmerHomeAlpha = img.color.a;
+
+            Color c = img.color;
+            c.a = alpha;
+            img.color = c;
+        }
+
+        /// <summary>
+        /// 收起對話框，壓黑與立繪留著（遭遇打牌，2026-11-02）。
+        /// 算「沒有開著」：下一句台詞排進來就會直接把框叫回來，不必等玩家先點掉現在這一頁。
+        /// </summary>
+        public void Collapse()
+        {
+            StopTyping();
+            CancelAutoAdvance();
+            IsShowing = false;
+            if (root != null) root.SetActive(false);
+        }
+
         public void ClearTargetViews()
         {
             for (int i = 0; i < spawnedTargets.Count; i++)
@@ -511,6 +560,8 @@ namespace EldritchMile.Core
                 if (spawnedTargets[i] != null) Destroy(spawnedTargets[i].gameObject);
             }
             spawnedTargets.Clear();
+
+            if (dimmerHomeAlpha >= 0f) SetDimmerAlpha(dimmerHomeAlpha);
 
             // ⚠️ **不可以無條件把立繪打開。**
             //
