@@ -27,192 +27,73 @@ public class CardHitEffectController : MonoBehaviour
     [Tooltip("命中特效音效使用的 AudioSource")]
     public AudioSource audioSource;
 
-
     // =========================================================
     // 對角色目標生成特效
     // =========================================================
 
     public GameObject SpawnEffectOnTarget(CardHitEffectData data, BattleUnit target, bool playSound = true)
     {
-        if (data == null)
-            return null;
-
-        if (data.effectPrefab == null)
-            return null;
-
-        if (target == null)
-            return null;
+        if (data == null) return null;
+        if (data.effectPrefab == null) return null;
+        if (data.fullScreenEffect) return SpawnFullScreenEffect(data, playSound);
+        if (target == null) return null;
 
         if (effectRoot == null)
         {
-            Debug.LogWarning(
-                "[CardHitEffectController] effectRoot 沒有指定"
-            );
-
+            Debug.LogWarning("[CardHitEffectController] effectRoot 沒有指定");
             return null;
         }
 
+        GameObject effectObject = Instantiate(data.effectPrefab, effectRoot);
+        RectTransform effectRect = effectObject.transform as RectTransform;
+        RectTransform targetRect = target.transform as RectTransform;
 
-        GameObject effectObject =
-            Instantiate(
-                data.effectPrefab,
-                effectRoot
-            );
-
-
-        RectTransform effectRect =
-            effectObject.transform as RectTransform;
-
-
-        /*
-         * 取得目標的 RectTransform。
-         *
-         * 目前你的 BattleUnit / EnemyUnit
-         * 都是場景中的 MonoBehaviour，
-         * Enemy 也掛在 UI Slot 系統中。
-         */
-        RectTransform targetRect =
-            target.transform as RectTransform;
-
-
-        if (effectRect != null &&
-            targetRect != null)
+        if (effectRect != null && targetRect != null)
         {
-            /*
-             * 先取得目標的世界座標。
-             */
-            Vector3 targetWorldPosition =
-                targetRect.position;
+            Vector3 targetWorldPosition = targetRect.position;
+            Vector3 localPosition = effectRoot.InverseTransformPoint(targetWorldPosition);
 
-
-            /*
-             * 再轉換成 EffectRoot 的本地座標。
-             */
-            Vector3 localPosition =
-                effectRoot.InverseTransformPoint(
-                    targetWorldPosition
-                );
-
-
-            effectRect.anchoredPosition =
-                new Vector2(
-                    localPosition.x,
-                    localPosition.y
-                )
-                +
-                data.positionOffset;
-
-
-            effectRect.localScale =
-                new Vector3(
-                    data.scale.x,
-                    data.scale.y,
-                    1f
-                );
-
-
-            effectRect.localRotation =
-                Quaternion.Euler(
-                    0f,
-                    0f,
-                    data.rotationZ
-                );
+            effectRect.anchoredPosition = new Vector2(localPosition.x, localPosition.y) + data.positionOffset;
+            effectRect.localScale = new Vector3(data.scale.x, data.scale.y, 1f);
+            effectRect.localRotation = Quaternion.Euler(0f, 0f, data.rotationZ);
         }
 
-
-        if (playSound)
-        {
-            PlayHitSound(data);
-        }
-
-
-        /*
-         * 自動刪除。
-         */
-        if (data.lifeTime > 0f)
-        {
-            Destroy(
-                effectObject,
-                data.lifeTime
-            );
-        }
-
+        if (playSound) PlayHitSound(data);
+        if (data.lifeTime > 0f) Destroy(effectObject, data.lifeTime);
 
         return effectObject;
     }
 
-     
+
     // =========================================================
     // 沒有角色目標的特效哈 
     // =========================================================
 
-    public GameObject SpawnEffectAtCenter(
-        CardHitEffectData data
-    )
+    public GameObject SpawnEffectAtCenter(CardHitEffectData data)
     {
-        if (data == null)
-            return null;
-
-        if (data.effectPrefab == null)
-            return null;
+        if (data == null) return null;
+        if (data.effectPrefab == null) return null;
+        if (data.fullScreenEffect) return SpawnFullScreenEffect(data, true);
 
         if (effectRoot == null)
         {
-            Debug.LogWarning(
-                "[CardHitEffectController] effectRoot 沒有指定"
-            );
-
+            Debug.LogWarning("[CardHitEffectController] effectRoot 沒有指定");
             return null;
         }
 
-
-        GameObject effectObject =
-            Instantiate(
-                data.effectPrefab,
-                effectRoot
-            );
-
-
-        RectTransform effectRect =
-            effectObject.transform as RectTransform;
-
+        GameObject effectObject = Instantiate(data.effectPrefab, effectRoot);
+        RectTransform effectRect = effectObject.transform as RectTransform;
 
         if (effectRect != null)
         {
-            effectRect.anchoredPosition =
-                screenCenterPosition
-                +
-                data.positionOffset;
-
-
-            effectRect.localScale =
-                new Vector3(
-                    data.scale.x,
-                    data.scale.y,
-                    1f
-                );
-
-
-            effectRect.localRotation =
-                Quaternion.Euler(
-                    0f,
-                    0f,
-                    data.rotationZ
-                );
+            effectRect.anchoredPosition = screenCenterPosition + data.positionOffset;
+            effectRect.localScale = new Vector3(data.scale.x, data.scale.y, 1f);
+            effectRect.localRotation = Quaternion.Euler(0f, 0f, data.rotationZ);
         }
-
 
         PlayHitSound(data);
 
-
-        if (data.lifeTime > 0f)
-        {
-            Destroy(
-                effectObject,
-                data.lifeTime
-            );
-        }
-
+        if (data.lifeTime > 0f) Destroy(effectObject, data.lifeTime);
 
         return effectObject;
     }
@@ -325,5 +206,39 @@ public class CardHitEffectController : MonoBehaviour
             data.hitSfx,
             data.hitSfxVolume
         );
+    }
+
+    private GameObject SpawnFullScreenEffect(CardHitEffectData data, bool playSound)
+    {
+        if (data == null || data.effectPrefab == null) return null;
+
+        if (effectRoot == null)
+        {
+            Debug.LogWarning("[CardHitEffectController] effectRoot 沒有指定");
+            return null;
+        }
+
+        GameObject effectObject = Instantiate(data.effectPrefab, effectRoot);
+        RectTransform effectRect = effectObject.transform as RectTransform;
+
+        if (effectRect != null)
+        {
+            effectRect.anchorMin = Vector2.zero;
+            effectRect.anchorMax = Vector2.one;
+            effectRect.pivot = new Vector2(0.5f, 0.5f);
+            effectRect.sizeDelta = Vector2.zero;
+            effectRect.anchoredPosition3D = new Vector3(data.positionOffset.x, data.positionOffset.y, 0f);
+            effectRect.localScale = new Vector3(data.scale.x, data.scale.y, 1f);
+            effectRect.localRotation = Quaternion.Euler(0f, 0f, data.rotationZ);
+        }
+        else
+        {
+            Debug.LogWarning("[CardHitEffectController] 全畫面特效 Prefab 根物件需要 RectTransform", effectObject);
+        }
+
+        if (playSound) PlayHitSound(data);
+        if (data.lifeTime > 0f) Destroy(effectObject, data.lifeTime);
+
+        return effectObject;
     }
 }
