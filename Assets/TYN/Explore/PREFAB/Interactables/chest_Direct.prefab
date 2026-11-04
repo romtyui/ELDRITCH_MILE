@@ -83,7 +83,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 5d39ee4eda07dfd4581c76a4ca1ae83c, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1cf4dbd1154f11440b569962c2356917, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -127,17 +127,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: -0.18}
+  m_Offset: {x: 0, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 40.931713, y: 28.94}
+    oldSize: {x: 12.396694, y: 9.090909}
     newSize: {x: 6.4, y: 4.8}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 12.46, y: 7.3}
+  m_Size: {x: 12.2, y: 8.8}
   m_EdgeRadius: 0
 --- !u!114 &9050346354691203830
 MonoBehaviour:
@@ -158,11 +158,11 @@ MonoBehaviour:
   interactedSprite: {fileID: 0}
   failedSprite: {fileID: 0}
   visualVariants:
-  - normal: {fileID: 21300000, guid: 5d39ee4eda07dfd4581c76a4ca1ae83c, type: 3}
+  - normal: {fileID: 21300000, guid: 1cf4dbd1154f11440b569962c2356917, type: 3}
     interacted: {fileID: 0}
-  - normal: {fileID: 21300000, guid: 9639822202a68d44d9838223b552fb5f, type: 3}
+  - normal: {fileID: 21300000, guid: e8e82a2347a12854aa605bff31a0a7ff, type: 3}
     interacted: {fileID: 0}
-  - normal: {fileID: 21300000, guid: 3dab73beb31ab4642a6a4f75e05aead2, type: 3}
+  - normal: {fileID: 21300000, guid: 9419c0681f885e44f8d054feeb0ac0a4, type: 3}
     interacted: {fileID: 0}
   closeUpSprite: {fileID: 0}
   showGrabCursor: 1
@@ -174,6 +174,11 @@ MonoBehaviour:
   lootItems: []
   grantedItemIds: []
   lootTable: {fileID: 11400000, guid: d246421b323f3c246adb0a8349390f79, type: 2}
+  moneyMin: 3
+  moneyMax: 8
+  emptyBonusMoneyMin: 5
+  emptyBonusMoneyMax: 12
+  moneyLineFormat: "\u91D1\u5E63 \xD7{0}"
   attribute: 0
   retryPolicy: 0
   tier: 0

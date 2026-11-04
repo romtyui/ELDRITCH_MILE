@@ -63,8 +63,8 @@ namespace EldritchMile.UI
             [Tooltip("平塗層的濃度。0 = 不壓暗，1 = 全黑")]
             [Range(0f, 1f)] public float dim = 0.4f;
 
-            [Tooltip("底色往純黑靠多少。Base Tint 在畫面上會比色碼亮很多（Linear 專案的 UI 頂點色不會轉換），" +
-                     "#140D08 實際看起來是灰褐色。要真的全黑就把這格拉到 1")]
+            [Tooltip("底色往純黑靠多少。0 = 美術稿的暖褐黑（Base Tint），1 = 純黑。\n" +
+                     "問句那一段用 1：組員反應字看不清楚，底色要盡量黑")]
             [Range(0f, 1f)] public float blacken = 0f;
 
             [Tooltip("暗角的濃度")]
@@ -182,8 +182,8 @@ namespace EldritchMile.UI
 
             if (dimLayer != null)
             {
-                // 全黑的時候也不脈動（「你願意相信嗎？」那一段）：Linear 專案裡差 3% 的透明度，
-                // 亮背景就會透上來，字又看不清楚了
+                // 全黑的時候也不脈動（「你願意相信嗎？」那一段）：
+                // 差 3% 的透明度，亮背景就會透上來，字又看不清楚了
                 float a = Mathf.Clamp01(dimNow + pulse * Mathf.Clamp01(dimNow * 4f) * Mathf.Clamp01((1f - dimNow) * 8f));
                 dimLayer.color = new Color(c.r, c.g, c.b, a);
                 dimLayer.enabled = a > 0.002f;

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -110,6 +111,7 @@ namespace EldritchMile.Explore
             // 拖曳結束時 Unity 也會送 click，要濾掉，否則放開牌會順便把它選起來
             if (eventData.dragging) return;
             if (eventData.button != PointerEventData.InputButton.Left) return;   // 右鍵是離開
+            if (hand != null && hand.IsAnyCardDragging) return;   // 別張牌正在打出去
 
             hand?.ToggleSelect(this);
         }
@@ -152,9 +154,20 @@ namespace EldritchMile.Explore
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (Card == null) return;
+            if (hand != null && hand.IsAnyCardDragging) return;   // 別張牌正在打出去
 
             IsDragging = true;
             hand?.NotifyDragBegin(this);   // 記錄「誰在拖」＋ 手牌區維持在最上層
+            MoveToDragLayer();
+            rect.position = eventData.position;
+
+            // 拖曳中持續顯示預覽，讓玩家看得到自己正拖向哪個目標
+            hand?.ShowPreviewFor(Card.data);
+        }
+
+        /// <summary>離開手牌區，轉正，搬到最上層。拖曳與打出去都走這裡。</summary>
+        private void MoveToDragLayer()
+        {
             startParent = transform.parent;
 
             // 移到專用的拖曳層（永遠在 Canvas 最上層），並讓 raycast 穿透自己才打得到底下的目標。
@@ -171,10 +184,42 @@ namespace EldritchMile.Explore
             transform.localScale = Vector3.one * dragScale;
             transform.localRotation = Quaternion.identity;
             SetPose(false, 0f, 1f);
-            rect.position = eventData.position;
+        }
 
-            // 拖曳中持續顯示預覽，讓玩家看得到自己正拖向哪個目標
-            hand?.ShowPreviewFor(Card.data);
+        /// <summary>
+        /// 兩段式出牌的第二段：牌還在手上，從它現在浮著的位置打出去。
+        /// </summary>
+        public void PlayFromHand(IProbabilityTarget target)
+        {
+            if (hand == null) return;
+
+            Vector3 shown = visualRoot != null ? visualRoot.position : transform.position;
+
+            hand.NotifyDragBegin(this);
+            MoveToDragLayer();
+            transform.position = shown;
+            StartCoroutine(PlayRoutine(target));
+        }
+
+        /// <summary>
+        /// 打出去：彈一下、停住 → 結算 → 淡出（順序照戰鬥）。
+        ///
+        /// 【協程掛在牌自己身上】結算可能當場結束打牌，手牌區跟著關掉，掛在手牌區的協程會被一起停掉。
+        /// 牌這時已經住在 __DragLayer，不受影響。
+        ///
+        /// 停住的這段期間 DraggingCard 還是這張（IsAnyCardDragging ＝ true）：
+        /// 別張牌拖不起來、右鍵也不會離開，機率數字也繼續顯示這張牌的。
+        /// </summary>
+        private IEnumerator PlayRoutine(IProbabilityTarget target)
+        {
+            yield return hand.playedCard.PunchAndHold(transform);
+
+            hand.ResolvePlay(this, target);
+            HoverPreviewBroadcaster.Instance?.End();
+
+            yield return hand.playedCard.FadeAway(transform, canvasGroup);
+
+            Destroy(gameObject);
         }
 
         public void OnDrag(PointerEventData eventData)
@@ -200,8 +245,6 @@ namespace EldritchMile.Explore
             if (!IsDragging) return;
 
             IsDragging = false;
-            hand?.NotifyDragEnd(this);
-            HoverPreviewBroadcaster.Instance?.End();
             DialogueEncounterController.Instance?.ClearAimed();
 
             // ⚠️⚠️ 找目標**必須在還原 blocksRaycasts 之前**。
@@ -215,11 +258,16 @@ namespace EldritchMile.Explore
             // 而且它對**所有**目標都失效，不是只有選項。
             IProbabilityTarget target = LeftZone(eventData) ? FindTargetUnder(eventData) : null;
 
+            if (target != null && hand != null)
+            {
+                StartCoroutine(PlayRoutine(target));
+                return;
+            }
+
+            hand?.NotifyDragEnd(this);
+            HoverPreviewBroadcaster.Instance?.End();
             canvasGroup.blocksRaycasts = true;
-
-            bool played = target != null && hand != null && hand.TryPlay(this, target);
-
-            if (!played) ReturnToHand();
+            ReturnToHand();
         }
 
         /// <summary>找放開位置底下的判定目標。UI 與世界物件都要找。</summary>

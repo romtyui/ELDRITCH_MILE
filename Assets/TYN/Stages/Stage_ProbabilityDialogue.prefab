@@ -206,7 +206,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 25.78}
-  m_SizeDelta: {x: 1074, y: 190}
+  m_SizeDelta: {x: 1165, y: 204}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &7363427590497852362
 MonoBehaviour:
@@ -226,7 +226,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 4
-  m_Spacing: 0
+  m_Spacing: 20
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
@@ -610,6 +610,12 @@ MonoBehaviour:
   hoverScale: 1.2
   hoverLift: 70
   handZoneTopRatio: 0.34
+  playedCard:
+    punchScale: 1.15
+    punchSeconds: 0.1
+    holdSeconds: 0.25
+    fadeSeconds: 0.2
+    fadeEndScale: 0.9
   noEffectHint: {fileID: 2213540150150925300}
   noEffectSeconds: 1.2
   outcomeLineFormat: "\uFF08{0}\uFF09"

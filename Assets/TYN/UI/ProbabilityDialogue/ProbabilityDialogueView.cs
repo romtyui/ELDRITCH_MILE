@@ -90,6 +90,9 @@ namespace EldritchMile.UI.ProbabilityDialogue
         [Tooltip("牌區的上緣（佔畫面高度的比例）。拖過這條線放開就是出牌，見 HandFanLayout.LeftHandZone")]
         [Range(0.1f, 0.8f)] public float handZoneTopRatio = 0.34f;
 
+        [Header("打出去的那一下")]
+        public EldritchMile.UI.PlayedCardMotion playedCard = new EldritchMile.UI.PlayedCardMotion();
+
         [Header("提示")]
         [Tooltip("卡牌沒有影響到任何回答時顯示（規格 R8：要顯示 No Effect）")]
         public GameObject noEffectHint;
@@ -448,10 +451,12 @@ namespace EldritchMile.UI.ProbabilityDialogue
                 ui.Bind(c);
                 ui.SetVisualRoot(EldritchMile.UI.HandFanLayout.BuildVisualRoot(ui.transform as RectTransform));
                 ui.OnHoverChanged += HandleCardHover;
+                ui.OnPlayStarting += HandleCardPlayStarting;
                 ui.OnPlayRequested += HandleCardPlayRequested;
                 ui.OnAimChanged += HandleCardAim;
                 ui.OnDragChanged += HandleCardDrag;
                 ui.handZoneTopRatio = handZoneTopRatio;
+                ui.playedCard = playedCard;
                 cardUIs.Add(ui);
             }
 
@@ -581,10 +586,36 @@ namespace EldritchMile.UI.ProbabilityDialogue
         }
 
         // ==========================================
+        /// <summary>牌正停在放開的位置。這段期間不能再拖別張牌、也不能選回答。</summary>
+        private ProbabilityCardUI playingCard;
+
+        private void HandleCardPlayStarting(ProbabilityCardUI ui)
+        {
+            playingCard = ui;
+            SetHandRaycasts(false);
+        }
+
         private void HandleCardPlayRequested(ProbabilityCardUI ui)
         {
+            playingCard = null;
+            SetHandRaycasts(true);
+
             if (inputLocked || session == null) { ui.ReturnHome(); return; }
-            if (!session.PlayCard(ui.Data)) ui.ReturnHome();
+
+            // ⚠️ 要先從清單拿掉：PlayCard 會觸發 RebuildHand 把清單裡的牌全部銷毀，這張還要留著淡出
+            int index = cardUIs.IndexOf(ui);
+            cardUIs.Remove(ui);
+
+            if (session.PlayCard(ui.Data)) return;
+
+            if (index >= 0) cardUIs.Insert(index, ui);
+            ui.ReturnHome();
+        }
+
+        private void SetHandRaycasts(bool on)
+        {
+            CanvasGroup g = handRoot != null ? handRoot.GetComponent<CanvasGroup>() : null;
+            if (g != null) g.blocksRaycasts = on;
         }
 
         /// <summary>拖曳／指到卡片時，把屬性相符且**還可用**的回答亮起來（規格 §3.1）。</summary>
@@ -659,8 +690,13 @@ namespace EldritchMile.UI.ProbabilityDialogue
             List<ProbabilityDialogueSession.RuntimeOption> targets,
             List<int> before, List<int> after)
         {
-            // 亮度收掉
-            foreach (ProbabilityAnswerUI a in answerUIs) if (a != null) a.SetHighlighted(false);
+            // 亮度與預覽收掉（數字與進度條接著由 AnimateProbability 跑上去）
+            foreach (ProbabilityAnswerUI a in answerUIs)
+            {
+                if (a == null) continue;
+                a.SetHighlighted(false);
+                a.SetPreview(null);
+            }
 
             for (int i = 0; i < targets.Count; i++)
             {
@@ -690,7 +726,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
         // ==========================================
         private void HandleAnswerClicked(ProbabilityAnswerUI ui)
         {
-            if (inputLocked || session == null || ui.Bound == null) return;
+            if (inputLocked || playingCard != null || session == null || ui.Bound == null) return;
 
             // 規格 §5.1：選了之後馬上鎖住所有輸入
             inputLocked = true;

@@ -48,6 +48,14 @@ namespace EldritchMile.Core
         [Tooltip("機率數字。**常駐顯示**：平常是目前的機率，手上指著一張牌時是打出這張牌的機率")]
         public TextMeshProUGUI previewLabel;
 
+        [Tooltip("鎖鏈與數字框（鎖鏈.png 加上 Preview Label）。開鎖成功時整組淡掉，只留箱子")]
+        public CanvasGroup lockRoot;
+
+        [Min(0.01f)] public float unlockSeconds = 0.3f;
+
+        [Tooltip("鎖鏈消失時放大到幾倍，像是崩開")]
+        public float unlockEndScale = 1.08f;
+
         [Tooltip("圖上方的一行字：容器的描述、這次判定的結果。對話框在打牌時是收起來的，文字放這裡（下方是手牌）")]
         public TextMeshProUGUI resultLabel;
 
@@ -185,6 +193,8 @@ namespace EldritchMile.Core
             // 不管成敗都彈一下：這張牌確實打在箱子上了
             PlayBounce();
 
+            if (success) StartCoroutine(UnlockRoutine());
+
             // 再讓真正的目標處理結果（開箱、給道具、變更狀態）
             Source?.OnCheckResult(success, usedRate);
         }
@@ -251,6 +261,24 @@ namespace EldritchMile.Core
             shownPercent = to;
             WriteNumber(to);
             countRoutine = null;
+        }
+
+        /// <summary>解開了：鎖鏈和數字一起消失。</summary>
+        private IEnumerator UnlockRoutine()
+        {
+            if (lockRoot == null) yield break;
+
+            StopCount();
+
+            for (float t = 0f; t < unlockSeconds; t += Time.unscaledDeltaTime)
+            {
+                float k = t / unlockSeconds;
+                lockRoot.alpha = 1f - k;
+                lockRoot.transform.localScale = Vector3.one * Mathf.Lerp(1f, unlockEndScale, k);
+                yield return null;
+            }
+
+            lockRoot.gameObject.SetActive(false);
         }
 
         [Header("出牌時的 Q 彈")]

@@ -1,9 +1,65 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace EldritchMile.UI
 {
+    /// <summary>
+    /// 牌打出去之後的那一下：停在放開的位置彈一下、停住 → （結算）→ 淡出。
+    /// 順序照戰鬥（Romtyui 的 GeneralCardPlayAnimationController）：先讓玩家看到「這張牌打出去了」，效果才發生。
+    /// </summary>
+    [Serializable]
+    public class PlayedCardMotion
+    {
+        [Tooltip("彈起來時放大幾倍（相對放開時的大小）")]
+        public float punchScale = 1.15f;
+
+        [Min(0.01f)] public float punchSeconds = 0.1f;
+
+        [Tooltip("結算之前停多久。覺得牌消失得太快就調這格")]
+        [Min(0f)] public float holdSeconds = 0.25f;
+
+        [Min(0.01f)] public float fadeSeconds = 0.2f;
+
+        [Tooltip("淡出到最後縮成幾倍")]
+        public float fadeEndScale = 0.9f;
+
+        public IEnumerator PunchAndHold(Transform card)
+        {
+            Vector3 from = card.localScale;
+            Vector3 peak = from * punchScale;
+
+            for (float t = 0f; t < punchSeconds; t += Time.unscaledDeltaTime)
+            {
+                // 正弦：放大再回來，手感是「蓋章」不是「變大」
+                card.localScale = Vector3.Lerp(from, peak, Mathf.Sin(t / punchSeconds * Mathf.PI));
+                yield return null;
+            }
+
+            card.localScale = from;
+
+            if (holdSeconds > 0f) yield return new WaitForSecondsRealtime(holdSeconds);
+        }
+
+        public IEnumerator FadeAway(Transform card, CanvasGroup group)
+        {
+            Vector3 from = card.localScale;
+            float alpha = group != null ? group.alpha : 1f;
+
+            for (float t = 0f; t < fadeSeconds; t += Time.unscaledDeltaTime)
+            {
+                float k = t / fadeSeconds;
+                card.localScale = Vector3.Lerp(from, from * fadeEndScale, k);
+                if (group != null) group.alpha = Mathf.Lerp(alpha, 0f, k);
+                yield return null;
+            }
+
+            if (group != null) group.alpha = 0f;
+        }
+    }
+
     /// <summary>
     /// 手牌怎麼排。**探索打牌與機率對話共用這一支。**
     ///

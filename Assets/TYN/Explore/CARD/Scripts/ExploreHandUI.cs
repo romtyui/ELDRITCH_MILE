@@ -63,6 +63,9 @@ namespace EldritchMile.Explore
         [Tooltip("牌區的上緣（佔畫面高度的比例）。拖過這條線放開就是出牌，見 HandFanLayout.LeftHandZone")]
         [Range(0.1f, 0.8f)] public float handZoneTopRatio = 0.34f;
 
+        [Header("打出去的那一下")]
+        public EldritchMile.UI.PlayedCardMotion playedCard = new EldritchMile.UI.PlayedCardMotion();
+
         [Header("屬性無效的視覺 (C17)")]
         [Tooltip("對當前目標屬性完全無效（顯示 ✕）的手牌要壓多暗。\n\n" +
                  "這不是裝飾 —— 有了真正的 0% 之後，玩家必須不 hover 每一張就看得出哪些是死牌，" +
@@ -532,22 +535,27 @@ namespace EldritchMile.Explore
 
             ExploreCardDrag card = SelectedCard;
             SelectedCard = null;
-            HoverPreviewBroadcaster.Instance?.End();
+            SyncArmedState();
 
-            return TryPlay(card, target);
+            card.PlayFromHand(target);
+            return true;
         }
 
-        /// <summary>玩家把卡放到目標上。真正的規則判斷交給 Core。</summary>
-        public bool TryPlay(ExploreCardDrag card, IProbabilityTarget target)
+        /// <summary>
+        /// 牌停完了，真的結算。真正的規則判斷交給 Core。
+        ///
+        /// ⚠️ 要先把牌從清單拿掉：PlayCard 會觸發 Rebuild 把清單裡的牌全部銷毀，
+        /// 這張還要留著淡出（跟戰鬥的 DetachCardViewForPlay 同一個道理）。
+        /// </summary>
+        public void ResolvePlay(ExploreCardDrag card, IProbabilityTarget target)
         {
-            if (encounter == null || card == null || card.Card == null) return false;
+            spawned.Remove(card);
+            NotifyDragEnd(card);
 
-            // PlayCard 成功與否指的是「判定成功」，不是「出牌合法」。
-            // 出牌合法時 OnHandChanged 會觸發 Rebuild，卡片自然被重建掉，
-            // 所以這裡只要回報「手牌數量有沒有變」即可。
-            int before = encounter.HandCount;
-            encounter.PlayCard(card.Card, target);
-            return encounter.HandCount != before;
+            if (encounter != null && encounter.IsActive && card != null && card.Card != null)
+            {
+                encounter.PlayCard(card.Card, target);
+            }
         }
 
         private void HandleEncounterEnded()
