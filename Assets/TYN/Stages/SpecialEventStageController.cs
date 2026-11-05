@@ -20,6 +20,12 @@ public class SpecialEventStageController : ChoiceStageController
 {
     public override StageType Stage => StageType.SpecialEvent;
 
+    /// <summary>
+    /// 《未知的祭壇》（事件叫出來的祭壇）：右手（拒絕）不給獎勵，改成恢復這麼多點 SAN。
+    /// -1 = 一般的祭壇（首排那個），右手照舊是獎勵畫面。GameFlowManager 進場前設、這裡讀完歸 -1。2026-10-29
+    /// </summary>
+    public static int PendingRefuseSan = -1;
+
     [System.Serializable]
     public class Offer
     {
@@ -111,6 +117,8 @@ public class SpecialEventStageController : ChoiceStageController
             // 左手（YES）拿的是 offers[0] 那張牌的卡面
             Offer gift = offers[0];
             CardVisualData visual = gift != null && gift.battleCard != null ? gift.battleCard.visualData : null;
+            altarView.refuseRestoresSan = PendingRefuseSan;
+            PendingRefuseSan = -1;
             altarView.Begin(visual, run);
             return;
         }
@@ -153,8 +161,14 @@ public class SpecialEventStageController : ChoiceStageController
     ///   · NO／右手：Romtyui 的獎勵畫面已經結束，獎勵是那個畫面自己發的 → 這裡只收尾
     /// 改版前 NO 是「什麼都不給直接走」，現在右手也會給東西。
     /// </summary>
+    /// <summary>祭壇演過一次就立這面旗。《未知的祭壇》要「新手教學（首排祭壇）結束後」才會出現。2026-10-29</summary>
+    public const string AltarSeenFlag = "altar_seen";
+
     private void HandleAltarFinished(EldritchMile.UI.AltarEventView.Choice choice)
     {
+        EldritchMile.Core.GameFlowManager gfm = EldritchMile.Core.GameFlowManager.Instance;
+        if (gfm != null && gfm.Run != null) gfm.Run.SetFlag(AltarSeenFlag);
+
         if (choice == EldritchMile.UI.AltarEventView.Choice.Believe)
         {
             GrantOffer(0);

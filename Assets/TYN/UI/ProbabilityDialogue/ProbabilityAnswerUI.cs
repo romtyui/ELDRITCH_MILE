@@ -23,6 +23,32 @@ namespace EldritchMile.UI.ProbabilityDialogue
         [Tooltip("目前成功機率。文字格式見 Probability Format")]
         public TextMeshProUGUI probabilityText;
 
+        [Tooltip("圓弧進度條（Filled、Radial 360）。圖換成這個回答的屬性色")]
+        public Image arcFill;
+
+        [Tooltip("圓弧的預覽段：手上指著的牌打出去會到哪裡。同一張圖半透明，畫在 Arc Fill 底下")]
+        public Image arcPreview;
+
+        [Tooltip("數字旁邊的「%」加色點，圖換成這個回答的屬性色")]
+        public Image markImage;
+
+        [Serializable]
+        public class AttributeArt
+        {
+            public EldritchMile.Core.ExploreAttribute attribute;
+            public Sprite arc;
+            public Sprite mark;
+        }
+
+        [Tooltip("各屬性用哪一組圖。美術把顏色畫在圖裡（紅綠藍各一張），所以這裡不染色。\n" +
+                 "吃多種屬性的回答用清單裡第一個屬性的圖；找不到就用這張表的第一組")]
+        public List<AttributeArt> attributeArt = new List<AttributeArt>();
+
+        [Tooltip("機率 → Fill Amount 的對照表（0%、1%…100% 平均取樣）。\n" +
+                 "圓弧繞著圖的中心轉，但各段離中心遠近不同，直接用機率當 Fill Amount 的話，弧長和機率對不上。\n" +
+                 "換了弧的圖要重算：元件右上角選單 → 重算圓弧對照表")]
+        public float[] arcFillTable = new float[0];
+
         [Tooltip("色點的容器。**色點會依這個回答吃的屬性動態生成**，\n" +
                  "所以這裡放一個空的 Layout Group 就好，不用預先擺點")]
         public RectTransform colorDotRoot;
@@ -63,6 +89,12 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
         [Tooltip("失敗後不可再選（規格 §6：整體變暗）")]
         public Color disabledTint = new Color(0.42f, 0.42f, 0.45f);
+
+        [Tooltip("失敗後整張的透明度。底圖是黑的，光靠染色看不出來")]
+        [Range(0f, 1f)] public float disabledAlpha = 0.45f;
+
+        [Tooltip("被牌指到時放大幾倍。底圖是黑的，光靠染色看不出來")]
+        public float highlightScale = 1.04f;
 
         [Header("判定動效（成功／失敗那一下）")]
         [Tooltip("判定之後、變暗之前，先在這一格上閃一下並打出「成功／失敗」。\n\n" +
@@ -115,7 +147,10 @@ namespace EldritchMile.UI.ProbabilityDialogue
             if (labelText != null) labelText.text = option?.source?.text ?? "";
             SetProbabilityImmediate(option != null ? option.currentProbability : 0);
             BuildDots(option, colorLookup);
+            ApplyArt(option);
             ApplyTint(interactable ? normalTint : disabledTint);
+            SetContentAlpha(interactable ? 1f : disabledAlpha);
+            transform.localScale = Vector3.one;
 
             gameObject.SetActive(true);
         }
@@ -137,6 +172,9 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
             if (colorDotRoot == null || colorDotPrefab == null || option?.source?.acceptedAttributes == null) return;
 
+            // 單一屬性的回答，圓弧和「%」的顏色已經講清楚了。色點只留給吃多種屬性的回答
+            if (option.source.acceptedAttributes.Count < 2) return;
+
             foreach (EldritchMile.Core.ExploreAttribute attr in option.source.acceptedAttributes)
             {
                 Image dot = Instantiate(colorDotPrefab, colorDotRoot);
@@ -146,17 +184,127 @@ namespace EldritchMile.UI.ProbabilityDialogue
             }
         }
 
+        /// <summary>換成這個回答的屬性色那一組圖。</summary>
+        private void ApplyArt(ProbabilityDialogueSession.RuntimeOption option)
+        {
+            AttributeArt art = attributeArt.Count > 0 ? attributeArt[0] : null;
+            List<EldritchMile.Core.ExploreAttribute> attrs = option?.source?.acceptedAttributes;
+
+            if (attrs != null && attrs.Count > 0)
+            {
+                AttributeArt match = attributeArt.Find(a => a.attribute == attrs[0]);
+                if (match != null) art = match;
+            }
+
+            if (art == null) return;
+
+            if (arcFill != null) { arcFill.sprite = art.arc; arcFill.color = Color.white; }
+            if (arcPreview != null) { arcPreview.sprite = art.arc; arcPreview.color = new Color(1f, 1f, 1f, 0.45f); }
+            if (markImage != null) { markImage.sprite = art.mark; markImage.color = Color.white; }
+        }
+
+        /// <summary>機率畫到圓弧上。0% 一定全空，100% 一定全滿。</summary>
+        private void SetArc(Image arc, int percent)
+        {
+            if (arc == null) return;
+
+            if (percent <= 0) { arc.fillAmount = 0f; return; }
+            if (arcFillTable == null || arcFillTable.Length < 2) { arc.fillAmount = percent / 100f; return; }
+
+            float at = Mathf.Clamp01(percent / 100f) * (arcFillTable.Length - 1);
+            int i = Mathf.Min(Mathf.FloorToInt(at), arcFillTable.Length - 2);
+            arc.fillAmount = Mathf.Lerp(arcFillTable[i], arcFillTable[i + 1], at - i);
+        }
+
+        private CanvasGroup contentGroup;
+
+        private void SetContentAlpha(float alpha)
+        {
+            if (contentGroup == null) contentGroup = GetComponent<CanvasGroup>();
+            if (contentGroup == null) contentGroup = gameObject.AddComponent<CanvasGroup>();
+            contentGroup.alpha = alpha;
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// 從弧的圖算出「機率 → Fill Amount」。每個不透明的像素算它落在幾度，累積起來就是弧長。
+        /// Image 的 Radial 360 是在圖的 0~1 座標裡算角度，所以這裡也用 0~1 座標。
+        /// </summary>
+        [ContextMenu("重算圓弧對照表")]
+        public void RebuildArcTable()
+        {
+            if (arcFill == null || attributeArt.Count == 0 || attributeArt[0].arc == null) return;
+
+            string path = UnityEditor.AssetDatabase.GetAssetPath(attributeArt[0].arc.texture);
+            var tex = new Texture2D(2, 2);
+            ImageConversion.LoadImage(tex, System.IO.File.ReadAllBytes(path));
+            Color32[] px = tex.GetPixels32();
+
+            const int Bins = 1440;
+            var hist = new int[Bins];
+            int total = 0;
+
+            // 起點與方向跟 Image 的 Fill Origin = Bottom、Clockwise = 否一致
+            for (int y = 0; y < tex.height; y++)
+            {
+                for (int x = 0; x < tex.width; x++)
+                {
+                    if (px[y * tex.width + x].a < 128) continue;
+
+                    float deg = Mathf.Atan2((y + 0.5f) / tex.height - 0.5f, (x + 0.5f) / tex.width - 0.5f) * Mathf.Rad2Deg + 90f;
+                    if (deg < 0f) deg += 360f;
+
+                    hist[Mathf.Min(Bins - 1, (int)(deg / 360f * Bins))]++;
+                    total++;
+                }
+            }
+
+            DestroyImmediate(tex);
+
+            var table = new float[101];
+            int sum = 0, bin = 0;
+
+            for (int i = 0; i <= 100; i++)
+            {
+                int want = total * i / 100;
+                while (bin < Bins - 1 && sum + hist[bin] < want) { sum += hist[bin]; bin++; }
+                table[i] = (bin + 1f) / Bins;
+            }
+
+            arcFillTable = table;
+            UnityEditor.EditorUtility.SetDirty(this);
+        }
+#endif
+
+        private int currentPercent;
+
         // ==========================================
         public void SetProbabilityImmediate(int value)
         {
             if (countUp != null) { StopCoroutine(countUp); countUp = null; }
+            currentPercent = value;
             if (probabilityText != null) probabilityText.text = string.Format(probabilityFormat, value);
+            SetArc(arcFill, value);
+            SetArc(arcPreview, value);
+        }
+
+        /// <summary>
+        /// 手上指著的牌打出去會到多少：圓弧的預覽段伸長、數字換成打出後的。null ＝ 收掉預覽。
+        /// </summary>
+        public void SetPreview(int? value)
+        {
+            int shown = value ?? currentPercent;
+            SetArc(arcPreview, shown);
+            if (probabilityText != null && countUp == null) probabilityText.text = string.Format(probabilityFormat, shown);
         }
 
         /// <summary>機率變化的動畫（規格 §10.1 probabilityChangeEffect）。</summary>
         public void AnimateProbability(int before, int after)
         {
             if (probabilityText == null) return;
+
+            currentPercent = after;
+            SetArc(arcPreview, after);   // 預覽段留在終點，填色追上去
 
             if (countUpSeconds <= 0f || before == after)
             {
@@ -176,9 +324,11 @@ namespace EldritchMile.UI.ProbabilityDialogue
                 t += Time.unscaledDeltaTime;
                 int v = Mathf.RoundToInt(Mathf.Lerp(from, to, Mathf.Clamp01(t / countUpSeconds)));
                 probabilityText.text = string.Format(probabilityFormat, v);
+                SetArc(arcFill, v);
                 yield return null;
             }
             probabilityText.text = string.Format(probabilityFormat, to);
+            SetArc(arcFill, to);
             countUp = null;
         }
 
@@ -204,6 +354,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
         public void SetHighlighted(bool on, Color? attributeColor)
         {
             if (!interactable) return;
+
+            transform.localScale = Vector3.one * (on ? highlightScale : 1f);
 
             if (!on) { ApplyTint(normalTint); return; }
 
@@ -243,10 +395,13 @@ namespace EldritchMile.UI.ProbabilityDialogue
         public void SetDisabled()
         {
             interactable = false;
+            transform.localScale = Vector3.one;
+            SetArc(arcPreview, currentPercent);
 
             if (flashRoutine != null) { dimAfterFlash = true; return; }
 
             ApplyTint(disabledTint);
+            SetContentAlpha(disabledAlpha);
         }
 
         /// <summary>
@@ -292,6 +447,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
             {
                 dimAfterFlash = false;
                 ApplyTint(disabledTint);
+                SetContentAlpha(disabledAlpha);
             }
         }
 

@@ -115,6 +115,66 @@ namespace EldritchMile.UI
             if (blur != null) blur.Open();
         }
 
+        // ==========================================
+        // 挑一張（2026-10-29：事件「銷毀 1 張武器牌／信仰牌」）
+        // ==========================================
+
+        private System.Action<CardData> pickDone;
+        private readonly List<CardPickTarget> pickTargets = new List<CardPickTarget>();
+        private bool closeWasActive;
+
+        public bool IsPicking => pickDone != null;
+
+        /// <summary>
+        /// 只放 <paramref name="candidates"/> 這些牌，讓玩家點一張。點了就關掉並回呼那一張。
+        /// **沒有取消** —— 事件選項已經說了要交出一張（關閉鍵在挑選期間藏起來）。
+        /// </summary>
+        public void OpenPicker(List<CardData> candidates, string title, System.Action<CardData> done)
+        {
+            if (viewer == null || candidates == null || candidates.Count == 0) { done?.Invoke(null); return; }
+
+            pickDone = done;
+            bookDeck.RestoreDrawPileOrderOnly(candidates);
+            viewer.battleDeck = bookDeck;
+            SetBattleOnlyTabsVisible(false);
+
+            if (viewer.closeButton != null) { closeWasActive = viewer.closeButton.gameObject.activeSelf; viewer.closeButton.gameObject.SetActive(false); }
+            if (viewer.titleText != null && !string.IsNullOrEmpty(title)) { viewer.titleText.text = title; viewer.titleText.gameObject.SetActive(true); }
+
+            viewer.OpenDrawPile();
+            if (blur != null) blur.Open();
+
+            // 每一格牌掛上點擊（書本模式的格子是固定那幾個，翻頁時換的是內容）
+            for (int i = 0; i < viewer.bookCardSlots.Count; i++)
+            {
+                CardViewUI slot = viewer.bookCardSlots[i];
+                if (slot == null) continue;
+                CardPickTarget t = slot.GetComponent<CardPickTarget>();
+                if (t == null) t = slot.gameObject.AddComponent<CardPickTarget>();
+                t.owner = this;
+                t.enabled = true;
+                if (!pickTargets.Contains(t)) pickTargets.Add(t);
+            }
+        }
+
+        /// <summary>某一格被點了（CardPickTarget 呼叫）。</summary>
+        internal void Picked(CardViewUI slot)
+        {
+            if (pickDone == null || slot == null || slot.CardInstance == null) return;
+            CardData card = slot.CardInstance.data;
+            System.Action<CardData> cb = pickDone;
+            EndPick();
+            Close();
+            cb(card);
+        }
+
+        private void EndPick()
+        {
+            pickDone = null;
+            for (int i = 0; i < pickTargets.Count; i++) if (pickTargets[i] != null) pickTargets[i].enabled = false;
+            if (viewer != null && viewer.closeButton != null) viewer.closeButton.gameObject.SetActive(closeWasActive);
+        }
+
         public void Close()
         {
             if (blur != null) blur.Close();

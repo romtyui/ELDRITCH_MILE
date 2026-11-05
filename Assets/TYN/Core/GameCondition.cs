@@ -66,6 +66,27 @@ namespace EldritchMile.Core
 
             /// 這場 run 已經玩了 ≥ value 秒
             ElapsedAtLeast = 6,
+
+            /// <summary>
+            /// **戰鬥牌組**裡這一類的牌 ≥ value。key：Weapon（武器牌）／Faith（信仰牌 = 神牌）。2026-10-29 追加。
+            /// 跟 TagCount 的差別：那個數的是背包裡的道具，牌在牌組裡，不在背包。
+            /// </summary>
+            DeckCountAtLeast = 7,
+
+            /// <summary>戰鬥牌組裡這一類的牌 &lt; value。key 同上</summary>
+            DeckCountBelow = 8,
+
+            /// <summary>這個角色在隊伍裡。key = 角色 id。對話事件用。2026-11-02</summary>
+            InParty = 9,
+
+            /// <summary>這個角色不在隊伍裡。key = 角色 id</summary>
+            NotInParty = 10,
+
+            /// <summary>這個角色還沒加入大廳。key = 角色 id。協助者事件用</summary>
+            NotInLobby = 11,
+
+            /// <summary>同行成員 ≤ value 人（不含主角）。協助者事件用（大綱：同行成員不多於 3 人）</summary>
+            PartySizeAtMost = 12,
         }
 
         [Tooltip("要判斷什麼")]
@@ -98,6 +119,18 @@ namespace EldritchMile.Core
                 case Kind.TagCountAtLeast: return run.CountByTag(key, db) >= value;
                 case Kind.TagCountBelow: return run.CountByTag(key, db) < value;
 
+                case Kind.DeckCountAtLeast: return PlayerVitals.CountDeck(key) >= value;
+                case Kind.DeckCountBelow: return PlayerVitals.CountDeck(key) < value;
+
+                case Kind.InParty: return run.InParty(key);
+                case Kind.NotInParty: return !run.InParty(key);
+                case Kind.NotInLobby:
+                {
+                    MetaProgressData meta = GameFlowManager.Instance != null ? GameFlowManager.Instance.Meta : null;
+                    return meta == null || !meta.InLobby(key);
+                }
+                case Kind.PartySizeAtMost: return run.party.Count <= value;
+
                 case Kind.ElapsedAtLeast: return run.ElapsedSeconds >= value;
             }
 
@@ -116,6 +149,12 @@ namespace EldritchMile.Core
                 case Kind.TagCountAtLeast: return $"持有 [{key}] ≥ {value}";
                 case Kind.TagCountBelow: return $"持有 [{key}] < {value}";
                 case Kind.ElapsedAtLeast: return $"已進行 ≥ {value} 秒";
+                case Kind.DeckCountAtLeast: return $"牌組 [{key}] ≥ {value}";
+                case Kind.DeckCountBelow: return $"牌組 [{key}] < {value}";
+                case Kind.InParty: return $"「{key}」在隊伍內";
+                case Kind.NotInParty: return $"「{key}」不在隊伍內";
+                case Kind.NotInLobby: return $"「{key}」未加入大廳";
+                case Kind.PartySizeAtMost: return $"同行成員 ≤ {value}";
             }
             return kind.ToString();
         }

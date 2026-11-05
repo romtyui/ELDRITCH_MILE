@@ -201,6 +201,7 @@ public class ProbabilityDialogueStageController : StageController
     /// </summary>
     private IEnumerator WaitThenReport()
     {
+        while (view != null && view.ResultPending) yield return null;
         while (PopupService.Instance != null && !PopupService.Instance.IsIdle) yield return null;
 
         // ⚠️ 出口是對話框本身。玩家回報離開鍵「不方便、找不到」

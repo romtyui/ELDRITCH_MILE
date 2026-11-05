@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 250aa35ed90ba144ea37b115a4b32b80, type: 3}
+  m_Name: Event_unknown_altar
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.EventData
+  id: unknown_altar
+  title: "\u672A\u77E5\u7684\u796D\u58C7"
+  conditions:
+  - kind: 8
+    key: Faith
+    value: 2
+  - kind: 0
+    key: altar_seen
+    value: 0
+  chance: 1
+  once: 0
+  oncePerMap: 0
+  priority: 0
+  weight: 1
+  showAllDressing: 0
+  bodyText: "\u4F34\u96A8\u8457\u4E00\u9663\u982D\u6688\u76EE\u7729\uFF0C\u7A7A\u9593\u958B\u59CB\u626D\u66F2\uFF0C\u5468\u570D\u7684\u666F\u8272\u7336\u5982\u5976\u6CB9\u822C\u878D\u5316\u3002\n\u7576\u4F60\u5BDF\u89BA\u5230\u7684\u6642\u5019\uFF0C\u5DF2\u7D93\u7F6E\u8EAB\u5728\u719F\u6089\u53C8\u964C\u751F\u7684\u623F\u9593\u7576\u4E2D\u3002\n\u6C89\u91CD\u7684\u7A7A\u6C23\uFF0C\u893B\u7006\u822C\u7684\u796D\u58C7\u51FA\u73FE\u5728\u4F60\u7684\u9762\u524D\u3002\u4F60\u611F\u53D7\u5230\u67D0\u7A2E\xB7\xB7\xB7\u671F\u5F85\u7684\u76EE\u5149\uFF0C\u6B63\u7B49\u5F85\u4F60\u7684\u9078\u64C7\u3002"
+  image: {fileID: 0}
+  speakerNames: []
+  startSignal: 
+  options:
+  - label: "\u2026\u2026"
+    resultText: 
+    effects:
+    - kind: 105
+      key: 
+      amount: 10
+      table: {fileID: 0}
+      letPlayerChoose: 1
+    chosenSignal: 
+  notes: 

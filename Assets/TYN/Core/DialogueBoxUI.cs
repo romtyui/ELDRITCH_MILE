@@ -95,9 +95,38 @@ namespace EldritchMile.Core
             {
                 // enabled 要一起處理，理由同 ShowSystem；設 null 時把圖也清掉，
                 // 免得殘留的舊立繪在下次 portraitRoot 被打開時冒出來
+                SetPortraitLayout(false);
                 portraitImage.enabled = portrait != null;
                 portraitImage.sprite = portrait;
             }
+        }
+
+        [Header("物件特寫（2026-11-02）")]
+        [Tooltip("開箱、檢查物件時借立繪位置秀特寫圖用的框。\n" +
+                 "立繪的框是直的（角色）、物件的圖是橫的，不換框的話寶箱會被拉成直的。圖本身維持比例")]
+        public Vector2 closeUpSize = new Vector2(750f, 750f);
+
+        [Tooltip("特寫的位置（相對立繪位置的中心）")]
+        public Vector2 closeUpPosition = Vector2.zero;
+
+        private Vector2 portraitHomeSize, portraitHomePos;
+        private bool portraitHomeCaptured;
+
+        /// <summary>切換立繪框：物件特寫（方框、維持比例）或角色（原本的直框）。</summary>
+        private void SetPortraitLayout(bool closeUp)
+        {
+            if (portraitImage == null) return;
+            RectTransform rt = portraitImage.rectTransform;
+            if (!portraitHomeCaptured)
+            {
+                portraitHomeSize = rt.sizeDelta;
+                portraitHomePos = rt.anchoredPosition;
+                portraitHomeCaptured = true;
+            }
+
+            rt.sizeDelta = closeUp ? closeUpSize : portraitHomeSize;
+            rt.anchoredPosition = closeUp ? closeUpPosition : portraitHomePos;
+            portraitImage.preserveAspect = closeUp;
         }
 
         [Header("打字機")]
@@ -179,6 +208,78 @@ namespace EldritchMile.Core
         }
 
         // ==========================================
+        // 點任意空白處推進（2026-10-25 美術要求）
+        // ==========================================
+
+        [Header("點任意空白處推進")]
+        [Tooltip("對話框有內容時，點畫面上任何**空白處**都能推進，不必點在框上。\n\n" +
+                 "「空白」的意思：滑鼠底下沒有會回應點擊的東西（按鈕、牌、寶箱、選項…都不算空白），\n" +
+                 "而且不是蓋在對話框上面的介面（HUD、卡冊、選單、彈窗）。\n" +
+                 "畫面上有選項要選時不推進 —— 不然一點就把選項跳掉了")]
+        public bool advanceOnAnyClick = true;
+
+        /// <summary>對話框是在哪一幀打開的。打開它的那一下點擊不能順便把它推進掉。</summary>
+        private int openedFrame = -1;
+
+        private static readonly List<UnityEngine.EventSystems.RaycastResult> clickHits =
+            new List<UnityEngine.EventSystems.RaycastResult>();
+
+        private void Update()
+        {
+            if (!advanceOnAnyClick || !IsShowing) return;
+
+            UnityEngine.InputSystem.Mouse mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouse == null || !mouse.leftButton.wasPressedThisFrame) return;
+            if (Time.frameCount <= openedFrame + 1) return;
+
+            if (IsBlankClick(mouse.position.ReadValue())) Advance();
+        }
+
+        /// <summary>這一點是不是「空白」：底下沒有會回應點擊的東西、也不是蓋在對話框上面的介面、畫面上沒有選項。</summary>
+        private bool IsBlankClick(Vector2 screenPos)
+        {
+            if (HoldOptions || (optionBox != null && optionBox.activeInHierarchy)) return false;
+
+            DialogueOptionsPanel options = DialogueOptionsPanel.Instance;
+            if (options != null && options.root != null && options.root.activeInHierarchy && options.Active.Count > 0) return false;
+
+            UnityEngine.EventSystems.EventSystem es = UnityEngine.EventSystems.EventSystem.current;
+            if (es == null) return true;
+
+            var data = new UnityEngine.EventSystems.PointerEventData(es) { position = screenPos };
+            clickHits.Clear();
+            es.RaycastAll(data, clickHits);
+            if (clickHits.Count == 0) return true;
+
+            GameObject top = clickHits[0].gameObject;
+
+            // ⚠️ 要排在「點在對話框自己身上」之前 —— 壓黑層跟對話框在同一個父物件底下
+            // 對話框後面那層全螢幕壓黑：它身上的「點外面結束打牌」只在探索打牌時有作用 ——
+            // 其他時候它就是空白，點了要推進
+            if (dimmer != null && top == dimmer)
+            {
+                DialogueEncounterController enc = DialogueEncounterController.Instance;
+                return enc == null || !enc.IsActive;
+            }
+
+            // 點在對話框自己身上 —— 推進鍵會處理，這裡再推一次就跳兩句
+            if (top.transform.IsChildOf(transform)) return false;
+            if (root != null && top.transform.IsChildOf(root.transform)) return false;
+
+            // 會回應點擊的東西（按鈕、牌、寶箱…）讓它自己處理
+            if (UnityEngine.EventSystems.ExecuteEvents.GetEventHandler<UnityEngine.EventSystems.IPointerClickHandler>(top) != null) return false;
+            if (UnityEngine.EventSystems.ExecuteEvents.GetEventHandler<UnityEngine.EventSystems.IPointerDownHandler>(top) != null) return false;
+
+            // 蓋在對話框上面的介面（HUD、卡冊、選單、彈窗）上的空白不算 —— 那是別的視窗的地盤
+            Canvas mine = GetComponentInParent<Canvas>();
+            Canvas theirs = top.GetComponentInParent<Canvas>();
+            if (mine != null && theirs != null && theirs.rootCanvas != mine.rootCanvas
+                && theirs.rootCanvas.sortingOrder > mine.rootCanvas.sortingOrder) return false;
+
+            return true;
+        }
+
+        // ==========================================
         // 對外 API
         // ==========================================
 
@@ -207,6 +308,7 @@ namespace EldritchMile.Core
                 // 只設 sprite 的話這張圖不會出現，而且不會有任何錯誤訊息
                 if (portraitImage != null && closeUp != null)
                 {
+                    SetPortraitLayout(true);
                     portraitImage.sprite = closeUp;
                     portraitImage.enabled = true;
                 }
@@ -232,6 +334,7 @@ namespace EldritchMile.Core
                 // enabled 要一起開，理由同 ShowSystem
                 if (portraitImage != null && portrait != null)
                 {
+                    SetPortraitLayout(false);
                     portraitImage.sprite = portrait;
                     portraitImage.enabled = true;
                 }
@@ -401,6 +504,55 @@ namespace EldritchMile.Core
             return view;
         }
 
+        /// <summary>
+        /// 只有壓黑與對象大圖，沒有對話框（寶箱畫面，2026-11-02）。文字改由大圖上方那行字顯示。
+        /// 要收掉時走一般的 Hide。
+        /// </summary>
+        public EncounterTargetView ShowTargetOnly(IProbabilityTarget source, Sprite closeUp)
+        {
+            if (root != null) root.SetActive(false);
+
+            // 大圖要先生：SpawnTargetView 會清舊的大圖，順便把壓黑還原
+            EncounterTargetView view = SpawnTargetView(source, closeUp);
+
+            if (dimmer != null)
+            {
+                dimmer.SetActive(true);
+                SetDimmerAlpha(closeUpDimAlpha);
+            }
+
+            return view;
+        }
+
+        [Tooltip("寶箱畫面的壓黑有多深。一般對話的壓黑是場景上 BLACK 那張圖自己的顏色，這裡只影響寶箱畫面")]
+        [Range(0f, 1f)] public float closeUpDimAlpha = 0.9f;
+
+        private float dimmerHomeAlpha = -1f;
+
+        private void SetDimmerAlpha(float alpha)
+        {
+            Image img = dimmer != null ? dimmer.GetComponent<Image>() : null;
+            if (img == null) return;
+
+            if (dimmerHomeAlpha < 0f) dimmerHomeAlpha = img.color.a;
+
+            Color c = img.color;
+            c.a = alpha;
+            img.color = c;
+        }
+
+        /// <summary>
+        /// 收起對話框，壓黑與立繪留著（遭遇打牌，2026-11-02）。
+        /// 算「沒有開著」：下一句台詞排進來就會直接把框叫回來，不必等玩家先點掉現在這一頁。
+        /// </summary>
+        public void Collapse()
+        {
+            StopTyping();
+            CancelAutoAdvance();
+            IsShowing = false;
+            if (root != null) root.SetActive(false);
+        }
+
         public void ClearTargetViews()
         {
             for (int i = 0; i < spawnedTargets.Count; i++)
@@ -408,6 +560,8 @@ namespace EldritchMile.Core
                 if (spawnedTargets[i] != null) Destroy(spawnedTargets[i].gameObject);
             }
             spawnedTargets.Clear();
+
+            if (dimmerHomeAlpha >= 0f) SetDimmerAlpha(dimmerHomeAlpha);
 
             // ⚠️ **不可以無條件把立繪打開。**
             //
@@ -436,6 +590,7 @@ namespace EldritchMile.Core
         /// </summary>
         private void Open()
         {
+            if (!IsShowing) openedFrame = Time.frameCount;
             IsShowing = true;
             if (root != null) root.SetActive(true);
             if (dimmer != null) dimmer.SetActive(true);

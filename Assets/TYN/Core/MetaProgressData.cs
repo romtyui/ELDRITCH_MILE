@@ -43,6 +43,17 @@ namespace EldritchMile.Core
         /// </summary>
         public List<RunSummary> runHistory = new List<RunSummary>();
 
+        /// <summary>大廳的常駐成員（角色 id）。協助者事件成功、輪次結束後加入，之後每一輪都在隊伍裡。2026-11-02</summary>
+        public List<string> lobby = new List<string>();
+
+        public bool InLobby(string characterId) => !string.IsNullOrEmpty(characterId) && lobby.Contains(characterId);
+
+        public void AddToLobby(string characterId)
+        {
+            if (string.IsNullOrEmpty(characterId) || lobby.Contains(characterId)) return;
+            lobby.Add(characterId);
+        }
+
         public bool HasLegacyItem(string id)
         {
             return !string.IsNullOrEmpty(id) && legacyItemIds.Contains(id);

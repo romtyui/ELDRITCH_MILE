@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -36,6 +37,7 @@ namespace EldritchMile.Core
         public void OnPointerClick(PointerEventData eventData)
         {
             if (eventData.dragging) return;   // 拖曳放開時 Unity 也會送 click，要濾掉
+            if (eventData.button != PointerEventData.InputButton.Left) return;   // 右鍵是離開
             OnClicked?.Invoke(this);
         }
 
@@ -43,8 +45,19 @@ namespace EldritchMile.Core
         [Tooltip("顯示對象的大圖")]
         public Image image;
 
-        [Tooltip("機率預覽標籤。設成 Image 的子物件並錨定 top-center，就會自動跟著圖的尺寸走")]
+        [Tooltip("機率數字。**常駐顯示**：平常是目前的機率，手上指著一張牌時是打出這張牌的機率")]
         public TextMeshProUGUI previewLabel;
+
+        [Tooltip("鎖鏈與數字框（鎖鏈.png 加上 Preview Label）。開鎖成功時整組淡掉，只留箱子")]
+        public CanvasGroup lockRoot;
+
+        [Min(0.01f)] public float unlockSeconds = 0.3f;
+
+        [Tooltip("鎖鏈消失時放大到幾倍，像是崩開")]
+        public float unlockEndScale = 1.08f;
+
+        [Tooltip("圖上方的一行字：容器的描述、這次判定的結果。對話框在打牌時是收起來的，文字放這裡（下方是手牌）")]
+        public TextMeshProUGUI resultLabel;
 
         [Header("尺寸")]
         [Tooltip("大圖能佔用的最大範圍。實際尺寸會依圖的比例縮進這個範圍內，\n" +
@@ -54,7 +67,13 @@ namespace EldritchMile.Core
         [Tooltip("勾選則小圖不會被放大，維持原始像素尺寸（適合像素美術）")]
         public bool neverUpscale = false;
 
-        [Header("預覽樣式")]
+        [Header("機率數字")]
+        [Tooltip("沒有指著牌時顯示的機率（百分比）。寶箱目前沒有基礎機率，所以是 00")]
+        [Range(0, 100)] public int baseRatePercent = 0;
+
+        [Tooltip("數字跳動的秒數。0 ＝ 直接換")]
+        [Min(0f)] public float countSeconds = 0.12f;
+
         public Color normalColor = Color.white;
         public Color immuneColor = new Color(0.5f, 0.5f, 0.5f);
 
@@ -99,8 +118,25 @@ namespace EldritchMile.Core
                 FitToSprite(closeUp);
             }
 
-            HidePreview();
+            ShowResult(null);
+            shownPercent = baseRatePercent;
+            WriteNumber(shownPercent);
         }
+
+        /// <summary>圖上方那行字。留空 ＝ 收掉。</summary>
+        public void ShowResult(string line)
+        {
+            if (resultLabel == null) return;
+
+            resultLabel.text = line ?? "";
+            resultLabel.gameObject.SetActive(!string.IsNullOrEmpty(line));
+
+            if (image != null)
+                resultLabel.rectTransform.anchoredPosition = new Vector2(0f, image.rectTransform.sizeDelta.y * 0.5f + resultGap);
+        }
+
+        [Tooltip("那行字離圖的上緣多遠")]
+        public float resultGap = 44f;
 
         /// <summary>
         /// 依圖的比例調整 RectTransform，讓它「就是那張圖的大小」。
@@ -154,8 +190,12 @@ namespace EldritchMile.Core
 
         public void OnCheckResult(bool success, float usedRate)
         {
-            // 先讓真正的目標處理結果（開箱、給道具、變更狀態），
-            // 它可能會透過 PopupService 顯示後續文字
+            // 不管成敗都彈一下：這張牌確實打在箱子上了
+            PlayBounce();
+
+            if (success) StartCoroutine(UnlockRoutine());
+
+            // 再讓真正的目標處理結果（開箱、給道具、變更狀態）
             Source?.OnCheckResult(success, usedRate);
         }
 
@@ -163,23 +203,123 @@ namespace EldritchMile.Core
         {
             if (previewLabel == null) return;
 
-            previewLabel.gameObject.SetActive(true);
-
             if (eff == Effectiveness.None)
             {
+                StopCount();
                 previewLabel.text = immuneText;
                 previewLabel.color = immuneColor;
+                return;
             }
-            else
-            {
-                previewLabel.text = Mathf.RoundToInt(rate * 100f).ToString();
-                previewLabel.color = normalColor;
-            }
+
+            CountTo(Mathf.RoundToInt(rate * 100f));
         }
 
+        /// <summary>沒有指著牌了。**數字不收掉**，回到目前的機率（骷髏頭的眼眶裡一直有數字）。</summary>
         public void HidePreview()
         {
-            if (previewLabel != null) previewLabel.gameObject.SetActive(false);
+            CountTo(baseRatePercent);
+        }
+
+        private int shownPercent;
+        private Coroutine countRoutine;
+
+        private void StopCount()
+        {
+            if (countRoutine != null) { StopCoroutine(countRoutine); countRoutine = null; }
+        }
+
+        private void WriteNumber(int percent)
+        {
+            if (previewLabel == null) return;
+            previewLabel.text = percent.ToString("00");
+            previewLabel.color = normalColor;
+        }
+
+        private void CountTo(int percent)
+        {
+            StopCount();
+
+            if (countSeconds <= 0f || !isActiveAndEnabled)
+            {
+                shownPercent = percent;
+                WriteNumber(percent);
+                return;
+            }
+
+            countRoutine = StartCoroutine(CountRoutine(shownPercent, percent));
+        }
+
+        private IEnumerator CountRoutine(int from, int to)
+        {
+            for (float t = 0f; t < countSeconds; t += Time.unscaledDeltaTime)
+            {
+                shownPercent = Mathf.RoundToInt(Mathf.Lerp(from, to, t / countSeconds));
+                WriteNumber(shownPercent);
+                yield return null;
+            }
+
+            shownPercent = to;
+            WriteNumber(to);
+            countRoutine = null;
+        }
+
+        /// <summary>解開了：鎖鏈和數字一起消失。</summary>
+        private IEnumerator UnlockRoutine()
+        {
+            if (lockRoot == null) yield break;
+
+            StopCount();
+
+            for (float t = 0f; t < unlockSeconds; t += Time.unscaledDeltaTime)
+            {
+                float k = t / unlockSeconds;
+                lockRoot.alpha = 1f - k;
+                lockRoot.transform.localScale = Vector3.one * Mathf.Lerp(1f, unlockEndScale, k);
+                yield return null;
+            }
+
+            lockRoot.gameObject.SetActive(false);
+        }
+
+        [Header("出牌時的 Q 彈")]
+        [Tooltip("整段搖多久")]
+        [Min(0.05f)] public float bounceSeconds = 0.6f;
+
+        [Tooltip("每秒壓扁／拉長幾次")]
+        public float bounceFrequency = 5f;
+
+        [Tooltip("壓扁的幅度。0.1 ＝ 寬 +10%、高 -10%")]
+        public float bounceSquash = 0.1f;
+
+        [Tooltip("左右搖晃的角度")]
+        public float bounceTilt = 3.5f;
+
+        private Coroutine bounceRoutine;
+
+        /// <summary>Q 彈地搖一下。動整個化身（圖、數字、那行字一起），轉軸是畫面上圖的中心。</summary>
+        public void PlayBounce()
+        {
+            if (!isActiveAndEnabled) return;
+            if (bounceRoutine != null) StopCoroutine(bounceRoutine);
+            bounceRoutine = StartCoroutine(BounceRoutine());
+        }
+
+        private IEnumerator BounceRoutine()
+        {
+            for (float t = 0f; t < bounceSeconds; t += Time.unscaledDeltaTime)
+            {
+                float fade = 1f - t / bounceSeconds;
+                fade *= fade;
+
+                float squash = bounceSquash * fade * Mathf.Sin(t * bounceFrequency * Mathf.PI * 2f);
+                transform.localScale = new Vector3(1f + squash, 1f - squash, 1f);
+                transform.localRotation = Quaternion.Euler(0f, 0f, bounceTilt * fade * Mathf.Sin(t * bounceFrequency * Mathf.PI));
+                yield return null;
+            }
+
+            transform.localScale = Vector3.one;
+            transform.localRotation = Quaternion.identity;
+            bounceRoutine = null;
         }
 
         public void OnAttemptsExhausted()

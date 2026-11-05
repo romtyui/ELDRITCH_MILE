@@ -73,6 +73,18 @@ namespace EldritchMile.Core
                      "⚠️ Unity 用 + 新增 List 元素時會零填充 —— 記得改成 1 以上，否則這條永遠抽不到")]
             [Min(0f)] public float weight = 1f;
 
+            [Tooltip("**越接近首領時**的權重（2026-10-25）。-1 = 跟上面一樣，不隨進度變。\n\n" +
+                     "實際權重 = 依地圖進度在 Weight 與這一格之間內插（起點 = Weight、首領前 = 這一格）。\n" +
+                     "進度由呼叫的地方設（目前只有商店會設，見 LootService.Depth01）；沒設就是起點的值。\n" +
+                     "例：稀有遺物 Weight 10、這格 35 —— 前期很少見，接近首領時常常出現")]
+            public float weightDeep = -1f;
+
+            /// <summary>在地圖進度 <paramref name="depth01"/>（0 = 起點、1 = 首領）時的權重。</summary>
+            public float WeightAt(float depth01)
+            {
+                return weightDeep < 0f ? weight : Mathf.Lerp(weight, weightDeep, Mathf.Clamp01(depth01));
+            }
+
             [Tooltip("抽中時給幾個。兩個都填 1 就是一個")]
             [Min(1)] public int countMin = 1;
             [Min(1)] public int countMax = 1;

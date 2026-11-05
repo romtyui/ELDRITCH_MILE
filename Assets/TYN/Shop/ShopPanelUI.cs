@@ -178,6 +178,11 @@ namespace EldritchMile.Shop
         /// <summary>
         /// 把一批商品擺上貨架。多出來的格子會清空。
         /// </summary>
+        /// <summary>
+        /// 價格倍率（2026-10-25：《月之蟾蜍》全部商品 -20%）。由 ShopStageController 在進貨前設。
+        /// </summary>
+        [System.NonSerialized] public float priceMultiplier = 1f;
+
         public void Bind(List<ItemStack> goods)
         {
             if (goods == null) goods = new List<ItemStack>();
@@ -194,6 +199,8 @@ namespace EldritchMile.Shop
                     // 查不到資料時價格是 0 —— 白送比「無限貴」好，
                     // 至少玩家點得動，也看得出這筆資料沒設好
                     int price = data != null ? data.price : 0;
+                    if (price > 0 && !Mathf.Approximately(priceMultiplier, 1f))
+                        price = Mathf.Max(1, Mathf.RoundToInt(price * priceMultiplier));
 
                     slot.Bind(goods[i].id, goods[i].count, price);
                 }

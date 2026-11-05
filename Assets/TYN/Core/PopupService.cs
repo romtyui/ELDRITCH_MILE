@@ -214,7 +214,10 @@ namespace EldritchMile.Core
         /// 開啟容器 —— 走系統提示公版。
         /// 格式（「打開了 X。」「獲得了：…」）在 DialogueBoxUI 的 Inspector 調，不寫死在程式裡。
         /// </summary>
-        public void ShowLoot(string containerName, IReadOnlyList<string> items)
+        public void ShowLoot(string containerName, IReadOnlyList<string> items) => ShowLoot(containerName, items, null);
+
+        /// <summary>同上，借立繪位置秀這個容器的特寫圖（櫃子就秀櫃子，不是一律寶箱）。</summary>
+        public void ShowLoot(string containerName, IReadOnlyList<string> items, Sprite closeUp)
         {
             if (dialogueBox == null)
             {
@@ -227,6 +230,7 @@ namespace EldritchMile.Core
             {
                 body = BuildLootText(containerName, items),
                 speaker = null,
+                portrait = closeUp,
                 autoAdvance = settlementAutoAdvance,
             });
         }

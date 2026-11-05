@@ -1,8 +1,65 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace EldritchMile.UI
 {
+    /// <summary>
+    /// 牌打出去之後的那一下：停在放開的位置彈一下、停住 → （結算）→ 淡出。
+    /// 順序照戰鬥（Romtyui 的 GeneralCardPlayAnimationController）：先讓玩家看到「這張牌打出去了」，效果才發生。
+    /// </summary>
+    [Serializable]
+    public class PlayedCardMotion
+    {
+        [Tooltip("彈起來時放大幾倍（相對放開時的大小）")]
+        public float punchScale = 1.15f;
+
+        [Min(0.01f)] public float punchSeconds = 0.1f;
+
+        [Tooltip("結算之前停多久。覺得牌消失得太快就調這格")]
+        [Min(0f)] public float holdSeconds = 0.25f;
+
+        [Min(0.01f)] public float fadeSeconds = 0.2f;
+
+        [Tooltip("淡出到最後縮成幾倍")]
+        public float fadeEndScale = 0.9f;
+
+        public IEnumerator PunchAndHold(Transform card)
+        {
+            Vector3 from = card.localScale;
+            Vector3 peak = from * punchScale;
+
+            for (float t = 0f; t < punchSeconds; t += Time.unscaledDeltaTime)
+            {
+                // 正弦：放大再回來，手感是「蓋章」不是「變大」
+                card.localScale = Vector3.Lerp(from, peak, Mathf.Sin(t / punchSeconds * Mathf.PI));
+                yield return null;
+            }
+
+            card.localScale = from;
+
+            if (holdSeconds > 0f) yield return new WaitForSecondsRealtime(holdSeconds);
+        }
+
+        public IEnumerator FadeAway(Transform card, CanvasGroup group)
+        {
+            Vector3 from = card.localScale;
+            float alpha = group != null ? group.alpha : 1f;
+
+            for (float t = 0f; t < fadeSeconds; t += Time.unscaledDeltaTime)
+            {
+                float k = t / fadeSeconds;
+                card.localScale = Vector3.Lerp(from, from * fadeEndScale, k);
+                if (group != null) group.alpha = Mathf.Lerp(alpha, 0f, k);
+                yield return null;
+            }
+
+            if (group != null) group.alpha = 0f;
+        }
+    }
+
     /// <summary>
     /// 手牌怎麼排。**探索打牌與機率對話共用這一支。**
     ///
@@ -27,6 +84,13 @@ namespace EldritchMile.UI
     ///    覺得看不清楚就把上浮距離調大，**不要改疊放順序**。
     ///
     /// ⚠️ 用這支的容器**不可以掛 LayoutGroup** —— 兩邊都在算位置會打架。
+    ///
+    /// 【2026-11-02 改成扇形】寶箱與遭遇的手牌改成跟戰鬥一樣：畫面正下方、扇形、
+    /// 滑上去的那張轉正放大並把兩邊推開。公式抄 Romtyui 的 `HandFanLayout`
+    /// （`Romtyui/codes/CardUI`，綁他的 CardHoverUI 所以不能直接掛）。
+    /// 上面第 1 點照舊（根物件不往上移，游標不會被抽走）；第 2 點只差在**被指到的那張會蓋到最上面**，
+    /// 扇形重疊得比較多，不提上來就看不到整張。
+    /// **出牌＝拖出牌區**，範圍見 <see cref="LeftHandZone"/>。
     /// </summary>
     public static class HandFanLayout
     {
@@ -60,6 +124,78 @@ namespace EldritchMile.UI
         }
 
         /// <summary>
+        /// 扇形排列（戰鬥手牌的公式）。只動根物件的位置、旋轉與疊放順序；被指到的那張怎麼浮起來見 <see cref="PoseVisual"/>。
+        /// </summary>
+        /// <param name="cards">要排的卡片（拖曳中的不要放進來）。順序就是左→右。</param>
+        /// <param name="activeIndex">被指到的那張。-1 ＝ 沒有。</param>
+        /// <param name="curveHeight">兩側下彎多少。戰鬥的預設值是 60。</param>
+        /// <param name="angleStep">相鄰兩張差幾度。戰鬥的預設值是 6。</param>
+        /// <param name="pushDistance">被指到時兩邊的牌讓開多遠。</param>
+        public static void ArrangeFan(IList<RectTransform> cards, int activeIndex, float cardSpacing, float maxHandWidth,
+                                      float curveHeight, float angleStep, float pushDistance)
+        {
+            if (cards == null) return;
+
+            int n = cards.Count;
+            if (n == 0) return;
+
+            float spacing = cardSpacing;
+            if (n > 1 && spacing * (n - 1) > maxHandWidth) spacing = maxHandWidth / (n - 1);
+
+            float center = (n - 1) * 0.5f;
+
+            for (int i = 0; i < n; i++)
+            {
+                RectTransform rt = cards[i];
+                if (rt == null) continue;
+
+                float offset = i - center;
+                float x = offset * spacing;
+                if (activeIndex >= 0 && i != activeIndex) x += i < activeIndex ? -pushDistance : pushDistance;
+
+                rt.anchoredPosition = new Vector2(x, -(offset * offset) * curveHeight / 10f);
+                rt.localRotation = Quaternion.Euler(0f, 0f, -offset * angleStep);
+                rt.SetSiblingIndex(i);
+            }
+
+            if (activeIndex >= 0 && activeIndex < n && cards[activeIndex] != null) cards[activeIndex].SetAsLastSibling();
+        }
+
+        /// <summary>
+        /// 視覺層的姿勢。被指到 ＝ 轉正、放大、浮到 <paramref name="hoverY"/>（手牌區座標，每張都浮到同一個高度）；
+        /// 其他 ＝ 貼回根物件。根物件是斜的，所以這裡要把旋轉抵銷掉。
+        /// </summary>
+        public static void PoseVisual(RectTransform visual, RectTransform cardRoot, bool active, float hoverY, float hoverScale)
+        {
+            if (visual == null || cardRoot == null) return;
+
+            if (!active)
+            {
+                visual.anchoredPosition = Vector2.zero;
+                visual.localRotation = Quaternion.identity;
+                visual.localScale = Vector3.one;
+                return;
+            }
+
+            Quaternion undo = Quaternion.Inverse(cardRoot.localRotation);
+            visual.anchoredPosition = undo * new Vector3(0f, hoverY - cardRoot.anchoredPosition.y, 0f);
+            visual.localRotation = undo;
+            visual.localScale = Vector3.one * hoverScale;
+        }
+
+        /// <summary>
+        /// 這一點在牌區外面了嗎（放開就算出牌）。
+        ///
+        /// 【範圍】牌區 ＝ 畫面下方 <paramref name="zoneTopRatio"/> 這一段，整個畫面寬。**只看上緣**，不看左右：
+        /// 打牌的動作一定是往上拖；往旁邊拖多半是在猶豫，一張牌的代價（消耗＋衰減）不該賠在這上面。
+        /// 預設 1/3，剛好比滑上去放大的牌頂再高一點 —— 把牌從手上抽出來就過線了，放回手牌區就是取消。
+        /// </summary>
+        public static bool LeftHandZone(Vector2 screenPoint, float zoneTopRatio)
+        {
+            return screenPoint.y > Screen.height * zoneTopRatio;
+        }
+
+        /// <summary>
         /// 在卡片底下插一層 `__Visual`，把原本的子物件全部搬進去。
         /// **上浮動這一層，根物件不動** —— 理由見上面的第 1 點。
         ///
@@ -83,6 +219,11 @@ namespace EldritchMile.UI
             visual.offsetMin = Vector2.zero;
             visual.offsetMax = Vector2.zero;
             visual.localScale = Vector3.one;
+
+            // 透明的可點區域跟著視覺層走：牌浮起來之後，游標移到上半截也還算指在這張牌上
+            Image hit = go.AddComponent<Image>();
+            hit.color = Color.clear;
+            hit.raycastTarget = true;
 
             // ⚠️ 順序必須保住。UI 的疊放靠 sibling 順序，而 SetParent 是**附加到最後** ——
             //    倒著迭代（避開 childCount 變動）會把整疊圖層翻過來，

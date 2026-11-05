@@ -59,6 +59,22 @@ public class ShopStageController : StageController
         "等它做好，改的是 ResolveStockTable() 那一支，資料不用動")]
     public List<RegionalStock> regionalStock = new List<RegionalStock>();
 
+    [Header("收藏品在商店的效果（2026-10-25《收藏品》大綱）")]
+    [Tooltip("《月之蟾蜍》：持有時商店所有商品價格降低")]
+    public string moonToadId = "relic_moon_toad";
+
+    [Tooltip("降低多少（0.2 = 打八折）")]
+    [Range(0f, 0.9f)] public float moonToadDiscount = 0.2f;
+
+    [Tooltip("《紅寶石》：進入商店時失去它，換成金幣")]
+    public string rubyId = "relic_ruby";
+
+    [Tooltip("紅寶石換多少金幣。大綱寫「大概抓個數量」—— 先抓售價 30 的兩倍")]
+    [Min(0)] public int rubyGold = 60;
+
+    [Tooltip("商人收下紅寶石時說的話。{0} = 金幣數")]
+    public string rubyLine = "哦哦……這可是好東西。就用 {0} 枚金幣跟你換吧，嘿嘿。";
+
     [Tooltip("要擺幾件。0 = 填滿整個貨架")]
     [Min(0)] public int stockCount = 0;
 
@@ -203,6 +219,17 @@ public class ShopStageController : StageController
         // 氣泡冒出來玩家看不到，等淡入完成才說才有意義
         if (shopkeeper != null) shopkeeper.Greet();
 
+        // 《紅寶石》：進店就被商人換走
+        if (run != null && !string.IsNullOrEmpty(rubyId) && run.HasItem(rubyId) && run.ConsumeItem(rubyId, 1))
+        {
+            run.AddMoney(rubyGold);
+            shelf.RefreshAffordability();
+            string line = string.Format(rubyLine, rubyGold);
+            if (shopkeeper != null) shopkeeper.Say(line, true);
+            else SpeechBubbleUI.Instance?.Show(line);
+            Debug.Log($"[商店] 紅寶石換成 {rubyGold} 金幣");
+        }
+
         yield break;
     }
 
@@ -242,7 +269,16 @@ public class ShopStageController : StageController
         }
 
         var rng = new System.Random(ShopSeed());
-        List<ItemStack> goods = LootService.RollExactly(table, rng, want);
+
+        // 越接近首領，稀有的東西越容易出現（表上條目的 weightDeep，見 LootTable.Entry）
+        List<ItemStack> goods;
+        LootService.Depth01 = MapDepth01();
+        try { goods = LootService.RollExactly(table, rng, want); }
+        finally { LootService.Depth01 = 0f; }
+
+        // 《月之蟾蜍》
+        shelf.priceMultiplier = run != null && !string.IsNullOrEmpty(moonToadId) && run.HasItem(moonToadId)
+            ? 1f - moonToadDiscount : 1f;
 
         shelf.Bind(goods);
 
@@ -256,6 +292,19 @@ public class ShopStageController : StageController
     /// 這是刻意留的接縫：等區域系統做好，只要改這一支去讀真正的區域欄位，
     /// 表本身與 Inspector 上的設定都不用動。
     /// </summary>
+    /// <summary>這間店在地圖上的進度：0 = 起點、1 = 首領那一層。</summary>
+    private float MapDepth01()
+    {
+        EldritchMile.Core.RunNodeData node = run != null ? run.CurrentNode : null;
+        if (node == null || run.mapData == null) return 0f;
+
+        int bossLayer = run.mapData.MaxLayer;
+        for (int i = 0; i < run.mapData.allNodes.Count; i++)
+            if (run.mapData.allNodes[i].kind == EldritchMile.Core.MapNodeKind.Boss) { bossLayer = run.mapData.allNodes[i].layer; break; }
+
+        return bossLayer > 0 ? Mathf.Clamp01((float)node.layer / bossLayer) : 0f;
+    }
+
     private LootTable ResolveStockTable()
     {
         // 地區自己指定了貨表就用它（2026-10-18 地區系統）。沒指定的地區照下面的舊規則，
@@ -374,15 +423,8 @@ public class ShopStageController : StageController
             return;
         }
 
+        // 武器牌會由 AddItem 轉進戰鬥牌組（見 RunContext.AddItem）
         run.AddItem(slot.ItemId, slot.Count);
-
-        // 武器牌買了要真的進戰鬥牌組（不是只躺在背包裡）。
-        // 牌組歸戰鬥端持有，這裡只是呼叫 —— 見 PlayerVitals.AddCardToDeck
-        ItemData data = GameFlowManager.Item(slot.ItemId);
-        if (data != null && data.grantsCard != null)
-        {
-            for (int i = 0; i < slot.Count; i++) PlayerVitals.AddCardToDeck(data.grantsCard);
-        }
 
         slot.MarkSoldOut();
         shelf.RefreshAffordability();

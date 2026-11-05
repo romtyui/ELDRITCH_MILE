@@ -10,11 +10,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
     using EldritchMile.Core.ProbabilityDialogue;
 
     /// <summary>
-    /// 一張機率卡。**拖出手牌區 = 使用**（規格 §10）。
-    ///
-    /// 【為什麼點擊也能出牌】規格只寫了拖曳，但拖曳在觸控／不同解析度下容易失手，
-    /// 而且測試時很難操作。點擊當成同一個動作，兩條路走到同一支 `Play()` ——
-    /// 不會有「兩種出牌方式行為不一致」的問題。
+    /// 一張機率卡。**拖出牌區 = 使用**（規格 §10），範圍見 `HandFanLayout.LeftHandZone`。
+    /// （2026-11-02 拿掉點擊出牌：滑上去看機率時手滑點一下，一張牌就沒了）
     /// </summary>
     public class ProbabilityCardUI : MonoBehaviour,
         IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler,
@@ -33,11 +30,19 @@ namespace EldritchMile.UI.ProbabilityDialogue
         [Tooltip("拖曳時的透明度")]
         [Range(0f, 1f)] public float dragAlpha = 0.6f;
 
-        [Tooltip("往上拖超過這個距離（像素）就算出牌。\n" +
-                 "太小會誤觸，太大會覺得拖不動")]
-        [Min(0f)] public float playDistance = 90f;
+        [Tooltip("牌區的上緣（佔畫面高度的比例）。由手牌區在生成時指定")]
+        public float handZoneTopRatio = 0.34f;
 
-        /// (卡, 這張 UI)
+        [Tooltip("拖出牌區（放開就會出牌）時放大幾倍")]
+        public float armedScale = 1.12f;
+
+        /// 打出去的那一下。由手牌區在生成時指定
+        public PlayedCardMotion playedCard = new PlayedCardMotion();
+
+        /// 放開了，要打出去。牌開始停住，這段期間手牌區要鎖住輸入
+        public event Action<ProbabilityCardUI> OnPlayStarting;
+
+        /// 停完了，真的結算
         public event Action<ProbabilityCardUI> OnPlayRequested;
 
         /// 拖曳／hover 時通知外面「這張是什麼顏色」，用來亮同色回答
@@ -45,6 +50,9 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
         /// 滑鼠進出。手牌區靠它決定哪一張要上浮（重排由手牌區負責，卡片自己不動位置）
         public event Action<ProbabilityCardUI, bool> OnHoverChanged;
+
+        /// 開始／結束拖曳。拖曳中的牌不參與排列，拖回來要重排
+        public event Action<ProbabilityCardUI, bool> OnDragChanged;
 
         /// <summary>
         /// 視覺層。**上浮只動這一層，根物件永遠留在原位。**
@@ -58,19 +66,16 @@ namespace EldritchMile.UI.ProbabilityDialogue
         /// <summary>由手牌區在生成後指定（見 `ProbabilityDialogueView.BuildVisualRoot`）。</summary>
         public void SetVisualRoot(RectTransform root) { visualRoot = root; }
 
-        /// <summary>上浮。0 = 回到原位。</summary>
-        public void SetLift(float lift)
+        /// <summary>被指到時浮起來。只動視覺層。</summary>
+        public void SetPose(bool active, float hoverY, float hoverScale)
         {
-            if (visualRoot == null) return;
-            visualRoot.anchoredPosition = new Vector2(0f, lift);
+            EldritchMile.UI.HandFanLayout.PoseVisual(visualRoot, transform as RectTransform, active, hoverY, hoverScale);
         }
 
         public bool IsDragging { get { return dragging; } }
 
         public CardDataExplore Data { get; private set; }
 
-        private Vector2 dragStart;
-        private Vector3 homePosition;
         private bool dragging;
         private bool spent;
 
@@ -117,28 +122,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
             if (nameText != null && card != null)
                 nameText.text = string.IsNullOrEmpty(card.cardName) ? card.cardId : card.cardName;
 
-            // ⚠️ **這裡不能抓 homePosition。**
-            //
-            // 這張牌住在 HorizontalLayoutGroup 底下，而 Layout 是在**影格結尾**才排的 ——
-            // Bind() 當下抓到的還是 prefab 的原始值 (0,0)。
-            // 容器如果當下是隱形的（「講完話才出現打牌」那段），排版更是根本沒跑過。
-            //
-            // 拿那個值當「原位」，拖回去就會飛到容器原點。
-            // 改成第一次要用到的時候才抓（EnsureHome），那時排版一定跑完了。
-            // 跟 ShortcutSlotUI 修過的是同一個坑。
-            homeCaptured = false;
             SetAlpha(1f);
         }
-
-        /// <summary>記住「本來的位置」。**只抓一次** —— 拖到一半再抓會把位移當成原位。</summary>
-        private void EnsureHome()
-        {
-            if (homeCaptured) return;
-            homePosition = transform.localPosition;
-            homeCaptured = true;
-        }
-
-        private bool homeCaptured;
 
         // ==========================================
         public void OnPointerEnter(PointerEventData eventData)
@@ -159,20 +144,19 @@ namespace EldritchMile.UI.ProbabilityDialogue
             if (!dragging) OnAimChanged?.Invoke(this, false);
         }
 
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            // 拖曳結束也會送一次 click，用 dragging 擋掉避免出兩次牌
-            if (dragging || spent) return;
-            Play();
-        }
+        // 留著這個介面才擋得住點擊往父物件冒泡。點牌沒有效果
+        public void OnPointerClick(PointerEventData eventData) { }
 
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (spent) return;
             dragging = true;
-            dragStart = eventData.position;
-            EnsureHome();
             SetAlpha(dragAlpha);
+            transform.SetAsLastSibling();
+            transform.localRotation = Quaternion.identity;
+            SetPose(false, 0f, 1f);
+            transform.position = eventData.position;
+            OnDragChanged?.Invoke(this, true);
             OnAimChanged?.Invoke(this, true);
         }
 
@@ -180,26 +164,32 @@ namespace EldritchMile.UI.ProbabilityDialogue
         {
             if (spent || !dragging) return;
             transform.position = eventData.position;
+
+            // 拖出牌區了：放大、不透明 ——「現在放開就打出去了」
+            bool outside = EldritchMile.UI.HandFanLayout.LeftHandZone(eventData.position, handZoneTopRatio);
+            transform.localScale = Vector3.one * (outside ? armedScale : 1f);
+            SetAlpha(outside ? 1f : dragAlpha);
         }
 
         public void OnEndDrag(PointerEventData eventData)
         {
             if (spent) { dragging = false; return; }
 
-            float dy = eventData.position.y - dragStart.y;
             dragging = false;
-            OnAimChanged?.Invoke(this, false);
 
-            if (dy >= playDistance)
+            // 打出去的話亮著的回答與預覽留著，結算那一刻才收
+            if (EldritchMile.UI.HandFanLayout.LeftHandZone(eventData.position, handZoneTopRatio))
             {
                 Play();
                 return;
             }
 
+            OnAimChanged?.Invoke(this, false);
+
             // 規格 §10：拖回 hand 視為 Cancel，不使用
-            EnsureHome();
-            transform.localPosition = homePosition;
+            transform.localScale = Vector3.one;
             SetAlpha(1f);
+            OnDragChanged?.Invoke(this, false);
         }
 
         private void Play()
@@ -207,96 +197,25 @@ namespace EldritchMile.UI.ProbabilityDialogue
             if (spent) return;
             spent = true;                      // 規格 R7：一張牌只能用一次
 
-            // ⚠️ **先發事件再播動畫。** 反過來的話機率數字要等動畫跑完才動，
-            //    玩家會覺得「出了牌但沒反應」—— 那比沒有動畫更糟。
-            //    事件處理裡若被拒絕（`ReturnHome`），下面的動畫會被那支停掉。
-            OnPlayRequested?.Invoke(this);
-
-            if (!playLaunchAnimation || !isActiveAndEnabled) return;
-            if (!spent) return;                // 被 ReturnHome 退回來了，不要飛走
-
-            if (launchRoutine != null) StopCoroutine(launchRoutine);
-            launchRoutine = StartCoroutine(LaunchRoutine());
+            OnPlayStarting?.Invoke(this);
+            StartCoroutine(PlayRoutine());
         }
 
-        // ==========================================
-        // 出牌動效：往畫面中央「射」出去，邊縮邊淡掉
-        // ==========================================
-        //
-        // 【為什麼要有】點一下牌就消失，玩家看不到「這張牌去了哪裡、對誰起作用」——
-        // 因果斷了，就會覺得是系統擅自把牌吃掉。
-        //
-        // 【為什麼是往畫面中央】那裡是這一刻的視線焦點（回答列與機率數字都在那一帶）。
-        // 牌飛過去、在焦點上散掉，玩家的視線正好被帶到「數字要開始跳了」的位置。
-        //
-        // ⚠️ **這是純視覺，不影響邏輯。** `OnPlayRequested` 在動畫**開始時**就發了 ——
-        // 等動畫跑完才發的話，機率數字會慢半拍，那反而更斷。
-        // 動畫只負責把玩家的視線送到數字那裡，剛好接上 `AnimateProbability` 的 countUp。
-
-        [Header("出牌動效")]
-        [Tooltip("出牌時往畫面中央飛出去再淡掉。取消勾選 = 點了就直接消失")]
-        public bool playLaunchAnimation = true;
-
-        [Min(0.05f)] public float launchSeconds = 0.32f;
-
-        [Tooltip("飛到終點時縮到原本的幾倍。小於 1 ＝ 一邊飛一邊變小，像被吸進去")]
-        [Range(0.1f, 1.5f)] public float launchEndScale = 0.55f;
-
-        [Tooltip("終點相對畫面中央再偏移多少（像素）。\n" +
-                 "回答列在畫面中下方，往上偏一點會更靠近機率數字")]
-        public Vector2 launchTargetOffset = new Vector2(0f, 60f);
-
-        [Tooltip("飛行路徑往上拱多少（像素）。0 ＝ 直線。\n" +
-                 "拱一點會像「拋出去」而不是「被拖過去」，手感差很多")]
-        public float launchArcHeight = 90f;
-
-        private Coroutine launchRoutine;
-
-        /// <summary>出牌的飛出動畫。跑完把自己收掉。</summary>
-        private IEnumerator LaunchRoutine()
+        /// <summary>
+        /// 打出去：停在放開的位置彈一下、停住 → 結算 → 淡出（順序照戰鬥）。
+        /// 機率數字與進度條在「結算」那一刻才跑，玩家先看到牌打出去，才看到它的效果。
+        /// </summary>
+        private IEnumerator PlayRoutine()
         {
-            RectTransform rt = transform as RectTransform;
-            RectTransform parent = rt != null ? rt.parent as RectTransform : null;
-            if (rt == null || parent == null) { gameObject.SetActive(false); yield break; }
+            yield return playedCard.PunchAndHold(transform);
 
-            Vector2 from = rt.anchoredPosition;
+            OnPlayRequested?.Invoke(this);
 
-            // 畫面中央換算成「手牌容器的座標」——
-            // 直接用 Vector2.zero 的話那是容器的中心，不是畫面的中心
-            Vector3 worldCentre = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f);
-            Canvas canvas = parent.GetComponentInParent<Canvas>();
-            Camera cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
-                ? canvas.worldCamera : null;
+            if (!spent) yield break;           // 被 ReturnHome 退回來了
 
-            Vector2 to;
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, worldCentre, cam, out to);
-            to += launchTargetOffset;
+            yield return playedCard.FadeAway(transform, canvasGroup);
 
-            Vector3 scale0 = rt.localScale;
-            float t = 0f;
-
-            while (t < 1f)
-            {
-                t += Time.unscaledDeltaTime / Mathf.Max(0.01f, launchSeconds);
-                float k = Mathf.Clamp01(t);
-
-                // 前段快、後段緩 —— 「射出去然後散掉」，不是等速滑過去
-                float e = 1f - (1f - k) * (1f - k);
-
-                Vector2 pos = Vector2.Lerp(from, to, e);
-                pos.y += Mathf.Sin(e * Mathf.PI) * launchArcHeight;   // 拋物線的拱
-                rt.anchoredPosition = pos;
-
-                rt.localScale = Vector3.Lerp(scale0, scale0 * launchEndScale, e);
-
-                // 到後半段才開始淡 —— 一開始就淡的話會像「牌壞掉了」而不是「射出去」
-                SetAlpha(k < 0.5f ? 1f : 1f - (k - 0.5f) * 2f);
-
-                yield return null;
-            }
-
-            launchRoutine = null;
-            gameObject.SetActive(false);
+            Destroy(gameObject);
         }
 
         private void SetAlpha(float a)
@@ -307,16 +226,12 @@ namespace EldritchMile.UI.ProbabilityDialogue
         /// <summary>出牌被拒絕（例如已經在 Resolving）時退回原位。</summary>
         public void ReturnHome()
         {
-            // 出牌被拒絕時，飛出去的動畫也要一起收掉 —— 不收的話牌會一邊飛走一邊「回到原位」
-            if (launchRoutine != null) { StopCoroutine(launchRoutine); launchRoutine = null; }
-
             spent = false;
             dragging = false;
             gameObject.SetActive(true);
             transform.localScale = Vector3.one;
-            EnsureHome();
-            transform.localPosition = homePosition;
             SetAlpha(1f);
+            OnDragChanged?.Invoke(this, false);
         }
     }
 }

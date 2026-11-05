@@ -64,10 +64,22 @@ namespace EldritchMile.UI
         /// </summary>
         public void Open(RunContext run, Action onDone)
         {
-            StartCoroutine(OpenRoutine(run, onDone));
+            StartCoroutine(OpenRoutine(
+                delegate { return rewardUI != null && rewardSpec != null && run != null && rewardUI.ShowOutsideBattle(run, rewardSpec, delegate { if (onDone != null) onDone(); }); },
+                onDone));
         }
 
-        private IEnumerator OpenRoutine(RunContext run, Action onDone)
+        /// <summary>
+        /// 同一個畫面，但內容是指定好的（寶箱開出來的，2026-11-02）。寶箱用的那一份不必設 Reward Spec。
+        /// </summary>
+        public void OpenGiven(RunContext run, int money, List<ItemStack> items, Action onDone)
+        {
+            StartCoroutine(OpenRoutine(
+                delegate { return rewardUI != null && run != null && rewardUI.ShowGivenRewards(run, money, items, delegate { if (onDone != null) onDone(); }); },
+                onDone));
+        }
+
+        private IEnumerator OpenRoutine(Func<bool> show, Action onDone)
         {
             // 截圖要等這一幀畫完
             yield return new WaitForEndOfFrame();
@@ -86,13 +98,10 @@ namespace EldritchMile.UI
 
             for (int i = 0; i < blurTargets.Count; i++) blurTargets[i].texture = captured;
 
-            bool opened = rewardUI != null && rewardSpec != null && run != null
-                          && rewardUI.ShowOutsideBattle(run, rewardSpec, () => { if (onDone != null) onDone(); });
-
-            if (!opened)
+            if (!show())
             {
-                Debug.LogWarning("[祭壇] 獎勵畫面打不開（" +
-                                 (rewardUI == null ? "沒有 BattleRewardUI" : rewardSpec == null ? "沒有獎勵設定" : run == null ? "沒有 RunContext" : "BattleRewardUI 拒絕開啟") +
+                Debug.LogWarning("[獎勵] 獎勵畫面打不開（" +
+                                 (rewardUI == null ? "沒有 BattleRewardUI" : "沒有獎勵設定或 RunContext，或 BattleRewardUI 拒絕開啟") +
                                  "），直接結束", this);
                 if (onDone != null) onDone();
             }

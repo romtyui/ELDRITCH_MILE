@@ -151,6 +151,12 @@ namespace EldritchMile.Core.ProbabilityDialogue
             {
                 if (data.options[i] == null) continue;
 
+                // 身上沒有需要的東西 → 這個回答不出現（《時藏》沒有食物就不能「給他吃的」）
+                if (!string.IsNullOrEmpty(data.options[i].requireTag)
+                    && GameFlowManager.Instance != null && GameFlowManager.Instance.Run != null
+                    && GameFlowManager.Instance.Run.CountByTag(data.options[i].requireTag, GameFlowManager.Instance.itemDatabase) <= 0)
+                    continue;
+
                 int p0 = Mathf.Clamp(data.options[i].baseProbability, 0, data.probabilityCap);
 
                 // ⚠️ 乘法的死角：0 乘任何數還是 0 —— 那個回答會**永遠推不動**，

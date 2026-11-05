@@ -164,6 +164,51 @@ namespace EldritchMile.Core
         {
         }
 
+        // ==========================================
+        // 不滑動的進出（2026-11-02：組員不希望看到地圖從上方下移）
+        // 畫面全黑時把地圖擺好或收走，亮起來時它就在那裡
+        // ==========================================
+
+        /// <summary>全黑時把地圖擺到定位。先不開放互動 —— 等 <see cref="FinishReveal"/>。</summary>
+        public void ShowForReveal()
+        {
+            IsOpen = true;
+            backdrop?.Spawn();
+            if (panel != null)
+            {
+                Vector2 pos = panel.anchoredPosition;
+                pos.y = shownY;
+                panel.anchoredPosition = pos;
+            }
+            ApplyInteractable(false);
+        }
+
+        /// <summary>地圖完全亮起來了，開放互動。</summary>
+        public void FinishReveal()
+        {
+            ApplyInteractable(true);
+            TutorialSignal.MapOpened();
+        }
+
+        /// <summary>全黑時把地圖收走。</summary>
+        public void HideForFade()
+        {
+            if (!IsOpen) return;
+            ApplyInteractable(false);
+            OnClosing();
+            SetOpenImmediate(false);
+            TutorialSignal.MapClosed();
+        }
+
+        /// <summary>地圖正在亮起來。子類別在這裡播鏡頭（3D 版：從節點拉遠）。</summary>
+        public virtual IEnumerator OnRevealing(float seconds)
+        {
+            yield break;
+        }
+
+        /// <summary>用滑動開地圖時，先把上一次進節點的鏡頭狀態還原。</summary>
+        public virtual void ResetEnterFocus() { }
+
         /// <summary>
         /// 地圖下拉完成後呼叫。適合播節點逐層彈出之類的進場動畫。
         /// </summary>

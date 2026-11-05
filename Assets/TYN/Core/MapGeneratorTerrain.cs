@@ -83,9 +83,9 @@ namespace EldritchMile.Core
             for (int y = 0; y < R; y++)
                 for (int x = 0; x < R; x++)
                 {
-                    float u = (float)x / (R - 1);
-                    float vv = (float)y / (R - 1);
-                    Color c = tex.GetPixelBilinear(u, vv);
+                    // 格子是「節點區域」的格子，要換算到地形圖上實際對應的位置（見 terrainSampleArea）
+                    Vector2 uv = s.TerrainUv(new Vector2(100f * x / (R - 1), 100f * y / (R - 1)));
+                    Color c = tex.GetPixelBilinear(uv.x, uv.y);
                     float lum = c.r * 0.299f + c.g * 0.587f + c.b * 0.114f;
 
                     bool isWater = lum < s.waterThreshold;
@@ -193,6 +193,9 @@ namespace EldritchMile.Core
                     }
                     if (picked.Count == 0) nearest = 10000f;
 
+                    // 太近的不要 —— 節點擠在一起，棋子會互相疊住（2026-10-25 要求間隔更寬）
+                    if (s.minNodeSpacing > 0f && nearest < s.minNodeSpacing * s.minNodeSpacing) continue;
+
                     float score = Mathf.Sqrt(nearest) * w;
                     if (score <= bestScore) continue;
 
@@ -201,7 +204,8 @@ namespace EldritchMile.Core
                 }
 
                 // K 個候選全在水裡 —— 放寬到「只要不是水就好」再試一輪
-                if (bestScore < 0f)
+                // （有間隔限制時不放寬：放寬就等於不限制了。放不下就停在這個數量）
+                if (bestScore < 0f && s.minNodeSpacing <= 0f)
                 {
                     for (int k = 0; k < K * 4 && bestScore < 0f; k++)
                     {
@@ -226,7 +230,8 @@ namespace EldritchMile.Core
         {
             if (s.terrainMap == null || !s.terrainMap.isReadable) return false;
 
-            Color c = s.terrainMap.GetPixelBilinear(pct.x / 100f, pct.y / 100f);
+            Vector2 uv = s.TerrainUv(pct);
+            Color c = s.terrainMap.GetPixelBilinear(uv.x, uv.y);
             float lum = c.r * 0.299f + c.g * 0.587f + c.b * 0.114f;
             return lum < s.waterThreshold;
         }
@@ -428,7 +433,9 @@ namespace EldritchMile.Core
             // ⚠️ 節點數決定圖的**直徑**，而直徑就是一場 run 有多長。
             //    Delaunay 圖的直徑大約是 sqrt(N)，所以要 8 層得要 N≈50 上下。
             //    玩家只會走過其中一條路徑（約 mapLayers 站），其餘是沒選的岔路
-            int count = Mathf.Clamp(depths * depths / 2 + depths, depths * 2, 60);
+            int count = s.terrainNodeCount > 0
+                ? s.terrainNodeCount
+                : Mathf.Clamp(depths * depths / 2 + depths, depths * 2, 60);
 
             List<Vector2> pts = SampleTerrain(su, s, rng, count);
             if (pts.Count < 3) return GenerateOrganic(s, rng);

@@ -1766,8 +1766,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 540}
-  m_SizeDelta: {x: -1820, y: 100}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &212650080
 MonoBehaviour:
@@ -1787,9 +1787,20 @@ MonoBehaviour:
   root: {fileID: 0}
   endButton: {fileID: 404171100}
   cardSpacing: 130
-  maxHandWidth: 760
-  hoverLift: 40
-  selectedLift: 155
+  maxHandWidth: 900
+  curveHeight: 60
+  angleStep: 6
+  hoverPush: 60
+  hoverScale: 1.2
+  hoverLift: 70
+  selectedLift: 100
+  handZoneTopRatio: 0.34
+  playedCard:
+    punchScale: 1.15
+    punchSeconds: 0.1
+    holdSeconds: 0.25
+    fadeSeconds: 0.2
+    fadeEndScale: 0.9
   ineffectiveAlpha: 0.35
 --- !u!225 &212650081
 CanvasGroup:
@@ -3741,7 +3752,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 794, y: 0}
+  m_AnchoredPosition: {x: 794, y: 120}
   m_SizeDelta: {x: 280, y: 120}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &404171102
@@ -3907,6 +3918,8 @@ MonoBehaviour:
   dimmer: {fileID: 816323013}
   advanceButton: {fileID: 99592063}
   targetViewPrefab: {fileID: 2935104796966573886, guid: 4bee8ef9c5b5d3a4b99cefb470bd0f0a, type: 3}
+  closeUpSize: {x: 640, y: 640}
+  closeUpPosition: {x: 0, y: 0}
   charsPerSecond: 40
   systemSpeakerName: "\u203B"
   systemTextColor: {r: 0.85, g: 0.85, b: 0.75, a: 1}
@@ -3916,6 +3929,8 @@ MonoBehaviour:
   itemLineFormat: "\u3000\xB7 {0}"
   emptyContainerFormat: "{0} \u88E1\u9762\u7A7A\u7A7A\u5982\u4E5F\u3002"
   containerOpenedFormat: "\u6253\u958B\u4E86 {0}\u3002"
+  advanceOnAnyClick: 1
+  closeUpDimAlpha: 0.9
 --- !u!114 &407060547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6467,6 +6482,7 @@ GameObject:
   - component: {fileID: 650878821}
   - component: {fileID: 650878823}
   - component: {fileID: 650878822}
+  - component: {fileID: 650878824}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -6531,6 +6547,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 650878820}
   m_CullTransparentMesh: 1
+--- !u!114 &650878824
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 650878820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 17bec53edea88ea46b72a278988deab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.UI.HoverDimImage
+  target: {fileID: 650878822}
+  hoverTint: {r: 0.6, g: 0.6, b: 0.6, a: 1}
+  fadeSeconds: 0.12
 --- !u!1 &691962861
 GameObject:
   m_ObjectHideFlags: 0
@@ -7983,7 +8014,6 @@ GameObject:
   - component: {fileID: 816323016}
   - component: {fileID: 816323015}
   - component: {fileID: 816323017}
-  - component: {fileID: 816323018}
   m_Layer: 5
   m_Name: BLACK
   m_TagString: Untagged
@@ -8064,18 +8094,6 @@ MonoBehaviour:
   visibleInStages: 
   alwaysVisible: 0
   useFadeIfAvailable: 1
---- !u!114 &816323018
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 816323013}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 088d61d1f39730e4c967fab6d1fdc0ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Explore.DimmerClickEndsEncounter
 --- !u!1 &819430381
 GameObject:
   m_ObjectHideFlags: 0
@@ -8787,7 +8805,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 530, y: -323.5}
+  m_AnchoredPosition: {x: 0, y: 140}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &874061774
@@ -9668,8 +9686,13 @@ MonoBehaviour:
   startingDeck: {fileID: 11400000, guid: 62ea6c15f92595b4f98ffee8d3ecdfbd, type: 2}
   startingMaxHp: 100
   startingMaxSan: 100
+  restEvent: {fileID: 11400000, guid: 493da22fa8ce320459ebe51a200f8ab1, type: 2}
+  startingParty:
+  - campbell
   dialogueNodeStage: 9
   currentStage: 0
+  mapFadeTransition: 1
+  mapPullBackSeconds: 1.1
   fadeOutSeconds: 0.3
   fadeInSeconds: 0.55
   holdBlackSeconds: 0.25
@@ -9692,6 +9715,8 @@ MonoBehaviour:
     text: "\u7279\u6B8A"
   - kind: 5
     text: "\u906D\u9047"
+  - kind: 7
+    text: "\u4F11\u606F"
   eventTitleFormat: "\u300A{0}\u300B"
 --- !u!1 &962004466
 GameObject:
@@ -10904,8 +10929,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 530, y: -180}
-  m_SizeDelta: {x: 860, y: 326}
+  m_AnchoredPosition: {x: 0, y: 180}
+  m_SizeDelta: {x: 1100, y: 360}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1091056595
 MonoBehaviour:
@@ -12724,7 +12749,7 @@ MonoBehaviour:
     prefab: {fileID: 6450695220657823247, guid: 7c6299e907ec2034c827ba5a695ffcf5, type: 3}
     customParent: {fileID: 0}
   - type: 4
-    prefab: {fileID: 8654447224476101637, guid: 0207ccef82a89a14398058f68030d947, type: 3}
+    prefab: {fileID: 980951467994646417, guid: 20b31f4247388de46b3ad09e338c42d6, type: 3}
     customParent: {fileID: 211474239}
   - type: 9
     prefab: {fileID: 7707460458205152320, guid: 37e6767f6a350234296f742793598e83, type: 3}
@@ -19467,6 +19492,8 @@ MonoBehaviour:
   hintLine: "\u5403\u6389\u4E00\u500B\u820A\u7684\u9A30\u51FA\u4F4D\u5B50\uFF0C\u6216\u4E1F\u6389\u5176\u4E2D\u4E00\u500B"
   eatLabel: "\u5403\u6389"
   discardLabel: "\u4E1F\u6389"
+  cancelLabel: "\u53D6\u6D88"
+  offerHintLine: "\u5403\u6389\u6216\u4E1F\u6389\u4E00\u500B\u820A\u7684\uFF0C\u63DB\u6210\u9019\u500B\uFF1B\u4E0D\u63DB\u5C31\u6309\u53D6\u6D88"
 --- !u!225 &1980679220
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -20922,8 +20949,13 @@ MonoBehaviour:
   spriteShop: {fileID: 21300000, guid: bbb26f440e881864883aa32f4866f8d9, type: 3}
   spriteSpecialEvent: {fileID: 21300000, guid: b45f0f4e423b7094c804e60f2d53a0fc, type: 3}
   spriteDialogue: {fileID: 21300000, guid: e3f68d38466a6204dafaf0ff1e001f62, type: 3}
+  spriteRest: {fileID: 0}
+  restTint: {r: 0.65, g: 1, b: 0.7, a: 1}
   spriteGate: {fileID: 0}
   gateTint: {r: 0.6, g: 0.75, b: 1, a: 1}
+  enterFocus: 1
+  enterFocusDistance: 0.4
+  enterFocusSeconds: 0.6
   lineMaterial: {fileID: 2100000, guid: 6bcb648d972cea145918da382a4e0dfb, type: 2}
   lineWidth: 0.04
   lineEndGap: 0.25
@@ -20953,6 +20985,9 @@ MonoBehaviour:
   - kind: 6
     title: "\u901A\u9053"
     body: "\u901A\u5F80\u5176\u4ED6\u5730\u5340\u7684\u5C94\u8DEF"
+  - kind: 7
+    title: "\u4F11\u606F"
+    body: "\u56DE\u5FA9 HP \u6216\u56DE\u5FA9 SAN\uFF0C\u4E8C\u9078\u4E00"
   tooltipTierElite: "<color=#FF9B6A>\u25C6 \u83C1\u82F1</color>"
   tooltipTierBoss: "<color=#FF6A6A>\u25C6\u25C6 BOSS</color>"
   tooltipStateCurrent: "<color=#FFD98A>\u4F60\u5728\u9019\u88E1\u3002</color>"

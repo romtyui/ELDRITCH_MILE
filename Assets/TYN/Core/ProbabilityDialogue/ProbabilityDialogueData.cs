@@ -71,6 +71,9 @@ namespace EldritchMile.Core.ProbabilityDialogue
 
         [Tooltip("成功後要跑的效果。留空 = 只顯示文字就結束")]
         public List<EventEffect> successOutcome = new List<EventEffect>();
+
+        [Tooltip("身上要有這個標籤的東西，這個回答才會出現（《時藏》給他吃的 → Food）。留空 = 不限。2026-11-02")]
+        public string requireTag = "";
     }
 
     /// <summary>
@@ -116,6 +119,10 @@ namespace EldritchMile.Core.ProbabilityDialogue
         [Header("卡牌")]
         [Tooltip("開場發幾張手牌（規格 §7.1 handSize）。**不要 hardcode**")]
         [Min(0)] public int handSize = 5;
+
+        [Tooltip("角色不講氣泡台詞（寒暄、判定反饋）。\n" +
+                 "《協助者事件》前半段角色還是「？？？」，氣泡會把名字講出來。2026-11-02")]
+        public bool noBarks = false;
 
         [Tooltip("⚠️ 正常情況**留空**。\n\n" +
                  "手牌是從玩家自己的探索牌組發的 —— 對話用的牌和開寶箱用的牌\n" +

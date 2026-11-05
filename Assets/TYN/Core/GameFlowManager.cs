@@ -115,6 +115,18 @@ namespace EldritchMile.Core
                  "0 = 沿用戰鬥端原本的值")]
         [Min(0)] public int startingMaxSan = 0;
 
+        [Header("休息節點（2026-10-25）")]
+        [Tooltip("走進休息節點時播的事件：回復 HP 或回復 SAN 二選一。\n" +
+                 "用事件模組是因為它已經有「一段文字＋選項＋效果」，休息就是那個形狀。\n" +
+                 "⚠️ 這一筆的 weight 要是 0，不然它會跑進隨機事件池")]
+        public EventData restEvent;
+
+        [Header("隊伍（2026-11-02）")]
+        [Tooltip("每一輪開始就在隊伍裡的角色 id。\n" +
+                 "（測試階段）坎貝爾預設在隊伍裡 —— 大綱沒有招募他的協助者事件，《魔術秀》又要他在隊伍內。\n" +
+                 "大廳的常駐成員會再加上去")]
+        public List<string> startingParty = new List<string> { "campbell" };
+
         [Header("對話節點")]
         [Tooltip("地圖上的**對話節點**要走哪一個 Stage。專案裡有兩套刻意並存的對話：\n\n" +
                  "· ProbabilityDialogue —— 資料驅動（一個事件一個資產），\n" +
@@ -187,6 +199,14 @@ namespace EldritchMile.Core
             CharacterDatabase db = Instance != null ? Instance.characterDatabase : null;
             return db != null ? db.GetById(id) : null;
         }
+
+        [Header("地圖的進出（2026-11-02）")]
+        [Tooltip("地圖不滑動：進節點是「鏡頭推近 → 黑」，回地圖是「黑 → 從那一站拉遠」。\n" +
+                 "取消勾選 = 回到地圖從上方滑下來的舊做法")]
+        public bool mapFadeTransition = true;
+
+        [Tooltip("回地圖時鏡頭從節點拉遠花幾秒。比淡入（fadeInSeconds）長一點，亮起來時鏡頭還在動才有「回到地圖」的感覺")]
+        [Min(0f)] public float mapPullBackSeconds = 1.1f;
 
         [Header("轉場節奏")]
         [Tooltip("淡出（畫面 → 黑）幾秒。\n\n" +
@@ -273,6 +293,7 @@ namespace EldritchMile.Core
             new NodeTitle { kind = MapNodeKind.Shop,         text = "商店" },
             new NodeTitle { kind = MapNodeKind.SpecialEvent, text = "特殊" },
             new NodeTitle { kind = MapNodeKind.Dialogue,     text = "遭遇" },
+            new NodeTitle { kind = MapNodeKind.Rest,         text = "休息" },
         };
 
         [Tooltip("事件插播時的卡片文案。{0} = 事件標題。\n\n" +
@@ -371,6 +392,9 @@ namespace EldritchMile.Core
             Run = RunContext.CreateNew(inheritLegacyItems ? Meta : null);
             Run.AddMoney(startingMoney);
 
+            for (int i = 0; i < startingParty.Count; i++) Run.JoinParty(startingParty[i]);
+            if (Meta != null) for (int i = 0; i < Meta.lobby.Count; i++) Run.JoinParty(Meta.lobby[i]);
+
             // HP／SAN 不存在 RunContext 裡 —— 它們歸 RunStateManager（戰鬥端）持有，
             // 我方只負責「run 開始時把它設好」。見 PlayerVitals 的說明。
             if (startingMaxHp > 0)
@@ -405,11 +429,7 @@ namespace EldritchMile.Core
             }
 
             yield return SwitchStageInternal(StageType.None);
-            yield return FadeIn();
-
-            IsTransitioning = false;
-
-            yield return OpenMapRoutine();
+            yield return RevealMapRoutine();
         }
 
         /// <summary>
@@ -435,6 +455,9 @@ namespace EldritchMile.Core
             PendingEvent = null;
             stageAfterEvent = StageType.None;
             stageAfterBattle = StageType.None;
+            stageAfterAltar = StageType.None;
+            teleportRequested = false;
+            altarRequested = false;
 
             BattleStageController.PendingEnemyId = null;
             ProbabilityDialogueStageController.PendingDialogue = null;
@@ -454,10 +477,7 @@ namespace EldritchMile.Core
             Run.mapData.MoveTo(node.nodeId);
             Run.pendingNode = node;
 
-            // 收起地圖（此時畫面還沒黑，玩家看得到地圖收上去）
-            if (mapOverlay != null) yield return mapOverlay.SlideUp();
-
-            yield return FadeOut();
+            yield return CloseMapRoutine();
 
             // ── 事件的前置檢查（大綱：「每當前進到下一張地圖…就會有概率觸發事件」）──
             //
@@ -465,7 +485,19 @@ namespace EldritchMile.Core
             // 有事件就先演事件，演完再由 StageCompleteRoutine 接回原本的節點 ——
             // 前置，不覆蓋。玩家不會因為運氣好觸發了事件反而少玩到一間房。
             StageType nodeStage = StageTypeForNode(node);
-            EventData ev = PickEventForNode();
+
+            // 休息節點本身就是一段事件（restEvent）—— 前面不再插隨機事件，
+            // 不然「事件 → 接回節點」那條路會接到一個沒有指定內容的事件 Stage
+            EventData ev = node.kind == MapNodeKind.Rest ? null : PickEventForNode();
+            if (node.kind == MapNodeKind.Rest)
+            {
+                PendingEvent = restEvent;
+                if (restEvent == null)
+                {
+                    Debug.LogWarning("[Flow] 走進休息節點，但 GameFlowManager.restEvent 沒有指定 —— 直接回地圖");
+                    nodeStage = StageType.None;
+                }
+            }
             RunRecorder.NodeEntered(Run, node, ev);
 
             string card;
@@ -560,7 +592,7 @@ namespace EldritchMile.Core
             Run.pendingNode = gate;
             RunRecorder.NodeEntered(Run, gate, null);
 
-            if (mapOverlay != null) yield return mapOverlay.SlideUp();
+            yield return CloseMapRoutine();
 
             if (target == null || !target.travelReady)
             {
@@ -568,10 +600,10 @@ namespace EldritchMile.Core
                     ? target.displayName : gate.targetRegionId;
                 Debug.Log($"[Flow] 通道 → 「{gate.targetRegionId}」還沒做好" + (target == null ? "（找不到這個地區）" : ""));
 
+                yield return FadeIn();
                 yield return PlaySystemLines(gateUnfinishedLines, name);
-
-                IsTransitioning = false;
-                yield return OpenMapRoutine();
+                yield return FadeOut();
+                yield return RevealMapRoutine();
                 yield break;
             }
 
@@ -602,10 +634,7 @@ namespace EldritchMile.Core
                       $"落在 {(arrival != null ? arrival.nodeId : "起點")}；新地圖 {Run.mapData.allNodes.Count} 個節點");
 
             yield return HoldBlackOrTitle(holdBlackAfterEventSeconds, target.displayName);
-            yield return FadeIn();
-
-            IsTransitioning = false;
-            yield return OpenMapRoutine();
+            yield return RevealMapRoutine();
         }
 
         /// <summary>依序播幾句系統提示（名字框是系統符號），播完收掉對話框。</summary>
@@ -634,6 +663,37 @@ namespace EldritchMile.Core
                 if (s != null) for (int i = 0; i < s.Length; i++) { h ^= s[i]; h *= 16777619; }
                 return (int)h;
             }
+        }
+
+        // ==========================================
+        // 事件要求的流程跳轉（2026-10-29《常駐事件》《祭壇事件》）
+        // ==========================================
+
+        private bool teleportRequested;
+        private bool altarRequested;
+        private int altarRefuseSan;
+        private StageType stageAfterAltar = StageType.None;
+
+        /// <summary>《任意門》：這個事件演完之後，傳送到同一張地圖任一個沒去過的節點並直接進入。</summary>
+        public void RequestTeleport() { teleportRequested = true; }
+
+        /// <summary>《未知的祭壇》：這個事件演完之後切到祭壇畫面；拒絕的話恢復 <paramref name="refuseSan"/> 點 SAN。</summary>
+        public void RequestAltar(int refuseSan) { altarRequested = true; altarRefuseSan = refuseSan; }
+
+        /// <summary>沒去過、不是首領也不是通道、不是現在這一站的節點，隨機挑一個。</summary>
+        private RunNodeData PickTeleportTarget()
+        {
+            if (Run == null || Run.mapData == null) return null;
+            var pool = new List<RunNodeData>();
+            RunNodeData cur = Run.mapData.CurrentNode;
+            for (int i = 0; i < Run.mapData.allNodes.Count; i++)
+            {
+                RunNodeData n = Run.mapData.allNodes[i];
+                if (n == null || n.visited || n == cur) continue;
+                if (n.kind == MapNodeKind.Boss || n.kind == MapNodeKind.Gate) continue;
+                pool.Add(n);
+            }
+            return pool.Count > 0 ? pool[UnityEngine.Random.Range(0, pool.Count)] : null;
         }
 
         /// <summary>
@@ -750,6 +810,30 @@ namespace EldritchMile.Core
                 StageType next = stageAfterEvent;
                 stageAfterEvent = StageType.None;
 
+                // 《任意門》：不回原本那一站，直接傳送到一個沒去過的節點並進入它
+                if (teleportRequested)
+                {
+                    teleportRequested = false;
+                    RunNodeData target = PickTeleportTarget();
+                    if (target != null)
+                    {
+                        Debug.Log($"[Flow] 任意門：傳送到 {target.nodeId}（{target.kind}）");
+                        Run.mapData.MoveTo(target.nodeId);
+                        Run.pendingNode = target;
+                        next = StageTypeForNode(target);
+                        if (target.kind == MapNodeKind.Rest) PendingEvent = restEvent;
+                    }
+                }
+
+                // 《未知的祭壇》：先切到有雙手的祭壇，演完再接回原本那一站
+                if (altarRequested)
+                {
+                    altarRequested = false;
+                    stageAfterAltar = next;
+                    SpecialEventStageController.PendingRefuseSan = altarRefuseSan;
+                    next = StageType.SpecialEvent;
+                }
+
                 // 接回主選單 ＝ 這場 run 結束了（結局那一段演完就是這條路）。
                 // ⚠️ 遺產結算（ContributeToMeta）在進結局事件**之前**就做過了，
                 //    這裡只負責把 run 丟掉
@@ -781,6 +865,21 @@ namespace EldritchMile.Core
                 stageAfterBattle = StageType.None;
 
                 Debug.Log($"[Flow] 事件安排的戰鬥結束，接回 {next}");
+
+                yield return FadeOut();
+                yield return SwitchStageInternal(next);
+                yield return HoldBlackOrTitle(holdBlackAfterEventSeconds, TitleForNode());
+                yield return FadeIn();
+
+                IsTransitioning = false;
+                yield break;
+            }
+
+            // ── 事件安排的祭壇演完 → 接回原本那個節點 ──
+            if (currentStage == StageType.SpecialEvent && stageAfterAltar != StageType.None)
+            {
+                StageType next = stageAfterAltar;
+                stageAfterAltar = StageType.None;
 
                 yield return FadeOut();
                 yield return SwitchStageInternal(next);
@@ -843,27 +942,63 @@ namespace EldritchMile.Core
                 yield break;
             }
 
-            // 一般情況：卸掉 Stage，地圖自動下拉（C1/C2）
+            // 一般情況：卸掉 Stage，回到地圖（C1/C2）
             yield return FadeOut();
             yield return SwitchStageInternal(StageType.None);
             yield return HoldBlack(holdBlackSeconds);
-            yield return FadeIn();
-
-            IsTransitioning = false;
-
-            yield return OpenMapRoutine();
+            yield return RevealMapRoutine();
         }
 
-        private IEnumerator OpenMapRoutine()
+        /// <summary>
+        /// 離開地圖。結束時畫面是**全黑**的、地圖已經收走。
+        /// 不滑動的版本：直接淡到黑（鏡頭已經推近那一站），黑了才把地圖收走。
+        /// </summary>
+        private IEnumerator CloseMapRoutine()
+        {
+            if (mapOverlay != null && !mapFadeTransition) yield return mapOverlay.SlideUp();
+
+            yield return FadeOut();
+
+            if (mapOverlay != null && mapFadeTransition) mapOverlay.HideForFade();
+        }
+
+        /// <summary>
+        /// 回到地圖。**呼叫時畫面要是全黑的**，結束時地圖已經可以操作（IsTransitioning 也放開了）。
+        ///
+        /// 【為什麼不滑了】（2026-11-02 組員回報）舊流程是「黑 → 亮起來一片空 → 地圖從上方掉下來」，
+        /// 是兩個分開的動作、中間還有一段空畫面。現在趁全黑把地圖擺好，亮起來時地圖就在那裡，
+        /// 鏡頭停在剛才那一站、邊亮邊拉遠 —— 跟進節點的推近是同一條路的反方向。
+        /// </summary>
+        private IEnumerator RevealMapRoutine()
         {
             if (mapOverlay == null)
             {
-                Debug.LogWarning("[Flow] 沒有指定 MapOverlay，無法下拉地圖");
+                Debug.LogWarning("[Flow] 沒有指定 MapOverlay，沒有地圖可以開");
+                yield return FadeIn();
+                IsTransitioning = false;
+                yield break;
+            }
+
+            if (!mapFadeTransition)
+            {
+                yield return FadeIn();
+                IsTransitioning = false;
+                mapOverlay.ResetEnterFocus();
+                mapOverlay.Refresh(Run);
+                yield return mapOverlay.SlideDown();
+                yield return mapOverlay.OnOpened();
                 yield break;
             }
 
             mapOverlay.Refresh(Run);
-            yield return mapOverlay.SlideDown();
+            mapOverlay.ShowForReveal();
+
+            Coroutine pullBack = StartCoroutine(mapOverlay.OnRevealing(mapPullBackSeconds));
+            yield return FadeIn();
+            yield return pullBack;
+
+            mapOverlay.FinishReveal();
+            IsTransitioning = false;
             yield return mapOverlay.OnOpened();
         }
 
@@ -898,6 +1033,14 @@ namespace EldritchMile.Core
             // 那個連坐後來被拆掉了（它同時也把氣泡吞掉，見 DialogueBoxUI.Hide），
             // 於是「從主選單進地圖，背景浮著一顆結束鍵」就跑出來了。
             EldritchMile.Explore.ExploreHandUI.Instance?.Hide();
+
+            // 對話立繪上的點擊區（場景常駐的 Speaker_Hitbox）**換站時把角色清掉**。
+            //
+            // （2026-10-19 評圖：探索裡點某些位置會一直冒出角色的對話氣泡）
+            // 它掛在對話框的立繪位置底下，遭遇（對話）節點把它設成那個角色之後就沒有人清。
+            // 探索開箱、檢查物件時會借同一個立繪位置秀特寫圖 → 點擊區跟著出現，
+            // 一點就講上一個遭遇角色的閒聊。對話環節進場時會自己再設回來（SetCharacter）
+            EldritchMile.UI.CharacterHitbox.SceneSpeaker?.SetCharacter("");
 
             // 氣泡也是同一批「畫布連坐關掉」的受害者，只是還沒有人回報 ——
             // 換環節時正好有一句話在播，它會被帶到下一個畫面上。
@@ -1057,6 +1200,9 @@ namespace EldritchMile.Core
 
                 case MapNodeKind.Dialogue:
                     return dialogueNodeStage;
+
+                case MapNodeKind.Rest:
+                    return StageType.Event;   // 內容是 restEvent，見 EnterNodeRoutine
 
                 case MapNodeKind.Event:
                 default:

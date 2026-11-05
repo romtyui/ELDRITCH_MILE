@@ -61,19 +61,37 @@ namespace EldritchMile.UI.ProbabilityDialogue
                  "**「講完話才出現打牌」就是這一格** —— 取消勾選則一開場就全部攤開")]
         public bool hidePlayUntilSpoken = true;
 
-        [Header("手牌排版（與探索打牌同一套）")]
+        [Header("手牌排版（畫面正下方的扇形，與寶箱、戰鬥同一套）")]
         [Tooltip("卡片間距。**比卡片窄就會重疊**。\n" +
                  "卡面共用之後兩邊卡寬一樣（176），預設 130 約重疊 26%。\n\n" +
                  "跟 `ExploreHandUI.cardSpacing` 是同一個意思 —— 現在連數字都該一樣")]
         [Min(1f)] public float cardSpacing = 130f;
 
         [Tooltip("整排手牌的最大寬度。超過會自動壓縮間距，不會擠出畫面")]
-        [Min(1f)] public float maxHandWidth = 760f;
+        [Min(1f)] public float maxHandWidth = 900f;
 
-        [Tooltip("hover 時卡片上浮的距離。\n\n" +
+        [Tooltip("兩側下彎多少。戰鬥是 60")]
+        public float curveHeight = 60f;
+
+        [Tooltip("相鄰兩張差幾度。戰鬥是 6")]
+        public float angleStep = 6f;
+
+        [Tooltip("滑上去時兩邊的牌讓開多遠")]
+        public float hoverPush = 60f;
+
+        [Tooltip("滑上去時放大幾倍")]
+        public float hoverScale = 1.2f;
+
+        [Tooltip("滑上去時浮到哪個高度（Hand Root 座標）。\n\n" +
                  "⚠️ 上浮**只動視覺層**，根物件留在原位 ——\n" +
                  "把根物件往上移的話游標會被抽走，卡片下緣會瘋狂閃爍")]
-        [Min(0f)] public float hoverLift = 40f;
+        public float hoverLift = 70f;
+
+        [Tooltip("牌區的上緣（佔畫面高度的比例）。拖過這條線放開就是出牌，見 HandFanLayout.LeftHandZone")]
+        [Range(0.1f, 0.8f)] public float handZoneTopRatio = 0.34f;
+
+        [Header("打出去的那一下")]
+        public EldritchMile.UI.PlayedCardMotion playedCard = new EldritchMile.UI.PlayedCardMotion();
 
         [Header("提示")]
         [Tooltip("卡牌沒有影響到任何回答時顯示（規格 R8：要顯示 No Effect）")]
@@ -307,6 +325,15 @@ namespace EldritchMile.UI.ProbabilityDialogue
             speaker = "";
             body = page;
 
+            // 《協助者事件》還不知道名字的時候，名字框是「？？？」
+            const string Unknown = "？？？";
+            if (page.StartsWith(Unknown + "："))
+            {
+                speaker = Unknown;
+                body = page.Substring(Unknown.Length + 1).TrimStart();
+                return;
+            }
+
             if (string.IsNullOrEmpty(speakerLabel)) return;
 
             string[] marks = { speakerLabel + "：", speakerLabel + ":" };
@@ -333,6 +360,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
         /// </param>
         private void Say(string line, bool waitForCurrent = false)
         {
+            if (session != null && session.Data != null && session.Data.noBarks) return;
+
             if (string.IsNullOrEmpty(line)) return;
 
             if (speakerHitbox != null) { speakerHitbox.Say(line, waitForCurrent); return; }
@@ -351,6 +380,10 @@ namespace EldritchMile.UI.ProbabilityDialogue
             //    那時不可以再把手牌叫回來
             bool canPlay = session != null
                         && session.CurrentState == ProbabilityDialogueSession.State.CardPhase;
+
+            // 對話框、選項、手牌三者拆開（2026-11-02）：輪到選項與手牌時把對話框收起來。
+            // 下一句台詞排進來就會自己回來（選了回答之後）
+            if (canPlay && Box != null) Box.Collapse();
 
             SetPlayVisible(canPlay);
             if (canPlay) inputLocked = false;
@@ -405,6 +438,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
         {
             for (int i = 0; i < cardUIs.Count; i++) if (cardUIs[i] != null) Destroy(cardUIs[i].gameObject);
             cardUIs.Clear();
+            draggedCard = null;
+            hoveredCard = null;
 
             if (handRoot == null || cardPrefab == null || session == null) return;
 
@@ -416,8 +451,12 @@ namespace EldritchMile.UI.ProbabilityDialogue
                 ui.Bind(c);
                 ui.SetVisualRoot(EldritchMile.UI.HandFanLayout.BuildVisualRoot(ui.transform as RectTransform));
                 ui.OnHoverChanged += HandleCardHover;
+                ui.OnPlayStarting += HandleCardPlayStarting;
                 ui.OnPlayRequested += HandleCardPlayRequested;
                 ui.OnAimChanged += HandleCardAim;
+                ui.OnDragChanged += HandleCardDrag;
+                ui.handZoneTopRatio = handZoneTopRatio;
+                ui.playedCard = playedCard;
                 cardUIs.Add(ui);
             }
 
@@ -433,7 +472,19 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
         private void HandleCardHover(ProbabilityCardUI card, bool on)
         {
+            // 拖曳中的牌 raycast 還是打得到底下別張牌，不換上浮的對象
+            if (draggedCard != null) return;
+
             hoveredCard = on ? card : (hoveredCard == card ? null : hoveredCard);
+            LayoutHand();
+        }
+
+        private ProbabilityCardUI draggedCard;
+
+        private void HandleCardDrag(ProbabilityCardUI card, bool on)
+        {
+            draggedCard = on ? card : null;
+            if (on) hoveredCard = null;
             LayoutHand();
         }
 
@@ -506,35 +557,65 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
         /// <summary>
         /// 手牌排版。**規則走共用的 <see cref="EldritchMile.UI.HandFanLayout"/>** ——
-        /// 與探索打牌是同一支，兩邊才不會又長得不一樣。
+        /// 與寶箱打牌是同一支，兩邊才不會又長得不一樣。
         ///
-        /// 這裡只留「哪一張要浮起來」，那是這個環節自己的狀態。
+        /// 這裡只留「哪一張要浮起來」，那是這個環節自己的狀態。拖曳中的牌不參與排列。
         /// </summary>
         private void LayoutHand()
         {
-            int n = cardUIs.Count;
-            if (n == 0) return;
+            var cards = new List<ProbabilityCardUI>(cardUIs.Count);
+            var rects = new List<RectTransform>(cardUIs.Count);
+            int activeIndex = -1;
 
-            var rects = new List<RectTransform>(n);
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < cardUIs.Count; i++)
             {
-                rects.Add(cardUIs[i] != null ? cardUIs[i].transform as RectTransform : null);
+                ProbabilityCardUI c = cardUIs[i];
+                if (c == null || c == draggedCard) continue;
+
+                if (c == hoveredCard) activeIndex = rects.Count;
+                cards.Add(c);
+                rects.Add(c.transform as RectTransform);
             }
 
-            EldritchMile.UI.HandFanLayout.Arrange(rects, cardSpacing, maxHandWidth);
+            EldritchMile.UI.HandFanLayout.ArrangeFan(rects, activeIndex, cardSpacing, maxHandWidth, curveHeight, angleStep, hoverPush);
 
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < cards.Count; i++)
             {
-                if (cardUIs[i] == null) continue;
-                cardUIs[i].SetLift(cardUIs[i] == hoveredCard && !cardUIs[i].IsDragging ? hoverLift : 0f);
+                cards[i].SetPose(i == activeIndex, hoverLift, hoverScale);
             }
         }
 
         // ==========================================
+        /// <summary>牌正停在放開的位置。這段期間不能再拖別張牌、也不能選回答。</summary>
+        private ProbabilityCardUI playingCard;
+
+        private void HandleCardPlayStarting(ProbabilityCardUI ui)
+        {
+            playingCard = ui;
+            SetHandRaycasts(false);
+        }
+
         private void HandleCardPlayRequested(ProbabilityCardUI ui)
         {
+            playingCard = null;
+            SetHandRaycasts(true);
+
             if (inputLocked || session == null) { ui.ReturnHome(); return; }
-            if (!session.PlayCard(ui.Data)) ui.ReturnHome();
+
+            // ⚠️ 要先從清單拿掉：PlayCard 會觸發 RebuildHand 把清單裡的牌全部銷毀，這張還要留著淡出
+            int index = cardUIs.IndexOf(ui);
+            cardUIs.Remove(ui);
+
+            if (session.PlayCard(ui.Data)) return;
+
+            if (index >= 0) cardUIs.Insert(index, ui);
+            ui.ReturnHome();
+        }
+
+        private void SetHandRaycasts(bool on)
+        {
+            CanvasGroup g = handRoot != null ? handRoot.GetComponent<CanvasGroup>() : null;
+            if (g != null) g.blocksRaycasts = on;
         }
 
         /// <summary>拖曳／指到卡片時，把屬性相符且**還可用**的回答亮起來（規格 §3.1）。</summary>
@@ -554,6 +635,11 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
                 // 亮起來的顏色照屬性走 —— 色點、卡框、亮起來的回答是同一個顏色系統
                 a.SetHighlighted(match, match ? HighlightColorFor(ui.Data, a.Bound.source) : (Color?)null);
+
+                // 打出去會到多少：跟 Session 同一支公式，預覽與實際才不會對不上
+                a.SetPreview(match
+                    ? ProbabilityCardRules.Apply(session.Data.growth, a.Bound.currentProbability, ui.Data, session.Data.probabilityCap)
+                    : (int?)null);
             }
         }
 
@@ -604,8 +690,13 @@ namespace EldritchMile.UI.ProbabilityDialogue
             List<ProbabilityDialogueSession.RuntimeOption> targets,
             List<int> before, List<int> after)
         {
-            // 亮度收掉
-            foreach (ProbabilityAnswerUI a in answerUIs) if (a != null) a.SetHighlighted(false);
+            // 亮度與預覽收掉（數字與進度條接著由 AnimateProbability 跑上去）
+            foreach (ProbabilityAnswerUI a in answerUIs)
+            {
+                if (a == null) continue;
+                a.SetHighlighted(false);
+                a.SetPreview(null);
+            }
 
             for (int i = 0; i < targets.Count; i++)
             {
@@ -635,7 +726,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
         // ==========================================
         private void HandleAnswerClicked(ProbabilityAnswerUI ui)
         {
-            if (inputLocked || session == null || ui.Bound == null) return;
+            if (inputLocked || playingCard != null || session == null || ui.Bound == null) return;
 
             // 規格 §5.1：選了之後馬上鎖住所有輸入
             inputLocked = true;
@@ -738,18 +829,46 @@ namespace EldritchMile.UI.ProbabilityDialogue
             Speak(prompt);
         }
 
+        /// <summary>
+        /// 判定完、結果文字還沒排進對話框的這一小段。
+        /// 舞台要等它結束才知道「話講完了沒」—— 對話框在打牌時是收起來的，
+        /// 不等的話它會以為沒東西要讀，判定一出來就直接離開這一站。
+        /// </summary>
+        public bool ResultPending { get; private set; }
+
         private void HandleEnded(bool success)
         {
             inputLocked = true;
-            SetPlayVisible(false);
-            foreach (ProbabilityCardUI c in cardUIs) if (c != null) c.gameObject.SetActive(false);
+            ResultPending = true;
 
             // ⚠️ waitForCurrent = true —— 判定反饋才剛冒出來，
             //    不等的話道別會把它直接刷掉，玩家只看到閃一下
             CharacterData who = Speaker;
             if (who != null) Say(who.PickFarewell(lineRng), true);
 
+            StartCoroutine(OutcomeAfterText());
+        }
+
+        /// <summary>
+        /// 結算那一句要排在結果文字**後面**。（2026-11-02 修：之前結算排在最前面 ——
+        /// 這一支在判定當下就跑，結果文字卻要等判定動效播完才進佇列，順序就反了。
+        /// 《協助者事件》會先跳「【時藏】加入了隊伍」，名字還沒揭曉就爆雷）
+        /// 等動效的時間再多等一點點，確保文字已經排進去。
+        /// </summary>
+        private IEnumerator OutcomeAfterText()
+        {
+            float wait = 0f;
+            for (int i = 0; i < answerUIs.Count; i++)
+                if (answerUIs[i] != null) wait = Mathf.Max(wait, answerUIs[i].TotalFlashSeconds);
+
+            yield return new WaitForSecondsRealtime(wait + 0.05f);
+
+            // 判定動效跑完才收，不然最後這一格的「成功／失敗」看不到
+            SetPlayVisible(false);
+            foreach (ProbabilityCardUI c in cardUIs) if (c != null) c.gameObject.SetActive(false);
+
             ShowOutcome();
+            ResultPending = false;
         }
 
         /// <summary>

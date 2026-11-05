@@ -251,6 +251,49 @@ namespace EldritchMile.Core
         /// <summary>這場 run 的戰鬥牌組有幾張。</summary>
         public static int DeckCount => Rs != null ? Rs.savedDeck.Count : 0;
 
+        public const string DeckWeapon = "Weapon";
+        public const string DeckFaith = "Faith";
+
+        /// <summary>
+        /// 這張牌算不算這一類。Faith = 信仰牌（神牌，CardData.isGodCard）；Weapon = 其餘的非衍生牌。
+        /// 空字串 = 全部。（2026-10-29：《米可，要吃飯！》《怪人》《未知的祭壇》要數牌組）
+        /// </summary>
+        public static bool IsKind(CardData c, string kind)
+        {
+            if (c == null) return false;
+            if (string.IsNullOrEmpty(kind)) return true;
+            if (kind == DeckFaith) return c.isGodCard;
+            if (kind == DeckWeapon) return !c.isGodCard && !c.isToken;
+            return false;
+        }
+
+        /// <summary>牌組裡這一類的牌有幾張。</summary>
+        public static int CountDeck(string kind)
+        {
+            if (Rs == null) return 0;
+            int n = 0;
+            for (int i = 0; i < Rs.savedDeck.Count; i++) if (IsKind(Rs.savedDeck[i], kind)) n++;
+            return n;
+        }
+
+        /// <summary>牌組裡這一類的牌（新的 List，可以放心改）。</summary>
+        public static List<CardData> DeckCards(string kind)
+        {
+            var list = new List<CardData>();
+            if (Rs == null) return list;
+            for (int i = 0; i < Rs.savedDeck.Count; i++) if (IsKind(Rs.savedDeck[i], kind)) list.Add(Rs.savedDeck[i]);
+            return list;
+        }
+
+        /// <summary>從牌組拿掉一張（同名有好幾張時拿掉一張）。事件「銷毀 1 張武器牌／信仰牌」用。</summary>
+        public static bool RemoveCardFromDeck(CardData card)
+        {
+            if (card == null || Rs == null) return false;
+            bool ok = Rs.savedDeck.Remove(card);
+            if (ok) Debug.Log($"[牌組] 移除「{card.cardName}」（剩 {DeckCount} 張）");
+            return ok;
+        }
+
         /// <summary>
         /// 加一張牌進戰鬥牌組。商店買武器牌、事件給神牌都走這支。
         ///

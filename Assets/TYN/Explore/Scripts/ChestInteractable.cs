@@ -180,8 +180,9 @@ namespace EldritchMile.Explore
             DialogueEncounterController encounter = DialogueEncounterController.Instance;
             if (encounter != null) body = encounter.WithAttemptLine(body);
 
-            // C18③：即時替換對話框正文，不排隊、不需點擊 —— 玩家可以馬上出下一張
-            PopupService.Instance?.ShowInstant(body);
+            // C18③：即時顯示，不排隊、不需點擊 —— 玩家可以馬上出下一張。
+            // 寶箱畫面沒有對話框，寫在近景圖上面
+            if (stage == null || !stage.ShowCloseUpLine(body)) PopupService.Instance?.ShowInstant(body);
 
             if (success) Open();
         }
@@ -247,15 +248,12 @@ namespace EldritchMile.Explore
         /// </summary>
         public void OnAttemptsExhausted()
         {
-            if (hasInteracted) return;   // 最後一張剛好成功，已經 Open() 過了
+            if (hasInteracted || opened) return;   // 最後一張剛好成功，已經 Open() 過了
 
             if (!string.IsNullOrEmpty(exhaustedText))
             {
-                // ⚠️ 用 ShowText（排隊）而不是 ShowInstant（即時替換）。
-                //    這一刻對話框上正顯示著最後一張牌的「沒能撬開」，
-                //    ShowInstant 會 pending.Clear() 並直接蓋掉它 —— 玩家連自己為什麼
-                //    失敗都沒看到就變成「鎖芯已經被撬爛了」。排隊才讀得完兩句。
-                PopupService.Instance?.ShowText(exhaustedText);
+                // 打牌畫面這時已經收了，帶著特寫圖講完這句，玩家才知道講的是哪個箱子
+                PopupService.Instance?.ShowSystemWithCloseUp(exhaustedText, closeUpSprite);
             }
 
             MarkFailed();
@@ -268,7 +266,7 @@ namespace EldritchMile.Explore
         {
             get
             {
-                if (hasInteracted) return false;          // 已經開過或已結案
+                if (hasInteracted || opened) return false;   // 已經開過或已結案
                 if (retryPolicy == RetryPolicy.None) return false;
 
                 if (retryCost == null)
@@ -440,7 +438,7 @@ namespace EldritchMile.Explore
 
                 case OpenMode.RequiresCheck:
                     // C18：點擊只是「開始打牌環節」，不會自動擲骰。
-                    // 實際判定要玩家把機率卡拖到這個目標上，而且可以連續嘗試。
+                    // 實際判定要玩家把機率卡拖出牌區，而且可以連續嘗試。
                     if (stage != null)
                     {
                         stage.BeginEncounter(this, checkPromptText, closeUpSprite);
@@ -454,50 +452,48 @@ namespace EldritchMile.Explore
         }
 
         /// <summary>
-        /// 抽戰利品表，直接入袋，回傳給玩家看的清單（「撬棍 ×2」這種）。
+        /// 這個容器裝了什麼：一定會給的道具＋抽戰利品表。**只是抽，還沒入袋。**
         ///
         /// 【種子】綁 run 的種子加上這個寶箱的物件 id —— 同一場 run 裡兩個寶箱不會開出一模一樣的東西。
         /// 不做跨存檔的重現，因為寶箱開過就結案（`MarkDone`），不會有第二次。
         /// </summary>
-        private List<string> RollLoot(RunContext run)
+        private List<ItemStack> RollContents(RunContext run)
         {
-            var lines = new List<string>();
-            if (lootTable == null) return lines;
+            var items = new List<ItemStack>();
+
+            foreach (string id in grantedItemIds)
+            {
+                if (!string.IsNullOrEmpty(id)) items.Add(new ItemStack { id = id, count = 1 });
+            }
+
+            if (lootTable == null) return items;
 
             var rng = new System.Random(run.runSeed ^ GetInstanceID());
 
             foreach (ItemStack stack in LootService.Roll(lootTable, rng))
             {
-                if (stack == null || string.IsNullOrEmpty(stack.id)) continue;
-
-                run.AddItem(stack.id, stack.count);
-
-                string name = GameFlowManager.ItemName(stack.id);
-                lines.Add(stack.count > 1 ? $"{name} ×{stack.count}" : name);
+                if (stack != null && !string.IsNullOrEmpty(stack.id)) items.Add(stack);
             }
 
-            return lines;
+            return items;
         }
 
         /// <summary>
-        /// 給錢。回傳要顯示在戰利品清單上的那一行；沒給就回空字串。
+        /// 這個容器裝了多少錢。**只是算，還沒入袋。**
         ///
         /// 【為什麼種子跟道具那邊分開（^ 31）】用同一個的話，
         /// 「抽到什麼道具」與「給多少錢」會綁在一起 ——
         /// 換一張戰利品表就連金額也一起變，那不是我們要的關聯。
         /// </summary>
         /// <param name="wasEmpty">前面的道具一件都沒掉。true 時再加上保底那一段。</param>
-        private string RollMoney(RunContext run, bool wasEmpty)
+        private int RollMoney(RunContext run, bool wasEmpty)
         {
             var rng = new System.Random((run.runSeed ^ GetInstanceID()) ^ 31);
 
             int amount = RandomBetween(rng, moneyMin, moneyMax);
             if (wasEmpty) amount += RandomBetween(rng, emptyBonusMoneyMin, emptyBonusMoneyMax);
 
-            if (amount <= 0) return "";
-
-            run.AddMoney(amount);
-            return string.Format(moneyLineFormat, amount);
+            return amount;
         }
 
         /// <summary>min~max（含）。**填反了也不會壞** —— 大小自己會對調。</summary>
@@ -510,22 +506,45 @@ namespace EldritchMile.Explore
             return rng.Next(lo, hi + 1);
         }
 
+        /// 開鎖成功到結算畫面關掉之間。那時還沒 MarkDone，但箱子已經不能再試了
+        private bool opened;
+
         private void Open()
         {
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
 
-            // 道具立刻入袋（狀態不能延後，否則中途離開會遺失）
+            opened = true;
+
+            List<ItemStack> items = run != null ? RollContents(run) : new List<ItemStack>();
+
+            // ⚠️ **金幣要在道具之後算** —— 保底那一段要看「前面到底有沒有掉東西」
+            int money = run != null ? RollMoney(run, items.Count == 0 && lootItems.Count == 0) : 0;
+
+            // 有結算畫面就交給它（2026-11-02，Romtyui 戰鬥結算那一套）：玩家領了才入袋
+            if (stage != null && stage.HasRewardScreen && (money > 0 || items.Count > 0))
+            {
+                stage.SettleChest(money, items, MarkDone);
+                return;
+            }
+
+            // 沒有結算畫面、或什麼都沒抽到：立刻入袋，用對話框唸出來
             var reported = new List<string>(lootItems);
 
             if (run != null)
             {
-                foreach (string id in grantedItemIds) run.AddItem(id);
+                foreach (ItemStack stack in items)
+                {
+                    run.AddItem(stack.id, stack.count);
 
-                foreach (string line in RollLoot(run)) reported.Add(line);
+                    string name = GameFlowManager.ItemName(stack.id);
+                    reported.Add(stack.count > 1 ? $"{name} ×{stack.count}" : name);
+                }
 
-                // ⚠️ **金幣要在道具之後算** —— 保底那一段要看「前面到底有沒有掉東西」
-                string coins = RollMoney(run, reported.Count == 0);
-                if (!string.IsNullOrEmpty(coins)) reported.Add(coins);
+                if (money > 0)
+                {
+                    run.AddMoney(money);
+                    reported.Add(string.Format(moneyLineFormat, money));
+                }
             }
 
             // 但「獲得了什麼」的**播報**要等打牌環節結束。
@@ -540,7 +559,8 @@ namespace EldritchMile.Explore
             }
             else
             {
-                PopupService.Instance?.ShowLoot(displayName, reported);
+                // 特寫用這個容器自己的圖（櫃子是櫃子，不是一律寶箱）
+                PopupService.Instance?.ShowLoot(displayName, reported, closeUpSprite);
             }
 
             MarkDone();

@@ -16,6 +16,12 @@ namespace EldritchMile.UI
     /// 牌是直的（0.65），所以置中之後上下會留白 —— 那是刻意的，
     /// 不要為了填滿而把圖拉長。<see cref="artImage"/> 的 `preserveAspect` 要開著。
     ///
+    /// 【遺物圖放大，邊角讓框蓋住】（2026-10-19 美術要求）彩圖本身左右留很多透明邊
+    /// （畫的部分只佔寬度的一半左右），原本的大小在牌上只剩一小塊。
+    /// 現在 artImage 的框是**牌寬的 1.45 倍**（正方形，preserveAspect 自己算高），
+    /// 畫的部分大約填滿框的開口，邊角被框蓋住一點是刻意的。
+    /// 牌的根物件掛了 RectMask2D：寬的遺物（釣竿、魚叉）超出牌的部分會被裁掉，不會跑到隔壁格。
+    ///
     /// 【誰在用】商店貨架的格子、購買確認視窗。兩邊共用這一支，
     /// 之後持有欄要改成牌的樣子也接得上。
     /// </summary>
@@ -43,9 +49,49 @@ namespace EldritchMile.UI
             {
                 artImage.sprite = art;
                 artImage.enabled = art != null;
+                CenterOnDrawing(art);
             }
 
             gameObject.SetActive(true);
+        }
+
+        [Tooltip("用「畫的部分」置中，而不是整張圖置中。\n" +
+                 "（2026-10-19 評圖：人魚的畫像沒有置中）彩圖本身的畫面不在畫布正中間 ——\n" +
+                 "實測偏移從 -5.8%（燒毀的樂譜）到 +4.9%（紅寶石）。圖放大之後偏移跟著放大，看得出歪。")]
+        public bool centerOnDrawing = true;
+
+        private Vector2 artHome;
+        private bool artHomeCaptured;
+
+        /// <summary>
+        /// 依 sprite 的 Tight 網格（貼著不透明部分）算出畫的中心，把 artImage 反向挪過去。
+        /// 網格是匯入時就算好的，不需要貼圖可讀；Full Rect 的圖網格就是整張，偏移為 0、等於不處理。
+        /// </summary>
+        private void CenterOnDrawing(Sprite art)
+        {
+            RectTransform rt = artImage.rectTransform;
+            if (!artHomeCaptured) { artHome = rt.anchoredPosition; artHomeCaptured = true; }
+
+            Vector2 offset = Vector2.zero;
+            if (centerOnDrawing && art != null)
+            {
+                Vector2[] v = art.vertices;
+                Bounds b = art.bounds;
+                if (v != null && v.Length > 0 && b.size.x > 0f && b.size.y > 0f)
+                {
+                    Vector2 mn = v[0], mx = v[0];
+                    for (int i = 1; i < v.Length; i++) { mn = Vector2.Min(mn, v[i]); mx = Vector2.Max(mx, v[i]); }
+                    Vector2 frac = new Vector2(((mn.x + mx.x) * 0.5f - b.center.x) / b.size.x,
+                                               ((mn.y + mx.y) * 0.5f - b.center.y) / b.size.y);
+
+                    // preserveAspect：圖在框裡實際顯示的大小
+                    Vector2 box = rt.rect.size;
+                    float aspect = b.size.x / b.size.y;
+                    Vector2 shown = box.x / box.y > aspect ? new Vector2(box.y * aspect, box.y) : new Vector2(box.x, box.x / aspect);
+                    offset = new Vector2(frac.x * shown.x, frac.y * shown.y);
+                }
+            }
+            rt.anchoredPosition = artHome - offset;
         }
 
         public void Hide()

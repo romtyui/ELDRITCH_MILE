@@ -57,6 +57,12 @@ public class EventStageController : ChoiceStageController
     /// 每個效果玩家挑了什麼
     private readonly Dictionary<EventEffect, List<string>> chosenByEffect = new Dictionary<EventEffect, List<string>>();
 
+    /// 「銷毀 1 張牌」的效果，玩家從卡冊挑了哪一張（2026-10-29）
+    private readonly Dictionary<EventEffect, CardData> chosenCardByEffect = new Dictionary<EventEffect, CardData>();
+
+    [Tooltip("要從牌組挑一張牌交出去時，卡冊上方的字。{0} = 武器牌／信仰牌")]
+    public string chooseCardTitle = "選一張要交出去的{0}";
+
     /// 選項框上每一格對應的道具 id
     private readonly List<string> choiceIds = new List<string>();
 
@@ -215,6 +221,7 @@ public class EventStageController : ChoiceStageController
         choosingOption = null;
         choosingEffect = null;
         chosenByEffect.Clear();
+        chosenCardByEffect.Clear();
         if (endButton != null) endButton.onClick.RemoveListener(EndEvent);
 
         // ⚠️ 殘留的武裝會打到下一站 —— 玩家在新對話框點第一下就被這一站的
@@ -252,6 +259,7 @@ public class EventStageController : ChoiceStageController
         choosingOption = option;
         choosingEffect = null;
         chosenByEffect.Clear();
+        chosenCardByEffect.Clear();
         ContinueChoosing();
     }
 
@@ -259,6 +267,30 @@ public class EventStageController : ChoiceStageController
     {
         RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
         EventData.Option option = choosingOption;
+
+        // 先挑牌（銷毀武器牌／信仰牌）—— 卡冊打開讓玩家點一張
+        if (option != null && run != null)
+        {
+            for (int i = 0; i < option.effects.Count; i++)
+            {
+                EventEffect e = option.effects[i];
+                if (e == null || !e.NeedsCardChoice || chosenCardByEffect.ContainsKey(e)) continue;
+
+                List<CardData> cards = PlayerVitals.DeckCards(e.CardKind);
+                EldritchMile.UI.DeckBookUI book = EldritchMile.UI.DeckBookUI.Instance;
+                if (cards.Count == 0) { chosenCardByEffect[e] = null; continue; }
+                if (cards.Count == 1 || book == null) { chosenCardByEffect[e] = cards[0]; continue; }
+
+                EventEffect pending = e;
+                string what = e.CardKind == PlayerVitals.DeckFaith ? "信仰牌" : "武器牌";
+                book.OpenPicker(cards, string.Format(chooseCardTitle, what), card =>
+                {
+                    chosenCardByEffect[pending] = card;
+                    ContinueChoosing();
+                });
+                return;
+            }
+        }
 
         if (option != null && run != null && Options != null)
         {
@@ -494,9 +526,14 @@ public class EventStageController : ChoiceStageController
 
             // 玩家挑好了的就照玩家挑的扣；沒挑夠（或不必挑）就照舊自動扣
             List<string> picked;
-            string note = e.NeedsChoice && chosenByEffect.TryGetValue(e, out picked) && picked.Count >= e.amount
-                ? e.ApplyChosen(run, picked)
-                : e.Apply(run);
+            CardData card;
+            string note;
+            if (e.NeedsCardChoice && chosenCardByEffect.TryGetValue(e, out card))
+                note = e.ApplyChosenCard(card);
+            else
+                note = e.NeedsChoice && chosenByEffect.TryGetValue(e, out picked) && picked.Count >= e.amount
+                    ? e.ApplyChosen(run, picked)
+                    : e.Apply(run);
             if (!string.IsNullOrEmpty(note)) notes.Add(note);
         }
 
