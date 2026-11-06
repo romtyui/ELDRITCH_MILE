@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Script: {fileID: 11500000, guid: 03fe5725cb2561e4c8c3422d95b538f5, type: 3}
   m_Name: Item_relic_broken_rod
-  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.RelicData
   id: relic_broken_rod
   displayName: "\u65B7\u88C2\u7684\u91E3\u7AFF"
   icon: {fileID: 21300000, guid: 529629852eb052b4b99b71f0c5fb03c4, type: 3}
@@ -26,12 +26,8 @@ MonoBehaviour:
   - Abyss
   - NoEffect
   grantsCard: {fileID: 0}
-  hpRestore: 0
-  sanRestore: 0
-  hpCost: 0
-  sanCost: 0
-  consumeOnUse: 1
-  battleItemEffect: {fileID: 0}
-  relicEffect: {fileID: 0}
   notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u9700\u8981\u65B0\u7684 RelicsEffectData
     \u5B50\u985E\u5225 \uFF0B BattleEnd \u89F8\u767C\u9EDE\u3002"
+  tire: 1
+  relicEffects: []
+  legacyRelicEffect: {fileID: 0}

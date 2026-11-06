@@ -19,7 +19,7 @@ namespace EldritchMile.UI
     ///
     /// 【它自己管的三件事】
     ///   1. 淡入淡出（CanvasGroup），Stage 沒要求時完全透明、點不到
-    ///   2. 對話框開著 → 推到 `aboveDialogueY`；關著 → 回到 `bottomY`
+    ///   2. 對話框開著 → 淡出、點不到（2026-11-06：黑底對話框出現時 EXIT 要消失）
     ///   3. HP／SAN 顯示要出來時先淡出，等那邊完全消失才淡回來（見 VitalsHudUI）
     ///
     /// 外觀（兩張圖替換、滑出）沿用商店那一套：SlideOutTab ＋ HoverCrossfadeImage。
@@ -37,14 +37,8 @@ namespace EldritchMile.UI
         public SlideOutTab slideTab;
 
         [Header("位置（本物件的 anchoredPosition.y，錨在右下角）")]
-        [Tooltip("對話框沒開時的高度")]
+        [Tooltip("高度")]
         public float bottomY = 40f;
-
-        [Tooltip("對話框開著時的高度。要**高過對話框的上緣**，整顆才看得完整")]
-        public float aboveDialogueY = 400f;
-
-        [Tooltip("上下移動大約多久到位（秒）")]
-        [Min(0.01f)] public float moveSmoothSeconds = 0.15f;
 
         [Header("淡入淡出")]
         [Tooltip("完整淡入或淡出要多久（秒）")]
@@ -207,7 +201,11 @@ namespace EldritchMile.UI
 
             // ── 淡入淡出 ──
             bool hudBusy = VitalsHudUI.Active != null && VitalsHudUI.Active.WantsScreen;
-            float want = IsRequested && !hudBusy ? 1f : 0f;
+
+            // 黑底對話框開著時不顯示：玩家正在讀，EXIT 疊在框上會搶注意力，也容易誤點
+            bool boxOpen = PopupService.Instance != null && PopupService.Instance.IsAnyOpen;
+
+            float want = IsRequested && !hudBusy && !boxOpen ? 1f : 0f;
             group.alpha = Mathf.MoveTowards(group.alpha, want, dt / fadeSeconds);
 
             // 確認面板開著時 EXIT 不收點擊 —— 面板本來就蓋著，這是保險
@@ -217,28 +215,13 @@ namespace EldritchMile.UI
 
             // 淡出時標籤還伸在外面的話收回來 —— 淡回來時才不會是伸出去的樣子
             if (!clickable && slideTab != null && slideTab.IsShown) slideTab.SetShown(false);
-
-            // ── 高度 ──
-            float targetY = TargetY();
-            Vector2 p = rt.anchoredPosition;
-            if (Mathf.Abs(p.y - targetY) < 0.5f) return;
-
-            float k = 1f - Mathf.Exp(-dt / moveSmoothSeconds);
-            p.y = Mathf.Lerp(p.y, targetY, k);
-            rt.anchoredPosition = p;
-        }
-
-        private float TargetY()
-        {
-            bool boxOpen = PopupService.Instance != null && PopupService.Instance.IsAnyOpen;
-            return boxOpen ? aboveDialogueY : bottomY;
         }
 
         private void SnapY()
         {
             if (rt == null) rt = (RectTransform)transform;
             Vector2 p = rt.anchoredPosition;
-            p.y = TargetY();
+            p.y = bottomY;
             rt.anchoredPosition = p;
         }
     }

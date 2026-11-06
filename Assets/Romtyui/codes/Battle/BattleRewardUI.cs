@@ -428,8 +428,11 @@ public class BattleRewardUI : MonoBehaviour
         {
             ItemData item = database.items[i];
             if (item == null || string.IsNullOrWhiteSpace(item.id)) continue;
-            if (item.relicEffect == null && !item.HasTag("Curio")) continue;
-            if (item.tire != requiredTier) continue;
+            //新增時間26/11/06 by TYN：遺物拆成 RelicData，改用型別判斷（原本是「有效果或有 Curio 標籤」）
+            RelicData relic = item as RelicData;
+            if (relic == null) continue;
+            if (relic.tire != requiredTier) continue;
+            //新增時間26/11/06 by TYN
             if (run.HasItem(item.id) || reservedIds.Contains(item.id) || !ids.Add(item.id)) continue;
             if (database.GetById(item.id) != item) continue;
 
@@ -554,7 +557,9 @@ public class BattleRewardUI : MonoBehaviour
         {
             if (row.food != null)
             {
-                ScriptableObject inventoryItem = row.food.battleItemEffect != null ? (ScriptableObject)row.food.battleItemEffect : row.food;
+                //新增時間26/11/06 by TYN：食物拆成 FoodData，戰鬥效果欄位在它身上
+                FoodData foodData = row.food as FoodData;
+                ScriptableObject inventoryItem = foodData != null && foodData.battleItemEffect != null ? (ScriptableObject)foodData.battleItemEffect : row.food;
                 if (foodInventory.AddItem(inventoryItem)) CompleteRow(index);
             }
         }

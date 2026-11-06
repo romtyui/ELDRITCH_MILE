@@ -14,9 +14,13 @@ namespace EldritchMile.Core
     /// 所以分工是：**id 是真相，這個型別只負責「長什麼樣」** ——
     /// 顯示的時候才透過 <see cref="ItemDatabase"/> 查表。
     /// 這跟 <see cref="EncounterTargetView"/> 對 <see cref="IProbabilityTarget"/> 的關係是同一個模式。
+    ///
+    /// 【2026-11-06 拆開】這裡只剩共用的部分（id、名字、圖、說明、價格、標籤、武器牌）。
+    /// 食物是 <see cref="FoodData"/>、遺物是 <see cref="RelicData"/>，都繼承這個型別；
+    /// 鑰匙、補給、武器牌這類沒有專屬欄位的，直接用這個型別。
     /// </summary>
     [CreateAssetMenu(fileName = "Item_", menuName = "Eldritch/Item")]
-    public class ItemData : ScriptableObject, IRelicsEffectSource, ISerializationCallbackReceiver
+    public class ItemData : ScriptableObject
     {
         [Header("識別")]
         [Tooltip("道具的唯一 id。**這是存進背包與存檔的東西，定了就不要改** ——\n" +
@@ -28,13 +32,6 @@ namespace EldritchMile.Core
         [Header("顯示")]
         [Tooltip("玩家看到的名字。**這個可以隨時改**，不影響任何存檔或引用")]
         public string displayName = "";
-
-        //新增時間26/10/06 by romtyui
-        [Header("物品等級")]
-        [Min(1)]
-        [Tooltip("物品本身的等級。")]
-        public int tire = 1;
-        //新增時間26/10/06 by romtyui
 
         [Tooltip("**持有中**的樣子 —— 快捷欄（持有遺物 UI）用的就是這一張。\n\n" +
                  "遺物的美術是**白色**那一張（例：`魚頭遺物白色_方形裁切`）——\n" +
@@ -84,85 +81,6 @@ namespace EldritchMile.Core
                  "加牌走 `PlayerVitals.AddCardToDeck()`，不要自己去碰那個清單")]
         public CardData grantsCard;
 
-        [Header("使用效果（食物／補給）")]
-        [Tooltip("使用時回復的 HP。0 = 不回。\n\n" +
-                 "⚠️ 這一組是**戰鬥外也有效**的簡易效果，走 PlayerVitals。\n" +
-                 "戰鬥內的複雜效果（給力量、加護甲…）是 Romtyui 的 ItemEffectData，\n" +
-                 "那一套需要 BattleManager，只能在戰鬥裡跑")]
-        [Min(0)] public int hpRestore = 0;
-
-        [Tooltip("使用時回復的 SAN。0 = 不回")]
-        [Min(0)] public int sanRestore = 0;
-
-        [Tooltip("使用時**扣掉**的 HP。0 = 不扣。\n\n" +
-                 "附件《食物》裡有幾樣東西是有代價的（奢侈的血塊「減少（中等）HP」）——\n" +
-                 "沒有這一欄的話那種食物只能寫在敘述裡、實際上不會發生任何事。")]
-        [Min(0)] public int hpCost = 0;
-
-        [Tooltip("使用時**扣掉**的 SAN。0 = 不扣。\n\n" +
-                 "奇怪的魚／蠕動的生蠔／仰望星空都是「回 HP 但減 SAN」——\n" +
-                 "那是這個世界吃東西的代價，不是錯字。")]
-        [Min(0)] public int sanCost = 0;
-
-        [Tooltip("使用後是否消耗掉。取消勾選 = 可以重複使用（目前沒有這種道具）")]
-        public bool consumeOnUse = true;
-
-        [Header("戰鬥道具效果（戰鬥中主動使用）")]
-        [Tooltip("這件道具在**戰鬥裡**的效果（Romtyui 的 `ItemEffectData`）。\n\n" +
-                 "戰鬥開始時會由 `BattleStageController` 把身上的道具送進 `ItemInventory`，\n" +
-                 "也就是戰鬥畫面左邊那個道具面板（`Props_Panel`）——\n" +
-                 "跟遺物走 `RelicsInventory` 是完全對稱的一套。\n\n" +
-                 "⛔ **目前全專案一個 `ItemEffectData` 資產都沒有**（那個類別是 abstract，\n" +
-                 "還沒有人寫子類別），所以這一欄現在一定是空的，\n" +
-                 "戰鬥裡的道具面板也因此永遠是空的。\n\n" +
-                 "⚠️ 這跟「快捷欄能不能吃東西」是**兩件事** ——\n" +
-                 "快捷欄走的是 `hpRestore` / `sanRestore` 那一組，戰鬥內外都有效，\n" +
-                 "不需要這一欄。這一欄是給「只有戰鬥裡才有意義」的效果用的\n" +
-                 "（給力量、加護甲、抽牌…那些需要 BattleManager 才跑得動）。")]
-        public ItemEffectData battleItemEffect;
-
-        [Header("遺物效果（戰鬥中被動觸發）")]
-        [Tooltip("這件收藏品在戰鬥裡的效果。**可以放好幾個**，全部都會生效。\n\n" +
-                 "兩種效果都放這裡，戰鬥端會自己分：\n" +
-                 "  · 觸發型 —— BattleStart／回合開始／回合結束／出牌時自動執行（見 RelicsTriggerType）\n" +
-                 "  · 數值型 —— 繼承 RelicsModifierEffectData（例：Stat Modifier，受到治療 +10%），\n" +
-                 "    不會被「觸發」，而是 ModifierSystem 算傷害／治療／護甲時來問\n\n" +
-                 "⚠️ 遺物**不是點來用的**。戰鬥開始時 BattleStageController 會把身上的遺物\n" +
-                 "（**這個 ItemData 本身**，不是效果）送進 RelicsInventory。\n\n" +
-                 "留空 = 這件收藏品目前只是收藏品，沒有效果")]
-        public List<RelicsEffectData> relicEffects = new List<RelicsEffectData>();
-
-        // 舊版是單一欄位 `relicEffect`。改成清單時用這個接住已經填過的值，
-        // 讀進來之後在 OnAfterDeserialize 搬進清單 —— 見那裡的說明
-        [SerializeField, HideInInspector, UnityEngine.Serialization.FormerlySerializedAs("relicEffect")]
-        private RelicsEffectData legacyRelicEffect;
-
-        /// <summary>
-        /// 第一個遺物效果。**只為了相容舊程式而留著**（Romtyui 的 BattleRewardUI 用它判斷
-        /// 「這件是不是有效果的遺物」）。新程式請用 <see cref="relicEffects"/> 或 <see cref="RelicsEffects"/>。
-        /// </summary>
-        public RelicsEffectData relicEffect
-        {
-            get
-            {
-                if (relicEffects == null) return null;
-                for (int i = 0; i < relicEffects.Count; i++)
-                    if (relicEffects[i] != null) return relicEffects[i];
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Romtyui 的 <see cref="RelicsRuntime"/> 就是靠這個介面讀遺物的。
-        ///
-        /// 【為什麼要實作】他的 `RelicsInventory` 收的是 ScriptableObject，`RelicsRuntime`
-        /// 拿到每一件都會做 `as IRelicsEffectSource` —— 不是這個介面的話**整件跳過**。
-        /// 以前我們塞進去的是效果資產本身（`RelicsEffectData`），那不是 IRelicsEffectSource，
-        /// 所以觸發型遺物只會噴警告，數值型（Modifier）則是**連警告都沒有、安靜地失效**。
-        /// 2026-10-13 Romtyui 開始做遺物效果時撞到的就是這個。
-        /// </summary>
-        public IReadOnlyList<RelicsEffectData> RelicsEffects => relicEffects;
-
         [Header("製作備註（玩家看不到）")]
         [TextArea(2, 8)]
         [Tooltip("給團隊看的：美術還沒畫、效果還沒接、附件與專案的出入、暫定值的理由…\n\n" +
@@ -171,22 +89,20 @@ namespace EldritchMile.Core
         public string notes = "";
 
         /// <summary>
-        /// 這件道具點下去有沒有事會發生。
-        /// **快捷欄用它決定要不要讓那一格可以點** —— 點了沒反應比不能點更糟。
+        /// 點下去有沒有事會發生。**快捷欄用它決定要不要讓那一格可以點** —— 點了沒反應比不能點更糟。
+        /// 只有食物（<see cref="FoodData"/>）會是 true。
         /// </summary>
-        public bool IsUsable => hpRestore > 0 || sanRestore > 0 || hpCost > 0 || sanCost > 0;
+        public virtual bool IsUsable => false;
 
         /// <summary>
-        /// **遺物是唯一的** —— 一件只能有一個，不能疊。（2026-10-13 定案）
-        ///
-        /// 判斷依據是 `Curio` 標籤（收藏品／遺物），不另開欄位：標籤本來就是
-        /// 「這個東西是什麼」，而「唯一」是遺物這一類的性質，不是個別道具的設定。
+        /// **一件只能有一個，不能疊。** 遺物（<see cref="RelicData"/>）一律是。
+        /// 還沒轉成 RelicData 的舊資產靠 `Curio` 標籤判斷（2026-10-13 定案的規則）。
         ///
         /// 會讀這個的地方：<see cref="RunContext.AddItem"/>（已經有就不給）、
         /// <see cref="LootService"/>（已經有的不抽、同一批不重複、數量壓成 1）、
         /// 戰鬥開場灌遺物（舊存檔裡如果有 ×2 也只灌一件）。
         /// </summary>
-        public bool IsUnique => HasTag("Curio");
+        public virtual bool IsUnique => HasTag("Curio");
 
         /// <summary>顯示名沒填就退回 id —— 至少畫面上不會是一片空白。</summary>
         public string Label => string.IsNullOrEmpty(displayName) ? id : displayName;
@@ -216,34 +132,6 @@ namespace EldritchMile.Core
                 if (hasStory && hasEffect) return fullDescription + "\n\n" + description;
                 return hasStory ? fullDescription : (hasEffect ? description : "");
             }
-        }
-
-        // ==========================================
-        // 舊資料搬家：relicEffect（單一）→ relicEffects（清單）
-        // ==========================================
-        //
-        // 【為什麼不寫一次性的編輯器腳本就好】資產不只在 main 上。Romtyui 正在做遺物，
-        // 他本機可能有還沒推、已經填了舊欄位的資產 —— 一次性腳本跑不到那些。
-        // 放在讀檔的時候搬，誰的機器打開都會自己搬好，下次存檔舊欄位就消失了。
-        //
-        // ⚠️ 這個 callback 可能在**載入執行緒**上跑。UnityEngine.Object 的 `==` 與
-        //    List.Contains（走 Equals）會呼叫引擎內部的存活檢查，非主執行緒會報錯 ——
-        //    所以這裡全部用 ReferenceEquals，只做純 C# 的參考比較。
-
-        public void OnBeforeSerialize() { }
-
-        public void OnAfterDeserialize()
-        {
-            if (ReferenceEquals(legacyRelicEffect, null)) return;
-
-            if (relicEffects == null) relicEffects = new List<RelicsEffectData>();
-
-            bool already = false;
-            for (int i = 0; i < relicEffects.Count; i++)
-                if (ReferenceEquals(relicEffects[i], legacyRelicEffect)) { already = true; break; }
-
-            if (!already) relicEffects.Insert(0, legacyRelicEffect);
-            legacyRelicEffect = null;
         }
 
         /// <summary>標籤比對。大小寫不敏感 —— 手打標籤很容易大小寫不一致。</summary>

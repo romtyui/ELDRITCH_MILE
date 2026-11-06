@@ -193,7 +193,7 @@ public class BattleFoodBridge : MonoBehaviour
         ItemDatabase db = GameFlowManager.Instance != null ? GameFlowManager.Instance.itemDatabase : null;
         if (db == null) return null;
         for (int i = 0; i < db.items.Count; i++)
-            if (db.items[i] != null && db.items[i].battleItemEffect == o && db.items[i].HasTag(RunContext.FoodTag)) return db.items[i];
+            if (db.items[i] is FoodData f && f.battleItemEffect == o) return db.items[i];
         return null;
     }
 

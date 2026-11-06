@@ -26,7 +26,7 @@ namespace EldritchMile.UI.Shortcut
     /// ────────────────────────────────────────────────────────
     /// 【點下去會發生什麼】
     ///
-    /// · **食物／補給**（`ItemData.IsUsable`）—— 直接使用：回 HP／SAN、消耗一個。
+    /// · **食物／補給**（`FoodData.IsUsable`）—— 直接使用：回 HP／SAN、消耗一個。
     ///   走 `PlayerVitals`，所以**地圖上、探索中、戰鬥裡都能用**。
     ///
     /// · **收藏品／遺物** —— 點了不會有事，那是刻意的。
@@ -579,9 +579,11 @@ namespace EldritchMile.UI.Shortcut
                 // 收藏品／遺物就是這一類：它們有效果，但**不是點來用的** ——
                 // 是戰鬥開始時自動生效。講清楚，不然玩家會一直點
                 Debug.Log($"[快捷欄]「{d.Label}」不是消耗品" +
-                          (d.relicEffect != null ? " —— 它的效果在戰鬥中自動生效" : ""));
+                          (d is RelicData ? " —— 它的效果在戰鬥中自動生效" : ""));
                 return false;
             }
+
+            FoodData food = (FoodData)d;   // IsUsable 只有食物會是 true
 
             RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
             if (run == null) return false;
@@ -602,10 +604,10 @@ namespace EldritchMile.UI.Shortcut
             //
             // 「付不起」的定義跟 PlayerVitals 一致：**扣到 0 或以下**。
             // 吃東西不該把自己吃死。
-            if (!CanAffordCost(d))
+            if (!CanAffordCost(food))
             {
                 Debug.Log($"[快捷欄]「{d.Label}」現在用不起 —— " +
-                          $"代價 HP -{d.hpCost}／SAN -{d.sanCost}，" +
+                          $"代價 HP -{food.hpCost}／SAN -{food.sanCost}，" +
                           $"目前 HP {PlayerVitals.Hp}、SAN {PlayerVitals.San}");
                 Notify($"{d.Label}　現在承受不起");
                 return false;
@@ -613,7 +615,7 @@ namespace EldritchMile.UI.Shortcut
 
             // ⚠️ 先確認真的還有這件東西再套效果。
             //    反過來做的話，快速連點會在庫存只剩 1 個時回血兩次
-            if (d.consumeOnUse && !run.ConsumeItem(d.id, 1))
+            if (food.consumeOnUse && !run.ConsumeItem(d.id, 1))
             {
                 Debug.LogWarning($"[快捷欄]「{d.Label}」用不掉 —— 背包裡已經沒有了");
                 Refresh(false);
@@ -640,16 +642,16 @@ namespace EldritchMile.UI.Shortcut
             // 會在 HP 很低時被自己的代價擋掉，而它本來就是要救命的
             if (unit != null)
             {
-                if (d.hpRestore > 0) unit.Heal(d.hpRestore);
+                if (food.hpRestore > 0) unit.Heal(food.hpRestore);
 
                 // ⚠️ TakeDamage 會被格擋吸收 —— 帶著格擋吃「奢侈的血塊」等於免費。
                 //    這是刻意接受的：直接改 currentHp 會跳過他的通知，血條不會更新
-                if (d.hpCost > 0) unit.TakeDamage(d.hpCost);
+                if (food.hpCost > 0) unit.TakeDamage(food.hpCost);
             }
             else
             {
-                if (d.hpRestore > 0) PlayerVitals.HealHp(d.hpRestore);
-                if (d.hpCost > 0) PlayerVitals.SpendHp(d.hpCost);
+                if (food.hpRestore > 0) PlayerVitals.HealHp(food.hpRestore);
+                if (food.hpCost > 0) PlayerVitals.SpendHp(food.hpCost);
             }
 
             // ── SAN：戰鬥中走 EnergySystem ──
@@ -664,13 +666,13 @@ namespace EldritchMile.UI.Shortcut
 
             if (energy != null)
             {
-                if (d.sanRestore > 0) energy.GainEnergy(d.sanRestore);
-                if (d.sanCost > 0) energy.Spend(Mathf.Min(d.sanCost, energy.currentEnergy));
+                if (food.sanRestore > 0) energy.GainEnergy(food.sanRestore);
+                if (food.sanCost > 0) energy.Spend(Mathf.Min(food.sanCost, energy.currentEnergy));
             }
             else
             {
-                if (d.sanRestore > 0) PlayerVitals.RestoreSan(d.sanRestore);
-                if (d.sanCost > 0) PlayerVitals.SpendSan(d.sanCost);
+                if (food.sanRestore > 0) PlayerVitals.RestoreSan(food.sanRestore);
+                if (food.sanCost > 0) PlayerVitals.SpendSan(food.sanCost);
             }
 
             int dHp = unit != null ? unit.currentHp - battleHp0 : PlayerVitals.Hp - hp0;
@@ -697,10 +699,10 @@ namespace EldritchMile.UI.Shortcut
             }
 
             Debug.Log($"[快捷欄] 使用「{d.Label}」" + (unit != null ? "（戰鬥中）" : "")
-                      + (d.hpRestore > 0 ? $"　HP +{d.hpRestore}" : "")
-                      + (d.sanRestore > 0 ? $"　SAN +{d.sanRestore}" : "")
-                      + (d.hpCost > 0 ? $"　HP -{d.hpCost}" : "")
-                      + (d.sanCost > 0 ? $"　SAN -{d.sanCost}" : "")
+                      + (food.hpRestore > 0 ? $"　HP +{food.hpRestore}" : "")
+                      + (food.sanRestore > 0 ? $"　SAN +{food.sanRestore}" : "")
+                      + (food.hpCost > 0 ? $"　HP -{food.hpCost}" : "")
+                      + (food.sanCost > 0 ? $"　SAN -{food.sanCost}" : "")
                       + $"　→ HP {hpNow}/{hpMax}　SAN {sanNow}/{sanMax}");
 
             Notify(UsedTextFor(d, dHp, dSan, hpNow, hpMax, sanNow, sanMax, ready));
@@ -795,7 +797,7 @@ namespace EldritchMile.UI.Shortcut
         /// 代價付得起嗎。**扣到 0 或以下就算付不起** —— 與
         /// <see cref="PlayerVitals.SpendHp"/> 用同一條規矩，兩邊不能各判各的。
         /// </summary>
-        private static bool CanAffordCost(ItemData d)
+        private static bool CanAffordCost(FoodData d)
         {
             if (d.hpCost <= 0 && d.sanCost <= 0) return true;
 

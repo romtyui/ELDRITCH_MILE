@@ -9,12 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Script: {fileID: 11500000, guid: 03fe5725cb2561e4c8c3422d95b538f5, type: 3}
   m_Name: Item_relic_greedy_maw
-  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.RelicData
   id: relic_greedy_maw
   displayName: "\u8CAA\u5A6A\u7684\u5927\u53E3"
-  tire: 1
   icon: {fileID: 21300000, guid: cd8689951b904764ebd3076ad52bfdd6, type: 3}
   shelfIcon: {fileID: 21300000, guid: 461e83af294e6a7459c95b268198e827, type: 3}
   description: "\u3010\u6548\u679C\u3011\u6062\u5FA9 HP \u6642\uFF0C\u7372\u5F97
@@ -28,15 +27,10 @@ MonoBehaviour:
   - EventOnly
   - NoEffect
   grantsCard: {fileID: 0}
-  hpRestore: 0
-  sanRestore: 0
-  hpCost: 0
-  sanCost: 0
-  consumeOnUse: 1
-  battleItemEffect: {fileID: 0}
-  relicEffects: []
-  legacyRelicEffect: {fileID: 0}
   notes: "\u203B \u26A0\uFE0F \u6548\u679C\u63DB\u904E\uFF1A\u5C08\u6848\u88E1\u539F\u672C\u5BEB\u300CHP
     \u7684\u6062\u5FA9\u91CF\u63D0\u5347 10%\u300D\u4E26\u4E14\u5DF2\u7D93\u63A5\u4E0ARelicEffect_HealingReceived_10Percent\u3002\u9644\u4EF6\u628A\u90A3\u500B\u6548\u679C\u7D66\u4E86\u300C\u4EBA\u9B5A\u7684\u756B\u50CF\u300D\uFF0C\u9019\u4E00\u4EF6\u6539\u6210\u300C\u6062\u5FA9
     HP \u6642\u7372\u5F97 1 \u5C64\u3010\u53CD\u64CA\u3011\u300D\uFF0C\u6240\u4EE5\u6548\u679C\u5DF2\u5378\u4E0B\u3001\u7B49
     Romtyui \u88DC\u65B0\u7684\u5B50\u985E\u5225\u3002\n\u203B \u7F8E\u8853\uFF1A\u985E\u4F3C\u8CAA\u5403\u9B3C\u8EAB\u4E0A\u6389\u4E0B\u4F86\u7684\u5176\u4E2D\u4E00\u500B\u9B5A\u982D\u3002"
+  tire: 1
+  relicEffects: []
+  legacyRelicEffect: {fileID: 0}
