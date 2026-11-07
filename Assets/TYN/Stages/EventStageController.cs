@@ -143,15 +143,29 @@ public class EventStageController : ChoiceStageController
     /// <summary>
     /// 把一整段內文切成一句一句。
     ///
-    /// 切在**換行**上：文案在資產裡怎麼分行，玩家就怎麼一段一段看到。
-    /// 連續的空行算同一個斷點，所以段落之間空一行也不會多冒出一則空訊息。
+    /// 【2026-11-08 改成空行斷句】文案表格的**一列就是一句**，一列裡面還會再換行。
+    /// 所以資產裡用**空一行**分句，同一句裡的換行原樣保留 —— 跟機率對話的寫法一致。
+    ///
+    /// 整段沒有空行的舊資產照舊規則：每一行一句（休息、結局那些還沒改寫的事件）。
     /// </summary>
-    private static List<string> SplitParagraphs(string body)
+    public static List<string> SplitParagraphs(string body)
     {
         var result = new List<string>();
         if (string.IsNullOrEmpty(body)) return result;
 
-        string[] parts = body.Replace("\r\n", "\n").Split('\n');
+        string normalized = body.Replace("\r\n", "\n");
+
+        if (normalized.Contains("\n\n"))
+        {
+            foreach (string page in normalized.Split(new[] { "\n\n" }, System.StringSplitOptions.RemoveEmptyEntries))
+            {
+                string t = page.Trim();
+                if (!string.IsNullOrEmpty(t)) result.Add(t);
+            }
+            return result;
+        }
+
+        string[] parts = normalized.Split('\n');
 
         for (int i = 0; i < parts.Length; i++)
         {
@@ -230,6 +244,22 @@ public class EventStageController : ChoiceStageController
 
         // 背景是生成出來的，離開時要收掉 —— 不收的話會一路留到下一站
         backdrop?.Despawn();
+    }
+
+    /// <summary>
+    /// 事件選項的 <see cref="EventData.Option.arrivalText"/>：換到下一個畫面才播。
+    /// 事件本身那時已經卸載了，所以存在這裡，由 GameFlowManager 在下一站叫 <see cref="PlayArrivalText"/>。
+    /// </summary>
+    public static string PendingArrivalText;
+
+    /// <summary>播出待播的那幾句（系統提示，一句一頁）。沒有就什麼都不做。</summary>
+    public static void PlayArrivalText()
+    {
+        string text = PendingArrivalText;
+        PendingArrivalText = null;
+        if (string.IsNullOrEmpty(text) || PopupService.Instance == null) return;
+
+        foreach (string page in SplitParagraphs(text)) PopupService.Instance.ShowText(page);
     }
 
     private void HandleChosen(DialogueOptionUI option)
@@ -327,6 +357,10 @@ public class EventStageController : ChoiceStageController
 
         // 全部挑完（或根本不必挑）
         choosingOption = null;
+
+        // 換了畫面之後才播的那幾句，交給流程總管在下一站播
+        PendingArrivalText = option.arrivalText;
+
         ShowResult(BuildResultBody(option));
     }
 
@@ -417,9 +451,13 @@ public class EventStageController : ChoiceStageController
         string notes = ApplyOption(option);
         string body = option.resultText ?? "";
 
-        if (!string.IsNullOrEmpty(notes)) body += string.Format(effectLineFormat, notes);
+        if (string.IsNullOrEmpty(notes)) return body;
 
-        return body;
+        // 空行斷句的內文：效果提示自己一句，不要黏在最後一句後面
+        if (body.Replace("\r\n", "\n").Contains("\n\n"))
+            return body.TrimEnd() + "\n\n" + string.Format(effectLineFormat, notes).Trim();
+
+        return body + string.Format(effectLineFormat, notes);
     }
 
     /// <summary>

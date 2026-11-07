@@ -460,7 +460,8 @@ namespace EldritchMile.Core
 
         [Header("內容")]
         [TextArea(4, 12)]
-        [Tooltip("事件內文。大綱表格裡「事件內容」那一格")]
+        [Tooltip("事件內文。**空一行 ＝ 換一句**（文案表格的一列），同一句裡的換行會照樣顯示。\n" +
+                 "整段都沒有空行的話，退回舊規則：每一行一句")]
         public string bodyText = "";
 
         [Tooltip("事件的圖（CG）。可留空")]
@@ -486,8 +487,14 @@ namespace EldritchMile.Core
             public string label = "";
 
             [TextArea(3, 10)]
-            [Tooltip("選了之後的內文")]
+            [Tooltip("選了之後的內文。**空一行 ＝ 換一句**，同一句裡的換行會照樣顯示")]
             public string resultText = "";
+
+            [TextArea(2, 6)]
+            [Tooltip("**換到下一個畫面之後**才播的內文。留空 = 沒有。\n\n" +
+                     "給「中間有黑屏、換了地方」的事件用：《任意門》傳送到別的節點之後的那一句、\n" +
+                     "《未知的祭壇》回到原本道路上的那三句。寫法跟 Result Text 一樣")]
+            public string arrivalText = "";
 
             [Tooltip("選了之後發生的事")]
             public List<EventEffect> effects = new List<EventEffect>();

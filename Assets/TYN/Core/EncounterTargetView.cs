@@ -164,6 +164,49 @@ namespace EldritchMile.Core
             // 尺寸是自己算的，preserveAspect 就沒有必要了；
             // 留著也不會錯，但關掉比較不會讓人誤以為是它在負責。
             image.preserveAspect = false;
+
+            FitLockToObject(sprite, rt.sizeDelta);
+        }
+
+        [Tooltip("鎖鏈圖（鎖鏈.png）原本設計的大小。數字框依這個比例縮放，鎖鏈本身拉成物件的大小")]
+        public Vector2 lockDesignSize = new Vector2(705f, 477f);
+
+        /// <summary>
+        /// 鎖鏈貼齊物件的邊緣（2026-11-08 美術要求）：橫鏈從物件左緣到右緣，直鏈從上緣到下緣。
+        ///
+        /// 【「物件的邊緣」不是圖的邊緣】圖四周常有透明邊。Sprite 的網格（Tight）只包住不透明的部分，
+        /// 取它的外框就是物件實際的範圍，不必讀像素。
+        /// 數字框跟著等比縮放，不跟著拉伸 —— 不然寬扁的櫃子會把框壓扁。
+        /// </summary>
+        private void FitLockToObject(Sprite sprite, Vector2 imageSize)
+        {
+            if (lockRoot == null) return;
+
+            Vector2 lo = new Vector2(0f, 0f), hi = new Vector2(1f, 1f);
+            Vector2[] verts = sprite.vertices;
+            Bounds full = sprite.bounds;
+
+            if (verts != null && verts.Length > 0 && full.size.x > 0f && full.size.y > 0f)
+            {
+                Vector2 min = verts[0], max = verts[0];
+                for (int i = 1; i < verts.Length; i++) { min = Vector2.Min(min, verts[i]); max = Vector2.Max(max, verts[i]); }
+
+                lo = new Vector2((min.x - full.min.x) / full.size.x, (min.y - full.min.y) / full.size.y);
+                hi = new Vector2((max.x - full.min.x) / full.size.x, (max.y - full.min.y) / full.size.y);
+            }
+
+            Vector2 size = new Vector2(imageSize.x * (hi.x - lo.x), imageSize.y * (hi.y - lo.y));
+            Vector2 centre = new Vector2(imageSize.x * ((lo.x + hi.x) * 0.5f - 0.5f), imageSize.y * ((lo.y + hi.y) * 0.5f - 0.5f));
+
+            var lockRect = (RectTransform)lockRoot.transform;
+            lockRect.sizeDelta = size;
+            lockRect.anchoredPosition = image.rectTransform.anchoredPosition + centre;
+
+            if (previewLabel != null && lockDesignSize.x > 0f && lockDesignSize.y > 0f)
+            {
+                float k = Mathf.Min(size.x / lockDesignSize.x, size.y / lockDesignSize.y);
+                previewLabel.rectTransform.localScale = Vector3.one * k;
+            }
         }
 
         // ==========================================
