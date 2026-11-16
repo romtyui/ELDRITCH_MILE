@@ -539,7 +539,7 @@ public class BattleStageController : StageController
     /// ────────────────────────────────────────────────────────
     /// ⛔ **目前這一支一定會灌 0 件。** 不是它壞了 ——
     /// `ItemEffectData` 是個 abstract 類別，全專案**一個子類別、一個資產都沒有**，
-    /// 所以 `ItemData.battleItemEffect` 不可能填得起來。
+    /// 所以 `FoodData.battleItemEffect` 不可能填得起來。
     /// 症狀就是「戰鬥裡叫不出食物」：面板打得開，但裡面是空的。
     ///
     /// 【誰該補】效果資產與子類別是戰鬥端（Romtyui）的東西，
@@ -588,15 +588,16 @@ public class BattleStageController : StageController
             ItemStack st = ctx.inventory[i];
             if (st == null || st.count <= 0) continue;
 
-            ItemData d = db.GetById(st.id);
-            if (d == null || d.relicEffect == null) { if (d != null && d.HasTag("Curio")) skipped++; continue; }
+            RelicData d = db.GetById(st.id) as RelicData;
+            if (d == null) continue;
+            if (d.relicEffect == null) { skipped++; continue; }
 
-            // ⚠️ 塞的是 **ItemData 本身**，不是 d.relicEffect。
+            // ⚠️ 塞的是 **RelicData 本身**，不是 d.relicEffect。
             //    RelicsRuntime 會對每一件做 `as IRelicsEffectSource` 再取效果清單；
             //    效果資產不是那個介面，以前塞效果進去的結果是整件被跳過 ——
-            //    數值型（Modifier）遺物甚至連警告都沒有。ItemData 實作了那個介面。
+            //    數值型（Modifier）遺物甚至連警告都沒有。RelicData 實作了那個介面。
             //
-            // 遺物是唯一的（ItemData.IsUnique）。舊存檔裡要是留著 ×2 也只灌一件
+            // 遺物是唯一的（RelicData.IsUnique）。舊存檔裡要是留著 ×2 也只灌一件
             int copies = d.IsUnique ? 1 : st.count;
             for (int n = 0; n < copies; n++)
             {

@@ -432,6 +432,30 @@ namespace EldritchMile.UI.ProbabilityDialogue
                 ui.OnClicked += HandleAnswerClicked;
                 answerUIs.Add(ui);
             }
+
+            RefreshTopGlow();
+        }
+
+        /// <summary>
+        /// 機率**唯一最高**的那個選項持續微微發亮 —— 玩家不用比數字也知道現在押哪個最穩。
+        /// 並列最高（例如開場全部 25%）就不亮：那時沒有「最好的那個」，亮了反而誤導。
+        /// </summary>
+        private void RefreshTopGlow()
+        {
+            int best = -1, count = 0;
+            foreach (ProbabilityAnswerUI a in answerUIs)
+            {
+                if (a == null || a.Bound == null || !a.Bound.available) continue;
+                int p = a.Bound.currentProbability;
+                if (p > best) { best = p; count = 1; }
+                else if (p == best) count++;
+            }
+
+            foreach (ProbabilityAnswerUI a in answerUIs)
+            {
+                if (a == null || a.Bound == null) continue;
+                a.SetTop(count == 1 && best > 0 && a.Bound.available && a.Bound.currentProbability == best);
+            }
         }
 
         private void RebuildHand()
@@ -704,6 +728,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
                 if (ui != null) ui.AnimateProbability(before[i], after[i]);
             }
 
+            RefreshTopGlow();
+
             // 規格 R8：沒有影響到任何回答時要講
             if (targets.Count == 0) ShowNoEffect();
         }
@@ -795,6 +821,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
         {
             ProbabilityAnswerUI ui = FindUI(o);
             if (ui != null) ui.SetDisabled();
+            RefreshTopGlow();
         }
 
         private void HandlePromptChanged(int failureCount, string prompt)

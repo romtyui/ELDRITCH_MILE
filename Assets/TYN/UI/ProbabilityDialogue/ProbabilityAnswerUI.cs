@@ -32,6 +32,24 @@ namespace EldritchMile.UI.ProbabilityDialogue
         [Tooltip("數字旁邊的「%」加色點，圖換成這個回答的屬性色")]
         public Image markImage;
 
+        [Header("發光（讓玩家看得出牌在推哪一個選項，2026-11-08 原型）")]
+        [Tooltip("同一張圓弧圖、加亮材質，疊在 Arc Fill 上面。亮度由程式控制")]
+        public Image arcGlow;
+
+        [Tooltip("指著牌時，預覽段從目前的機率「長」到打出後的機率要多久（蓄力）")]
+        [Min(0.01f)] public float chargeSeconds = 0.3f;
+
+        [Tooltip("蓄力完之後預覽段呼吸一次多久")]
+        [Min(0.1f)] public float chargePulseSeconds = 0.8f;
+
+        [Tooltip("打出牌、機率上升的那一下，圓弧亮起來再退掉要多久")]
+        [Min(0.05f)] public float playFlashSeconds = 0.6f;
+
+        [Tooltip("機率最高的選項持續微微發亮。0 = 關掉這個提示")]
+        [Range(0f, 1f)] public float topGlowAlpha = 0.5f;
+
+        [Min(0.1f)] public float topGlowPulseSeconds = 1.6f;
+
         [Serializable]
         public class AttributeArt
         {
@@ -201,6 +219,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
             if (arcFill != null) { arcFill.sprite = art.arc; arcFill.color = Color.white; }
             if (arcPreview != null) { arcPreview.sprite = art.arc; arcPreview.color = new Color(1f, 1f, 1f, 0.45f); }
             if (markImage != null) { markImage.sprite = art.mark; markImage.color = Color.white; }
+            if (arcGlow != null) { arcGlow.sprite = art.arc; arcGlow.color = new Color(1f, 1f, 1f, 0f); }
         }
 
         /// <summary>機率畫到圓弧上。0% 一定全空，100% 一定全滿。</summary>
@@ -283,19 +302,87 @@ namespace EldritchMile.UI.ProbabilityDialogue
         {
             if (countUp != null) { StopCoroutine(countUp); countUp = null; }
             currentPercent = value;
+            previewShown = value;
             if (probabilityText != null) probabilityText.text = string.Format(probabilityFormat, value);
             SetArc(arcFill, value);
             SetArc(arcPreview, value);
         }
 
         /// <summary>
-        /// 手上指著的牌打出去會到多少：圓弧的預覽段伸長、數字換成打出後的。null ＝ 收掉預覽。
+        /// 手上指著的牌打出去會到多少：圓弧的預覽段**蓄力**長到那裡、數字換成打出後的。null ＝ 收掉預覽。
         /// </summary>
         public void SetPreview(int? value)
         {
+            previewTarget = value;
+            if (value == null) previewShown = currentPercent;
+
             int shown = value ?? currentPercent;
-            SetArc(arcPreview, shown);
             if (probabilityText != null && countUp == null) probabilityText.text = string.Format(probabilityFormat, shown);
+        }
+
+        /// <summary>機率最高的選項（由 View 判斷，只有一個最高時才亮）。</summary>
+        public void SetTop(bool on)
+        {
+            isTop = on && interactable;
+        }
+
+        private int? previewTarget;
+        private float previewShown;
+        private float chargeTime;
+        private bool isTop;
+        private float flash;
+
+        /// <summary>
+        /// 發光與蓄力。每幀算一次，不用協程 —— 三種效果（蓄力、打出的一下、最高的那個）會同時發生，
+        /// 各開協程的話會互相蓋掉亮度。
+        /// </summary>
+        private void Update()
+        {
+            float dt = Time.unscaledDeltaTime;
+
+            // ── 蓄力：預覽段從目前的機率長到打出後的機率，長滿之後呼吸 ──
+            if (arcPreview != null)
+            {
+                float alpha = 0.45f;
+
+                if (previewTarget.HasValue && interactable)
+                {
+                    chargeTime += dt;
+                    float k = Mathf.Clamp01(chargeTime / chargeSeconds);
+                    previewShown = Mathf.Lerp(currentPercent, previewTarget.Value, 1f - (1f - k) * (1f - k));
+
+                    if (k >= 1f)
+                    {
+                        float wave = 0.5f + 0.5f * Mathf.Sin((chargeTime - chargeSeconds) / chargePulseSeconds * Mathf.PI * 2f);
+                        alpha = Mathf.Lerp(0.35f, 0.85f, wave);
+                    }
+                }
+                else
+                {
+                    chargeTime = 0f;
+                    previewShown = currentPercent;
+                }
+
+                SetArc(arcPreview, Mathf.RoundToInt(previewShown));
+                Color c = arcPreview.color;
+                c.a = alpha;
+                arcPreview.color = c;
+            }
+
+            // ── 發光：打出的那一下 ＋ 機率最高的那一個 ──
+            if (arcGlow != null && arcFill != null)
+            {
+                flash = Mathf.Max(0f, flash - dt / playFlashSeconds);
+
+                float top = 0f;
+                if (isTop && topGlowAlpha > 0f)
+                    top = topGlowAlpha * (0.55f + 0.45f * Mathf.Sin(Time.unscaledTime / topGlowPulseSeconds * Mathf.PI * 2f));
+
+                float a = Mathf.Max(top, flash);
+                arcGlow.fillAmount = arcFill.fillAmount;
+                arcGlow.color = new Color(1f, 1f, 1f, a);
+                arcGlow.enabled = a > 0.01f && arcFill.fillAmount > 0f;
+            }
         }
 
         /// <summary>機率變化的動畫（規格 §10.1 probabilityChangeEffect）。</summary>
@@ -305,6 +392,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
             currentPercent = after;
             SetArc(arcPreview, after);   // 預覽段留在終點，填色追上去
+            if (after > before) flash = 1f;   // 牌確實把它推上去了：亮一下
 
             if (countUpSeconds <= 0f || before == after)
             {
@@ -395,6 +483,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
         public void SetDisabled()
         {
             interactable = false;
+            isTop = false;
+            previewTarget = null;
             transform.localScale = Vector3.one;
             SetArc(arcPreview, currentPercent);
 

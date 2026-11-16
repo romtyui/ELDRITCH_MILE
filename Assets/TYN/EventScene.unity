@@ -3921,7 +3921,7 @@ MonoBehaviour:
   closeUpSize: {x: 640, y: 640}
   closeUpPosition: {x: 0, y: 0}
   charsPerSecond: 40
-  systemSpeakerName: "\u203B"
+  systemSpeakerName: 
   systemTextColor: {r: 0.85, g: 0.85, b: 0.75, a: 1}
   speechTextColor: {r: 1, g: 1, b: 1, a: 1}
   itemGainedFormat: "\u7372\u5F97\u4E86 {0}\u3002"
@@ -12526,8 +12526,6 @@ MonoBehaviour:
   button: {fileID: 643147711}
   slideTab: {fileID: 1269993789}
   bottomY: 40
-  aboveDialogueY: 400
-  moveSmoothSeconds: 0.15
   fadeSeconds: 0.25
   confirmPanel: {fileID: 743341807}
   confirmQuestion: {fileID: 591602499}

@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
   id: card_human_axe
   displayName: "\u65A7\u982D"
-  tire: 1
   icon: {fileID: 0}
   shelfIcon: {fileID: 0}
   description: "\u3010\u6548\u679C\u3011\u5C07\u3008\u65A7\u982D\u3009\u52A0\u5165\u4F60\u7684\u6230\u9B25\u724C\u7D44\u3002"
@@ -23,13 +22,5 @@ MonoBehaviour:
   tags:
   - Weapon
   grantsCard: {fileID: 11400000, guid: d242339d1dfa51441857c2c465e917f6, type: 2}
-  hpRestore: 0
-  sanRestore: 0
-  hpCost: 0
-  sanCost: 0
-  consumeOnUse: 1
-  battleItemEffect: {fileID: 0}
-  relicEffects: []
-  legacyRelicEffect: {fileID: 0}
   notes: "2026-10-25 \u5546\u5E97\u5361\u6C60\u52A0\u5165 Romtyui \u7684\u4EBA\u724C\u6B66\u5668\u3002\u50F9\u683C\u66AB\u5B9A
     30 + \u8CBB\u7528x8\u3002"

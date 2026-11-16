@@ -134,7 +134,7 @@ namespace EldritchMile.Core
         public float charsPerSecond = 40f;
 
         [Header("系統提示公版")]
-        [Tooltip("系統提示時名字框顯示什麼。留空則隱藏名字框")]
+        [Tooltip("系統提示時名字框顯示什麼。留空則隱藏名字框（2026-11-06 起預設留空）")]
         public string systemSpeakerName = "";
 
         [Tooltip("系統提示的文字顏色")]
@@ -293,9 +293,7 @@ namespace EldritchMile.Core
         {
             Open();
 
-            bool hasName = !string.IsNullOrEmpty(systemSpeakerName);
-            if (nameBox != null) nameBox.SetActive(hasName);
-            if (hasName && nameText != null) nameText.text = systemSpeakerName;
+            SetName(systemSpeakerName);
 
             // 打牌期間立繪位置放的是對象大圖（SpawnTargetView 生成的），
             // 後續訊息不可以把它關掉，否則玩家就沒有東西可以出牌了。
@@ -323,8 +321,7 @@ namespace EldritchMile.Core
         {
             Open();
 
-            if (nameBox != null) nameBox.SetActive(!string.IsNullOrEmpty(speaker));
-            if (nameText != null) nameText.text = speaker;
+            SetName(speaker);
 
             // 同上：固定立繪期間，沒帶圖的台詞不該把角色關掉
             if (spawnedTargets.Count == 0 && !HoldPortrait)
@@ -411,7 +408,24 @@ namespace EldritchMile.Core
             // 漏掉的症狀是「立繪浮在主選單上」—— 因為沒有人關它。
             if (portraitRoot != null) portraitRoot.SetActive(false);
             if (optionBox != null) optionBox.SetActive(false);
-            if (nameBox != null) nameBox.SetActive(false);
+            SetName(null);
+        }
+
+        /// <summary>
+        /// 名字框（白框）與名字。沒有名字就**整個藏起來**，系統提示就是這樣（2026-11-06：
+        /// 以前系統提示的名字框會顯示「※」，改成不顯示）。
+        ///
+        /// ⚠️ 名字文字是白框的**兄弟**，不是子物件 —— 只關白框的話字會留在畫面上，要兩個一起關。
+        /// </summary>
+        private void SetName(string speaker)
+        {
+            bool has = !string.IsNullOrEmpty(speaker);
+            if (nameBox != null) nameBox.SetActive(has);
+            if (nameText != null)
+            {
+                nameText.text = has ? speaker : "";
+                nameText.gameObject.SetActive(has);
+            }
         }
 
         public void HideImmediate() => Hide();

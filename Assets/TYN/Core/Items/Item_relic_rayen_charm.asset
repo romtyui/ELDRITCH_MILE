@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Script: {fileID: 11500000, guid: 03fe5725cb2561e4c8c3422d95b538f5, type: 3}
   m_Name: Item_relic_rayen_charm
-  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.RelicData
   id: relic_rayen_charm
   displayName: "\u87BA\u6E6E\u5FA1\u5B88"
   icon: {fileID: 21300000, guid: 5c6c43ac134feb141b841585e07d2d85, type: 3}
@@ -26,13 +26,9 @@ MonoBehaviour:
   - EventOnly
   - NoEffect
   grantsCard: {fileID: 0}
-  hpRestore: 0
-  sanRestore: 0
-  hpCost: 0
-  sanCost: 0
-  consumeOnUse: 1
-  battleItemEffect: {fileID: 0}
-  relicEffect: {fileID: 0}
   notes: "\u203B \u26A0\uFE0F \u6548\u679C\u63DB\u904E\uFF1A\u5C08\u6848\u88E1\u539F\u672C\u5BEB\u300C\u4F7F\u5176\u984D\u5916\u767C\u52D5\u4E00\u6B21\u300D\uFF0C\u9644\u4EF6\u5BEB\u300C\u6539\u7232\u5C0D\u5168\u9AD4\u6575\u4EBA\u767C\u52D5\u300D\u3002\n\u3000
     \u4F9D\u6307\u793A\u4EE5\u9644\u4EF6\u70BA\u6E96\u3002\u5169\u8005\u90FD\u9084\u6C92\u6709\u5BE6\u4F5C\u3002\n\u203B
     \u7F8E\u8853\uFF1A\u6709\u985E\u4F3C\u7AE0\u9B5A\u89F8\u624B\u6216\u5438\u76E4\u5716\u6848\u7684\u5FA1\u5B88\u3002"
+  tire: 1
+  relicEffects: []
+  legacyRelicEffect: {fileID: 0}

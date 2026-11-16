@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Script: {fileID: 11500000, guid: 03fe5725cb2561e4c8c3422d95b538f5, type: 3}
   m_Name: Item_relic_mermaid_flesh
-  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.RelicData
   id: relic_mermaid_flesh
   displayName: "\u4EBA\u9B5A\u8089"
   icon: {fileID: 21300000, guid: 72a506385fb692344a9332cf270accd3, type: 3}
@@ -27,14 +27,10 @@ MonoBehaviour:
   - EventOnly
   - NoEffect
   grantsCard: {fileID: 0}
-  hpRestore: 0
-  sanRestore: 0
-  hpCost: 0
-  sanCost: 0
-  consumeOnUse: 1
-  battleItemEffect: {fileID: 0}
-  relicEffect: {fileID: 0}
   notes: "\u203B \u6230\u9B25\u7AEF\u672A\u63A5\uFF1A\u9700\u8981\u65B0\u7684 RelicsEffectData
     \u5B50\u985E\u5225\u3002\n\u203B \u5C08\u6848\u539F\u672C\u5BEB\u300C\u6D88\u8017
     10 \u9EDE SAN\u300D\uFF0C\u9644\u4EF6\u5BEB\u300C\u6E1B\u5C11\uFF08\u5C11\u91CF\uFF09SAN\u300D\u2014\u2014
     \u540C\u4E00\u4EF6\u4E8B\uFF0C\u53D6 10\u3002"
+  tire: 1
+  relicEffects: []
+  legacyRelicEffect: {fileID: 0}

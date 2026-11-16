@@ -9,12 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73b3ac59f45a61146ae44b55edfe3c3c, type: 3}
+  m_Script: {fileID: 11500000, guid: 03fe5725cb2561e4c8c3422d95b538f5, type: 3}
   m_Name: Item_relic_moon_toad
-  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.ItemData
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.RelicData
   id: relic_moon_toad
   displayName: "\u6708\u4E4B\u87FE\u870D"
-  tire: 1
   icon: {fileID: 21300000, guid: c6f294e0086e7d94b918fa2b258016a1, type: 3}
   shelfIcon: {fileID: 21300000, guid: 613ab16fa29398b4e8303d9ef290c082, type: 3}
   description: "\u3010\u6548\u679C\u3011\u5546\u5E97\u7684\u6240\u6709\u5546\u54C1\u50F9\u683C\u964D\u4F4E
@@ -27,13 +26,8 @@ MonoBehaviour:
   - General
   - NotInShop
   grantsCard: {fileID: 0}
-  hpRestore: 0
-  sanRestore: 0
-  hpCost: 0
-  sanCost: 0
-  consumeOnUse: 1
-  battleItemEffect: {fileID: 0}
-  relicEffects: []
-  legacyRelicEffect: {fileID: 0}
   notes: "\u203B \u672A\u63A5\uFF1A\u9700\u8981\u5546\u5E97\u5B9A\u50F9\u6642\u7684\u9264\u5B50\uFF08ShopStageController
     \u7B97\u50F9\u7684\u5730\u65B9\uFF09\u3002"
+  tire: 1
+  relicEffects: []
+  legacyRelicEffect: {fileID: 0}
