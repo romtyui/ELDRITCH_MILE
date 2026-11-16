@@ -27,6 +27,9 @@ public class FoodSelectionEntryUI : MonoBehaviour, IPointerEnterHandler, IPointe
     [SerializeField, Tooltip("有食物時的格子圖片。")]
     private Sprite occupiedSlotSprite;
 
+    [SerializeField, Tooltip("食物被選取時的格子圖片。未指定時沿用有食物的圖片。")]
+    private Sprite selectedSlotSprite;
+
     private void Awake()
     {
         entryButton = GetComponent<Button>();
@@ -50,12 +53,6 @@ public class FoodSelectionEntryUI : MonoBehaviour, IPointerEnterHandler, IPointe
 
         if (entryButton != null) entryButton.interactable = hasItem;
 
-        if (slotBackgroundImage != null)
-        {
-            slotBackgroundImage.sprite = hasItem ? occupiedSlotSprite : emptySlotSprite;
-            slotBackgroundImage.enabled = true;
-        }
-
         if (itemImage != null)
         {
             itemImage.sprite = hasItem ? item.ShelfIcon : null;
@@ -63,6 +60,23 @@ public class FoodSelectionEntryUI : MonoBehaviour, IPointerEnterHandler, IPointe
         }
 
         if (quantityText != null) quantityText.text = hasItem ? $"×{quantity}" : "";
+
+        UpdateSelectionFrame(null);
+    }
+
+    public void UpdateSelectionFrame(ItemData selectedItem)
+    {
+        if (slotBackgroundImage == null) slotBackgroundImage = GetComponent<Image>();
+        if (slotBackgroundImage == null) return;
+
+        bool hasItem = item != null;
+        bool isSelected = hasItem && selectedItem != null && item.id == selectedItem.id;
+
+        Sprite backgroundSprite = hasItem ? occupiedSlotSprite : emptySlotSprite;
+        if (isSelected && selectedSlotSprite != null) backgroundSprite = selectedSlotSprite;
+
+        slotBackgroundImage.sprite = backgroundSprite;
+        slotBackgroundImage.enabled = true;
     }
 
     public void OnPointerEnter(PointerEventData eventData)

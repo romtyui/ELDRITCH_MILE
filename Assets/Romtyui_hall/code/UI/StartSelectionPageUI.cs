@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 
 [DisallowMultipleComponent]
 public class StartSelectionPageUI : MonoBehaviour
@@ -54,6 +55,18 @@ public class StartSelectionPageUI : MonoBehaviour
     public bool IsFoodSelectionOpen => foodSelectionPanel != null && foodSelectionPanel.activeSelf;
     public bool IsRelicSelectionOpen => relicSelectionPanel != null && relicSelectionPanel.activeSelf;
 
+    [Header("準備室視角事件")]
+    [Tooltip("MainPanel 開始移向食物版面時觸發，傳入 MainPanel 的移動時間。")]
+    [SerializeField] private UnityEvent<float> onFoodViewRequested = new UnityEvent<float>();
+
+    [Tooltip("MainPanel 開始移向遺物版面時觸發，傳入 MainPanel 的移動時間。")]
+    [SerializeField] private UnityEvent<float> onRelicViewRequested = new UnityEvent<float>();
+
+    [Tooltip("MainPanel 開始返回中央時觸發，傳入 MainPanel 的返回時間。")]
+    [SerializeField] private UnityEvent<float> onCenterViewRequested = new UnityEvent<float>();
+
+    [Tooltip("配置介面重設時觸發，用來立即還原中央視角。")]
+    [SerializeField] private UnityEvent onViewReset = new UnityEvent();
     private void Awake()
     {
         if (foodSelectionPanel != null)
@@ -176,6 +189,9 @@ public class StartSelectionPageUI : MonoBehaviour
         activeCanvasGroup = group;
         activeOriginalScale = originalScale;
 
+        if (panel == foodSelectionPanel) onFoodViewRequested.Invoke(mainMoveDuration);
+        else if (panel == relicSelectionPanel) onRelicViewRequested.Invoke(mainMoveDuration);
+
         yield return AnimateMainPanel(target, mainMoveDuration);
         yield return AnimatePanel(panel, group, originalScale, true);
 
@@ -191,6 +207,8 @@ public class StartSelectionPageUI : MonoBehaviour
             activePanel.SetActive(false);
             activePanel.transform.localScale = activeOriginalScale;
         }
+
+        onCenterViewRequested.Invoke(mainReturnDuration);
 
         yield return AnimateMainPanel(centerTarget, mainReturnDuration);
         ResetClosedState();
@@ -286,6 +304,7 @@ public class StartSelectionPageUI : MonoBehaviour
         ResetPanel(foodSelectionPanel, foodPanelCanvasGroup, foodPanelOriginalScale);
         ResetPanel(relicSelectionPanel, relicPanelCanvasGroup, relicPanelOriginalScale);
         ApplyLayout(centerTarget);
+        onViewReset.Invoke();
     }
 
     private void ResetPanel(GameObject panel, CanvasGroup group, Vector3 originalScale)

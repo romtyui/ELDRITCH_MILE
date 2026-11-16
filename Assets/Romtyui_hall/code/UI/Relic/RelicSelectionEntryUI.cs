@@ -12,6 +12,7 @@ public class RelicSelectionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoint
     private Button entryButton;
     private ItemData item;
     private RelicSelectionUI owner;
+
     [Header("格子背景")]
     [SerializeField, Tooltip("Button 本身的 Image。未指定時自動取得。")]
     private Image slotBackgroundImage;
@@ -19,8 +20,11 @@ public class RelicSelectionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoint
     [SerializeField, Tooltip("沒有遺物時的格子圖片。")]
     private Sprite emptySlotSprite;
 
-    [SerializeField, Tooltip("有遺物時的格子圖片。")]
+    [SerializeField, Tooltip("有遺物但未選取時的格子圖片。")]
     private Sprite occupiedSlotSprite;
+
+    [SerializeField, Tooltip("遺物被選取時的格子圖片。未指定時沿用有遺物的圖片。")]
+    private Sprite selectedSlotSprite;
 
     private void Awake()
     {
@@ -45,17 +49,28 @@ public class RelicSelectionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoint
 
         if (entryButton != null) entryButton.interactable = hasItem;
 
-        if (slotBackgroundImage != null)
-        {
-            slotBackgroundImage.sprite = hasItem ? occupiedSlotSprite : emptySlotSprite;
-            slotBackgroundImage.enabled = true;
-        }
-
         if (itemImage != null)
         {
             itemImage.sprite = hasItem ? item.ShelfIcon : null;
             itemImage.enabled = itemImage.sprite != null;
         }
+
+        UpdateSelectionFrame(null);
+    }
+
+    public void UpdateSelectionFrame(ItemData selectedItem)
+    {
+        if (slotBackgroundImage == null) slotBackgroundImage = GetComponent<Image>();
+        if (slotBackgroundImage == null) return;
+
+        bool hasItem = item != null;
+        bool isSelected = hasItem && selectedItem != null && item.id == selectedItem.id;
+
+        Sprite backgroundSprite = hasItem ? occupiedSlotSprite : emptySlotSprite;
+        if (isSelected && selectedSlotSprite != null) backgroundSprite = selectedSlotSprite;
+
+        slotBackgroundImage.sprite = backgroundSprite;
+        slotBackgroundImage.enabled = true;
     }
 
     public void OnPointerEnter(PointerEventData eventData)

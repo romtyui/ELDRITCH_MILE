@@ -162,6 +162,7 @@ public class FoodSelectionUI : MonoBehaviour
 
             FoodSelectionEntryUI entry = Instantiate(entryTemplate, content);
             entry.Bind(item, quantity, this);
+            entry.UpdateSelectionFrame(selectedItem);
             entry.gameObject.SetActive(true);
             spawnedEntries.Add(entry);
         }
@@ -199,12 +200,14 @@ public class FoodSelectionUI : MonoBehaviour
         {
             selectedItem = null;
             previewedItem = item;
+            RefreshSelectionFrames();
             ShowDetails(item);
             return;
         }
 
         selectedItem = item;
         previewedItem = null;
+        RefreshSelectionFrames();
         ShowDetails(item);
     }
 
@@ -242,6 +245,7 @@ public class FoodSelectionUI : MonoBehaviour
         selectedItem = null;
         previewedItem = null;
         editingSlotIndex = -1;
+        RefreshSelectionFrames();
         ShowDetails(null);
         pageUI.CloseFoodSelection();
     }
@@ -290,6 +294,15 @@ public class FoodSelectionUI : MonoBehaviour
                     backgroundImage.enabled = true;
                 }
             }
+        }
+    }
+
+    private void RefreshSelectionFrames()
+    {
+        foreach (FoodSelectionEntryUI entry in spawnedEntries)
+        {
+            if (entry == null) continue;
+            entry.UpdateSelectionFrame(selectedItem);
         }
     }
 }

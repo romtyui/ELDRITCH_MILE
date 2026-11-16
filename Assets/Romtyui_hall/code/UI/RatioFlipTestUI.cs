@@ -120,7 +120,7 @@ public class RatioFlipTestUI : MonoBehaviour
             else
             {
                 block.displayedB = block.flipToB;
-                block.image.sprite = block.displayedB ? spriteB : spriteA;
+                block.image.sprite = block.displayedB ? spriteA : spriteB;
                 widthRatio = Mathf.SmoothStep(0f, 1f, (progress - 0.5f) * 2f);
             }
 

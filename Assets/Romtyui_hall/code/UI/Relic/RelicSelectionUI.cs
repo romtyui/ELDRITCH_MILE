@@ -157,6 +157,7 @@ public class RelicSelectionUI : MonoBehaviour
 
             RelicSelectionEntryUI entry = Instantiate(entryTemplate, content);
             entry.Bind(item, this);
+            entry.UpdateSelectionFrame(selectedItem);
             entry.gameObject.SetActive(true);
             spawnedEntries.Add(entry);
         }
@@ -194,12 +195,14 @@ public class RelicSelectionUI : MonoBehaviour
         {
             selectedItem = null;
             previewedItem = item;
+            RefreshSelectionFrames();
             ShowDetails(item);
             return;
         }
 
         selectedItem = item;
         previewedItem = null;
+        RefreshSelectionFrames();
         ShowDetails(item);
     }
 
@@ -237,6 +240,7 @@ public class RelicSelectionUI : MonoBehaviour
         selectedItem = null;
         previewedItem = null;
         editingSlotIndex = -1;
+        RefreshSelectionFrames();
         ShowDetails(null);
         pageUI.CloseRelicSelection();
     }
@@ -285,6 +289,15 @@ public class RelicSelectionUI : MonoBehaviour
                     backgroundImage.enabled = true;
                 }
             }
+        }
+    }
+
+    private void RefreshSelectionFrames()
+    {
+        foreach (RelicSelectionEntryUI entry in spawnedEntries)
+        {
+            if (entry == null) continue;
+            entry.UpdateSelectionFrame(selectedItem);
         }
     }
 }
