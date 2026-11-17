@@ -19,17 +19,14 @@ MonoBehaviour:
   groundTexture: {fileID: 0}
   encounterPool: {fileID: 0}
   shopStock: {fileID: 0}
-  battleBackground: {fileID: 0}
-  bossBattleBackground: {fileID: 0}
+  battleBackground: {fileID: 21300000, guid: 974ae96a0fa38d543bd0cc77fd107bac, type: 3}
+  bossBattleBackground: {fileID: 21300000, guid: ceb58549d26a7af42935577c1971fd3a, type: 3}
   battleEncounterPool: {fileID: 11400000, guid: 13f5cf0799ec5e042b125c85a3849e23, type: 2}
   earlyBattles: 3
   weightEarly: 1
   weightLater: 2
   weightElite: 3
   weightBoss: 5
-  exits:
-  - target: {fileID: 11400000, guid: 983bbc8ee5a458c4ab9a784521f21d6d, type: 2}
-    chance: 1
-  - target: {fileID: 11400000, guid: d3bccb495f84f9c45a60090cd343aa4a, type: 2}
-    chance: 1
+  exits: []
   travelReady: 1
+  nextRegion: {fileID: 11400000, guid: 04ca420aab8a6804abe2fde0a98d593c, type: 2}

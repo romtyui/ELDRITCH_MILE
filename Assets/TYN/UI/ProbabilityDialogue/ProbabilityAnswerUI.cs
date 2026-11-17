@@ -36,6 +36,10 @@ namespace EldritchMile.UI.ProbabilityDialogue
         [Tooltip("同一張圓弧圖、加亮材質，疊在 Arc Fill 上面。亮度由程式控制")]
         public Image arcGlow;
 
+        [Tooltip("圓弧外圍的柔光（模糊過的圓弧，比圓弧大一圈）。跟 Arc Glow 同時亮，\n" +
+                 "讓光暈「溢出」圓弧 —— 圓弧本身很細，只靠加亮不夠顯眼（2026-11-18 組員回饋）")]
+        public Image arcHalo;
+
         [Tooltip("指著牌時，預覽段從目前的機率「長」到打出後的機率要多久（蓄力）")]
         [Min(0.01f)] public float chargeSeconds = 0.3f;
 
@@ -50,13 +54,24 @@ namespace EldritchMile.UI.ProbabilityDialogue
 
         [Min(0.1f)] public float topGlowPulseSeconds = 1.6f;
 
+        [Tooltip("手牌出完時，機率最高的選項改成閃爍：一明一暗一次多久")]
+        [Min(0.05f)] public float handEmptyBlinkSeconds = 0.55f;
+
+        [Tooltip("閃爍暗下去時剩多少亮度（0 = 全暗）")]
+        [Range(0f, 1f)] public float handEmptyBlinkMin = 0.1f;
+
         [Serializable]
         public class AttributeArt
         {
             public EldritchMile.Core.ExploreAttribute attribute;
             public Sprite arc;
             public Sprite mark;
+
+            [Tooltip("外圍柔光（Arc Halo）的顏色。取這組圓弧圖的平均色")]
+            public Color haloColor = Color.white;
         }
+
+        private Color haloColor = Color.white;
 
         [Tooltip("各屬性用哪一組圖。美術把顏色畫在圖裡（紅綠藍各一張），所以這裡不染色。\n" +
                  "吃多種屬性的回答用清單裡第一個屬性的圖；找不到就用這張表的第一組")]
@@ -220,6 +235,7 @@ namespace EldritchMile.UI.ProbabilityDialogue
             if (arcPreview != null) { arcPreview.sprite = art.arc; arcPreview.color = new Color(1f, 1f, 1f, 0.45f); }
             if (markImage != null) { markImage.sprite = art.mark; markImage.color = Color.white; }
             if (arcGlow != null) { arcGlow.sprite = art.arc; arcGlow.color = new Color(1f, 1f, 1f, 0f); }
+            haloColor = art.haloColor;
         }
 
         /// <summary>機率畫到圓弧上。0% 一定全空，100% 一定全滿。</summary>
@@ -320,11 +336,20 @@ namespace EldritchMile.UI.ProbabilityDialogue
             if (probabilityText != null && countUp == null) probabilityText.text = string.Format(probabilityFormat, shown);
         }
 
-        /// <summary>機率最高的選項（由 View 判斷，只有一個最高時才亮）。</summary>
-        public void SetTop(bool on)
+        /// <summary>
+        /// 機率最高的選項（由 View 判斷，只有一個最高時才亮）。
+        /// <paramref name="blink"/> ＝ 手牌出完了，改成閃爍。
+        /// </summary>
+        public void SetTop(bool on, bool blink = false)
         {
+            bool wasBlinking = isTop && topBlink;
             isTop = on && interactable;
+            topBlink = blink;
+            if (isTop && topBlink && !wasBlinking) blinkStart = Time.unscaledTime;   // 從最亮開始閃
         }
+
+        private bool topBlink;
+        private float blinkStart;
 
         private int? previewTarget;
         private float previewShown;
@@ -375,13 +400,26 @@ namespace EldritchMile.UI.ProbabilityDialogue
                 flash = Mathf.Max(0f, flash - dt / playFlashSeconds);
 
                 float top = 0f;
-                if (isTop && topGlowAlpha > 0f)
+                if (isTop && topBlink)
+                {
+                    // 閃爍：亮的時間長、暗的時間短，看起來是「閃」不是「呼吸」
+                    float w = 0.5f + 0.5f * Mathf.Cos((Time.unscaledTime - blinkStart) / handEmptyBlinkSeconds * Mathf.PI * 2f);
+                    top = Mathf.Lerp(handEmptyBlinkMin, 1f, Mathf.Sqrt(w));
+                }
+                else if (isTop && topGlowAlpha > 0f)
                     top = topGlowAlpha * (0.55f + 0.45f * Mathf.Sin(Time.unscaledTime / topGlowPulseSeconds * Mathf.PI * 2f));
 
                 float a = Mathf.Max(top, flash);
                 arcGlow.fillAmount = arcFill.fillAmount;
                 arcGlow.color = new Color(1f, 1f, 1f, a);
                 arcGlow.enabled = a > 0.01f && arcFill.fillAmount > 0f;
+
+                if (arcHalo != null)
+                {
+                    arcHalo.fillAmount = arcFill.fillAmount;   // 同一個中心點，同樣的 Radial 360，角度對得上
+                    arcHalo.color = new Color(haloColor.r, haloColor.g, haloColor.b, a);
+                    arcHalo.enabled = arcGlow.enabled;
+                }
             }
         }
 

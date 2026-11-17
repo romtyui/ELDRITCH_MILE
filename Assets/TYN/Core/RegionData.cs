@@ -92,6 +92,12 @@ namespace EldritchMile.Core
                  "（2026-10-18：目前只有漁村，其他地區先用這一格擋著）")]
         public bool travelReady = false;
 
+        [Header("首領之後（2026-11-18：通道先拿掉，改成打倒首領進下一區）")]
+        [Tooltip("打倒這一區的首領之後前往哪一區（換一張新地圖，從起點開始走）。\n" +
+                 "留空 = 打完首領這場 run 就結束（走結局）。\n" +
+                 "目標地區的 travelReady 沒勾，也當作結束。")]
+        public RegionData nextRegion;
+
         /// <summary>從 <paramref name="from"/> 往這一區走，是哪個方向（-1/0/1, -1/0/1）。</summary>
         public Vector2Int DirectionFrom(RegionData from)
         {

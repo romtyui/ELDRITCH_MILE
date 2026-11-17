@@ -548,6 +548,7 @@ namespace EldritchMile.Core
                 if (r == null || !seen.Add(r)) continue;
                 if (r.regionId == regionId) return r;
 
+                if (r.nextRegion != null) queue.Enqueue(r.nextRegion);
                 if (r.exits == null) continue;
                 for (int i = 0; i < r.exits.Count; i++)
                     if (r.exits[i] != null && r.exits[i].target != null) queue.Enqueue(r.exits[i].target);
@@ -613,6 +614,7 @@ namespace EldritchMile.Core
         /// <summary>
         /// 穿越到 <paramref name="target"/>：換一張新地區的地圖，HP／SAN／牌組／背包全部保留
         /// （那些是 run 的，不是地圖的）。落點是新地圖上「對應的位置」—— 見 MapGenerator.FindArrival。
+        /// <paramref name="gate"/> 是 null（打倒首領過來的）就從新地圖的起點開始走。
         /// 呼叫時地圖已經收起來了。
         /// </summary>
         private IEnumerator TravelRoutine(RegionData target, RunNodeData gate)
@@ -934,10 +936,20 @@ namespace EldritchMile.Core
                 yield break;
             }
 
-            // 打完 Boss 也視為 run 結束
+            // 打完 Boss：這一區有下一區（RegionData.nextRegion）就換地圖過去，沒有才算 run 結束
+            // （2026-11-18：通道先拿掉，港口 → 漁村改成打倒首領才過去）
             RunNodeData current = Run?.CurrentNode;
             if (current != null && Run.mapData.IsFinalLayer(current))
             {
+                RegionData nextRegion = CurrentRegion != null ? CurrentRegion.nextRegion : null;
+                if (nextRegion != null && nextRegion.travelReady)
+                {
+                    yield return FadeOut();
+                    yield return SwitchStageInternal(StageType.None);
+                    yield return TravelRoutine(nextRegion, null);
+                    yield break;
+                }
+
                 yield return StageCompleteRoutine(StageResult.RunFinished);
                 yield break;
             }

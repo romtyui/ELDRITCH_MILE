@@ -6,6 +6,7 @@ Shader "EldritchMile/UI Additive"
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
+        _Intensity ("Intensity (>1 = brighter)", Range(1, 4)) = 1
 
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -74,6 +75,7 @@ Shader "EldritchMile/UI Additive"
 
             sampler2D _MainTex;
             fixed4 _Color;
+            half _Intensity;
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
             float4 _MainTex_ST;
@@ -98,6 +100,7 @@ Shader "EldritchMile/UI Additive"
                 color.a *= UnityGet2DClipping(IN.worldPosition.xy, _ClipRect);
                 #endif
 
+                color.rgb *= _Intensity;
                 return color;
             }
             ENDCG

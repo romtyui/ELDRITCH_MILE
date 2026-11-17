@@ -442,6 +442,10 @@ namespace EldritchMile.UI.ProbabilityDialogue
         /// </summary>
         private void RefreshTopGlow()
         {
+            // 手牌出完 → 最高的那個改成閃爍，提示「該選了」（2026-11-18 組員回饋：發亮不夠明顯）。
+            // 這時並列最高也一起閃 —— 牌打完了還沒有任何東西在閃，玩家會以為卡住了
+            bool handEmpty = session != null && session.Hand != null && session.Hand.Count == 0;
+
             int best = -1, count = 0;
             foreach (ProbabilityAnswerUI a in answerUIs)
             {
@@ -454,7 +458,8 @@ namespace EldritchMile.UI.ProbabilityDialogue
             foreach (ProbabilityAnswerUI a in answerUIs)
             {
                 if (a == null || a.Bound == null) continue;
-                a.SetTop(count == 1 && best > 0 && a.Bound.available && a.Bound.currentProbability == best);
+                bool isBest = best > 0 && a.Bound.available && a.Bound.currentProbability == best;
+                a.SetTop(isBest && (count == 1 || handEmpty), handEmpty);
             }
         }
 

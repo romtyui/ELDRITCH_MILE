@@ -62,6 +62,81 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1 &2318481919824588067
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 303334070916057650}
+  - component: {fileID: 4533522698680539732}
+  - component: {fileID: 6764138455715968389}
+  m_Layer: 0
+  m_Name: ArcHalo
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &303334070916057650
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2318481919824588067}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2991276017111457536}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.1314, y: 0.1169}
+  m_AnchorMax: {x: 0.9695, y: 0.9933}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 39.28594, y: 39.32055}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &4533522698680539732
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2318481919824588067}
+  m_CullTransparentMesh: 1
+--- !u!114 &6764138455715968389
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2318481919824588067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 2100000, guid: 45692ba071dfafe4c853a6bd9fdcb9c7, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 1f875820702e2d441adab5cc0f1a3620, type: 3}
+  m_Type: 3
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 0
+  m_FillClockwise: 0
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &2460033765044785167
 GameObject:
   m_ObjectHideFlags: 0
@@ -593,6 +668,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6943086923535050952}
+  - {fileID: 303334070916057650}
   - {fileID: 375795423879054513}
   - {fileID: 4280168700889257593}
   - {fileID: 2285536604689219117}
@@ -662,21 +738,27 @@ MonoBehaviour:
   arcPreview: {fileID: 6636458723794154095}
   markImage: {fileID: 8784633293329945378}
   arcGlow: {fileID: 576430811719296604}
+  arcHalo: {fileID: 6764138455715968389}
   chargeSeconds: 0.3
   chargePulseSeconds: 0.8
   playFlashSeconds: 0.6
-  topGlowAlpha: 0.5
+  topGlowAlpha: 0.8
   topGlowPulseSeconds: 1.6
+  handEmptyBlinkSeconds: 0.55
+  handEmptyBlinkMin: 0.1
   attributeArt:
   - attribute: 1
     arc: {fileID: 21300000, guid: 7d6fde378c1438647ab9fbe30b6e01cf, type: 3}
     mark: {fileID: 21300000, guid: 9394646961670ec40a78e56be61d7652, type: 3}
+    haloColor: {r: 1, g: 0.41, b: 0.4, a: 1}
   - attribute: 3
     arc: {fileID: 21300000, guid: 605753e11b77ab34f9288b55ae0471f5, type: 3}
     mark: {fileID: 21300000, guid: 22d8bdde6859f604cb78f021ca19cd40, type: 3}
+    haloColor: {r: 0.52, g: 0.76, b: 0.3, a: 1}
   - attribute: 2
     arc: {fileID: 21300000, guid: 5dcde8e18b71d4d47b89c421b674978d, type: 3}
     mark: {fileID: 21300000, guid: c0b452c24ecca404eafdf00e3cb52524, type: 3}
+    haloColor: {r: 0.16, g: 0.5, b: 0.86, a: 1}
   arcFillTable:
   - 0.00069444446
   - 0.10625
