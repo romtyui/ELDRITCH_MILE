@@ -45,6 +45,10 @@ namespace EldritchMile.Core
         [Tooltip("點擊推進的按鈕。建議是蓋住整個對話框的透明 Button")]
         public Button advanceButton;
 
+        [Tooltip("SKIP 鍵：跳到這一串的最後一句（2026-11-20）。要排在 Advance Button **後面**（畫在上層），\n" +
+                 "不然點擊會被蓋住整個框的推進鍵吃掉。顯示與否由 PopupService 決定（後面還有句子才出現）")]
+        public Button skipButton;
+
         [Header("打牌環節的對象大圖")]
         [Tooltip("生成在 Portrait Root 底下的對象化身 prefab。\n" +
                  "需含 Image（勾 Preserve Aspect）與機率標籤，掛 EncounterTargetView")]
@@ -665,6 +669,19 @@ namespace EldritchMile.Core
             bodyText.maxVisibleCharacters = total;
             IsTyping = false;
             typing = null;
+        }
+
+        /// <summary>字直接打完（不推進）。SKIP 用。</summary>
+        public void CompleteTyping()
+        {
+            if (IsTyping) SkipTyping();
+        }
+
+        public void SetSkipVisible(bool visible)
+        {
+            if (skipButton == null) return;
+            visible &= IsShowing;
+            if (skipButton.gameObject.activeSelf != visible) skipButton.gameObject.SetActive(visible);
         }
 
         private void SkipTyping()

@@ -56,7 +56,8 @@ public class BattleRegionHook : MonoBehaviour
     /// 這一場 run 出現過的組合先避開（池子自己記的那份）；全出現過了才重複。
     /// 這個 weight 一組都沒有（表還沒填完）就往下找最接近的，再沒有就往上 —— 寧可難度差一階，也不要整場空白。
     /// </summary>
-    public EnemyFormationData ReserveFromPool(int weight)
+    /// <param name="exclude">不要抽這一組（地區的首領那一組）。null = 不排除</param>
+    public EnemyFormationData ReserveFromPool(int weight, EnemyFormationData exclude = null)
     {
         EnemyEncounterPoolData pool = spawner != null ? spawner.encounterPool : null;
         if (pool == null || pool.entries == null) return null;
@@ -65,9 +66,9 @@ public class BattleRegionHook : MonoBehaviour
         List<EnemyFormationData> candidates = null;
         for (int d = 0; d <= 10 && candidates == null; d++)
         {
-            candidates = Collect(pool, weight - d);
+            candidates = Collect(pool, weight - d, exclude);
             if (candidates != null) { found = weight - d; break; }
-            if (d > 0) { candidates = Collect(pool, weight + d); if (candidates != null) { found = weight + d; break; } }
+            if (d > 0) { candidates = Collect(pool, weight + d, exclude); if (candidates != null) { found = weight + d; break; } }
         }
         if (candidates == null) return null;
 
@@ -80,8 +81,21 @@ public class BattleRegionHook : MonoBehaviour
         return pick;
     }
 
+    /// <summary>
+    /// 直接預約指定的這一組（地區設了固定首領時用，見 RegionData.bossFormation）。
+    /// </summary>
+    public EnemyFormationData ReserveFormation(EnemyFormationData formation)
+    {
+        if (formation == null) return null;
+        EnemyEncounterPoolData pool = spawner != null ? spawner.encounterPool : null;
+        if (pool != null) pool.MarkFormationUsed(formation);
+        if (RunStateManager.Instance != null) RunStateManager.Instance.ReserveFormation(formation);
+        Debug.Log($"[戰鬥地區] 固定首領 → {formation.name}");
+        return formation;
+    }
+
     /// <summary>weight 剛好等於 w 的組合。優先沒出現過的；全出現過就全部。一組都沒有回 null。</summary>
-    private static List<EnemyFormationData> Collect(EnemyEncounterPoolData pool, int w)
+    private static List<EnemyFormationData> Collect(EnemyEncounterPoolData pool, int w, EnemyFormationData exclude)
     {
         if (w < 0) return null;
         var fresh = new List<EnemyFormationData>();
@@ -89,7 +103,7 @@ public class BattleRegionHook : MonoBehaviour
         for (int i = 0; i < pool.entries.Count; i++)
         {
             EnemyEncounterPoolEntry e = pool.entries[i];
-            if (e == null || e.formation == null || e.weight != w) continue;
+            if (e == null || e.formation == null || e.weight != w || e.formation == exclude) continue;
             if (!all.Contains(e.formation)) all.Add(e.formation);
             if (!pool.IsFormationUsed(e.formation) && !fresh.Contains(e.formation)) fresh.Add(e.formation);
         }

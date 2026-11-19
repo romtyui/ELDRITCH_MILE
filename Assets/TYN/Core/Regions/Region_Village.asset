@@ -15,13 +15,14 @@ MonoBehaviour:
   regionId: village
   displayName: "\u6F01\u6751"
   worldCell: {x: 0, y: 1}
-  mapSettings: {fileID: 0}
-  groundTexture: {fileID: 0}
+  mapSettings: {fileID: 11400000, guid: c0f9c9c51b09224459cffa16c9a24419, type: 2}
+  groundTexture: {fileID: 2800000, guid: 3d85a23566a6faf419451d8a9ce86452, type: 3}
   encounterPool: {fileID: 0}
   shopStock: {fileID: 11400000, guid: 495328ac58e20294f946bf46605460e0, type: 2}
   battleBackground: {fileID: 21300000, guid: feac9f42a49e53d46acd3f09d8afc03a, type: 3}
   bossBattleBackground: {fileID: 21300000, guid: f9eb6002d8659534ab6b2ed721328bf3, type: 3}
   battleEncounterPool: {fileID: 11400000, guid: e02e6ed190ca559478a9b937a6f9e959, type: 2}
+  bossFormation: {fileID: 11400000, guid: 5bc924a08ec682b42ac304dacfd62138, type: 2}
   earlyBattles: 3
   weightEarly: 1
   weightLater: 2

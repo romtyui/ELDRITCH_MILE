@@ -874,7 +874,10 @@ public class BattleStageController : StageController
                                 : (node != null ? node.enemyTier : EncounterPool.Tier.Minion);
         int weight = region.WeightFor(tier, run != null ? run.regionBattleCount : 0);
 
-        EnemyFormationData picked = hook.ReserveFromPool(weight);
+        // 地區指定了首領那一組：首領戰直接打它；其他戰鬥抽池子時把它排除
+        EnemyFormationData picked = boss && region.bossFormation != null
+            ? hook.ReserveFormation(region.bossFormation)
+            : hook.ReserveFromPool(weight, region.bossFormation);
         if (picked == null) return false;
 
         // 獎勵與紀錄要知道打的是誰（ReserveEnemies 平常會填這一份）

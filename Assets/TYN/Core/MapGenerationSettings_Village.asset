@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 966927c2a5887794ca843a3863c836e0, type: 3}
+  m_Name: MapGenerationSettings_Village
+  m_EditorClassIdentifier: Assembly-CSharp::EldritchMile.Core.MapGenerationSettings
+  layout: 2
+  mapLayers: 8
+  gridColumns: 5
+  pathCount: 4
+  startNodeCount: 2
+  midLayerMin: 2
+  midLayerMax: 3
+  combatChance: 0.45
+  shopChance: 0.12
+  specialEventChance: 0
+  dialogueChance: 0.15
+  restChance: 0.1
+  shopsPerRoute: 1
+  maxShopsPerRoute: 2
+  shopMinLayerRatio: 0.3
+  balanceExploreCombat: 1
+  guaranteedKinds: 0300000005000000
+  organicSpread: 95
+  organicWidthMax: 4
+  organicRadialJitter: 0.6
+  organicAngleJitter: 0.4
+  organicMinSpacing: 9
+  organicCrossLink: 0.35
+  terrainMap: {fileID: 2800000, guid: 3d85a23566a6faf419451d8a9ce86452, type: 3}
+  waterThreshold: 0.5
+  coastRange: 8
+  coastBias: 2.5
+  candidatesPerNode: 24
+  terrainSampleArea: 0.6666667
+  terrainNodeCount: 38
+  minNodeSpacing: 9
+  maxLinkDistance: 22
+  linkMode: 1
+  extraLinkChance: 0.2
+  maxForwardLinks: 2
+  maxLayerJump: 1
+  verticalMargin: 10
+  horizontalMargin: 20
+  horizontalJitter: 2
+  firstLayerKind: 4
+  useDemoRoute: 0
+  demoRouteShape: 1
+  demoRouteKinds: 03000000000000000300000004000000010000000000000005000000000000000300000002000000
+  demoRouteLayers:
+  - nodes: 0400000004000000
+  - nodes: 000000000100000000000000
+  - nodes: 0300000005000000
+  - nodes: 010000000000000001000000
+  - nodes: 0500000003000000
+  - nodes: 0100000001000000
+  - nodes: 02000000

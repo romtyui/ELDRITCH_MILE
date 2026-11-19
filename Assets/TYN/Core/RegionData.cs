@@ -58,6 +58,11 @@ namespace EldritchMile.Core
                  "漁村的節點可能排到別區的怪（或反過來）。")]
         public EnemyEncounterPoolData battleEncounterPool;
 
+        [Tooltip("首領戰**固定**打這一組，不從怪物池抽（2026-11-18：漁村首領要是八百比丘尼／無臉人魚）。\n" +
+                 "留空 = 照下面的 weightBoss 從怪物池抽。\n" +
+                 "一般／菁英戰從池子抽到這一組時會跳過 —— 首領不該在首領戰之前出現。")]
+        public EnemyFormationData bossFormation;
+
         [Header("戰鬥組怪物池的權重規則（2026-10-18 Romtyui《怪物組合》）")]
         [Tooltip("這一區的前幾場一般戰算「前期」。第 N+1 場起改用 weightLater")]
         [Min(0)] public int earlyBattles = 3;

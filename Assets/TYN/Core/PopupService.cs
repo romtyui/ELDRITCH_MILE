@@ -161,11 +161,13 @@ namespace EldritchMile.Core
         private void OnEnable()
         {
             if (dialogueBox != null) dialogueBox.OnAdvanced += HandleAdvanced;
+            if (dialogueBox != null && dialogueBox.skipButton != null) dialogueBox.skipButton.onClick.AddListener(SkipToLast);
         }
 
         private void OnDisable()
         {
             if (dialogueBox != null) dialogueBox.OnAdvanced -= HandleAdvanced;
+            if (dialogueBox != null && dialogueBox.skipButton != null) dialogueBox.skipButton.onClick.RemoveListener(SkipToLast);
         }
 
         // ==========================================
@@ -307,20 +309,7 @@ namespace EldritchMile.Core
         {
             if (pending.Count > 0)
             {
-                PendingMessage msg = pending.Dequeue();
-
-                if (string.IsNullOrEmpty(msg.speaker))
-                {
-                    // 系統提示也可能帶特寫圖（借立繪位置）
-                    if (msg.portrait != null) dialogueBox.ShowSystem(msg.body, msg.portrait);
-                    else dialogueBox.ShowSystem(msg.body);
-                }
-                else
-                {
-                    dialogueBox.ShowSpeech(msg.speaker, msg.body, msg.portrait);
-                }
-
-                dialogueBox.ScheduleAutoAdvance(msg.autoAdvance);
+                ShowMessage(pending.Dequeue());
                 return;
             }
 
@@ -331,6 +320,56 @@ namespace EldritchMile.Core
             }
 
             OnAllClosed?.Invoke();
+        }
+
+        private void ShowMessage(PendingMessage msg)
+        {
+            if (string.IsNullOrEmpty(msg.speaker))
+            {
+                // 系統提示也可能帶特寫圖（借立繪位置）
+                if (msg.portrait != null) dialogueBox.ShowSystem(msg.body, msg.portrait);
+                else dialogueBox.ShowSystem(msg.body);
+            }
+            else
+            {
+                dialogueBox.ShowSpeech(msg.speaker, msg.body, msg.portrait);
+            }
+
+            dialogueBox.ScheduleAutoAdvance(msg.autoAdvance);
+        }
+
+        // ==========================================
+        // SKIP（2026-11-20 文案組要求：黑底對話框加跳過鍵）
+        // ==========================================
+
+        /// <summary>
+        /// 後面還有排隊的句子時才能跳。只剩眼前這一句就不用跳（點一下就好），
+        /// 結算頁鎖住推進時也不給跳 —— 那一頁是要玩家看的。
+        /// </summary>
+        public bool CanSkip => IsAnyOpen && pending.Count > 0 && !LockAdvance;
+
+        /// <summary>
+        /// 跳到這一串的**最後一句**，字直接打完。
+        ///
+        /// 【為什麼停在最後一句，不是整串關掉】最後一句通常是問句或結果（「要向未知的神明祈禱嗎？」、
+        /// 「獲得了…」），選項跟結束鍵也是看著它出現的。整串關掉的話，事件的選項會在沒有題目的狀態下冒出來。
+        /// 等「話講完」的那些流程（`IsIdle`）會在這一刻接手，跟玩家一句一句點到最後一樣。
+        /// </summary>
+        public void SkipToLast()
+        {
+            if (!CanSkip) return;
+
+            // PendingMessage 是 struct，不能拿 null 判斷 —— CanSkip 已經保證佇列裡至少有一則
+            PendingMessage last = pending.Dequeue();
+            while (pending.Count > 0) last = pending.Dequeue();
+
+            ShowMessage(last);
+            dialogueBox.CompleteTyping();
+        }
+
+        private void LateUpdate()
+        {
+            if (dialogueBox != null) dialogueBox.SetSkipVisible(CanSkip);
         }
 
         private string BuildLootText(string containerName, IReadOnlyList<string> items)
