@@ -32,4 +32,19 @@ public abstract class BattleStatusBehaviourData : ScriptableObject
     public virtual void OnSuccessfullyDiscardedHandCards(EnemyUnit enemy, int amount)
     {
     }
+    public virtual void OnAttacked(EnemyUnit enemy, BattleUnit attacker)
+    {
+    }
+
+    public virtual void OnEnemyRoundStart(EnemyUnit enemy)
+    {
+    }
+
+    public virtual void OnIntentExecuted(EnemyUnit enemy, EnemyIntentData intent, bool isAdditionalAction)
+    {
+    }
+
+    public virtual void OnEnemyRoundEnd(EnemyUnit enemy)
+    {
+    }
 }

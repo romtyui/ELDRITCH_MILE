@@ -31,4 +31,9 @@
     FeedingDesire, // 飢食的渴求
     Overload, // 過負荷
 
+    AbyssStrategy,       // 深淵怪物的條件選招
+    GreatCompassion,     // 大慈大悲
+    GluttonousCycle,     // 惡食循環
+    Fear,               // 恐懼：目前先儲存層數，實際效果待補
+
 }

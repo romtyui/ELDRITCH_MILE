@@ -13,28 +13,39 @@ MonoBehaviour:
   m_Name: Boss
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   unitName: monster_05
-  maxHp: 200
+  maxHp: 550
   enemyId: boss
-  normalVisualPrefab: {fileID: 5170236678497478279, guid: bf268a3a596679644b7cebaf7eb53d51, type: 3}
-  darkVisualPrefab: {fileID: 3783185597483147171, guid: f0404c58383ed83449841e87b93a7931, type: 3}
-  visualAnchoredPosition: {x: 0, y: 250}
-  visualScale: {x: 1.2, y: 1.2, z: 1}
+  normalVisualPrefab: {fileID: 6589648622016819937, guid: 5866ed8a0c943bb419b3930e978fd042, type: 3}
+  darkVisualPrefab: {fileID: 1437885555450961245, guid: d5322c48a5fdb914eb75df7155bdfaa0, type: 3}
+  visualAnchoredPosition: {x: 0, y: 0}
+  visualScale: {x: 1, y: 1, z: 1}
   visualEulerAngles: {x: 0, y: 0, z: 0}
   damagePopupOffset: {x: 0, y: 80}
+  blockPositionOffset: {x: 0, y: 0}
+  blockSizeMultiplier: {x: 1, y: 1}
   hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
   hitBoxSprite: {fileID: 0}
   targetFrameFollowBoneName: head_01
   targetFrameAnchoredPosition: {x: 0, y: 65}
   targetFrameSize: {x: 200, y: 200}
+  summonFaction: 0
+  summonRank: 0
+  canBeSummoned: 0
   stunIntent: {fileID: 0}
   startingStatuses:
-  - statusType: 7
-    amount: 20
+  - statusType: 17
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: fd8f1e6a1f8c3754a8d4bc3e04d0b631, type: 2}
+  - statusType: 18
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: 1aa6c7eb6ef637e4c861d59634b03096, type: 2}
+  - statusType: 19
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: e10d610dfcd2c084e91978df18439cac, type: 2}
   intents:
-  - {fileID: 11400000, guid: 5ddd6d6144535af4db9c808c36af01ef, type: 2}
-  - {fileID: 11400000, guid: e5707821394d4ca43926ff13fc0a882d, type: 2}
-  - {fileID: 11400000, guid: 58080c96d63f4fe42b1a56b4e9c83e4c, type: 2}
-  - {fileID: 11400000, guid: 9deb6dbdc2ad1df4da48198459d13934, type: 2}
+  - {fileID: 11400000, guid: 587b237fbb7830b468742407c94aa049, type: 2}
+  - {fileID: 11400000, guid: bc63d9131a3abf24696e37207d7951fa, type: 2}
+  - {fileID: 11400000, guid: a055badfe4e7317418cfcb9544212de0, type: 2}
   idleTrigger: idle
   attackTrigger: atk
   hurtTrigger: hurt

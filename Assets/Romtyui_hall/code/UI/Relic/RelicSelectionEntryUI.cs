@@ -51,7 +51,7 @@ public class RelicSelectionEntryUI : MonoBehaviour, IPointerEnterHandler, IPoint
 
         if (itemImage != null)
         {
-            itemImage.sprite = hasItem ? item.ShelfIcon : null;
+            itemImage.sprite = hasItem ? item.displayIcon : null;
             itemImage.enabled = itemImage.sprite != null;
         }
 

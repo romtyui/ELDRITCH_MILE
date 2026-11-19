@@ -46,6 +46,11 @@ namespace EldritchMile.Core
                  "這是美術給的兩套素材，不是同一張圖調色調出來的")]
         public Sprite shelfIcon;
 
+        //11/16 by romtyui
+        //For display purposes icon 
+        [Tooltip("背包圖標展示")]
+        public Sprite displayIcon;
+
         [TextArea(2, 4)]
         [Tooltip("**效果文字**。快捷欄 hover 的說明框只顯示這一欄。\n\n" +
                  "hover 的當下玩家要的是「這個吃下去會怎樣」，不是讀故事 ——\n" +

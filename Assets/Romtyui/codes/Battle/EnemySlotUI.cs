@@ -237,11 +237,11 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
         AutoFindRefs();
 
+        ClearVisual();
+
         currentEnemyData = enemyData;
 
         gameObject.SetActive(true);
-
-        ClearVisual();
 
         ApplyUIReferences(useBossUI);
         ApplyBlockLayoutSettings(enemyData);
@@ -264,9 +264,9 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
         RefreshStatusTooltip();
 
         HideTargetFrame();
+
         return enemyUnit;
     }
-
     private void BindTargetFrameBones(EnemyData enemyData)
     {
         currentNormalTargetFrameBone = null;
@@ -861,8 +861,7 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
     private void RebindSpriteSkins(GameObject root)
     {
-        if (root == null)
-            return;
+        if (root == null) return;
 
         SpriteSkin[] skins = root.GetComponentsInChildren<SpriteSkin>(true);
 
@@ -870,15 +869,12 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
         {
             SpriteSkin skin = skins[i];
 
-            if (skin == null)
-                continue;
+            if (skin == null) continue;
 
             skin.autoRebind = true;
-            skin.enabled = false;
-            skin.enabled = true;
         }
 
-        Debug.Log($"[EnemySlotUI] Rebind SpriteSkin：{root.name}, count = {skins.Length}", root);
+        Debug.Log($"[EnemySlotUI] 設定 SpriteSkin 自動綁定：{root.name}, count = {skins.Length}", root);
     }
     private void ClearVisual()
     {
@@ -888,30 +884,53 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
         Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;
         Transform darkRoot = currentDarkVisual != null ? currentDarkVisual.transform : null;
 
-        if (lightReveal != null)
-            lightReveal.UnregisterMonster(normalRoot, darkRoot);
+        if (lightReveal != null) lightReveal.UnregisterMonster(normalRoot, darkRoot);
 
-        if (currentNormalVisual != null)
-        {
-            Destroy(currentNormalVisual);
-            currentNormalVisual = null;
-        }
+        List<GameObject> visualsToDestroy = new List<GameObject>();
 
-        if (currentDarkVisual != null)
-        {
-            Destroy(currentDarkVisual);
-            currentDarkVisual = null;
-        }
+        if (currentNormalVisual != null) visualsToDestroy.Add(currentNormalVisual);
+        if (currentDarkVisual != null && !visualsToDestroy.Contains(currentDarkVisual)) visualsToDestroy.Add(currentDarkVisual);
 
         if (visualRoot != null)
         {
             for (int i = visualRoot.childCount - 1; i >= 0; i--)
             {
-                Destroy(visualRoot.GetChild(i).gameObject);
+                GameObject child = visualRoot.GetChild(i).gameObject;
+
+                if (!visualsToDestroy.Contains(child)) visualsToDestroy.Add(child);
             }
         }
-    }
 
+        currentNormalVisual = null;
+        currentDarkVisual = null;
+
+        for (int i = 0; i < visualsToDestroy.Count; i++)
+        {
+            GameObject visual = visualsToDestroy[i];
+
+            if (visual == null) continue;
+
+            SpriteSkin[] skins = visual.GetComponentsInChildren<SpriteSkin>(true);
+
+            for (int j = 0; j < skins.Length; j++)
+            {
+                if (skins[j] == null) continue;
+
+                skins[j].enabled = false;
+            }
+
+            visual.SetActive(false);
+        }
+
+        for (int i = 0; i < visualsToDestroy.Count; i++)
+        {
+            GameObject visual = visualsToDestroy[i];
+
+            if (visual == null) continue;
+
+            Destroy(visual);
+        }
+    }
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (battleTargetUI != null)

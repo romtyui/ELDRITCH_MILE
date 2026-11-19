@@ -220,12 +220,12 @@ public class FoodSelectionUI : MonoBehaviour
     {
         if (detailIcon != null)
         {
-            detailIcon.sprite = item != null ? item.ShelfIcon : null;
+            detailIcon.sprite = item != null ? item.displayIcon : null;
             detailIcon.enabled = detailIcon.sprite != null;
         }
 
         if (detailName != null) detailName.text = item != null ? item.Label : "";
-        if (detailDescription != null) detailDescription.text = item != null ? item.FullText : "";
+        if (detailDescription != null) detailDescription.text = item != null ? item.description : "";
 
         if (confirmButton != null) confirmButton.interactable = selectedItem != null && loadout != null && warehouse != null && loadout.CanAssign(editingSlotIndex, selectedItem, warehouse);
 
@@ -278,7 +278,7 @@ public class FoodSelectionUI : MonoBehaviour
 
                 if (itemImage != null)
                 {
-                    Sprite itemSprite = hasItem ? (item.icon != null ? item.icon : item.ShelfIcon) : null;
+                    Sprite itemSprite = hasItem ? (item.icon != null ? item.icon : item.displayIcon) : null;
                     itemImage.sprite = itemSprite;
                     itemImage.enabled = itemSprite != null;
                 }

@@ -55,7 +55,7 @@ public class FoodSelectionEntryUI : MonoBehaviour, IPointerEnterHandler, IPointe
 
         if (itemImage != null)
         {
-            itemImage.sprite = hasItem ? item.ShelfIcon : null;
+            itemImage.sprite = hasItem ? item.displayIcon : null;
             itemImage.enabled = itemImage.sprite != null;
         }
 
