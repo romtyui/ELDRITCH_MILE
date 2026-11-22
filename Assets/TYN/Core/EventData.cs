@@ -493,7 +493,8 @@ namespace EldritchMile.Core
             [TextArea(2, 6)]
             [Tooltip("**換到下一個畫面之後**才播的內文。留空 = 沒有。\n\n" +
                      "給「中間有黑屏、換了地方」的事件用：《任意門》傳送到別的節點之後的那一句、\n" +
-                     "《未知的祭壇》回到原本道路上的那三句。寫法跟 Result Text 一樣")]
+                     "《未知的祭壇》那三句。寫法跟 Result Text 一樣。\n\n" +
+                     "⚠️ 下一站是祭壇時，**在祭壇背景上、拿完東西之後**播完才離開祭壇（2026-11-23）")]
             public string arrivalText = "";
 
             [Tooltip("選了之後發生的事")]

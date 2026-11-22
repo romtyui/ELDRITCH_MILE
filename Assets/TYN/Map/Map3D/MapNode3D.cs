@@ -64,6 +64,16 @@ namespace EldritchMile.Map3D
         /// </summary>
         [System.NonSerialized] public Color kindTint = Color.white;
 
+        /// <summary>
+        /// 走過的路染色（2026-11-23 組員反饋：走過的節點與路要染成主角的顏色）。
+        /// 由 MapView3D 設；a = 0 代表不用，退回 colorVisited／colorCurrent 的舊行為。
+        /// 有設的話「走過」與「現在所在」都用這個顏色，透明度照它自己的 a，不再乘 visitedAlpha ——
+        /// 染色本身就說明了「這站去過了」，再淡下去路線就看不出來了。
+        /// </summary>
+        [System.NonSerialized] public Color travelColor = new Color(0f, 0f, 0f, 0f);
+
+        private bool UsesTravelColor { get { return travelColor.a > 0f; } }
+
         private MapView3D view;
         private Vector3 pinHome;
         private bool pinHomeCaptured;
@@ -93,19 +103,34 @@ namespace EldritchMile.Map3D
 
             switch (NodeState)
             {
-                case State.Current: c = colorCurrent; s = scaleCurrent; break;
+                case State.Current: c = UsesTravelColor ? travelColor : colorCurrent; s = scaleCurrent; break;
                 case State.Selectable: c = colorSelectable; s = scaleSelectable; break;
-                case State.Visited: c = colorVisited; c.a *= visitedAlpha; s = scaleInactive; break;
+                case State.Visited:
+                    if (UsesTravelColor) c = travelColor;
+                    else { c = colorVisited; c.a *= visitedAlpha; }
+                    s = scaleInactive;
+                    break;
                 default: c = colorUnreachable; s = scaleInactive; break;
             }
 
-            c *= kindTint;
+            if (!(UsesTravelColor && (NodeState == State.Current || NodeState == State.Visited))) c *= kindTint;
+            ApplyColor(c);
+
+            transform.localScale = new Vector3(s, s, s);
+        }
+
+        /// <summary>棋子走到這一站的那一刻先染上去（狀態要等回到地圖才會更新）</summary>
+        public void ShowTraveled()
+        {
+            if (UsesTravelColor) ApplyColor(travelColor);
+        }
+
+        private void ApplyColor(Color c)
+        {
             if (pin != null) pin.color = c;
 
             // 圓環比棋子暗一階 —— 它是投影不是主體，一樣亮會搶掉棋子
             if (ring != null) ring.color = new Color(c.r, c.g, c.b, c.a * 0.75f);
-
-            transform.localScale = new Vector3(s, s, s);
         }
 
         // ==========================================

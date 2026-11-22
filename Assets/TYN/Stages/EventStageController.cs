@@ -255,11 +255,20 @@ public class EventStageController : ChoiceStageController
     /// <summary>播出待播的那幾句（系統提示，一句一頁）。沒有就什麼都不做。</summary>
     public static void PlayArrivalText()
     {
+        if (PopupService.Instance == null) return;
+        foreach (string page in TakeArrivalPages()) PopupService.Instance.ShowText(page);
+    }
+
+    /// <summary>
+    /// 把待播的那幾句拿走（一段一頁），之後就不會在下一站再播一次。
+    /// 祭壇用這一支：《未知的祭壇》的「祭壇晃動、消散……」要在**祭壇背景**上播完才換回道路
+    /// （2026-11-23 組員反饋：原本換到節點背景才播，畫面跟文字對不上）。
+    /// </summary>
+    public static List<string> TakeArrivalPages()
+    {
         string text = PendingArrivalText;
         PendingArrivalText = null;
-        if (string.IsNullOrEmpty(text) || PopupService.Instance == null) return;
-
-        foreach (string page in SplitParagraphs(text)) PopupService.Instance.ShowText(page);
+        return string.IsNullOrEmpty(text) ? new List<string>() : SplitParagraphs(text);
     }
 
     private void HandleChosen(DialogueOptionUI option)

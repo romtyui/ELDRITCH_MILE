@@ -117,6 +117,24 @@ namespace EldritchMile.Map3D
         [Tooltip("弧線用幾段折線畫。直線時忽略。太少會看出稜角")]
         [Range(2, 32)] public int lineSegments = 14;
 
+        [Header("走過的路（2026-11-23 組員反饋）")]
+        [Tooltip("走過的路與節點染成這個顏色（＝主角的顏色）。棋子移動時路會跟著一路染過去，到站那一刻節點也染上。\n" +
+                 "透明度 0 = 關掉，回到舊的「走過變灰變淡」")]
+        public Color travelColor = new Color(0.66f, 0.1f, 0.14f, 1f);
+
+        [Tooltip("染色那條線比一般連線粗幾倍")]
+        [Min(1f)] public float travelLineWidthScale = 1.8f;
+
+        [Header("路徑周圍局部模糊（2026-11-23 組員反饋：路的顏色跟地圖相近、看起來亂）")]
+        [Tooltip("底圖材質要用 EldritchMile/MapGroundPathBlur 才有效果。關掉 = 不畫遮罩")]
+        public bool pathHalo = true;
+
+        [Tooltip("模糊帶離路中心多寬（世界單位，單邊）")]
+        [Min(0.01f)] public float pathHaloRadius = 0.3f;
+
+        [Tooltip("遮罩解析度（正方形）。512 對 30 單位寬的底圖約 17 像素／單位，夠用")]
+        public int pathHaloMaskSize = 512;
+
         [Header("說明框")]
         [Tooltip("沿用平面版那一套。留空則不顯示")]
         public EldritchMile.Map.MapTooltipUI nodeTooltip;
@@ -171,6 +189,9 @@ namespace EldritchMile.Map3D
         private MapData boundMap;
         private readonly Dictionary<string, MapNode3D> spawned = new Dictionary<string, MapNode3D>();
         private readonly List<LineRenderer> lines = new List<LineRenderer>();
+        private readonly List<LineRenderer> trails = new List<LineRenderer>();
+        private Material trailMaterial;
+        private Texture2D pathMask;
         private MapNode3D hovered;
         private bool moving;
 
@@ -319,6 +340,7 @@ namespace EldritchMile.Map3D
                 if (n.ring != null) FitRing(n.ring);
                 n.kindTint = d.kind == MapNodeKind.Gate && spriteGate == null ? gateTint
                            : d.kind == MapNodeKind.Rest && spriteRest == null ? restTint : Color.white;
+                n.travelColor = travelColor;
 
                 // 棋子要面向地圖相機，不是主相機
                 YBillboard bb = n.pin != null ? n.pin.GetComponent<YBillboard>() : null;
@@ -329,6 +351,8 @@ namespace EldritchMile.Map3D
             }
 
             BuildLines(map);
+            BuildTrails(map);
+            BuildPathMask(map);
             BuildPlayer();
         }
 
@@ -401,9 +425,9 @@ namespace EldritchMile.Map3D
         ///
         /// 移動期間鏡頭改追棋子 —— 不然棋子會滑出畫面。
         /// </summary>
-        private IEnumerator MovePlayer(Vector3 from, Vector3 to)
+        private IEnumerator MovePlayer(Vector3 from, Vector3 to, System.Action<float> onProgress = null)
         {
-            if (playerRoot == null) yield break;
+            if (playerRoot == null) { if (onProgress != null) onProgress(1f); yield break; }
 
             if (cameraController != null) cameraController.followTarget = playerRoot;
 
@@ -416,10 +440,12 @@ namespace EldritchMile.Map3D
                 t += Time.unscaledDeltaTime;
                 float p = playerMoveCurve.Evaluate(Mathf.Clamp01(t / dur));
                 playerRoot.localPosition = Bezier(from, ctrl, to, p) + playerOffset;
+                if (onProgress != null) onProgress(p);
                 yield return null;
             }
 
             playerRoot.localPosition = to + playerOffset;
+            if (onProgress != null) onProgress(1f);
         }
 
         /// <summary>
@@ -567,6 +593,207 @@ namespace EldritchMile.Map3D
             }
         }
 
+        // ==========================================
+        // 走過的路（2026-11-23）
+        // ==========================================
+
+        /// <summary>
+        /// 走過的路重畫一遍（重建地圖時）：MapData.historyNodeIds ＋ 現在這站，依序兩兩相連。
+        /// 兩站之間沒有連線的（《任意門》傳送）不畫 —— 那一段不是走過去的。
+        /// </summary>
+        private void BuildTrails(MapData map)
+        {
+            if (travelColor.a <= 0f || map == null) return;
+
+            var path = new List<string>(map.historyNodeIds);
+            if (!string.IsNullOrEmpty(map.currentNodeId)) path.Add(map.currentNodeId);
+
+            for (int i = 1; i < path.Count; i++)
+            {
+                RunNodeData a = map.GetNode(path[i - 1]);
+                RunNodeData b = map.GetNode(path[i]);
+                if (!Connected(a, b)) continue;
+
+                LineRenderer lr = NewTrail(a, b);
+                Vector3 pa, pb, ctrl;
+                EdgeEnds(a, b, out pa, out pb, out ctrl);
+                WriteCurve(lr, pa, pb, ctrl);
+            }
+        }
+
+        private static bool Connected(RunNodeData a, RunNodeData b)
+        {
+            return a != null && b != null && a.nextNodeIds != null && a.nextNodeIds.Contains(b.nodeId);
+        }
+
+        /// <summary>連線的兩端（已經往內縮 lineEndGap）與弧線控制點。一般連線與染色線共用，兩條才會疊在一起</summary>
+        private void EdgeEnds(RunNodeData a, RunNodeData b, out Vector3 pa, out Vector3 pb, out Vector3 ctrl)
+        {
+            pa = WorldPosOf(a);
+            pb = WorldPosOf(b);
+            ctrl = CurveControl(pa, pb);
+            Vector3 dir = (pb - pa).normalized;
+            pa += dir * lineEndGap;
+            pb -= dir * lineEndGap;
+        }
+
+        /// <summary>
+        /// 一條染色線。蓋在一般連線上面（sortingOrder 1），粗一點。
+        /// 材質另外複製一份、_Color 設白 —— 一般連線的材質本身帶深色，乘上去紅色會變黑
+        /// </summary>
+        private LineRenderer NewTrail(RunNodeData a, RunNodeData b)
+        {
+            if (trailMaterial == null)
+            {
+                trailMaterial = new Material(lineMaterial != null ? lineMaterial : new Material(Shader.Find("Sprites/Default")));
+                trailMaterial.name = "MapTrail (runtime)";
+                if (trailMaterial.HasProperty("_Color")) trailMaterial.SetColor("_Color", Color.white);
+            }
+
+            GameObject go = new GameObject("Trail_" + a.nodeId + "_" + b.nodeId);
+            go.transform.SetParent(world, false);
+            go.layer = world.gameObject.layer;
+            go.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            go.transform.localPosition = new Vector3(0f, nodeLift * 0.6f, 0f);
+
+            LineRenderer lr = go.AddComponent<LineRenderer>();
+            lr.useWorldSpace = false;
+            lr.alignment = LineAlignment.TransformZ;
+            lr.material = trailMaterial;
+            lr.widthMultiplier = lineWidth * travelLineWidthScale;
+            lr.numCapVertices = 2;
+            lr.numCornerVertices = 4;
+            lr.startColor = travelColor;
+            lr.endColor = travelColor;
+            lr.sortingOrder = 1;
+            lr.positionCount = 0;
+
+            trails.Add(lr);
+            return lr;
+        }
+
+        /// <summary>染色線只畫到 0~<paramref name="progress"/> 那一段（棋子走到哪、染到哪）</summary>
+        private void WritePartialCurve(LineRenderer lr, Vector3 pa, Vector3 pb, Vector3 ctrl, float progress)
+        {
+            progress = Mathf.Clamp01(progress);
+            if (progress <= 0f) { lr.positionCount = 0; return; }
+
+            int n = Mathf.Max(2, Mathf.CeilToInt(Mathf.Max(2, lineSegments) * progress) + 1);
+            lr.positionCount = n;
+            for (int i = 0; i < n; i++)
+            {
+                Vector3 p = lineBend <= 0.001f
+                    ? Vector3.Lerp(pa, pb, progress * i / (n - 1))
+                    : Bezier(pa, ctrl, pb, progress * i / (n - 1));
+                lr.SetPosition(i, new Vector3(p.x, -p.z, 0f));
+            }
+        }
+
+        // ==========================================
+        // 路徑周圍局部模糊（2026-11-23）
+        // ==========================================
+
+        /// <summary>
+        /// 把每條連線的弧線畫進遮罩（底圖 UV 空間，R8），交給底圖的 MapGroundPathBlur shader：
+        /// 遮罩有值的地方，底圖換成模糊＋提亮的版本 —— 路旁的細節被抹淡，深色的路才浮得出來。
+        ///
+        /// 建圖時算一次就好（一張圖幾十條線，CPU 上蓋印章不到 1 ms），之後完全不用再動。
+        /// 底圖材質不是那支 shader（沒有 _PathMask）就什麼都不做。
+        /// </summary>
+        private void BuildPathMask(MapData map)
+        {
+            Renderer r = ground != null ? ground.GetComponent<Renderer>() : null;
+            if (r == null || r.sharedMaterial == null || !r.sharedMaterial.HasProperty("_PathMask")) return;
+
+            int size = Mathf.Clamp(pathHaloMaskSize, 64, 2048);
+            if (pathMask == null || pathMask.width != size)
+            {
+                if (pathMask != null) Destroy(pathMask);
+                pathMask = new Texture2D(size, size, TextureFormat.R8, false, true);
+                pathMask.name = "MapPathMask (runtime)";
+                pathMask.wrapMode = TextureWrapMode.Clamp;
+                pathMask.filterMode = FilterMode.Bilinear;
+            }
+
+            var px = new byte[size * size];
+
+            if (pathHalo && map != null)
+            {
+                for (int i = 0; i < map.allNodes.Count; i++)
+                {
+                    RunNodeData a = map.allNodes[i];
+                    if (a == null || a.nextNodeIds == null) continue;
+
+                    for (int k = 0; k < a.nextNodeIds.Count; k++)
+                    {
+                        RunNodeData b = map.GetNode(a.nextNodeIds[k]);
+                        if (b == null) continue;
+
+                        Vector3 pa, pb, ctrl;
+                        EdgeEnds(a, b, out pa, out pb, out ctrl);
+                        StampCurve(px, size, pa, pb, ctrl);
+                    }
+                }
+            }
+
+            pathMask.SetPixelData(px, 0);
+            pathMask.Apply(false);
+
+            var block = new MaterialPropertyBlock();
+            r.GetPropertyBlock(block);
+            block.SetTexture("_PathMask", pathMask);
+            r.SetPropertyBlock(block);
+        }
+
+        /// <summary>地圖世界（world 的本地座標）上的一點 → 底圖 UV。Unity 的 Quad 是 ±0.5、UV = 本地 xy + 0.5</summary>
+        private Vector2 GroundUv(Vector3 worldLocal)
+        {
+            Vector3 g = ground.InverseTransformPoint(world.TransformPoint(worldLocal));
+            return new Vector2(g.x + 0.5f, g.y + 0.5f);
+        }
+
+        private void StampCurve(byte[] px, int size, Vector3 pa, Vector3 pb, Vector3 ctrl)
+        {
+            Vector2 ua = GroundUv(pa) * size;
+            Vector2 ub = GroundUv(pb) * size;
+
+            // 半徑換成像素：拿路中點往旁邊挪 pathHaloRadius，看在 UV 上差多少
+            Vector3 mid = Bezier(pa, ctrl, pb, 0.5f);
+            float rx = (GroundUv(mid + Vector3.right * pathHaloRadius) - GroundUv(mid)).magnitude * size;
+            float rz = (GroundUv(mid + Vector3.forward * pathHaloRadius) - GroundUv(mid)).magnitude * size;
+            float rad = Mathf.Max(1.5f, (rx + rz) * 0.5f);
+
+            float lenPx = (ub - ua).magnitude * 1.3f;   // 弧線比弦長一點
+            int steps = Mathf.Max(2, Mathf.CeilToInt(lenPx / (rad * 0.35f)));
+
+            for (int s = 0; s <= steps; s++)
+            {
+                float t = (float)s / steps;
+                Vector3 p = lineBend <= 0.001f ? Vector3.Lerp(pa, pb, t) : Bezier(pa, ctrl, pb, t);
+                Stamp(px, size, GroundUv(p) * size, rad);
+            }
+        }
+
+        /// <summary>軟邊圓章：中間一半實心，外圈平滑淡出。疊的時候取大值，不會越疊越亮</summary>
+        private static void Stamp(byte[] px, int size, Vector2 c, float rad)
+        {
+            int x0 = Mathf.Max(0, Mathf.FloorToInt(c.x - rad)), x1 = Mathf.Min(size - 1, Mathf.CeilToInt(c.x + rad));
+            int y0 = Mathf.Max(0, Mathf.FloorToInt(c.y - rad)), y1 = Mathf.Min(size - 1, Mathf.CeilToInt(c.y + rad));
+
+            for (int y = y0; y <= y1; y++)
+            {
+                for (int x = x0; x <= x1; x++)
+                {
+                    float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), c) / rad;
+                    if (d >= 1f) continue;
+                    float v = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.5f, 1f, d));
+                    byte b = (byte)Mathf.RoundToInt(v * 255f);
+                    int i = y * size + x;
+                    if (b > px[i]) px[i] = b;
+                }
+            }
+        }
+
         /// <summary>
         /// 把一條（可能彎的）路寫進 LineRenderer。
         /// 座標要從世界的 XZ 換成線物件的 local XY —— 見 BuildLines 的說明。
@@ -627,6 +854,10 @@ namespace EldritchMile.Map3D
             for (int i = 0; i < lines.Count; i++)
                 if (lines[i] != null) DestroyImmediate(lines[i].gameObject);
             lines.Clear();
+
+            for (int i = 0; i < trails.Count; i++)
+                if (trails[i] != null) DestroyImmediate(trails[i].gameObject);
+            trails.Clear();
 
             if (playerRoot != null) DestroyImmediate(playerRoot.gameObject);
             playerRoot = null;
@@ -846,10 +1077,30 @@ namespace EldritchMile.Map3D
         {
             moving = true;
 
+            // 走過的路：棋子走到哪、紅線染到哪；到站那一刻節點也染上（2026-11-23）
+            System.Action<float> paint = null;
+            RunNodeData from = boundMap != null ? boundMap.CurrentNode : null;
+            if (travelColor.a > 0f && Connected(from, node))
+            {
+                LineRenderer trail = NewTrail(from, node);
+                Vector3 pa, pb, ctrl;
+                EdgeEnds(from, node, out pa, out pb, out ctrl);
+
+                // 棋子的弧線從節點中心算，染色線兩端內縮了 lineEndGap —— 換算成那一段上的進度
+                float gapT = Mathf.Clamp01(lineEndGap / Mathf.Max(0.001f, (WorldPosOf(node) - WorldPosOf(from)).magnitude));
+                paint = p => WritePartialCurve(trail, pa, pb, ctrl, Mathf.InverseLerp(gapT, 1f - gapT, p));
+            }
+
             if (playerRoot != null && boundMap != null)
-                yield return MovePlayer(PlayerSpot(boundMap.currentNodeId), PlayerSpot(node.nodeId));
+                yield return MovePlayer(PlayerSpot(boundMap.currentNodeId), PlayerSpot(node.nodeId), paint);
             else
+            {
+                if (paint != null) paint(1f);
                 yield return null;
+            }
+
+            MapNode3D arrived;
+            if (spawned.TryGetValue(node.nodeId, out arrived) && arrived != null) arrived.ShowTraveled();
 
             // 棋子到了之後鏡頭推近那一站，再收地圖（2026-10-25：進節點要有「靠近」的感覺）
             if (enterFocus && cameraController != null)

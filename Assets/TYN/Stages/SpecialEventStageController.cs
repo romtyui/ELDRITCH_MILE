@@ -176,7 +176,22 @@ public class SpecialEventStageController : ChoiceStageController
         }
 
         Debug.Log("[特殊事件] 玩家沒有相信祭壇，從右手挑了獎勵");
+        outroTailLines.Clear();
+        AppendArrivalText();
         BeginOutro();
+    }
+
+    /// <summary>
+    /// 叫出這個祭壇的事件（《未知的祭壇》）有「換了畫面之後才播」的那幾句 →
+    /// **在祭壇這裡播完**，排在拿到東西的結算之後，播完才離開祭壇、換回節點背景。
+    ///
+    /// 2026-11-23 組員反饋：那幾句寫的是「眼前的祭壇晃動、消散……」，
+    /// 原本留到下一站才播，祭壇已經不見了，文字跟畫面對不上。
+    /// </summary>
+    private void AppendArrivalText()
+    {
+        foreach (string page in EventStageController.TakeArrivalPages())
+            outroTailLines.Add(new Line { text = page });
     }
 
     private void HandleChosen(DialogueOptionUI option)
@@ -241,6 +256,7 @@ public class SpecialEventStageController : ChoiceStageController
             else outroTailLines.Add(new Line { text = settlement });
         }
 
+        AppendArrivalText();
         BeginOutro();
     }
 

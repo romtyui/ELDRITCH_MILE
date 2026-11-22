@@ -1154,8 +1154,9 @@ namespace EldritchMile.Core
             // 放在 Stage 載入之後，新 prefab 裡的面板才掃得到。
             UIDirector.Instance?.ApplyStage(next);
 
-            // 事件選項的「換了畫面之後才播」（《任意門》傳送後、《未知的祭壇》回到原路）。
-            // 祭壇本身也是一站，要等離開祭壇的那一站才播
+            // 事件選項的「換了畫面之後才播」（《任意門》傳送後的那一句）。
+            // 祭壇這一站不在這裡播：《未知的祭壇》那幾句由祭壇自己在收尾時拿走、在祭壇背景上播完
+            // （2026-11-23，見 SpecialEventStageController.AppendArrivalText）
             if (next != StageType.Event && next != StageType.SpecialEvent && next != StageType.None && !IsTitleOrHall(next))
                 EventStageController.PlayArrivalText();
 
