@@ -89,8 +89,14 @@ namespace EldritchMile.Core
         public CharacterDatabase characterDatabase;
 
         [Header("啟動")]
-        [Tooltip("遊戲啟動後要進入的第一個 Stage")]
+        [Tooltip("遊戲啟動後要進入的第一個 Stage。\n" +
+                 "填 Menu 而且 StageHost 有登記 Hall 時，會改進大廳的標題畫面（見 TitleStage）")]
         public StageType bootStage = StageType.Menu;
+
+        [Tooltip("一輪結束（死亡或通關，結局演完）之後：\n" +
+                 "勾 = 直接站在大廳（不再看一次標題）；不勾 = 回標題畫面。\n" +
+                 "沒有登記 Hall 時一律回舊的主選單。（2026-11-23 暫定勾，待團隊確認）")]
+        public bool runEndReturnsToHall = true;
 
         [Tooltip("開局身上的錢。**佔位值** —— 經濟還沒設計，這只是為了讓商店能測。\n" +
                  "定案後這個值多半會改由遺產或難度決定，不會留在這裡")]
@@ -320,7 +326,35 @@ namespace EldritchMile.Core
 
         private void Start()
         {
-            StartCoroutine(SwitchStage(bootStage));
+            StageType boot = bootStage;
+            if (boot == StageType.Menu)
+            {
+                HallStageController.OpenAtTitle = true;
+                boot = TitleStage;
+            }
+            StartCoroutine(SwitchStage(boot));
+        }
+
+        /// <summary>
+        /// 標題畫面是哪一站：有登記大廳就是大廳（它自帶標題），沒有就是舊的主選單。
+        /// （2026-11-23 Romtyui 的大廳接進來）
+        /// </summary>
+        public StageType TitleStage
+        {
+            get { return stageHost != null && stageHost.Has(StageType.Hall) ? StageType.Hall : StageType.Menu; }
+        }
+
+        /// <summary>一輪結束之後回哪一站。順便把大廳要不要從標題開始設好</summary>
+        private StageType StageAfterRun()
+        {
+            StageType s = TitleStage;
+            if (s == StageType.Hall) HallStageController.OpenAtTitle = !runEndReturnsToHall;
+            return s;
+        }
+
+        private static bool IsTitleOrHall(StageType s)
+        {
+            return s == StageType.Menu || s == StageType.Hall;
         }
 
         // ==========================================
@@ -339,8 +373,20 @@ namespace EldritchMile.Core
         /// </summary>
         public void StartNewRun()
         {
+            StartNewRun(null);
+        }
+
+        /// <summary>
+        /// 開新的一場 run，身上先帶著 <paramref name="startingItems"/>（道具 id）。
+        /// 大廳整備室的出發鍵走這一支：選好的食物／遺物在地圖生成前逐一 <see cref="RunContext.AddItem"/>。
+        ///
+        /// ⚠️ 這是「玩家手動選、有格數上限」的那條路，跟 <see cref="inheritLegacyItems"/>
+        ///    （自動繼承上一輪）無關 —— 那一格照舊關著（2026-09-15 定案）。
+        /// </summary>
+        public void StartNewRun(IList<string> startingItems)
+        {
             if (IsTransitioning) return;
-            StartCoroutine(StartNewRunRoutine());
+            StartCoroutine(StartNewRunRoutine(startingItems));
         }
 
         /// <summary>
@@ -373,14 +419,15 @@ namespace EldritchMile.Core
 
             if (mapOverlay != null) mapOverlay.SetOpenImmediate(false);
 
-            yield return SwitchStageInternal(StageType.Menu);
+            HallStageController.OpenAtTitle = true;
+            yield return SwitchStageInternal(TitleStage);
 
             yield return FadeIn();
 
             IsTransitioning = false;
         }
 
-        private IEnumerator StartNewRunRoutine()
+        private IEnumerator StartNewRunRoutine(IList<string> startingItems)
         {
             IsTransitioning = true;
 
@@ -402,6 +449,15 @@ namespace EldritchMile.Core
                 PlayerVitals.EnsureInitialized(
                     startingMaxHp, startingMaxSan,
                     startingDeck != null ? startingDeck.Resolve() : null);
+            }
+
+            // 大廳整備室選的開局道具。放在 PlayerVitals 初始化之後 —— 武器類道具是直接進牌組的
+            if (startingItems != null)
+            {
+                for (int i = 0; i < startingItems.Count; i++)
+                {
+                    if (!string.IsNullOrEmpty(startingItems[i])) Run.AddItem(startingItems[i]);
+                }
             }
 
             // 地圖在此一次生成，之後整場 run 都用同一份 —— 地圖 UI 反覆下拉收起不會重生成
@@ -839,7 +895,7 @@ namespace EldritchMile.Core
                 // 接回主選單 ＝ 這場 run 結束了（結局那一段演完就是這條路）。
                 // ⚠️ 遺產結算（ContributeToMeta）在進結局事件**之前**就做過了，
                 //    這裡只負責把 run 丟掉
-                if (next == StageType.Menu) Run = null;
+                if (IsTitleOrHall(next)) Run = null;
 
                 yield return FadeOut();
                 yield return SwitchStageInternal(next);
@@ -914,7 +970,7 @@ namespace EldritchMile.Core
                 if (ending != null && currentStage != StageType.Event)
                 {
                     PendingEvent = ending;
-                    stageAfterEvent = StageType.Menu;   // 演完接回主選單（走事件那條既有的路）
+                    stageAfterEvent = StageAfterRun();   // 演完接回主選單／大廳（走事件那條既有的路）
 
                     yield return FadeOut();
                     yield return SwitchStageInternal(StageType.Event);
@@ -926,7 +982,7 @@ namespace EldritchMile.Core
                 }
 
                 yield return FadeOut();
-                yield return SwitchStageInternal(StageType.Menu);
+                yield return SwitchStageInternal(StageAfterRun());
 
                 Run = null;   // A4：死亡 → 這場 run 整個丟棄，下個輪迴重來
 
@@ -1100,7 +1156,7 @@ namespace EldritchMile.Core
 
             // 事件選項的「換了畫面之後才播」（《任意門》傳送後、《未知的祭壇》回到原路）。
             // 祭壇本身也是一站，要等離開祭壇的那一站才播
-            if (next != StageType.Event && next != StageType.SpecialEvent && next != StageType.None && next != StageType.Menu)
+            if (next != StageType.Event && next != StageType.SpecialEvent && next != StageType.None && !IsTitleOrHall(next))
                 EventStageController.PlayArrivalText();
 
             OnStageChanged?.Invoke(previous, next);

@@ -167,6 +167,7 @@ namespace EldritchMile.Core
                 StageType.Shop,
                 StageType.Battle,
                 StageType.Menu,
+                StageType.Hall,
             })
             {
                 if (perRow >= 4)   // 一排四顆，不然按鈕會被擠到看不見字

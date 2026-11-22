@@ -54,7 +54,7 @@ public class FoodWarehouse : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        if (transform.parent == null) DontDestroyOnLoad(gameObject); //修改時間26/11/23 by TYN：打包成 Stage_Hall 後是子物件，不加判斷會噴警告
         Load();
     }
 

@@ -1,5 +1,38 @@
 # 交接：把大廳接進遊戲流程（給協助 Romtyui 的 AI）
 
+## 2026-11-23 更新：已接進流程（以這一節為準，下面是 11/04 的原提案）
+
+做法改成跟戰鬥一樣：**TYN 把 `test_Scene` 打包成快照** `Assets/TYN/Stages/Stage_Hall.prefab`，Romtyui 不用自己做 prefab。他改了 `test_Scene` 之後，由 TYN 重新打包。
+
+流程：開遊戲 → 他的標題畫面（MainMenuRoot，取代我們舊的 Stage_Menu）→ Start 轉場 → 大廳 → 點整備室的門 → 選食物／遺物 → **GO** → 開新一輪，選的東西放進背包 → 地圖。一輪結束（結局演完）直接回大廳，不再看一次標題；系統選單的「回到主畫面」回標題。
+
+快照的內容與取捨：
+
+| 項目 | 處理 |
+|---|---|
+| Main Camera | 帶進來，改名 `HallCamera`；進大廳時暫停宿主相機（`StageCameraHandover`），cullingMask 拿掉 5／7／8／10／11 |
+| MainMenuRoot、Lobby、System、Global Light 2D、Particle System | 帶進來 |
+| TransitionCanvas | 帶進來並**打開**（他場景裡是關的，轉場黑幕在這裡）；蓋全畫面的封面 `Panel` 關掉 |
+| `Lobby/Hall`（2D 圖片版大廳） | **打開**。他場景裡是關的，但只有它有整備室的門可以點 |
+| `大廳`（ProBuilder 3D 版） | **沒帶**：還沒有可點的門，而且它的桌子和書會穿到整備室畫面前景。做完再重打包 |
+| EventSystem、PSBMonsterLightReveal、Freeform Light 2D | 沒帶 |
+| 三張畫布的 CanvasScaler | ConstantPixelSize → ScaleWithScreenSize 1920×1080、match 0.5 |
+| `MainPanel/Button`（GO） | 改名 `DepartButton`，由 `HallStageController` 接出發 |
+| 標題的 Setting 鍵 | 改開我們的系統選單（他的 settingsRoot 還沒做） |
+
+改到 Romtyui 檔案的地方（都有 `//修改時間26/11/23 by TYN` 註記）：四個倉庫／配置腳本的 `DontDestroyOnLoad` 加上「是根物件才呼叫」，否則當子物件會一直噴警告。
+
+原提案的「待決定」，目前的暫定做法（都還可以改）：
+
+1. 倉庫不取代 09-15 的決定：自動繼承（`inheritLegacyItems`）仍關著，大廳選的是另一條手動的路。
+2. 倉庫進貨：還沒有，只有他場景上的初始內容（食物 2 種、遺物 1 個）。
+3. 帶出去不扣倉庫（照他現在的 `TryAssign`）。
+4. 一輪結束回大廳（`GameFlowManager.runEndReturnsToHall`，取消勾選就回標題）。
+5. 比例滑條：還不影響牌組。
+6. 第一輪也進大廳。
+
+倉庫仍存在 PlayerPrefs（還沒搬進 MetaProgressData，「清除進度」不會清到它）。
+
 2026-11-04，TYN 這邊整理。依據是 `origin/damege_test`（d04d8a7）的 `Assets/Romtyui_hall`，以及 TYN 本機 `main` 的流程程式。
 
 **這是提案，還沒實作。** Romtyui 的指示優先於這份文件。「待決定」一節列出的事請問 Romtyui，不要自己定。

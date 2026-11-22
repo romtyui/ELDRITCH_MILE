@@ -35,6 +35,15 @@ namespace EldritchMile.Core
         /// 等新的這套驗收完、舊對話的資產也都轉過來之後，再考慮退役舊的。
         /// </summary>
         ProbabilityDialogue,
+
+        /// <summary>
+        /// 大廳（Romtyui 的 `Assets/Romtyui_hall`）：標題畫面 → 大廳 → 整備室選開局食物／遺物 → 出發。
+        /// 2026-11-23 接進流程。**有登記這一站時，它取代 <see cref="Menu"/> 當標題畫面**；
+        /// 沒登記就退回舊的 Menu。
+        ///
+        /// ⚠️ 加在最後是因為 enum 的數字會存進 prefab 與場景（StageHost 的清單），插在中間會整排錯位。
+        /// </summary>
+        Hall,
     }
 
     /// <summary>
