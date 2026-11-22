@@ -15,6 +15,11 @@ public class EnemyVisualAnimationController : MonoBehaviour
     [Header("Audio")]
     public AudioSource audioSource;
 
+    [Header("Inflation Animation")]
+    public string inflationLevelParameter = "InflationLevel";
+
+    private EnemyUnit inflationSource;
+
     public void Bind(GameObject normalVisual, GameObject darkVisual, EnemyData enemyData)
     {
         this.normalVisual = normalVisual;
@@ -288,6 +293,77 @@ public class EnemyVisualAnimationController : MonoBehaviour
 
             default:
                 return null;
+        }
+    }
+
+    public void BindInflationSource(EnemyUnit source)
+    {
+        if (inflationSource != null)
+        {
+            inflationSource.OnStatusChanged -= RefreshInflationAnimation;
+        }
+
+        inflationSource = source;
+
+        if (inflationSource != null)
+        {
+            inflationSource.OnStatusChanged += RefreshInflationAnimation;
+        }
+
+        RefreshInflationAnimation();
+    }
+
+    private void RefreshInflationAnimation()
+    {
+        if (inflationSource == null) return;
+        if (string.IsNullOrWhiteSpace(inflationLevelParameter)) return;
+
+        int level = Mathf.Max(0, inflationSource.GetStatus(StatusType.Inflation));
+
+        SetInflationLevelOnAnimators(normalAnimators, level);
+        SetInflationLevelOnAnimators(darkAnimators, level);
+    }
+
+    private void SetInflationLevelOnAnimators(Animator[] animators, int level)
+    {
+        if (animators == null) return;
+
+        for (int i = 0; i < animators.Length; i++)
+        {
+            Animator animator = animators[i];
+
+            if (animator == null || animator.runtimeAnimatorController == null) continue;
+            if (!HasIntParameter(animator, inflationLevelParameter)) continue;
+
+            animator.keepAnimatorStateOnDisable = true;
+            animator.SetInteger(inflationLevelParameter, level);
+        }
+    }
+
+    private static bool HasIntParameter(Animator animator, string parameterName)
+    {
+        if (animator == null || animator.runtimeAnimatorController == null) return false;
+        if (string.IsNullOrWhiteSpace(parameterName)) return false;
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            AnimatorControllerParameter parameter = parameters[i];
+
+            if (parameter == null) continue;
+            if (parameter.type != AnimatorControllerParameterType.Int) continue;
+            if (parameter.name == parameterName) return true;
+        }
+
+        return false;
+    }
+
+    private void OnDestroy()
+    {
+        if (inflationSource != null)
+        {
+            inflationSource.OnStatusChanged -= RefreshInflationAnimation;
         }
     }
 }

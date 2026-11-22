@@ -568,9 +568,18 @@ public class EnemyUnit : BattleUnit
 
     public void RefreshHpUI()
     {
+        if (!gameObject.activeInHierarchy) return;
+
         if (hpNumberAnimator != null)
         {
-            hpNumberAnimator.SetValue(currentHp, maxHp);
+            if (hpNumberAnimator.isActiveAndEnabled)
+            {
+                hpNumberAnimator.SetValue(currentHp, maxHp);
+            }
+            else
+            {
+                hpNumberAnimator.SetValueImmediate(currentHp, maxHp);
+            }
         }
         else if (currentHpText != null)
         {
@@ -1316,10 +1325,21 @@ public class EnemyUnit : BattleUnit
 
     public IEnumerator DieRoutine()
     {
-        if (isDead)
-            yield break;
+        if (isDead) yield break;
 
         isDead = true;
+
+        List<KeyValuePair<StatusType, BattleStatusBehaviourData>> behaviours = new List<KeyValuePair<StatusType, BattleStatusBehaviourData>>(statusBehaviours);
+
+        for (int i = 0; i < behaviours.Count; i++)
+        {
+            KeyValuePair<StatusType, BattleStatusBehaviourData> pair = behaviours[i];
+
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+
+            pair.Value.OnOwnerDeath(this);
+        }
 
         ClearStatusIconUI();
 

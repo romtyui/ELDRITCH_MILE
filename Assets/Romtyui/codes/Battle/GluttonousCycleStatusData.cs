@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 [CreateAssetMenu(menuName = "CardGame/Status Behaviours/Gluttonous Cycle")]
 public class GluttonousCycleStatusData : BattleStatusBehaviourData
@@ -40,8 +41,32 @@ public class GluttonousCycleStatusData : BattleStatusBehaviourData
         target.RefreshHpUI();
     }
 
+    public override void OnOwnerDeath(EnemyUnit enemy)
+    {
+        if (enemy == null) return;
+
+        BattleManager manager = enemy.battleManager;
+
+        if (manager == null || manager.enemies == null) return;
+
+        List<EnemyUnit> allies = new List<EnemyUnit>(manager.enemies);
+
+        for (int i = 0; i < allies.Count; i++)
+        {
+            EnemyUnit ally = allies[i];
+
+            if (ally == null || ally == enemy) continue;
+            if (!ally.gameObject.activeInHierarchy) continue;
+            if (ally.currentHp <= 0) continue;
+
+            ally.LoseHpDirectly(ally.currentHp);
+        }
+
+        Debug.Log($"[GluttonousCycle] {enemy.unitName} 死亡，消滅所有存活友方。");
+    }
+
     public override string GetDescription(EnemyUnit enemy, int amount)
     {
-        return $"敵方回合結束時，治療一名HP低於50%的其他友方，優先選擇目前HP最低者，恢復其最大HP的100%。自身最大HP減少{maxHpLoss}，最低降至{minimumMaxHp}。";
+        return $"敵方回合結束時，治療一名HP低於50%的其他友方，優先選擇目前HP最低者，恢復其最大HP的100%。自身最大HP減少{maxHpLoss}，最低降至{minimumMaxHp}。\n自身死亡時，消滅所有友方。";
     }
 }

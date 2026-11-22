@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf43116519b6a7a449b6e0c6921700bc, type: 3}
+  m_Name: "\u9B3C\u5207"
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  unitName: monster_10
+  maxHp: 50
+  enemyId: boss
+  normalVisualPrefab: {fileID: 4926071022799580537, guid: c25309f4094ff9e4bb4e39500cdfd3d5, type: 3}
+  darkVisualPrefab: {fileID: 5325955522770667828, guid: e135c44461e88e942997b7594bcc0dad, type: 3}
+  visualAnchoredPosition: {x: 0, y: 0}
+  visualScale: {x: 1, y: 1, z: 1}
+  visualEulerAngles: {x: 0, y: 0, z: 0}
+  damagePopupOffset: {x: 0, y: 80}
+  blockPositionOffset: {x: 0, y: 0}
+  blockSizeMultiplier: {x: 1, y: 1}
+  hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
+  hitBoxSprite: {fileID: 0}
+  targetFrameFollowBoneName: head_01
+  targetFrameAnchoredPosition: {x: 0, y: 65}
+  targetFrameSize: {x: 200, y: 200}
+  summonFaction: 0
+  summonRank: 0
+  canBeSummoned: 0
+  stunIntent: {fileID: 0}
+  startingStatuses:
+  - statusType: 15
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: 94ce0235154c6b74691765d7c365a0b4, type: 2}
+  - statusType: 24
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: 622504eaad17f4c469b45cb2ce780872, type: 2}
+  intents:
+  - {fileID: 11400000, guid: 47423efa38c7127458cf0259411226b8, type: 2}
+  - {fileID: 11400000, guid: b050cfcb020b13c4da57a1d9c4bbce4d, type: 2}
+  idleTrigger: idle
+  attackTrigger: atk
+  hurtTrigger: hurt
+  deathTrigger: death
+  blockTrigger: block
+  specialAttackTrigger: special
+  attackAnimDuration: 0.4
+  hurtAnimDuration: 0.3
+  deathAnimDuration: 1
+  blockAnimDuration: 0.2
+  specialAttackAnimDuration: 0.8
+  attackSfx: {fileID: 0}
+  hurtSfx: {fileID: 0}
+  deathSfx: {fileID: 0}
+  blockSfx: {fileID: 0}
+  specialAttackSfx: {fileID: 0}
+  sfxVolume: 1

@@ -508,40 +508,94 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
     private string GetStatusTitle(StatusType statusType)
     {
-        switch (statusType)
+        switch (statusType.ToString())
         {
-            case StatusType.Strength:
+            case "Strength":
                 return "力量";
 
-            case StatusType.TemporaryStrength:
+            case "TemporaryStrength":
                 return "臨時力量";
 
-            case StatusType.Weak:
+            case "Weak":
                 return "虛弱";
 
-            case StatusType.Vulnerable:
+            case "Vulnerable":
                 return "易傷";
 
-            case StatusType.Frail:
+            case "Frail":
                 return "脆弱";
 
-            case StatusType.Poison:
+            case "Poison":
                 return "中毒";
 
-            case StatusType.Harden:
+            case "Harden":
                 return "硬化";
 
-            case StatusType.Regeneration:
+            case "Regeneration":
                 return "再生";
 
-            case StatusType.InitialBlock:
+            case "Counter":
+                return "反擊";
+
+            case "InitialBlock":
                 return "初始護盾";
 
-            case StatusType.RetainBlock:
+            case "RetainBlock":
                 return "護盾保留";
 
-            case StatusType.HermitHunt:
+            case "DiscardHandAtNextTurnStart":
+                return "下回合棄牌";
+
+            case "HermitHunt":
                 return "寄居狩獵";
+
+            case "EndlessHunger":
+                return "好餓好餓好餓";
+
+            case "PhaseSwitch":
+                return "型態轉換";
+
+            case "FeedingDesire":
+                return "餵食的渴求";
+
+            case "Overload":
+                return "過負荷";
+
+            case "AbyssStrategy":
+                return "深淵行動";
+
+            case "GreatCompassion":
+                return "大慈大悲";
+
+            case "GluttonousCycle":
+                return "惡食循環";
+
+            case "FeedingTemptation":
+                return "餵食的誘惑";
+
+            case "Hunger":
+                return "飢餓";
+
+            case "Fear":
+                return "恐懼";
+
+            case "Evolution":
+                return "進化";
+
+            case "WeakPointBreak":
+                return "弱點擊破";
+
+            case "CarrionFeast":
+                return "食腐";
+
+            case "Lurking":
+                return "潛伏";
+
+            case "Inflation":
+                return "膨脹";
+
+            case "InflationCycle":
+                return "膨脹循環";
 
             default:
                 return statusType.ToString();
@@ -773,6 +827,7 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
         currentNormalVisual = SpawnOneVisual(enemyData.normalVisualPrefab, parent, enemyData);
         currentDarkVisual = SpawnOneVisual(enemyData.darkVisualPrefab, parent, enemyData);
+
         if (lightReveal != null)
         {
             Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;
@@ -780,33 +835,12 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
 
             lightReveal.RegisterMonster(normalRoot, darkRoot);
         }
+
         if (visualAnimationController != null)
         {
-            visualAnimationController.Bind(
-                currentNormalVisual,
-                currentDarkVisual,
-                enemyData
-            );
+            visualAnimationController.Bind(currentNormalVisual, currentDarkVisual, enemyData);
+            visualAnimationController.BindInflationSource(enemyUnit);
         }
-        //if (lightReveal != null)
-        //{
-        //    Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;
-        //    Transform darkRoot = currentDarkVisual != null ? currentDarkVisual.transform : null;
-
-        //    lightReveal.RegisterMonster(normalRoot, darkRoot);
-        //}
-        //Transform parent = worldVisualRoot != null ? worldVisualRoot : transform;
-
-        //currentNormalVisual = SpawnOneVisual(enemyData.normalVisualPrefab, parent, enemyData);
-        //currentDarkVisual = SpawnOneVisual(enemyData.darkVisualPrefab, parent, enemyData);
-
-        //if (lightReveal != null)
-        //{
-        //    Transform normalRoot = currentNormalVisual != null ? currentNormalVisual.transform : null;
-        //    Transform darkRoot = currentDarkVisual != null ? currentDarkVisual.transform : null;
-
-        //    lightReveal.RegisterMonster(normalRoot, darkRoot);
-        //}
     }
 
     private GameObject SpawnOneVisual(GameObject prefab, Transform parent, EnemyData enemyData)
@@ -850,13 +884,36 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
     }
     private IEnumerator RebindSpriteSkinsNextFrame(GameObject root)
     {
+        if (root == null) yield break;
+
+        string slotName = gameObject.name;
+        string dataName = currentEnemyData != null ? currentEnemyData.name : "None";
+        string enemyId = currentEnemyData != null ? currentEnemyData.enemyId : "None";
+        Vector3 dataScale = currentEnemyData != null ? currentEnemyData.visualScale : Vector3.one;
+        float slotMultiplier = slotVisualScaleMultiplier;
+        Vector3 expectedScale = dataScale * slotMultiplier;
+        Vector3 initialScale = root.transform.localScale;
+
         yield return null;
+
+        if (root == null) yield break;
 
         RebindSpriteSkins(root);
 
+        Vector3 nextFrameScale = root.transform.localScale;
+
         yield return null;
 
+        if (root == null) yield break;
+
         RebindSpriteSkins(root);
+
+        Transform visualTransform = root.transform;
+        Transform parent = visualTransform.parent;
+        string parentName = parent != null ? parent.name : "None";
+        Vector3 parentWorldScale = parent != null ? parent.lossyScale : Vector3.one;
+
+        Debug.Log($"[怪物大小檢查] Slot={slotName}，Data={dataName}，EnemyID={enemyId}，Visual={root.name}\nSlot倍率={slotMultiplier:F3}，Data縮放={dataScale.ToString("F3")}，預期LocalScale={expectedScale.ToString("F3")}\n生成當下={initialScale.ToString("F3")}，下一幀={nextFrameScale.ToString("F3")}，第二幀={visualTransform.localScale.ToString("F3")}\n父物件={parentName}，父物件世界縮放={parentWorldScale.ToString("F3")}，怪物世界縮放={visualTransform.lossyScale.ToString("F3")}", root);
     }
 
     private void RebindSpriteSkins(GameObject root)
@@ -948,14 +1005,15 @@ public class EnemySlotUI : MonoBehaviour, UnityEngine.EventSystems.IPointerEnter
     }
     private void ShowTargetFrame()
     {
-        if (targetFrameImage == null)
-            return;
+        if (targetFrameImage == null) return;
+        if (enemyUnit == null) return;
+        if (enemyUnit.currentHp <= 0) return;
 
-        if (enemyUnit == null)
+        if (enemyUnit.HasStatus(StatusType.Lurking))
+        {
+            HideTargetFrame();
             return;
-
-        if (enemyUnit.currentHp <= 0)
-            return;
+        }
 
         targetFrameImage.gameObject.SetActive(true);
     }

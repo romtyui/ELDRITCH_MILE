@@ -474,6 +474,7 @@ public class BattleManager : MonoBehaviour
             turnEndButtonAnimatorUI.SetEnemyTurnIdle();
         }
 
+
         // =========================================================
         // Relics：Player Turn End
         // =========================================================
@@ -543,9 +544,12 @@ public class BattleManager : MonoBehaviour
                 if (!enemy.gameObject.activeInHierarchy) continue;
                 if (enemy.currentHp <= 0) continue;
 
+                enemy.ClearStatusCompletely(StatusType.Lurking);
                 enemy.OnPlayerTurnEnd();
             }
         }
+
+        RefreshStatusUI();
 
         if (turnPhaseBannerUI != null)
         {
@@ -1552,6 +1556,14 @@ public class BattleManager : MonoBehaviour
                 return playerUnit;
 
             case TargetType.SingleEnemy:
+                if (!(selectedTarget is EnemyUnit)) return null;
+
+                if (!BattleTargetUI.CanDirectlyTarget(selectedTarget))
+                {
+                    Debug.Log("指定目標無效，怪物可能正在潛伏、已死亡或未啟用。");
+                    return null;
+                }
+
                 return selectedTarget;
 
             case TargetType.RandomEnemy:

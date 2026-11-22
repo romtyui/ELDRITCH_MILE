@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 342a61cff0a51c54f99ab4c39b6abe6d, type: 3}
+  m_Name: "ACT_\u91DD\u5343\u672C_\u81A8\u8139"
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyInflationActionData
+  tooltipEntry:
+    title: 
+    body: 
+  blockAmount: 5
+  counterAmount: 3
+  maxInflationStacks: 3

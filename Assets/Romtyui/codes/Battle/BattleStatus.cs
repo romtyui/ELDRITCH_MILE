@@ -34,6 +34,13 @@
     AbyssStrategy,       // 深淵怪物的條件選招
     GreatCompassion,     // 大慈大悲
     GluttonousCycle,     // 惡食循環
+    FeedingTemptation, // 餵食的誘惑：回合開始賦予玩家飢餓
+    Hunger,           // 玩家承受的飢餓狀態
     Fear,               // 恐懼：目前先儲存層數，實際效果待補
-
+    Evolution, // 進化：每成功使玩家隨機棄掉一張手牌，自身最大HP增加
+    WeakPointBreak, // 弱點擊破：每成功使玩家隨機棄掉一張手牌，賦予玩家虛弱
+    CarrionFeast, // 食腐
+    Lurking,     // 潛伏
+    Inflation,      // 膨脹：記錄體型階段
+    InflationCycle, // 膨脹行動規則：膨脹3次後使用爆裂
 }

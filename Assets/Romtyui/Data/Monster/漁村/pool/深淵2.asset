@@ -13,8 +13,29 @@ MonoBehaviour:
   m_Name: "\u6DF1\u6DF52"
   m_EditorClassIdentifier: Assembly-CSharp::EnemyEncounterPoolData
   entries:
-  - formation: {fileID: 11400000, guid: 5bc924a08ec682b42ac304dacfd62138, type: 2}
+  - formation: {fileID: 11400000, guid: 3fee00ccb789e184ca09a12434edd522, type: 2}
+    weight: 1
+    isBoss: 0
+  - formation: {fileID: 11400000, guid: 3722d2e3dd807fa42872e4ab44db2353, type: 2}
+    weight: 1
+    isBoss: 0
+  - formation: {fileID: 11400000, guid: 938493d2e35c6274abba898a351b3dfc, type: 2}
+    weight: 1
+    isBoss: 0
+  - formation: {fileID: 11400000, guid: a439882c51cf2544491d4cd5ef319c04, type: 2}
+    weight: 2
+    isBoss: 0
+  - formation: {fileID: 11400000, guid: 25cecd8a5a39545408e16c52ad460de0, type: 2}
+    weight: 2
+    isBoss: 0
+  - formation: {fileID: 11400000, guid: ca62cf86b11019a40933f4b905ab3c3b, type: 2}
     weight: 3
+    isBoss: 0
+  - formation: {fileID: 11400000, guid: 9750456637e0f6e4fb4510a9bbefa62a, type: 2}
+    weight: 3
+    isBoss: 0
+  - formation: {fileID: 11400000, guid: 5bc924a08ec682b42ac304dacfd62138, type: 2}
+    weight: 5
     isBoss: 1
   debugUsedFormationNames:
   - 

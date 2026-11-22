@@ -43,7 +43,9 @@ public abstract class BattleStatusBehaviourData : ScriptableObject
     public virtual void OnIntentExecuted(EnemyUnit enemy, EnemyIntentData intent, bool isAdditionalAction)
     {
     }
-
+    public virtual void OnOwnerDeath(EnemyUnit enemy)
+    {
+    }
     public virtual void OnEnemyRoundEnd(EnemyUnit enemy)
     {
     }
