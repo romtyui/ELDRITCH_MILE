@@ -40,6 +40,12 @@ namespace EldritchMile.UI
         [Tooltip("顯示模糊截圖的 RawImage（材質用 blur_M）")]
         public RawImage backdrop;
 
+        [Tooltip("背景那一層（帶 overrideSorting 的子畫布）。**關著的時候整個關掉**。留空會自己找 backdrop 所在的子畫布。\n\n" +
+                 "⚠️ 2026-11-23 踩過：子畫布開了 overrideSorting，Unity 判斷能不能點時會在那一層停下來，\n" +
+                 "不再往上看父物件 CanvasGroup 的 blocksRaycasts —— 結果透明的壓暗層一直擋著，\n" +
+                 "排序 390 以下的東西（大廳標題、各 Stage 的按鈕）全部點不到")]
+        public GameObject backdropLayer;
+
         [Tooltip("截圖時暫時藏起來的畫面 —— HUD 要清楚地疊在模糊背景上，截進去的話會有一層糊掉的分身")]
         public List<CanvasGroup> hideWhileCapturing = new List<CanvasGroup>();
 
@@ -88,6 +94,11 @@ namespace EldritchMile.UI
         private void Awake()
         {
             RunContext.OnFoodOverflow += HandleOverflow;
+            if (backdropLayer == null && backdrop != null)
+            {
+                Canvas layer = backdrop.GetComponentInParent<Canvas>(true);
+                if (layer != null && layer.transform != transform) backdropLayer = layer.gameObject;
+            }
             if (tubeDiscardTemplate != null) tubeDiscardTemplate.gameObject.SetActive(false);
             if (newDiscardButton != null) newDiscardButton.onClick.AddListener(DiscardNew);
             if (bannerText != null) bannerText.text = bannerLine;
@@ -277,6 +288,7 @@ namespace EldritchMile.UI
                 group.blocksRaycasts = on;
                 group.interactable = on;
             }
+            if (backdropLayer != null) backdropLayer.SetActive(on);
 
             if (!on)
             {

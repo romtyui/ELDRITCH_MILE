@@ -357,9 +357,21 @@ namespace EldritchMile.Core.ProbabilityDialogue
         /// ⚠️ **一定要在 `OnEnded` 之前呼叫** —— UI 是在那個事件裡讀結算文字的。
         /// 兩處呼叫端（成功、全部失敗）目前都是這個順序，改的時候不要換過去。
         /// </summary>
+        /// <summary>
+        /// true = 給東西的效果（道具、戰利品表、金幣）先不入袋，收進 <see cref="PendingItems"/>／<see cref="PendingMoney"/>，
+        /// 由 Stage 打開物資清單讓玩家領。Stage 有獎勵畫面時才設。（2026-11-23）
+        /// </summary>
+        public bool DeferGrants;
+
+        public readonly List<ItemStack> PendingItems = new List<ItemStack>();
+        public int PendingMoney;
+        public bool HasPendingRewards { get { return PendingMoney > 0 || PendingItems.Count > 0; } }
+
         private void RunOutcome(List<EventEffect> effects)
         {
             LastOutcomeNotes = "";
+            PendingItems.Clear();
+            PendingMoney = 0;
 
             if (effects == null || effects.Count == 0) return;
 
@@ -375,6 +387,8 @@ namespace EldritchMile.Core.ProbabilityDialogue
             for (int i = 0; i < effects.Count; i++)
             {
                 if (effects[i] == null) continue;
+
+                if (DeferGrants && effects[i].TryCollectGrant(PendingItems, ref PendingMoney)) continue;
 
                 // ⚠️ 回傳值就是給玩家看的那句話。丟掉的話結算永遠不會出現
                 string note = effects[i].Apply(run);

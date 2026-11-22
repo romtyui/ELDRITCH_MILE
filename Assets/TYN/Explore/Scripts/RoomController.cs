@@ -66,6 +66,7 @@ namespace EldritchMile.Explore
             }
 
             var rng = new System.Random(seed);
+            populating = slots;
             var usedCount = new Dictionary<RoomContentData.Entry, int>();
 
             // 打亂位子順序，避免每次都從同一個角落開始填
@@ -95,6 +96,10 @@ namespace EldritchMile.Explore
             {
                 if (slot == null || slot.IsOccupied) continue;
                 if (string.IsNullOrEmpty(slot.contentTag)) continue;
+
+                // 只有「畫在背景上的家具」才無條件填。2026-11-23 起寶箱也用 tag 限定位子（"chest"），
+                // 那些要照群組配額決定放幾個，不能在這裡一口氣全部填滿
+                if (!slot.artIsPainted) continue;
 
                 RoomContentData.Entry entry = contentData.PickFor(slot, rng, usedCount, null);
                 if (entry == null)
@@ -224,12 +229,14 @@ namespace EldritchMile.Explore
             foreach (InteractableBase it in obj.GetComponentsInChildren<InteractableBase>(true))
             {
                 it.ApplyRandomVariant(rng);
+                if (slot.fixedSprite != null) it.ForceSprite(slot.fixedSprite);   // 美術指定的轉向（2026-11-23）
             }
 
             // 美術已經把這件家具畫在背景上 —— 生成物只留碰撞框，圖隱形
             if (slot.artIsPainted) HideVisualsKeepRaycast(obj);
 
             slot.MarkOccupied();
+            if (populating != null) BlockSlotsAround(slot, populating);
         }
 
         /// <summary>
@@ -254,6 +261,9 @@ namespace EldritchMile.Explore
                     SpawnSlot other = all[j];
                     if (other == null || other == painted || other.IsOccupied) continue;
 
+                    // 美術對著畫面指定圖與位置的格子（寶箱三點，2026-11-23）本來就排在櫃子旁邊，不擋
+                    if (other.fixedSprite != null) continue;
+
                     Vector3 c = other.transform.position;
                     var foot = new Rect(c.x - contentFootprint.x * 0.5f,
                                         c.y - contentFootprint.y * 0.5f,
@@ -265,6 +275,37 @@ namespace EldritchMile.Explore
                     Debug.Log($"[房間] {name} 的「{other.name}」會蓋到畫上去的家具，這一輪跳過。" +
                               "要用回這個位子就把它挪開。", this);
                 }
+            }
+        }
+
+        /// <summary>
+        /// 這一格剛放了東西 —— 附近會跟它疊在一起的空位子這一輪跳過（只限寶箱點與它周圍）。
+        /// （2026-11-23：美術指定的三個寶箱點跟原本的家具位子很近，不擋的話箱子上會疊一個衣櫃）
+        /// 大小用 contentFootprint 乘上這一格的縮放。
+        /// </summary>
+        private List<SpawnSlot> populating;
+
+        private void BlockSlotsAround(SpawnSlot placed, List<SpawnSlot> all)
+        {
+            // 畫在背景上的家具另有 reserveSize 那一套（BlockSlotsCoveringPaintedArt），這裡不重複擋
+            if (placed.artIsPainted) return;
+
+            float k = Mathf.Max(placed.scaleRange.x, placed.scaleRange.y);
+            Vector3 p = placed.transform.position;
+            var area = new Rect(p.x - contentFootprint.x * k * 0.5f, p.y - contentFootprint.y * k * 0.5f,
+                                contentFootprint.x * k, contentFootprint.y * k);
+
+            foreach (SpawnSlot other in all)
+            {
+                if (other == null || other == placed || other.IsOccupied) continue;
+
+                // 只管牽涉到「美術指定點」（寶箱三點）的組合 —— 一般家具位子之間照舊，不改變其他房間的擺法
+                if (placed.fixedSprite == null && other.fixedSprite == null) continue;
+
+                Vector3 c = other.transform.position;
+                var foot = new Rect(c.x - contentFootprint.x * 0.5f, c.y - contentFootprint.y * 0.5f,
+                                    contentFootprint.x, contentFootprint.y);
+                if (foot.Overlaps(area)) other.MarkOccupied();
             }
         }
 

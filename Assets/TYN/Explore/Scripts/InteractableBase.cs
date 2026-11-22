@@ -167,6 +167,30 @@ namespace EldritchMile.Explore
         }
 
         /// <summary>
+        /// 這一格指定了固定的圖（<see cref="SpawnSlot.fixedSprite"/>）—— 換上去，點擊範圍跟著改成這張圖的大小。
+        /// 隨機外觀裡有同一張圖的話，連「互動後的圖」也用那一組的。
+        /// </summary>
+        public void ForceSprite(Sprite s)
+        {
+            if (s == null) return;
+            if (targetRenderer == null) targetRenderer = GetComponent<SpriteRenderer>();
+            if (targetRenderer == null) return;
+
+            targetRenderer.sprite = s;
+
+            if (visualVariants != null)
+                foreach (VisualVariant v in visualVariants)
+                    if (v != null && v.normal == s && v.interacted != null) interactedSprite = v.interacted;
+
+            BoxCollider2D box = targetRenderer.GetComponent<BoxCollider2D>();
+            if (box != null)
+            {
+                box.size = s.bounds.size;
+                box.offset = s.bounds.center;
+            }
+        }
+
+        /// <summary>
         /// 標記為已互動：換圖、切游標、回報房間。
         /// 子類別在「這次互動真的完成了」時呼叫 —— 注意判定失敗**不算**完成，
         /// 因為 C12 允許再試一次。

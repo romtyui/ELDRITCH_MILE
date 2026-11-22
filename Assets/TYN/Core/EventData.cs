@@ -172,6 +172,30 @@ namespace EldritchMile.Core
         }
 
         /// <summary>
+        /// 這個效果是「給東西」（道具、戰利品表、金幣）的話，**不入袋**，改成放進
+        /// <paramref name="items"/>／<paramref name="money"/>，交給獎勵畫面（物資清單）讓玩家自己領。回傳 true。
+        /// 不是給東西的效果回傳 false，照舊呼叫 <see cref="Apply"/>。（2026-11-23：遭遇的結算改走物資清單）
+        /// </summary>
+        public bool TryCollectGrant(System.Collections.Generic.List<ItemStack> items, ref int money)
+        {
+            switch (kind)
+            {
+                case Kind.GrantItem:
+                    if (!string.IsNullOrEmpty(key)) items.Add(new ItemStack(key, Mathf.Max(1, amount)));
+                    return true;
+
+                case Kind.GrantFromTable:
+                    if (table != null) items.AddRange(LootService.Roll(table, new System.Random()));
+                    return true;
+
+                case Kind.GrantMoney:
+                    money += amount;
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// 套用這個效果，回傳**要給玩家看的一行提示**（沒有就回空字串）。
         ///
         /// 【為什麼回傳字串而不是自己彈視窗】大綱把數值變化直接寫在事件內文裡

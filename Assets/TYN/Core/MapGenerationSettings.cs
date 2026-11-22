@@ -134,6 +134,31 @@ namespace EldritchMile.Core
             return new Vector2(0.5f + (pct.x / 100f - 0.5f) * a, 0.5f + (pct.y / 100f - 0.5f) * a);
         }
 
+        [Header("首領固定位置（Terrain 擺法，2026-11-23：港口在藍色圓形、漁村在骨頭下的黑色圓形）")]
+        [Tooltip("勾了首領就固定生在下面那個位置，整張圖從離它最遠的地方開始、一路走向它。\n" +
+                 "不勾 = 舊行為（最下面出發，走最遠的那一站是首領）")]
+        public bool fixBossPosition = false;
+
+        [Tooltip("首領在**底圖上**的位置，0~1，**左上角是 (0, 0)**、右下是 (1, 1)。\n" +
+                 "直接用看圖軟體量：x = 像素 X ÷ 圖寬、y = 像素 Y ÷ 圖高")]
+        public Vector2 bossOnMap = new Vector2(0.5f, 0.2f);
+
+        [Tooltip("首領周圍多大範圍（節點座標 0~100）內不放其他節點，免得擠在首領身上")]
+        [Range(0f, 20f)] public float bossClearRadius = 6f;
+
+        /// <summary><see cref="bossOnMap"/> 換成節點座標（0~100）。底圖比節點區域大，換算要扣掉 terrainSampleArea</summary>
+        public Vector2 BossPercent
+        {
+            get
+            {
+                float a = Mathf.Clamp(terrainSampleArea, 0.1f, 1f);
+                float u = bossOnMap.x, v = 1f - bossOnMap.y;   // 圖片的 y 往下，UV 的 v 往上
+                return new Vector2(
+                    Mathf.Clamp(((u - 0.5f) / a + 0.5f) * 100f, 0f, 100f),
+                    Mathf.Clamp(((v - 0.5f) / a + 0.5f) * 100f, 0f, 100f));
+            }
+        }
+
         [Tooltip("要放幾個節點（之後還會刪掉走不到的，實際會少一點）。0 = 依層數自動算")]
         [Range(0, 60)] public int terrainNodeCount = 0;
 

@@ -76,6 +76,12 @@ public class ProbabilityDialogueStageController : StageController
              "自己跳走反而會讓玩家覺得畫面被搶走了")]
     [Min(0f)] public float endAutoSeconds = 6f;
 
+    [Header("獎勵（物資清單）")]
+    [Tooltip("Romtyui 的獎勵畫面複製品（跟探索開箱同一份）。有接的話，對話結果裡「給東西」的效果\n" +
+             "（道具、戰利品表、金幣）不直接入袋，改在話講完之後打開物資清單讓玩家領。\n" +
+             "留空 = 舊行為：直接入袋，只在結算那一頁寫「獲得 …」。（2026-11-23）")]
+    public EldritchMile.UI.AltarRewardBridge rewardScreen;
+
     private ProbabilityDialogueSession session;
     private bool reported;
 
@@ -147,6 +153,8 @@ public class ProbabilityDialogueStageController : StageController
         int seed = (run != null ? run.runSeed : 0) ^ (data.eventId != null ? data.eventId.GetHashCode() : 0);
 
         session = new ProbabilityDialogueSession();
+        if (rewardScreen == null) rewardScreen = GetComponentInChildren<EldritchMile.UI.AltarRewardBridge>(true);
+        session.DeferGrants = rewardScreen != null && run != null;
         view.Attach(session, GameFlowManager.Instance != null ? GameFlowManager.Instance.characterDatabase : null);
 
         session.OnEnded += HandleEnded;
@@ -203,6 +211,19 @@ public class ProbabilityDialogueStageController : StageController
     {
         while (view != null && view.ResultPending) yield return null;
         while (PopupService.Instance != null && !PopupService.Instance.IsIdle) yield return null;
+
+        // 有東西可領 → 話講完之後打開物資清單，關掉就離開這一站（2026-11-23）
+        RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+        if (rewardScreen != null && run != null && session != null && session.HasPendingRewards)
+        {
+            SetEndButtonVisible(false);
+            // 物資清單自己有離開鍵（右下角那個 EXIT），我們的共用 EXIT 要先收，不然右下角疊兩個
+            EldritchMile.UI.SharedExitUI.Instance?.Hide();
+            if (PopupService.Instance != null) PopupService.Instance.CloseAll();
+            var items = new System.Collections.Generic.List<ItemStack>(session.PendingItems);
+            rewardScreen.OpenGiven(run, session.PendingMoney, items, Report);
+            yield break;
+        }
 
         // ⚠️ 出口是對話框本身。玩家回報離開鍵「不方便、找不到」
         if (PopupService.Instance != null)

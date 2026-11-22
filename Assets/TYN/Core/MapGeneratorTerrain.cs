@@ -287,6 +287,58 @@ namespace EldritchMile.Core
             return hop;
         }
 
+        /// <summary>
+        /// 首領固定位置時的分層（2026-11-23）：
+        ///   1. 先算每個點離首領幾步，**離首領最遠的那一點當起點**（一樣遠就取最下面的）
+        ///   2. 再照舊從起點 BFS 分層 —— 所有點都從起點走得到，節點數跟舊版差不多
+        ///   3. 首領所在的那一層就是最後一層；比首領還深的點（在首領背後）丟掉
+        /// 同一層的其他點會先被擲成 Boss，之後由 CollapseToSingleBoss 指定首領那一點、其餘降級。
+        ///
+        /// （第一版是「層數 ＝ 離首領幾步倒著算」，但那樣從起點走不到的點太多，
+        ///   刪完只剩一半節點 —— 實測 35 → 15，放棄。）
+        /// </summary>
+        private static int[] LayersFromFarStart(List<Vector2> pts, List<List<int>> adj, int boss, out int maxHop)
+        {
+            int n = pts.Count;
+            var dist = Bfs(adj, boss, n);
+
+            int start = -1;
+            for (int i = 0; i < n; i++)
+            {
+                if (dist[i] < 0) continue;
+                if (start < 0 || dist[i] > dist[start] || (dist[i] == dist[start] && pts[i].y < pts[start].y)) start = i;
+            }
+
+            var hop = Bfs(adj, start, n);
+            int bossHop = hop[boss];
+            for (int i = 0; i < n; i++) if (hop[i] > bossHop) hop[i] = -1;
+
+            maxHop = bossHop;
+            return hop;
+        }
+
+        private static int[] Bfs(List<List<int>> adj, int from, int n)
+        {
+            var d = new int[n];
+            for (int i = 0; i < n; i++) d[i] = -1;
+            if (from < 0) return d;
+            var q = new Queue<int>();
+            d[from] = 0;
+            q.Enqueue(from);
+            while (q.Count > 0)
+            {
+                int cur = q.Dequeue();
+                for (int k = 0; k < adj[cur].Count; k++)
+                {
+                    int nb = adj[cur][k];
+                    if (d[nb] >= 0) continue;
+                    d[nb] = d[cur] + 1;
+                    q.Enqueue(nb);
+                }
+            }
+            return d;
+        }
+
         // ==========================================
         // 連線：Delaunay 三角化
         // ==========================================
@@ -440,6 +492,16 @@ namespace EldritchMile.Core
             List<Vector2> pts = SampleTerrain(su, s, rng, count);
             if (pts.Count < 3) return GenerateOrganic(s, rng);
 
+            // 首領固定位置：把那一點放進去（周圍的取樣點讓開），之後層數改成「離首領幾步」倒著算
+            int bossIdx = -1;
+            if (s.fixBossPosition)
+            {
+                Vector2 bp = s.BossPercent;
+                pts.RemoveAll(p => (p - bp).magnitude < s.bossClearRadius);
+                pts.Add(bp);
+                bossIdx = pts.Count - 1;
+            }
+
             // ⚠️ 先三角化，再用圖上的跳數分層。順序不能反 —— 見 LayersByHops
             List<int[]> tris = Delaunay(pts);
             List<List<int>> adjAll = BuildAdjacency(tris, pts.Count);
@@ -451,7 +513,9 @@ namespace EldritchMile.Core
             List<List<int>> adj = FilterByLength(adjAll, pts, s.maxLinkDistance);
 
             int maxHop;
-            int[] hop = LayersByHops(pts, adj, out maxHop);
+            int[] hop = bossIdx >= 0
+                ? LayersFromFarStart(pts, adj, bossIdx, out maxHop)
+                : LayersByHops(pts, adj, out maxHop);
 
             // 濾完之後圖可能斷開 —— 連不到起點的那些點直接不要，
             // 硬留著就是玩家永遠走不到的節點
@@ -515,7 +579,7 @@ namespace EldritchMile.Core
                 //    但 BFS 樹的葉子整圈鄰居都不比自己深 —— 那就是死路。
                 //    實測少了這一行有 1046 個死路節點
                 EnsureReachesGoal(nodes, layer, adj, maxHop);
-                CollapseToSingleBoss(nodes, layer, adj, maxHop, s, rng);
+                CollapseToSingleBoss(nodes, layer, adj, maxHop, s, rng, bossIdx >= 0 ? remap[bossIdx] : -1);
                 RemoveStrandedNodes(map, maxHop);
             }
             else
@@ -531,7 +595,7 @@ namespace EldritchMile.Core
 
                 PruneLinks(nodes, s.maxForwardLinks);
                 EnsureReachesGoal(nodes, layer, adj, maxHop);
-                CollapseToSingleBoss(nodes, layer, adj, maxHop, s, rng);
+                CollapseToSingleBoss(nodes, layer, adj, maxHop, s, rng, bossIdx >= 0 ? remap[bossIdx] : -1);
                 RemoveStrandedNodes(map, maxHop);
             }
             return map;
@@ -552,7 +616,7 @@ namespace EldritchMile.Core
         /// </summary>
         private static void CollapseToSingleBoss(
             List<RunNodeData> nodes, int[] layer, List<List<int>> adj, int maxHop,
-            MapGenerationSettings s, System.Random rng)
+            MapGenerationSettings s, System.Random rng, int forcedBoss = -1)
         {
             if (maxHop < 2) return;   // 太淺的圖降級後會又擲到 Boss，不處理
 
@@ -571,7 +635,16 @@ namespace EldritchMile.Core
                 }
 
             int boss = -1, bestReach = -1;
-            for (int i = 0; i < n; i++)
+
+            // 首領固定位置（2026-11-23）：直接指定那一點，不用比誰走得到的人多
+            if (forcedBoss >= 0 && forcedBoss < n)
+            {
+                boss = forcedBoss;
+                nodes[boss].kind = MapNodeKind.Boss;
+                bestReach = int.MaxValue;
+            }
+
+            for (int i = 0; i < n && forcedBoss < 0; i++)
             {
                 if (nodes[i].kind != MapNodeKind.Boss) continue;
                 int reach = CountAncestors(incoming, i, n);
