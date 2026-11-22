@@ -474,6 +474,7 @@ public class BattleManager : MonoBehaviour
             turnEndButtonAnimatorUI.SetEnemyTurnIdle();
         }
 
+
         // =========================================================
         // Relics：Player Turn End
         // =========================================================
@@ -543,9 +544,12 @@ public class BattleManager : MonoBehaviour
                 if (!enemy.gameObject.activeInHierarchy) continue;
                 if (enemy.currentHp <= 0) continue;
 
+                enemy.ClearStatusCompletely(StatusType.Lurking);
                 enemy.OnPlayerTurnEnd();
             }
         }
+
+        RefreshStatusUI();
 
         if (turnPhaseBannerUI != null)
         {
@@ -558,19 +562,7 @@ public class BattleManager : MonoBehaviour
     {
         EnsureEnemiesRegistered();
 
-        StartEnemyTurn();
-
-        if (currentPhase == BattlePhase.BattleEnded)
-            yield break;
-
-        yield return new WaitForSeconds(enemyActionDelay);
-
-        if (enemies == null || enemies.Count == 0)
-        {
-            Debug.LogWarning("[EnemyTurnRoutine] �S������Ǫ��i�H���");
-            EndEnemyTurn();
-            yield break;
-        }
+        List<KeyValuePair<EnemyUnit, int>> actionOrder = new List<KeyValuePair<EnemyUnit, int>>();
 
         for (int i = 0; i < enemies.Count; i++)
         {
@@ -580,20 +572,77 @@ public class BattleManager : MonoBehaviour
             if (!enemy.gameObject.activeInHierarchy) continue;
             if (enemy.currentHp <= 0) continue;
 
-            Debug.Log($"[EnemyTurnRoutine] �Ǫ���ʡG{enemy.unitName}");
+            actionOrder.Add(new KeyValuePair<EnemyUnit, int>(enemy, enemy.SpawnVersion));
+        }
+
+        StartEnemyTurn();
+
+        if (currentPhase == BattlePhase.BattleEnded) yield break;
+
+        yield return new WaitForSeconds(enemyActionDelay);
+
+        if (enemies == null || enemies.Count == 0)
+        {
+            Debug.LogWarning("[EnemyTurnRoutine] 沒有怪物可以行動。");
+            EndEnemyTurn();
+            yield break;
+        }
+
+        for (int i = 0; i < actionOrder.Count; i++)
+        {
+            EnemyUnit enemy = actionOrder[i].Key;
+            int spawnVersion = actionOrder[i].Value;
+
+            if (enemy == null) continue;
+            if (enemy.SpawnVersion != spawnVersion) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
+            if (currentPhase == BattlePhase.BattleEnded) yield break;
+
+            Debug.Log($"[EnemyTurnRoutine] 怪物行動：{enemy.unitName}");
 
             currentEnemy = enemy;
+
+            EnemyIntentData additionalIntent = enemy.AdditionalIntent;
+
+            if (additionalIntent != null && enemy.CanSwitchStatusPhase)
+            {
+                yield return enemy.PlayActionAnimation(additionalIntent.animationType);
+
+                if (currentPhase == BattlePhase.BattleEnded) yield break;
+
+                if (enemy.SpawnVersion == spawnVersion && enemy.gameObject.activeInHierarchy && enemy.currentHp > 0)
+                {
+                    enemy.ExecuteAdditionalIntent(additionalIntent, playerUnit, this);
+                }
+
+                RefreshPlayerBarsUI();
+                RefreshStatusUI();
+
+                if (playerUnit != null && playerUnit.currentHp <= 0)
+                {
+                    EndBattle(false);
+                    yield break;
+                }
+
+                yield return new WaitForSeconds(enemyActionDelay);
+            }
+
+            if (currentPhase == BattlePhase.BattleEnded) yield break;
+            if (enemy == null || enemy.SpawnVersion != spawnVersion) continue;
+            if (!enemy.gameObject.activeInHierarchy || enemy.currentHp <= 0) continue;
 
             EnemyAnimationType animationType = enemy.GetCurrentIntentAnimationType();
 
             yield return enemy.PlayActionAnimation(animationType);
-            // �Ǫ����� / ���m / �W���A
-            // �ˮ`�ץ��|�b EnemyDamageActionData �� enemy.DealDamageTo(playerUnit, amount) �̳B�z
+
+            if (currentPhase == BattlePhase.BattleEnded) yield break;
+            if (enemy == null || enemy.SpawnVersion != spawnVersion) continue;
+            if (!enemy.gameObject.activeInHierarchy || enemy.currentHp <= 0) continue;
+
             enemy.ExecuteTurn(playerUnit, this);
 
             RefreshPlayerBarsUI();
-
-
             RefreshStatusUI();
 
             yield return new WaitForSeconds(enemyActionDelay);
@@ -650,8 +699,7 @@ public class BattleManager : MonoBehaviour
 
     public void StartEnemyTurn()
     {
-        if (currentPhase == BattlePhase.BattleEnded)
-            return;
+        if (currentPhase == BattlePhase.BattleEnded) return;
 
         currentPhase = BattlePhase.EnemyTurn;
 
@@ -659,7 +707,6 @@ public class BattleManager : MonoBehaviour
 
         EnsureEnemiesRegistered();
 
-        // �Ǫ��^�X�}�l�G�Ҧ��Ǫ��M��� + ���A����
         for (int i = 0; i < enemies.Count; i++)
         {
             EnemyUnit enemy = enemies[i];
@@ -669,25 +716,29 @@ public class BattleManager : MonoBehaviour
             if (enemy.currentHp <= 0) continue;
 
             enemy.ResetBlock();
-
-            // �Ǫ��^�X�}�l���A����A�Ҧp Poison
             enemy.OnTurnStart();
         }
 
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            EnemyUnit enemy = enemies[i];
+
+            if (enemy == null) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
+
+            enemy.PrepareEnemyRoundAbilities();
+        }
+
         RefreshStatusUI();
-
-
         RequestCheckBattleEnd();
 
-        Debug.Log("�Ǫ��^�X�}�l");
+        Debug.Log("敵方回合開始");
     }
-
     public void EndEnemyTurn()
     {
-        if (currentPhase == BattlePhase.BattleEnded)
-            return;
+        if (currentPhase == BattlePhase.BattleEnded) return;
 
-        // �Ǫ��^�X�������A����A�Ҧp Weak / Vulnerable / Frail �h�� -1
         for (int i = 0; i < enemies.Count; i++)
         {
             EnemyUnit enemy = enemies[i];
@@ -699,12 +750,26 @@ public class BattleManager : MonoBehaviour
             enemy.OnTurnEnd();
         }
 
+        List<EnemyUnit> roundEndEnemies = new List<EnemyUnit>(enemies);
+
+        for (int i = 0; i < roundEndEnemies.Count; i++)
+        {
+            EnemyUnit enemy = roundEndEnemies[i];
+
+            if (enemy == null) continue;
+            if (!enemy.gameObject.activeInHierarchy) continue;
+            if (enemy.currentHp <= 0) continue;
+
+            enemy.ResolveEnemyRoundEndAbilities();
+        }
+
+        RefreshPlayerBarsUI();
+        RefreshStatusUI();
         RequestCheckBattleEnd();
 
-        if (currentPhase == BattlePhase.BattleEnded)
-            return;
+        if (currentPhase == BattlePhase.BattleEnded) return;
 
-        Debug.Log("�Ǫ��^�X����");
+        Debug.Log("敵方回合結束");
 
         StartPlayerTurn();
     }
@@ -1491,6 +1556,14 @@ public class BattleManager : MonoBehaviour
                 return playerUnit;
 
             case TargetType.SingleEnemy:
+                if (!(selectedTarget is EnemyUnit)) return null;
+
+                if (!BattleTargetUI.CanDirectlyTarget(selectedTarget))
+                {
+                    Debug.Log("指定目標無效，怪物可能正在潛伏、已死亡或未啟用。");
+                    return null;
+                }
+
                 return selectedTarget;
 
             case TargetType.RandomEnemy:

@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdefbaf090f51ee449a06740328bed42, type: 3}
+  m_Name: Inflation Cycle
+  m_EditorClassIdentifier: Assembly-CSharp::InflationCycleStatusData
+  inflationIntent: {fileID: 11400000, guid: 232772b2a5c83914ba5dff4424189003, type: 2}
+  explosionIntent: {fileID: 11400000, guid: 2c44cd118d36f8647a26c3bea4bd53c5, type: 2}
+  requiredInflationStacks: 3

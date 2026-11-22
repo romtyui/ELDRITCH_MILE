@@ -1507,9 +1507,31 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
     // Disable
     // =========================================================
 
-    private void OnDisable()
+    private async void OnDisable()
     {
-        ShowUIAfterGodAnimation();
+        if (!Application.isPlaying) return;
+
+        // 先保存 UI 參考，等待後不再讀取 Controller 的欄位。
+        GameObject uiToRestore = hideDuringGodAnimationUI;
+
+        if (uiToRestore == null) return;
+
+        try
+        {
+            await Awaitable.NextFrameAsync(Application.exitCancellationToken);
+        }
+        catch (System.OperationCanceledException)
+        {
+            return;
+        }
+
+        // UI 如果也被銷毀，就不再嘗試啟用。
+        if (!Application.isPlaying || uiToRestore == null) return;
+
+        string uiName = uiToRestore.name;
+        uiToRestore.SetActive(true);
+
+        Debug.Log($"[GodCardAnimation] 神牌動畫停用後，恢復 UI：{uiName}");
     }
 
 
@@ -1520,9 +1542,6 @@ public class GodCardCorruptionAnimationController : MonoBehaviour
     private void OnDestroy()
     {
         DestroyCurrentAnimationPrefab();
-
-        ShowUIAfterGodAnimation();
-
         ClearPendingTransform();
     }
 

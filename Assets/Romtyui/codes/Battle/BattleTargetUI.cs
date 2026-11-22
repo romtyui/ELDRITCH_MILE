@@ -5,16 +5,41 @@ public class BattleTargetUI : MonoBehaviour, IPointerEnterHandler, IPointerExitH
 {
     public BattleUnit battleUnit;
 
-    public static BattleTargetUI CurrentHoveredTarget { get; private set; }
+    private static BattleTargetUI currentHoveredTarget;
+
+    public static BattleTargetUI CurrentHoveredTarget
+    {
+        get
+        {
+            if (currentHoveredTarget == null) return null;
+            if (!currentHoveredTarget.isActiveAndEnabled) return null;
+            if (!CanDirectlyTarget(currentHoveredTarget.battleUnit)) return null;
+
+            return currentHoveredTarget;
+        }
+    }
+
+    public static bool CanDirectlyTarget(BattleUnit unit)
+    {
+        if (unit == null) return false;
+        if (!unit.gameObject.activeInHierarchy || unit.currentHp <= 0) return false;
+        if (unit is EnemyUnit && unit.HasStatus(StatusType.Lurking)) return false;
+
+        return true;
+    }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        CurrentHoveredTarget = this;
+        currentHoveredTarget = this;
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        if (CurrentHoveredTarget == this)
-            CurrentHoveredTarget = null;
+        if (currentHoveredTarget == this) currentHoveredTarget = null;
+    }
+
+    private void OnDisable()
+    {
+        if (currentHoveredTarget == this) currentHoveredTarget = null;
     }
 }

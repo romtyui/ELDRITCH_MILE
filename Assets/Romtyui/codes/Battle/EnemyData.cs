@@ -51,6 +51,26 @@ public class EnemyData : ScriptableObject
 
     [Tooltip("鎖定框大小")]
     public Vector2 targetFrameSize = new Vector2(300f, 300f);
+
+    public enum EnemySummonFaction
+    {
+        None,
+        Abyss
+    }
+
+    public enum EnemySummonRank
+    {
+        Normal,
+        Elite,
+        Boss
+    }
+
+    [Header("Summon Classification")]
+    public EnemySummonFaction summonFaction = EnemySummonFaction.None;
+    public EnemySummonRank summonRank = EnemySummonRank.Normal;
+
+    [Tooltip("允許被技能召喚。體型過大的怪物不要勾選。")]
+    public bool canBeSummoned = false;
     [Header("Special Intents")]
     public EnemyIntentData stunIntent;
     [System.Serializable]

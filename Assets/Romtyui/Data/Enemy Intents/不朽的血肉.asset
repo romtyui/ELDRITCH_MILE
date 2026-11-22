@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce995f04a5e894cbd0e62549d564bd, type: 3}
+  m_Name: "\u4E0D\u673D\u7684\u8840\u8089"
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyIntentData
+  intentName: "\u4E0D\u673D\u7684\u8840\u8089"
+  description: "\u6062\u5FA9\u81EA\u8EAB\u6700\u5927HP\u768480%\uFF0C\u7372\u5F978\u9EDE\u57FA\u790E\u8B77\u76FE\u3002"
+  intentIcon: {fileID: 0}
+  damageTextOverride: 
+  actions:
+  - {fileID: 11400000, guid: 5fd35a6cc60e31245aae5ced531b06ba, type: 2}
+  animationType: 4

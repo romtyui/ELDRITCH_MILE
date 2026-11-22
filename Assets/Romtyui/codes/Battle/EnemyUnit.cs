@@ -149,7 +149,18 @@ public class EnemyUnit : BattleUnit
     public TooltipTriggerUI intentTooltipTrigger;
 
     public event Action OnIntentChanged;
+    public class AbyssStrategyRuntimeState
+    {
+        public bool hasExecutedNormalAction;
+        public bool healedThisRound;
+        public int roundsWithoutHealing;
+    }
 
+    public AbyssStrategyRuntimeState abyssStrategyRuntime = new AbyssStrategyRuntimeState();
+
+    public EnemyIntentData AdditionalIntent { get; set; }
+
+    public int SpawnVersion { get; private set; }
     public class PhaseSwitchRuntimeState
     {
         public int playerTurnEndCount;
@@ -338,17 +349,22 @@ public class EnemyUnit : BattleUnit
 
     public void RefreshIntentTooltip()
     {
-        if (intentTooltipTrigger == null)
-            return;
+        if (intentTooltipTrigger == null) return;
 
         List<TooltipEntry> entries = new List<TooltipEntry>();
 
         TooltipEntry chargeEntry;
+
         if (TryGetChargeTooltip(out chargeEntry))
         {
             entries.Add(chargeEntry);
             intentTooltipTrigger.SetEntries(entries);
             return;
+        }
+
+        if (AdditionalIntent != null)
+        {
+            entries.Add(new TooltipEntry("額外行動：" + AdditionalIntent.intentName, "正常行動前額外執行，不消耗本回合的正常行動次數。"));
         }
 
         EnemyIntentData intent = CurrentIntent;
@@ -359,37 +375,29 @@ public class EnemyUnit : BattleUnit
             return;
         }
 
+        int actionEntryStart = entries.Count;
+
         if (intent.actions != null)
         {
             for (int i = 0; i < intent.actions.Count; i++)
             {
                 EnemyActionData action = intent.actions[i];
 
-                if (action == null)
-                    continue;
+                if (action == null) continue;
 
                 TooltipEntry actionEntry = action.GetTooltipEntry();
 
-                if (actionEntry == null)
-                    continue;
-
-                if (string.IsNullOrWhiteSpace(actionEntry.title) &&
-                    string.IsNullOrWhiteSpace(actionEntry.body))
-                    continue;
+                if (actionEntry == null) continue;
+                if (string.IsNullOrWhiteSpace(actionEntry.title) && string.IsNullOrWhiteSpace(actionEntry.body)) continue;
 
                 entries.Add(actionEntry);
             }
         }
 
-        if (entries.Count == 0)
+        if (entries.Count == actionEntryStart)
         {
-            string title = string.IsNullOrWhiteSpace(intent.intentName)
-                ? "意圖"
-                : intent.intentName;
-
-            string body = string.IsNullOrWhiteSpace(intent.description)
-                ? "這名敵人將要行動。"
-                : intent.description;
+            string title = string.IsNullOrWhiteSpace(intent.intentName) ? "意圖" : intent.intentName;
+            string body = string.IsNullOrWhiteSpace(intent.description) ? "這名敵人將要行動。" : intent.description;
 
             entries.Add(new TooltipEntry(title, body));
         }
@@ -493,8 +501,7 @@ public class EnemyUnit : BattleUnit
 
     public void ExecuteTurn(BattleUnit player, BattleManager battleManager)
     {
-        if (currentHp <= 0)
-            return;
+        if (currentHp <= 0) return;
 
         stayOnCurrentIntentThisTurn = false;
 
@@ -521,11 +528,12 @@ public class EnemyUnit : BattleUnit
         {
             EnemyActionData action = intent.actions[i];
 
-            if (action == null)
-                continue;
+            if (action == null) continue;
 
             action.Execute(context);
         }
+
+        NotifyIntentExecuted(intent, false);
 
         if (stayOnCurrentIntentThisTurn)
         {
@@ -560,9 +568,18 @@ public class EnemyUnit : BattleUnit
 
     public void RefreshHpUI()
     {
+        if (!gameObject.activeInHierarchy) return;
+
         if (hpNumberAnimator != null)
         {
-            hpNumberAnimator.SetValue(currentHp, maxHp);
+            if (hpNumberAnimator.isActiveAndEnabled)
+            {
+                hpNumberAnimator.SetValue(currentHp, maxHp);
+            }
+            else
+            {
+                hpNumberAnimator.SetValueImmediate(currentHp, maxHp);
+            }
         }
         else if (currentHpText != null)
         {
@@ -594,6 +611,10 @@ public class EnemyUnit : BattleUnit
         statusIntentPending = false;
         successfullyDiscardedHandCardCount = 0;
         phaseSwitchRuntime = new PhaseSwitchRuntimeState();
+        abyssStrategyRuntime = new AbyssStrategyRuntimeState();
+        AdditionalIntent = null;
+        SpawnVersion++;
+        ClearCharge();
 
         if (enemyData != null && enemyData.startingStatuses != null)
         {
@@ -628,6 +649,103 @@ public class EnemyUnit : BattleUnit
         }
 
         RefreshAllUI();
+    }
+
+    private List<BattleStatusBehaviourData> GetActiveStatusBehaviours()
+    {
+        List<BattleStatusBehaviourData> result = new List<BattleStatusBehaviourData>();
+
+        foreach (KeyValuePair<StatusType, BattleStatusBehaviourData> pair in statusBehaviours)
+        {
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+
+            result.Add(pair.Value);
+        }
+
+        return result;
+    }
+
+    public override void TakeDamage(int amount, BattleUnit damageSource, bool ignoreBlock)
+    {
+        if (amount > 0 && currentHp > 0 && damageSource != null && damageSource != this)
+        {
+            List<BattleStatusBehaviourData> behaviours = GetActiveStatusBehaviours();
+
+            for (int i = 0; i < behaviours.Count; i++)
+            {
+                behaviours[i].OnAttacked(this, damageSource);
+            }
+        }
+
+        base.TakeDamage(amount, damageSource, ignoreBlock);
+    }
+
+    public void PrepareEnemyRoundAbilities()
+    {
+        AdditionalIntent = null;
+
+        if (currentHp <= 0 || !gameObject.activeInHierarchy) return;
+
+        List<BattleStatusBehaviourData> behaviours = GetActiveStatusBehaviours();
+
+        for (int i = 0; i < behaviours.Count; i++)
+        {
+            behaviours[i].OnEnemyRoundStart(this);
+
+            if (currentHp <= 0 || !gameObject.activeInHierarchy) return;
+        }
+
+        RefreshIntentUI();
+    }
+
+    public void ResolveEnemyRoundEndAbilities()
+    {
+        if (currentHp <= 0 || !gameObject.activeInHierarchy) return;
+
+        List<BattleStatusBehaviourData> behaviours = GetActiveStatusBehaviours();
+
+        for (int i = 0; i < behaviours.Count; i++)
+        {
+            behaviours[i].OnEnemyRoundEnd(this);
+
+            if (currentHp <= 0 || !gameObject.activeInHierarchy) return;
+        }
+
+        RefreshAllUI();
+    }
+
+    private void NotifyIntentExecuted(EnemyIntentData intent, bool isAdditionalAction)
+    {
+        List<BattleStatusBehaviourData> behaviours = GetActiveStatusBehaviours();
+
+        for (int i = 0; i < behaviours.Count; i++)
+        {
+            behaviours[i].OnIntentExecuted(this, intent, isAdditionalAction);
+        }
+    }
+
+    public void ExecuteAdditionalIntent(EnemyIntentData intent, BattleUnit player, BattleManager manager)
+    {
+        if (intent == null || currentHp <= 0 || !gameObject.activeInHierarchy) return;
+
+        EnemyActionContext context = new EnemyActionContext(this, player, manager);
+
+        for (int i = 0; i < intent.actions.Count; i++)
+        {
+            if (currentHp <= 0 || !gameObject.activeInHierarchy) break;
+            if (player != null && player.currentHp <= 0) break;
+
+            EnemyActionData action = intent.actions[i];
+
+            if (action == null) continue;
+
+            action.Execute(context);
+        }
+
+        NotifyIntentExecuted(intent, true);
+        AdditionalIntent = null;
+        RefreshIntentUI();
     }
 
     public bool TrySetStatusIntent(EnemyIntentData intent)
@@ -1207,10 +1325,21 @@ public class EnemyUnit : BattleUnit
 
     public IEnumerator DieRoutine()
     {
-        if (isDead)
-            yield break;
+        if (isDead) yield break;
 
         isDead = true;
+
+        List<KeyValuePair<StatusType, BattleStatusBehaviourData>> behaviours = new List<KeyValuePair<StatusType, BattleStatusBehaviourData>>(statusBehaviours);
+
+        for (int i = 0; i < behaviours.Count; i++)
+        {
+            KeyValuePair<StatusType, BattleStatusBehaviourData> pair = behaviours[i];
+
+            if (!HasStatus(pair.Key)) continue;
+            if (pair.Value == null) continue;
+
+            pair.Value.OnOwnerDeath(this);
+        }
 
         ClearStatusIconUI();
 

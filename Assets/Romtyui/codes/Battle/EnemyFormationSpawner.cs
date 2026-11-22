@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using static EnemyData;
 
 public class EnemyFormationSpawner : MonoBehaviour
 {
@@ -27,6 +28,8 @@ public class EnemyFormationSpawner : MonoBehaviour
     [SerializeField] private List<string> debugSpawnedEnemyNames = new();
     [SerializeField] private List<string> debugCandidateNames = new();
     [SerializeField] private string debugSpawnMode;
+    [Header("Battle Summoning")]
+    public EnemyDatabase summonDatabase;
     public EnemyFormationData CurrentFormation => debugCurrentFormation;
 
     private readonly List<EnemyUnit> spawnedEnemies = new();
@@ -278,5 +281,70 @@ public class EnemyFormationSpawner : MonoBehaviour
         Debug.Log(
             $"[EnemyFormationSpawner] 設定關卡怪物規則：useStageWeightRule = {useStageWeightRule}, MaxWeight = {currentStageMaxWeight}, IsBoss = {currentStageIsBoss}"
         );
+    }
+    public EnemyUnit SummonRandomAbyssEnemy()
+    {
+        if (battleManager == null || summonDatabase == null) return null;
+        if (battleManager.currentPhase == BattlePhase.BattleEnded) return null;
+        if (summonDatabase.enemies == null) return null;
+
+        EnemySlotUI availableSlot = null;
+
+        for (int i = 0; i < enemySlots.Count; i++)
+        {
+            EnemySlotUI slot = enemySlots[i];
+
+            if (slot == null || slot.enemyUnit == null) continue;
+            if (slot.enemyUnit.IsDeathAnimationPlaying) continue;
+            if (slot.gameObject.activeInHierarchy && slot.enemyUnit.currentHp > 0) continue;
+
+            availableSlot = slot;
+            break;
+        }
+
+        if (availableSlot == null)
+        {
+            Debug.Log("[EnemyFormationSpawner] 沒有可用位置，召喚不生成怪物。");
+            return null;
+        }
+
+        List<EnemyData> candidates = new List<EnemyData>();
+
+        for (int i = 0; i < summonDatabase.enemies.Count; i++)
+        {
+            EnemyData data = summonDatabase.enemies[i];
+
+            if (data == null || !data.canBeSummoned) continue;
+            if (data.summonFaction != EnemySummonFaction.Abyss) continue;
+            if (data.summonRank != EnemySummonRank.Normal && data.summonRank != EnemySummonRank.Elite) continue;
+            if (candidates.Contains(data)) continue;
+
+            candidates.Add(data);
+        }
+
+        if (candidates.Count == 0)
+        {
+            Debug.LogWarning("[EnemyFormationSpawner] 找不到允許召喚的深淵一般／精英怪物。");
+            return null;
+        }
+
+        EnemyData selectedData = candidates[Random.Range(0, candidates.Count)];
+
+        availableSlot.enemyUnit.battleManager = battleManager;
+
+        EnemyUnit summonedEnemy = availableSlot.SpawnEnemy(selectedData, false);
+
+        if (summonedEnemy == null) return null;
+
+        summonedEnemy.battleManager = battleManager;
+
+        if (!spawnedEnemies.Contains(summonedEnemy)) spawnedEnemies.Add(summonedEnemy);
+        if (!battleManager.enemies.Contains(summonedEnemy)) battleManager.enemies.Add(summonedEnemy);
+
+        debugSpawnedEnemyNames.Add($"召喚：{summonedEnemy.unitName}");
+
+        Debug.Log($"[EnemyFormationSpawner] 召喚怪物：{summonedEnemy.unitName}");
+
+        return summonedEnemy;
     }
 }

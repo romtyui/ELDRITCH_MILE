@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf43116519b6a7a449b6e0c6921700bc, type: 3}
+  m_Name: Boss
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyData
+  unitName: monster_05
+  maxHp: 550
+  enemyId: boss
+  normalVisualPrefab: {fileID: 6589648622016819937, guid: 5866ed8a0c943bb419b3930e978fd042, type: 3}
+  darkVisualPrefab: {fileID: 1437885555450961245, guid: d5322c48a5fdb914eb75df7155bdfaa0, type: 3}
+  visualAnchoredPosition: {x: 0, y: 0}
+  visualScale: {x: 1, y: 1, z: 1}
+  visualEulerAngles: {x: 0, y: 0, z: 0}
+  damagePopupOffset: {x: 0, y: 80}
+  blockPositionOffset: {x: 0, y: 0}
+  blockSizeMultiplier: {x: 1, y: 1}
+  hitBoxColor: {r: 1, g: 0, b: 1, a: 0}
+  hitBoxSprite: {fileID: 0}
+  targetFrameFollowBoneName: head_01
+  targetFrameAnchoredPosition: {x: 0, y: 65}
+  targetFrameSize: {x: 200, y: 200}
+  summonFaction: 0
+  summonRank: 0
+  canBeSummoned: 0
+  stunIntent: {fileID: 0}
+  startingStatuses:
+  - statusType: 17
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: fd8f1e6a1f8c3754a8d4bc3e04d0b631, type: 2}
+  - statusType: 18
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: 1aa6c7eb6ef637e4c861d59634b03096, type: 2}
+  - statusType: 19
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: e10d610dfcd2c084e91978df18439cac, type: 2}
+  - statusType: 20
+    amount: 1
+    statusBehaviour: {fileID: 11400000, guid: e10d610dfcd2c084e91978df18439cac, type: 2}
+  intents:
+  - {fileID: 11400000, guid: 587b237fbb7830b468742407c94aa049, type: 2}
+  - {fileID: 11400000, guid: bc63d9131a3abf24696e37207d7951fa, type: 2}
+  - {fileID: 11400000, guid: a055badfe4e7317418cfcb9544212de0, type: 2}
+  idleTrigger: idle
+  attackTrigger: atk
+  hurtTrigger: hurt
+  deathTrigger: death
+  blockTrigger: block
+  specialAttackTrigger: special
+  attackAnimDuration: 0.4
+  hurtAnimDuration: 0.3
+  deathAnimDuration: 1
+  blockAnimDuration: 0.2
+  specialAttackAnimDuration: 0.8
+  attackSfx: {fileID: 0}
+  hurtSfx: {fileID: 0}
+  deathSfx: {fileID: 0}
+  blockSfx: {fileID: 0}
+  specialAttackSfx: {fileID: 0}
+  sfxVolume: 1

@@ -50,4 +50,9 @@ public class CardHitEffectData : ScriptableObject
 
     [Range(0f, 1f)]
     public float hitSfxVolume = 1f;
+
+
+    [Header("Screen Effect")]
+    [Tooltip("勾選後，特效鋪滿 Effect Root，不使用角色位置。適合畫面邊緣護罩等全畫面 UI 特效。")]
+    public bool fullScreenEffect = false;
 }
