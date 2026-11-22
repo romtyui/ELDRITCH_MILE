@@ -554,9 +554,17 @@ namespace EldritchMile.UI.Shortcut
         /// 兩者不衝突：日後要做「只能在戰鬥裡用」的複雜道具，
         /// 就在這裡多一條路由到 `ItemEffectData`，簡易效果照舊。
         /// </summary>
+        /// <summary>
+        /// 點格子時先問這一支：回 true 就當它處理掉了，不走平常的使用流程。
+        /// 食物欄滿了的提醒（FoodOverflowUI）開著時用 —— 那時點試管＝「吃掉這一個騰出位子」，
+        /// 不能被「地圖上不能使用道具」擋掉。（2026-11-23）
+        /// </summary>
+        public System.Func<ItemData, bool> slotClickOverride;
+
         private void HandleSlotClicked(ShortcutSlotUI s)
         {
             if (s.Item == null) return;
+            if (slotClickOverride != null && slotClickOverride(s.Item)) return;
             TryUse(s.Item, true);
         }
 

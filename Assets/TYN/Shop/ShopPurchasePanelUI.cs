@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Serialization;
+using EldritchMile.Core;
 
 namespace EldritchMile.Shop
 {
@@ -65,6 +66,10 @@ namespace EldritchMile.Shop
         [Tooltip("商品說明。內容跟貨架 hover 的說明框同一份（ItemData.description）——\n"
                  + "兩邊講不一樣的話就會有兩個真相，改一邊忘了另一邊是遲早的事")]
         public TextMeshProUGUI bodyText;
+
+        [Tooltip("「藥水裝備已滿」紅色標籤（2026-11-23 美術《藥水已滿的情況》）。\n" +
+                 "要買的是食物、而食物欄已經滿了時顯示 —— 照樣可以買，買下去會跳丟棄畫面")]
+        public GameObject foodFullWarning;
 
         [Header("按鈕")]
         public Button yesButton;
@@ -141,6 +146,13 @@ namespace EldritchMile.Shop
             }
 
             if (bodyText != null) bodyText.text = body ?? "";
+
+            if (foodFullWarning != null)
+            {
+                RunContext run = GameFlowManager.Instance != null ? GameFlowManager.Instance.Run : null;
+                bool full = run != null && data != null && data.HasTag(RunContext.FoodTag) && run.FoodCount >= run.FoodSlots;
+                foodFullWarning.SetActive(full);
+            }
 
             if (yesButton != null)
             {
